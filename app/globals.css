@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+/* PRUEBA visible para confirmar que globals.css carga */
+body {
+  background: #0a0a0a;      /* verás fondo gris muy oscuro si esto entra */
+  color: #e5e7eb;           /* gris claro para texto */
+  font-family: var(--font-poppins), sans-serif;
+
+}
+
+.container { /* helper usado en el layout */
+  max-width: 72rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.cta-btn {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  background: rgba(79, 70, 229, 0.8); /* indigo-600 con opacidad */
+  color: #fff;
+  font-family: var(--font-poppins), sans-serif;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  font-size: 1.125rem;
+  text-decoration: none;
+  transition: background-color 150ms ease, transform 100ms ease;
+}
+
+.cta-btn:hover {
+  background: rgba(79, 70, 229, 0.9); /* un poco más intenso */
+}
+
+.cta-btn:active {
+  background: rgba(67, 56, 202, 1); /* indigo aún más fuerte */
+  transform: scale(0.97);           /* efecto "hundido" */
+}
+
+.font-heading {
+  font-family: var(--font-poppins), sans-serif;
+}
+
+.font-body {
+  font-family: var(--font-roboto-mono), monospace;
+}
+
+.font-button {
+  font-family: var(--font-poppins), sans-serif;
+  letter-spacing: 0.05em;
+}
+
+/* Variante verde del botón */
+.cta-btn--green {
+  background: rgba(3, 97, 100, 0.85); /* verde (tailwind: emerald-500 aprox) */
+}
+
+.cta-btn--green:hover {
+  background: rgb(1, 81, 128);
+}
+
+.cta-btn--green:active {
+  background: rgb(3, 151, 209); /* un tono más oscuro al presionar */
+  transform: scale(0.97);
+}
