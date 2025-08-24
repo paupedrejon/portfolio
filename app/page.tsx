@@ -19,12 +19,11 @@ export default function HomePage() {
           overflow: "hidden",
         }}
       >
-        {/* Fondo */}
+        {/* Fondo  backgroundImage: "url(/portada.png)",*/}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage: "url(/portada.png)",
             backgroundSize: "cover",
             backgroundPosition: "50% 30%",
             backgroundRepeat: "no-repeat",
@@ -36,7 +35,7 @@ export default function HomePage() {
           style={{
             position: "absolute",
             inset: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
+            backgroundColor: "rgba(220, 227, 228, 1)",
             zIndex: 1,
           }}
         />
@@ -53,7 +52,7 @@ export default function HomePage() {
             zIndex: 2,
           }}
         >
-          <div style={{ textAlign: "center", color: "#fff", padding: "0 1rem" }}>
+          <div style={{ textAlign: "center", color: "#575757", padding: "0 1rem" }}>
             <h1
               className={poppins.className}
               style={{
@@ -76,6 +75,7 @@ export default function HomePage() {
             >
               PAU <span>PEDREJON</span>
             </div>
+            
             <div style={{ marginTop: "2rem" }}>
         <a
             href="https://linkedin.com"         
@@ -87,109 +87,151 @@ export default function HomePage() {
             VIEW CURRICULUM
         </a>
         </div>
+        <div
+              className={poppins.className}
+              style={{
+                marginTop: "0.5rem",
+                fontSize: "clamp(20px, 6vw, 42px)",
+                fontWeight: 300,
+                letterSpacing: "0.08em",
+              }}
+            >
+               <span><br></br>▼</span>
+            </div>
             
           </div>
         </div>
       </section>
 
-<SectionPage
-  id="Salmon Infinite"
-  title={<>ONLINE REALISTIC VIDEOGAME</>}
-  title2={<>PART 2</>}
-  kicker="2025 - Personal Project"   // 👈 ahora sí funciona
-
-  subtitle="Online Multiplayer character-based shooter."
-  background= "/salmon2.png"
-  darken={0.6}
-  align="center"
-  ctaText="View More"
-  ctaHref="https://palgames.wixsite.com/salmoninfinite"
-/>
 
 
-<SectionPage
-  id="FIB Lab"
-  title={<>FIB LAB </>}
-  title2={<>Unity 2024 Course Project</>}
-  kicker="2024 - Universitat Politècnica de Barcelona"   // 👈 ahora sí funciona
 
-  subtitle="A simple 2D game made during the Unity Essential Course."
-  background= "/fiblab.png"
-  darken={0.45}
-  align="left"
-  ctaText="PLAY"
-  ctaHref="https://pa2005.itch.io/fib-lab"
-/>
 
-<SectionPage
-  id="Game Jam 2024"
-  title={<>CIRCUS VR </>}
-  title2={<>Game Jam 2024</>}
-  kicker="2024 - Universitat Politècnica de Barcelona"   // 👈 ahora sí funciona
 
-  subtitle="Built a functional interactive system with circus props within 48h."
-  background= "/circusvr.png"
-  darken={0.6}
-  align="right"
-  ctaText="View More"
-  ctaHref="#VirtualReality"
-/>
 
-<SectionPage
-  id="TR"
-  title={<>VR EXPERIENCE </>}
-  title2={<>TREBALL DE RECERCA</>}
-  kicker="2023 - Institut Tecnològic de Barcelona"   // 👈 ahora sí funciona
 
-  subtitle="Made a Virtual Reality experience to show the capacities of the Metaverse."
-  background= "/portada.png"
-  darken={0.45}
-  align="left"
-  ctaText="View More"
-  ctaHref="https://gamejolt.com/games/realyexperience/728307"
-/>
+     <section
+  style={{
+    position: "relative",
+    width: "100%",
+    height: "20vh",
+    overflow: "hidden",
+  }}
+>
+  {/* Fondo */}
+  <div
+    style={{
+      position: "absolute",
+      inset: 0,
+      backgroundSize: "cover",
+      backgroundPosition: "50% 30%",
+      backgroundRepeat: "no-repeat",
+      zIndex: 0,
+    }}
+  />
+  {/* Oscurecedor */}
+  <div
+    style={{
+      position: "absolute",
+      inset: 0,
+      backgroundColor: "rgba(236, 236, 236, 1)",
+      zIndex: 1,
+    }}
+  />
+{/* === Fila de 4 tarjetas === */}
+<div
+  style={{
+    position: "relative",
+    zIndex: 2,
+    width: "100%",             // ancho completo
+    pointerEvents: "auto",
+  }}
+>
+  <div
+    style={{
+      maxWidth: "1200px",       // centra y acota
+      margin: "0 auto",
+      padding: "24px 16px",
+    }}
+  >
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, minmax(0, 1fr))", // 4 columnas
+        gap: "16px",
+      }}
+    >
+      {/* Card 1 */}
+      <a href="/proyectos" className="pill-card pill-card--indigo">
+        <span className="pill-card__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </span>
+        <div className="pill-card__text">
+        {/* 👇 subtítulo en Open Sans */}
+        <p className={`${robotoMono.className} pill-card__kicker`}>Section</p>
+        {/* 👇 título en Poppins */}
+        <p className={`${poppins.className} pill-card__title`}>PROJECTS</p>
+        </div>
+      </a>
 
-<SectionPage
-  id="DROVO"
-  title={<>DROVO</>}
-  title2={<>ONLINE MULTIPLAYER PROTOTYPE</>}
-  kicker="2023 - Personal Project"   // 👈 ahora sí funciona
+      {/* Card 2 */}
+      <a href="/conocimientos" className="pill-card pill-card--emerald">
+        <span className="pill-card__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M8 16l-4-4 4-4M16 8l4 4-4 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </span>
+        <div className="pill-card__text">
+        {/* 👇 subtítulo en Open Sans */}
+        <p className={`${robotoMono.className} pill-card__kicker`}>Section</p>
+        {/* 👇 título en Poppins */}
+        <p className={`${poppins.className} pill-card__title`}>SKILLS</p>
+        </div>
+      </a>
 
-  subtitle="Built a fun project to play with friends."
-  background= "/drovo.png"
-  darken={0.6}
-  align="right"
-  ctaText="View More"
-  ctaHref="https://gamejolt.com/games/drovo/726952"
-/>
+      {/* Card 3 */}
+      <a href="/about-me" className="pill-card pill-card--rose">
+        <span className="pill-card__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 12a4 4 0 100-8 4 4 0 000 8z" stroke="white" strokeWidth="2"/>
+            <path d="M4 20a8 8 0 0116 0" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </span>
+        <div className="pill-card__text">
+        <div className="pill-card__text">
+        {/* 👇 subtítulo en Open Sans */}
+        <p className={`${robotoMono.className} pill-card__kicker`}>Section</p>
+        {/* 👇 título en Poppins */}
+        <p className={`${poppins.className} pill-card__title`}>ABOUT ME</p>
+        </div>
+        </div>
+      </a>
 
-<SectionPage
-  id="Salmon Infinite 1"
-  title={<>ONLINE VIDEOGAME</>}
-  title2={<>PART 1</>}
-  kicker="2020 - Personal Project"   // 👈 ahora sí funciona
+      {/* Card 4 */}
+      <a href="/contact" className="pill-card pill-card--amber">
+        <span className="pill-card__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M4 6h16v12H4z" stroke="white" strokeWidth="2" />
+            <path d="M4 7l8 6 8-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </span>
+        <div className="pill-card__text">
+        {/* 👇 subtítulo en Open Sans */}
+        <p className={`${robotoMono.className} pill-card__kicker`}>Go To</p>
+        {/* 👇 título en Poppins */}
+        <p className={`${poppins.className} pill-card__title`}>CONTACT</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
 
-  subtitle="My first contact with programming."
-  background= "/salmon1.png"
-  darken={0.6}
-  align="left"
-  ctaText="View More"
-  ctaHref="https://gamejolt.com/games/salmon_infinite_experimental/712867"
-/>
 
-<SectionPage
-  id="Impresora3D"
-  title={<>3D PRINTING</>}
-  title2={<>MAKER PROJECT</>}
-  kicker="2020 - Personal Project"   // 👈 ahora sí funciona
 
-  subtitle="Adapted complex 3D big models."
-  background= "/impresora3D.jpg"
-  darken={0.6}
-  align="right"
-  ctaText=""
-  ctaHref="https://gamejolt.com/games/drovo/726952"
-/>
+</section>
+
 
     </>
   );

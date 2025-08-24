@@ -1,18 +1,26 @@
+// app/layout.tsx
 import "./globals.css";
-import type { Metadata } from "next";
+import Header from "@/components/Header";          // 👈 importa el Header
+import { din } from "./fonts";                     // si usas Barlow como var(--font-din)
 
-export const metadata: Metadata = {
-  title: "Portfolio — Tu Nombre",
-  description: "Portfolio de proyectos",
+export const metadata = {
+  title: "Portfolio",
+  description: "Pau Pedrejon",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <body>
-        {/* Header se renderiza encima del hero */}
-        {children}
-      </body>
+    <html lang="es" className={din?.variable}>
+      <body className="bg-black text-white">
+  {/* Header va aquí */}
+  <Header />
+
+  {/* Deja hueco para el header fijo */}
+  <main className="pt-20">
+    {children}
+  </main>
+</body>
+
     </html>
   );
 }

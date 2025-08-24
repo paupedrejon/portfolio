@@ -6,7 +6,7 @@
 
 /* PRUEBA visible para confirmar que globals.css carga */
 body {
-  background: #0a0a0a;      /* verás fondo gris muy oscuro si esto entra */
+  background:  "rgba(220, 227, 228, 1)";      /* verás fondo gris muy oscuro si esto entra */
   color: #e5e7eb;           /* gris claro para texto */
   font-family: var(--font-poppins), sans-serif;
 
@@ -68,4 +68,65 @@ body {
 .cta-btn--green:active {
   background: rgb(3, 151, 209); /* un tono más oscuro al presionar */
   transform: scale(0.97);
+}
+
+
+/* Variante verde del botón */
+.cta-btn--grey {
+  background: rgba(59, 59, 59, 0); /* verde (tailwind: emerald-500 aprox) */
+}
+
+.cta-btn--grey:hover {
+  background: rgb(225, 245, 255);
+}
+
+.cta-btn--grey:active {
+  background: rgb(108, 213, 255); /* un tono más oscuro al presionar */
+  transform: scale(0.97);
+}
+
+
+.pill-card{
+  display:inline-flex; align-items:center; gap:16px;
+  height:96px; padding:16px 20px;
+  border-radius:16px; text-decoration:none;
+  color:#fff; box-shadow:0 10px 20px rgba(0,0,0,.25);
+  transition:transform .1s ease, background-color .15s ease;
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(45,45,45,.55); /* fallback si falta la variante */
+  backdrop-filter: blur(6px);
+}
+.pill-card:hover{ transform: translateY(-2px); }
+.pill-card:active{ transform: scale(.98); }
+
+/* Variantes de color (puedes ajustar tonos) */
+.pill-card--indigo { background: rgba(79,70,229,.90); }
+.pill-card--indigo:hover { background: rgba(79,70,229,1); }
+
+.pill-card--emerald { background: rgba(5,150,105,.90); }
+.pill-card--emerald:hover { background: rgba(5,150,105,1); }
+
+.pill-card--rose { background: rgba(225,29,72,.90); }
+.pill-card--rose:hover { background: rgba(225,29,72,1); }
+
+.pill-card--amber { background: rgba(217,119,6,.90); }
+.pill-card--amber:hover { background: rgba(217,119,6,1); }
+
+.pill-card__icon{
+  display:inline-grid; place-items:center;
+  width:48px; height:48px; border-radius:9999px;
+  background: rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.22);
+}
+
+.pill-card__text{ min-width:0; }
+.pill-card__kicker{
+font-family: var(--font-roboto-mono), monospace;
+  margin:0; font-size:12px; letter-spacing:.25em;
+  text-transform:uppercase; opacity:.8;
+}
+.pill-card__title{
+  font-family: var(--font-poppins), sans-serif;
+  margin:2px 0 0; font-size:20px; font-weight:700; line-height:1.1;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
