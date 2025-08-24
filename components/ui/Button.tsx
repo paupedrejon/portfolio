@@ -1,42 +1,40 @@
-import Link from "next/link";
-import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/cn";
+'use client';
 
-const button = cva(
-  "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium border transition-colors",
-  {
-    variants: {
-      variant: {
-        solid:
-          "bg-gray-900 text-white hover:bg-black dark:bg-white dark:text-black dark:hover:bg-white/90",
-        ghost: "bg-transparent hover:bg-black/5 dark:hover:bg-white/10",
-      },
-    },
-    defaultVariants: { variant: "solid" },
-  }
-);
+import Link from 'next/link';
+import { cn } from '@/lib/cn'; // si no tienes esta utilidad, elimina el import y concatena strings
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof button> {
-  href?: string; // si lo pasas, renderizamos <Link>
-}
+type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
-export function Button({ className, variant, href, ...props }: ButtonProps) {
-  const classes = cn(button({ variant, className }));
-  if (href) {
-    return (
-      <Link href={href} className={classes} {...(props as any)}>
-        {props.children}
-      </Link>
-    );
-  }
+type ButtonProps = {
+  href: string;
+  variant?: ButtonVariant;
+  className?: string;
+  children: React.ReactNode;
+} & React.AnchorHTMLAttributes<HTMLAnchorElement>;
+
+export default function Button({
+  href,
+  variant = 'primary',
+  className,
+  children,
+  ...rest
+}: ButtonProps) {
+  const base =
+    'inline-block rounded-full px-6 py-3 font-semibold tracking-wide transition-colors';
+  const variants: Record<ButtonVariant, string> = {
+    primary: 'bg-indigo-600/80 hover:bg-indigo-600 text-white',
+    secondary: 'bg-pink-600/80 hover:bg-pink-600 text-white',
+    ghost: 'bg-white/10 hover:bg-white/20 text-white',
+  };
+
+  // Si no usas cn(), puedes usar: `${base} ${variants[variant]} ${className ?? ''}`
   return (
-    <button className={classes} {...props}>
-      {props.children}
-    </button>
+    <Link
+      href={href}
+      className={cn ? cn(base, variants[variant], className) : `${base} ${variants[variant]} ${className ?? ''}`}
+      {...rest}
+    >
+      {children}
+    </Link>
   );
 }
-
-// 👇 añade esto para permitir importar como default O con nombre
-export default Button;
