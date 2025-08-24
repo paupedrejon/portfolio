@@ -4,8 +4,8 @@ import Header from "@/components/Header";          // 👈 importa el Header
 import { din } from "./fonts";                     // si usas Barlow como var(--font-din)
 
 export const metadata = {
-  title: "Portfolio",
-  description: "Pau Pedrejon",
+  title: "Portfolio — Pau Pedrejon",
+  description: "Portfolio",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
