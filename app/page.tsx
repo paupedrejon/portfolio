@@ -1,4 +1,3 @@
-import { Poppins } from "next/font/google";
 import { Poppins, Roboto_Mono } from "next/font/google";
 
 const poppins = Poppins({ subsets: ["latin"], weight: ["400", "600", "800"] });
