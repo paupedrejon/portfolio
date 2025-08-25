@@ -35,7 +35,7 @@ export default function AboutMePage() {
           style={{
             position: "absolute",
             inset: 0,
-            backgroundColor: "rgba(225,29,72,.90)",
+            backgroundColor: "#3146a3",
             zIndex: 1,
           }}
         />

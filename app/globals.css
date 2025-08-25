@@ -9,15 +9,18 @@ body {
   background:  "rgba(220, 227, 228, 1)";      /* verás fondo gris muy oscuro si esto entra */
   color: #e5e7eb;           /* gris claro para texto */
   font-family: var(--font-poppins), sans-serif;
+  margin: 0;
+  padding: 0;
+  width: 100%;
 
 }
 
 .container { /* helper usado en el layout */
   max-width: 72rem;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  margin: 0;
+
+  padding-left: 0rem;
+  padding-right: 0rem;
 }
 
 .cta-btn {
@@ -62,7 +65,7 @@ body {
 }
 
 .cta-btn--green:hover {
-  background: rgb(1, 81, 128);
+  background: rgb(1, 81, 128); 
 }
 
 .cta-btn--green:active {
@@ -100,17 +103,22 @@ body {
 .pill-card:active{ transform: scale(.98); }
 
 /* Variantes de color (puedes ajustar tonos) */
-.pill-card--indigo { background: rgba(79,70,229,.90); }
-.pill-card--indigo:hover { background: rgba(79,70,229,1); }
+.pill-card--indigo { background: rgba(65, 90, 201, 0.9); }
 
-.pill-card--emerald { background: rgba(5,150,105,.90); }
-.pill-card--emerald:hover { background: rgba(5,150,105,1); }
+.pill-card--indigo:hover { background: rgba(50, 69, 155, 0.9); }
 
-.pill-card--rose { background: rgba(225,29,72,.90); }
-.pill-card--rose:hover { background: rgba(225,29,72,1); }
+/*.pill-card--emerald { background: rgba(5,150,105,.90); }*/
+.pill-card--emerald { background:#215aaa; }
+.pill-card--emerald:hover { background: #18427c; }
 
-.pill-card--amber { background: rgba(217,119,6,.90); }
-.pill-card--amber:hover { background: rgba(217,119,6,1); }
+/*.pill-card--rose { background: rgba(225,29,72,.90); }*/
+.pill-card--rose { background:#3146a3; }
+.pill-card--rose:hover { background: #1d2961; }
+
+/*.pill-card--amber { background: rgba(217,119,6,.90); }*/
+.pill-card--amber { background: #093577; }
+
+.pill-card--amber:hover { background: #062350; }
 
 .pill-card__icon{
   display:inline-grid; place-items:center;

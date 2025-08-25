@@ -36,7 +36,7 @@ export default function ProjectsPage() {
           style={{
             position: "absolute",
             inset: 0,
-            backgroundColor: " rgba(79,70,229,.90)",
+            backgroundColor: " rgba(65, 90, 201, 0.9)",
             zIndex: 1,
           }}
         />
@@ -87,50 +87,53 @@ export default function ProjectsPage() {
             VIEW CURRICULUM
         </a>
         </div>
-        <div
-              className={poppins.className}
-              style={{
-                marginTop: "0.5rem",
-                fontSize: "clamp(20px, 6vw, 42px)",
-                fontWeight: 300,
-                letterSpacing: "0.08em",
-              }}
-            >
-               <span><br></br>▼</span>
+        <div style={{ textAlign: "center", marginTop: "2rem" }}>
+              <a href="#projects" className="cursor-pointer">
+                <span style={{ fontSize: "2rem", color: "#ffffffff" }}>▼</span>
+              </a>
             </div>
             
           </div>
         </div>
       </section>
 
-<SectionPage
-  id="Salmon Infinite"
-  title={<>ONLINE REALISTIC VIDEOGAME</>}
-  title2={<>PART 2</>}
-  kicker="2025 - Personal Project"   // 👈 ahora sí funciona
-
+<SectionPage 
+  id="projects"
+  title="ONLINE REALISTIC VIDEOGAME"
+  title2="PART 2"
+  kicker="2025 - Personal Project"
   subtitle="Online Multiplayer character-based shooter."
-  background= "/salmon2.png"
-  darken={0.6}
-  align="center"
-  ctaText="View More"
-  ctaHref="https://palgames.wixsite.com/salmoninfinite"
+  imageCard="/salmon2.png"
+  imageSide="right"
+  align="left"
+  // tamaño de imagen (opcional)
+  imageMaxW="clamp(300px, 38vw, 820px)"
+  imageAspect="16/9"
+  ctaText="RESULTS"
+  ctaHref="https://gamejolt.com/games/salmon_infinite/681208"
+
+  midText="USED: Unreal Engine, Blender, Substance Painter, Photoshop, Networking (listen server), C++, Mixamo "  // 👈 nuevo
+  midTextColor="#5c57a1ff"                            // (opcional)
 />
 
-
 <SectionPage
-  id="FIB Lab"
   title={<>FIB LAB </>}
   title2={<>Unity 2024 Course Project</>}
-  kicker="2024 - Universitat Politècnica de Barcelona"   // 👈 ahora sí funciona
-
+  kicker="2024 - Universitat Politècnica de Barcelona"
   subtitle="A simple 2D game made during the Unity Essential Course."
-  background= "/fiblab.png"
-  darken={0.45}
+  imageCard="/fiblab.png"
+  imageSide="right"
   align="left"
+  // tamaño de imagen (opcional)
+  imageMaxW="clamp(300px, 38vw, 820px)"
+  imageAspect="16/9"
   ctaText="PLAY"
   ctaHref="https://pa2005.itch.io/fib-lab"
+
+  midText="USED: Unity, Photoshop "  // 👈 nuevo
+  midTextColor="#5c57a1ff"                            // (opcional)
 />
+
 
 <SectionPage
   id="Game Jam 2024"
@@ -139,10 +142,18 @@ export default function ProjectsPage() {
   kicker="2024 - Universitat Politècnica de Barcelona"   // 👈 ahora sí funciona
 
   subtitle="Built a functional interactive system with circus props within 48h."
-  background= "/circusvr.png"
-  darken={0.6}
-  align="right"
-  ctaText="View More"
+  imageCard= "/circusvr.png"
+  imageSide="right"
+  align="left"
+  imageMaxW="clamp(300px, 38vw, 820px)"
+  imageAspect="16/9"
+
+  midText="USED: Unreal Engine (for VR), Blender, Photoshop, Git "  // 👈 nuevo
+  midTextColor="#5c57a1ff"                            // (opcional)
+
+
+
+  ctaText="About Game Jam"
   ctaHref="#VirtualReality"
 />
 
@@ -153,10 +164,15 @@ export default function ProjectsPage() {
   kicker="2023 - Institut Tecnològic de Barcelona"   // 👈 ahora sí funciona
 
   subtitle="Made a Virtual Reality experience to show the capacities of the Metaverse."
-  background= "/portada.png"
-  darken={0.45}
+  imageCard= "/portada.png"
+  imageSide="right"
   align="left"
-  ctaText="View More"
+  imageMaxW="clamp(300px, 38vw, 820px)"
+  imageAspect="16/9"
+
+  midText="USED: Unreal Engine (for VR), Blender, Photoshop, MetaHumans "  // 👈 nuevo
+  midTextColor="#5c57a1ff"                            // (opcional)
+  ctaText="RESULTS"
   ctaHref="https://gamejolt.com/games/realyexperience/728307"
 />
 
@@ -167,10 +183,15 @@ export default function ProjectsPage() {
   kicker="2023 - Personal Project"   // 👈 ahora sí funciona
 
   subtitle="Built a fun project to play with friends."
-  background= "/drovo.png"
-  darken={0.6}
-  align="right"
-  ctaText="View More"
+  imageCard= "/drovo.png"
+  imageSide="right"
+  align="left"
+  imageMaxW="clamp(300px, 38vw, 820px)"
+  imageAspect="16/9"
+
+  midText="USED: Unreal Engine, Blender, Photoshop, Mixamo "  // 👈 nuevo
+  midTextColor="#5c57a1ff"                            // (opcional)
+  ctaText="VIEW PROTOTYPE"
   ctaHref="https://gamejolt.com/games/drovo/726952"
 />
 
@@ -181,10 +202,15 @@ export default function ProjectsPage() {
   kicker="2020 - Personal Project"   // 👈 ahora sí funciona
 
   subtitle="My first contact with programming."
-  background= "/salmon1.png"
-  darken={0.6}
+  imageCard= "/salmon1.png"
+  imageSide="right"
   align="left"
-  ctaText="View More"
+  imageMaxW="clamp(300px, 38vw, 820px)"
+  imageAspect="16/9"
+
+  midText="USED: Unreal Engine, Blender, Substance Painter, Photoshop, Networking (listen server), C++, Mixamo "  // 👈 nuevo
+  midTextColor="#5c57a1ff"                            // (opcional)
+  ctaText="RESULTS"
   ctaHref="https://gamejolt.com/games/salmon_infinite_experimental/712867"
 />
 
@@ -195,9 +221,16 @@ export default function ProjectsPage() {
   kicker="2020 - Personal Project"   // 👈 ahora sí funciona
 
   subtitle="Adapted complex 3D big models."
-  background= "/impresora3D.jpg"
-  darken={0.6}
-  align="right"
+  imageCard= "/impresora3D.jpg"
+  imageSide="right"
+  align="left"
+  imageMaxW="clamp(300px, 38vw, 820px)"
+  imageAspect="16/9"
+
+  midText="USED: FreeCad, Blender, UltiMaker Cura, Photoshop, FDM Printers "  // 👈 nuevo
+  midTextColor="#5c57a1ff"                            // (opcional)
+
+
   ctaText=""
   ctaHref="https://gamejolt.com/games/drovo/726952"
 />

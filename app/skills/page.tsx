@@ -35,7 +35,7 @@ export default function SkillsPage() {
           style={{
             position: "absolute",
             inset: 0,
-            backgroundColor: "rgba(5,150,105,.90)",
+            backgroundColor: "#215aaa",
             zIndex: 1,
           }}
         />
