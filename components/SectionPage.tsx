@@ -149,13 +149,18 @@ export default function SectionPage({
       )}
 
       {subtitle && (
-        <p
-          className={`${openSans.className} mt-4 text-lg md:text-xl`}
-          style={{ color: effectiveTextColor + "CC", maxWidth: "40rem" }}
-        >
-          {subtitle}
-        </p>
-      )}
+  <p
+    className={`${openSans.className} mt-4 text-lg md:text-xl`}
+    style={{
+      color: effectiveTextColor,   // 👈 ahora usa el color sólido
+      maxWidth: "40rem",
+      fontWeight: 500,             // opcional: puedes darle un poco más de grosor si lo quieres aún más visible
+    }}
+  >
+    {subtitle}
+  </p>
+)}
+
 
       {ctaText && ctaHref && (
         <div className="mt-8">
