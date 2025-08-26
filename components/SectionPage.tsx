@@ -164,8 +164,12 @@ export default function SectionPage({
 
       {ctaText && ctaHref && (
         <div className="mt-8">
-          <a href={ctaHref} className={`${poppins.className} cta-btn`}>
+          <a href={ctaHref}  className={`${poppins.className} cta-btn`}
+          target="_blank"               // 👉 abre en nueva pestaña
+    rel="noopener noreferrer"     // 👉 seguridad: evita que la nueva pestaña acceda a window.opener
+    >
             {ctaText}
+            
           </a>
         </div>
       )}

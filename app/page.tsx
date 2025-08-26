@@ -4,6 +4,10 @@ const poppins = Poppins({ subsets: ["latin"], weight: ["400", "600", "800"] });
 const robotoMono = Roboto_Mono({ subsets: ["latin"], weight: ["400", "700"] });
 import SectionPage from "@/components/SectionPage";
 import AdaptiveCardsRow from "@/components/AdaptiveCardsRow";
+import ScrollButton from "@/components/ScrollButton";   
+import CurriculumButton from "@/components/CurriculumButton"; 
+
+
 
 export default function HomePage() {
   return (
@@ -72,19 +76,13 @@ export default function HomePage() {
             >
               PAU <span>PEDREJON</span>
             </div>
-
-            <div style={{ marginTop: "2rem" }}>
-              <a
-                href="https://linkedin.com"
-                className={`${poppins.className} cta-btn cta-btn--green`}
-              >
-                VIEW CURRICULUM
-              </a>
+            < div className="scroll-wrap">
+              <CurriculumButton bgColor="#333333ff" textColor="#ffffffff" />
             </div>
-            <div style={{ textAlign: "center", marginTop: "2rem" }}>
-              <a href="#sections" className="cursor-pointer">
-                <span style={{ fontSize: "2rem", color: "#676767" }}>▼</span>
-              </a>
+
+            
+             < div className="scroll-wrap">
+              <ScrollButton targetId="sections" color="#0000" iconColor="#676767" />
             </div>
           </div>
         </div>
@@ -156,7 +154,7 @@ export default function HomePage() {
               </a>
 
               {/* Card 2 */}
-              <a href="/conocimientos" className="pill-card pill-card--emerald">
+              <a href="/skills" className="pill-card pill-card--emerald">
                 <span className="pill-card__icon">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <path

@@ -81,7 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   style={{ gap: "48px" }}          // 👈 separación forzada entre items (override)
 >
   <a
-    href="https://github.com/tuusuario"
+    href="https://github.com/paupedrejon"
     target="_blank"
     rel="noopener noreferrer"
     aria-label="GitHub"
@@ -99,7 +99,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   </a>
 
   <a
-    href="https://linkedin.com/in/tuusuario"
+    href="https://es.linkedin.com/in/pau-pedrejon-sobrino-0b5643380"
     target="_blank"
     rel="noopener noreferrer"
     aria-label="LinkedIn"
@@ -113,7 +113,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   </a>
 
   <a
-    href="mailto:tucorreo@example.com"
+    href="mailto:paupedrejon@gmail.com"
     aria-label="Email"
     className="inline-flex items-center justify-center rounded-full"
     style={{ width: 25, height: 25, padding: 5 }}

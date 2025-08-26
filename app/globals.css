@@ -138,3 +138,296 @@ font-family: var(--font-roboto-mono), monospace;
   margin:2px 0 0; font-size:20px; font-weight:700; line-height:1.1;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
+
+/* Contenedor vertical para pill + barra */
+.skillItem{
+  display:flex;
+  flex-direction:column;
+  gap:12px;             /* espacio entre pill y barra */
+  align-items:stretch;  /* la barra ocupa el mismo ancho de la pill */
+}
+
+/* Barra de progreso (track) */
+.skillItem__progress{
+  height:12px;
+  border-radius:9999px;
+  background: rgba(0,0,0,.10);      /* track neutro */
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.12);
+  overflow:hidden;
+}
+
+/* Relleno de la barra */
+.skillItem__bar{
+  height:100%;
+  border-radius:inherit;
+  transition: width .6s ease;
+  /* color se controla desde props (barColor) */
+}
+
+/* Celda envolvente para separar tarjetas sin tocar AdaptiveCardsRow */
+.skill-cell{
+  /* usa el que prefieras: margin o padding */
+  padding: 12px;               /* separación externa entre cards */
+  padding-bottom: 26px;     /* 👈 espacio extra bajo la card */
+  position: relative;       /* para que la barra pueda sobresalir */
+  overflow: visible;        /* por si acaso */
+
+  display: flex;
+  justify-content: center;     /* centra la card dentro de la celda */
+}
+
+/* ===== SkillItem (barra dentro) ===== */
+.skill-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 18px;
+    z-index: 1;
+
+}
+
+.skill-card__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.skill-card__bar {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 6px;
+}
+
+.skill-card__barTrack {
+  height: 10px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .15);
+}
+
+.skill-card__barFill {
+  height: 100%;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.9);
+  transition: width 220ms ease;
+}
+
+/* Contenedor centrado del botón */
+.scroll-wrap{
+  display:flex;
+  justify-content:center;
+  margin-top:2rem;
+}
+
+/* Botón circular estilo "chip" */
+.scroll-btn{
+  position: relative;
+  width:56px;
+  height:56px;
+  border-radius:9999px;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,.25);
+  background: rgba(65, 90, 201, 0.02);      /* azul a juego con tus cards */
+  box-shadow: 0 10px 20px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.15);
+  backdrop-filter: blur(6px);
+  transition: transform .15s ease, box-shadow .2s ease;
+  outline: none;
+}
+
+/* Disco interior (aro) */
+.scroll-btn::before{
+  content:"";
+  position:absolute;
+  inset:6px;
+  border-radius:inherit;
+  background: rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.22);
+}
+
+/* Onda (ring) al hacer clic */
+.scroll-btn.clicked::after{
+  content:"";
+  position:absolute;
+  inset:-4px;
+  border-radius:inherit;
+  border:2px solid rgba(255,255,255,.75);
+  animation: scrollRing .45s ease-out forwards;
+}
+@keyframes scrollRing{
+  from{ opacity:.85; transform: scale(.92); }
+  to  { opacity:0;    transform: scale(1.25); }
+}
+
+/* Icono */
+.scroll-btn svg{
+  position:relative;
+  z-index:1;
+  width:32px;
+  height:32px;
+  fill:#676767;
+  transition: transform .2s ease;
+}
+
+/* Hover: flotación + bounce del chevron */
+.scroll-btn:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.18);
+}
+.scroll-btn:hover svg{
+  animation: scrollBounce 1s ease-in-out infinite;
+}
+@keyframes scrollBounce{
+  0%, 100%{ transform: translateY(-1px); }
+  50%    { transform: translateY(2px); }
+}
+
+/* Active: pequeño “tap” */
+.scroll-btn:active{
+  transform: scale(.96);
+}
+
+/* ===== Education cards ===== */
+.edu-section {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 12px 16px;
+}
+
+.edu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Card base */
+.edu-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  border-radius: 18px;
+  background: rgba(65, 90, 201, 0.9);
+  border: 1px solid rgba(0,0,0,.06);
+  box-shadow:
+    0 8px 20px rgba(0,0,0,.06),
+    0 1px 0 rgba(0,0,0,.04) inset;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+
+.edu-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 14px 28px rgba(0,0,0,.09),
+    0 1px 0 rgba(0,0,0,.06) inset;
+  border-color: rgba(0,0,0,.09);
+}
+
+.edu-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Icono circular (tono indigo suave) */
+.edu-icon {
+  display: grid;
+  place-items: center;
+  width: 48px; height: 48px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.22);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Tipos */
+.edu-title {
+  margin: 0;
+  font-size: clamp(16px, 1.7vw, 20px);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+}
+
+.edu-sub {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: #ffffffb0;
+}
+
+.edu-note {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #7a7a7a;
+}
+
+.edu-years {
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  color: #ffffff; /* gris tailwind-ish */
+  white-space: nowrap;
+}
+
+.section-separator {
+  height: 3px;
+  width: 100%;
+  background-color: #6767671e;
+  margin: 2rem 0; /* espacio arriba y abajo */
+}
+
+.curriculum-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 2rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #fff;
+  background: #415ac9;
+  border: 1px solid rgba(255,255,255,.25);
+  box-shadow: 0 10px 20px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.15);
+  backdrop-filter: blur(6px);
+  transition: transform .15s ease, box-shadow .2s ease;
+  text-decoration: none;
+}
+
+/* Disco interior (aro transparente) */
+.curriculum-btn::before {
+  content:"";
+  position:absolute;
+  inset:4px;
+  border-radius:inherit;
+  background: rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.18);
+}
+
+/* Efecto onda (ring) al click */
+.curriculum-btn.clicked::after {
+  content:"";
+  position:absolute;
+  inset:-6px;
+  border-radius:inherit;
+  border:2px solid rgba(255,255,255,.75);
+  animation: curriculumRing .45s ease-out forwards;
+}
+@keyframes curriculumRing {
+  from { opacity:.85; transform: scale(.95); }
+  to   { opacity:0;   transform: scale(1.2); }
+}
+
+/* Hover: flotación */
+.curriculum-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.18);
+}
+
+/* Active: pequeño tap */
+.curriculum-btn:active {
+  transform: scale(.96);
+}

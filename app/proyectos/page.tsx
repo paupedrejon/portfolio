@@ -3,6 +3,10 @@ import { Poppins, Roboto_Mono } from "next/font/google";
 const poppins = Poppins({ subsets: ["latin"], weight: ["400", "600", "800"] });
 const robotoMono = Roboto_Mono({ subsets: ["latin"], weight: ["400", "700"] });
 import SectionPage from "@/components/SectionPage";
+import ScrollButton from "@/components/ScrollButton";   
+import CurriculumButton from "@/components/CurriculumButton"; 
+
+
 
 
 export default function ProjectsPage() {
@@ -76,29 +80,43 @@ export default function ProjectsPage() {
             >
               PAU <span>PEDREJON</span>
             </div>
-            <div style={{ marginTop: "2rem" }}>
-        <a
-            href="https://linkedin.com"         
-            className={`${poppins.className} cta-btn cta-btn--green`}
-            // opcional:
-            // target="_blank" rel="noopener noreferrer"
-            // download
-        >
-            VIEW CURRICULUM
-        </a>
+            < div className="scroll-wrap">
+                          <CurriculumButton bgColor="rgba(65, 90, 201, 0.9)" textColor="#ffffffff" />
+                        </div>
         </div>
-        <div style={{ textAlign: "center", marginTop: "2rem" }}>
-              <a href="#projects" className="cursor-pointer">
-                <span style={{ fontSize: "2rem", color: "#ffffffff" }}>▼</span>
-              </a>
-            </div>
+            < div className="scroll-wrap">
+            <ScrollButton targetId="projects" />   {/* 👈 usar aquí */}
+        </div>
             
-          </div>
         </div>
       </section>
 
+
+
+
 <SectionPage 
   id="projects"
+  title="PERSONAL PORTFOLIO"
+  title2="WEB APP"
+  kicker="2025 - Personal Project"
+  subtitle="Interactive portfolio designed with Next.js and React to show my projects, skills and experience as a software engineer."
+  imageCard="/react.png"
+  imageSide="right"
+  align="left"
+  // tamaño de imagen (opcional)
+  imageMaxW="clamp(300px, 38vw, 820px)"
+  imageAspect="16/9"
+  ctaText=""
+  ctaHref="https://gamejolt.com/games/salmon_infinite/681208"
+
+  midText="USED: REACT, Next.js, TypeScript, Git, Vercel "  // 👈 nuevo
+  midTextColor="#5c57a1ff"                            // (opcional)
+/>
+
+
+
+
+<SectionPage 
   title="ONLINE REALISTIC VIDEOGAME"
   title2="PART 2"
   kicker="2025 - Personal Project"
@@ -113,6 +131,24 @@ export default function ProjectsPage() {
   ctaHref="https://gamejolt.com/games/salmon_infinite/681208"
 
   midText="USED: Unreal Engine, Blender, Substance Painter, Photoshop, Networking (listen server), C++, Mixamo "  // 👈 nuevo
+  midTextColor="#5c57a1ff"                            // (opcional)
+/>
+
+<SectionPage 
+  title="TIRE INFLATOR SIMULATOR"
+  title2="MICROCONTROLLER PROJECT"
+  kicker="2024 - Universitat Politècnica de Barcelona"
+  subtitle="Simulation of a tire inflation system built in Proteus, using C for microcontroller programming."
+  imageCard="/proteus.png"
+  imageSide="right"
+  align="left"
+  // tamaño de imagen (opcional)
+  imageMaxW="clamp(300px, 38vw, 820px)"
+  imageAspect="16/9"
+  ctaText=""
+  ctaHref="https://gamejolt.com/games/salmon_infinite/681208"
+
+  midText="USED: Proteus, C, Microcontroller Simulation, Embedded System "  // 👈 nuevo
   midTextColor="#5c57a1ff"                            // (opcional)
 />
 
