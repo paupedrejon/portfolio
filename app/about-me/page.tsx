@@ -1,8 +1,9 @@
 import { Poppins, Open_Sans, Roboto } from "next/font/google";
 
-export const poppins = Poppins({ subsets: ["latin"], weight: ["600", "700", "800"] });
-export const openSans = Open_Sans({ subsets: ["latin"], weight: ["400", "600"] });
-export const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"] });
+const poppins = Poppins({ subsets: ["latin"], weight: ["600", "700", "800"] });
+const openSans = Open_Sans({ subsets: ["latin"], weight: ["400", "600"] });
+const roboto  = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"] });
+
 
 import SectionPage from "@/components/SectionPage";
 import AdaptiveCardsRow from "@/components/AdaptiveCardsRow";
