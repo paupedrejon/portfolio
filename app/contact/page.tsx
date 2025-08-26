@@ -84,7 +84,8 @@ export default function AboutMePage() {
             </div>
             
             < div className="scroll-wrap">
-                          <CurriculumButton bgColor="#093577" textColor="#ffffffff" />
+                          <CurriculumButton href="/curriculum.pdf" bgColor="#093577" textColor="#ffffffff" />
+
                         </div>
         < div className="scroll-wrap">
                             <ScrollButton targetId="contact" color="#0000" iconColor="#ffffffff" />
