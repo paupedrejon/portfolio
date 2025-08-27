@@ -12,10 +12,11 @@ type Props = {
 };
 
 export default function CurriculumButton({
-  href="/curriculum.pdf",
+  href="/PauPedrejonCV.pdf",
   text = "SEE CURRICULUM",
   bgColor = "#415ac9",
   textColor = "#fff",
+
 }: Props) {
   const ref = useRef<HTMLAnchorElement>(null);
 
