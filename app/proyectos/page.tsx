@@ -198,7 +198,7 @@ export default function ProjectsPage() {
   id="TR"
   title={<>VR EXPERIENCE </>}
   title2={<>TREBALL DE RECERCA</>}
-  kicker="2023 - Institut Tecnològic de Barcelona"   // 👈 ahora sí funciona
+  kicker="2022 - Institut Tecnològic de Barcelona"   // 👈 ahora sí funciona
 
   subtitle="Made a Virtual Reality experience to show the capacities of the Metaverse."
   imageCard= "/portada.png"
