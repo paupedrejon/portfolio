@@ -135,7 +135,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   
 </section>
-
+<Analytics />
 </body>
 
     </html>
