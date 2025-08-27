@@ -2,7 +2,6 @@
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react"
 
-
 import Header from "@/components/Header";          // 👈 importa el Header
 import { din } from "./fonts";                     // si usas Barlow como var(--font-din)
 import { Poppins, Roboto_Mono } from "next/font/google";
