@@ -12,7 +12,7 @@ type Props = {
 };
 
 export default function CurriculumButton({
-  href="/portada.png",
+  href="/curriculum.pdf",
   text = "SEE CURRICULUM",
   bgColor = "#415ac9",
   textColor = "#fff",
