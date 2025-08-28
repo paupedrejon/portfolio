@@ -86,8 +86,13 @@ export default function Header() {
           className={`select-none cursor-default leading-none ${poppins.className}`}
           style={{ textAlign: "center", color: "#575757", padding: "0 0.5rem" }}
         >
-          <span className="block text-[20px] tracking-[0.35em]">PAU</span>
-          <span className="block text-[20px] tracking-[0.35em]">PEDREJON</span>
+          <span
+          className="block text-[20px] tracking-[0.35em]"
+          style={{ fontWeight: 700 }}
+        >
+          PAU PEDREJON
+        </span>
+ 
         </div>
 
         {/* Menú escritorio si cabe; si no, hamburguesa a la izquierda */}
@@ -161,16 +166,18 @@ export default function Header() {
         </nav>
       )}
 
-      {/* 👇 Clon invisible para medir (no afecta al layout) */}
+      {/* Clon invisible para medir */}
    <div
   ref={sizerRef}
   aria-hidden
   className="pointer-events-none fixed -left-[9999px] top-0"
 >
   <div className="h-16 flex items-center justify-between px-3 md:px-8 max-w-[1280px]">
-    <div className={`${poppins.className}`} style={{ padding: "0 0.5rem" }}>
-      <span className="block text-[20px] tracking-[0.35em]">PAU</span>
-      <span className="block text-[20px] tracking-[0.35em]">PEDREJON</span>
+    <div className={`${poppins.className} block w-full rounded-md`} style={{ padding: "0.9rem 0.9rem" }}>
+      <span className="block text-[20px] tracking-[0.35em] font-bold"   style={{ fontWeight: 700 }}
+>PAU</span>
+      <span className="block text-[20px] tracking-[0.35em] font-bold"   style={{ fontWeight: 700 }}
+>PEDREJON</span>
     </div>
 
     <ul className="flex items-center gap-3">

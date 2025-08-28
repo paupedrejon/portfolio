@@ -50,7 +50,7 @@ export default function ProjectsPage() {
             position: "absolute",
             inset: 0,
             display: "flex",
-            flexDirection: "column", // 👈 añadimos columna
+            flexDirection: "column", 
 
             alignItems: "center",
             justifyContent: "center",
@@ -86,7 +86,7 @@ export default function ProjectsPage() {
                         </div>
         </div>
             < div className="scroll-wrap">
-            <ScrollButton targetId="projects" />   {/* 👈 usar aquí */}
+            <ScrollButton targetId="projects" />   {/*  */}
         </div>
             
         </div>
@@ -104,14 +104,13 @@ export default function ProjectsPage() {
   imageCard="/react.png"
   imageSide="right"
   align="left"
-  // tamaño de imagen (opcional)
   imageMaxW="clamp(300px, 38vw, 820px)"
   imageAspect="16/9"
   ctaText=""
   ctaHref="https://gamejolt.com/games/salmon_infinite/681208"
 
-  midText="USED: REACT, Next.js, TypeScript, Git, Vercel "  // 👈 nuevo
-  midTextColor="#5c57a1ff"                            // (opcional)
+  midText="USED: REACT, Next.js, TypeScript, Git, Vercel "  
+  midTextColor="#5c57a1ff"                            
 />
 
 
@@ -125,14 +124,13 @@ export default function ProjectsPage() {
   imageCard="/salmon2.png"
   imageSide="right"
   align="left"
-  // tamaño de imagen (opcional)
   imageMaxW="clamp(300px, 38vw, 820px)"
   imageAspect="16/9"
   ctaText="RESULTS"
   ctaHref="https://gamejolt.com/games/salmon_infinite/681208"
 
-  midText="USED: Unreal Engine, Blender, Substance Painter, Photoshop, Networking (listen server), C++, Mixamo "  // 👈 nuevo
-  midTextColor="#5c57a1ff"                            // (opcional)
+  midText="USED: Unreal Engine, Blender, Substance Painter, Photoshop, Networking (listen server), C++, Mixamo "  
+  midTextColor="#5c57a1ff"                            
 />
 
 <SectionPage 
@@ -143,14 +141,13 @@ export default function ProjectsPage() {
   imageCard="/proteus.png"
   imageSide="right"
   align="left"
-  // tamaño de imagen (opcional)
   imageMaxW="clamp(300px, 38vw, 820px)"
   imageAspect="16/9"
   ctaText=""
   ctaHref="https://gamejolt.com/games/salmon_infinite/681208"
 
-  midText="USED: Proteus, C, Microcontroller Simulation, Embedded System "  // 👈 nuevo
-  midTextColor="#5c57a1ff"                            // (opcional)
+  midText="USED: Proteus, C, Microcontroller Simulation, Embedded System " 
+  midTextColor="#5c57a1ff"                            
 />
 
 <SectionPage
@@ -161,14 +158,13 @@ export default function ProjectsPage() {
   imageCard="/fiblab.png"
   imageSide="right"
   align="left"
-  // tamaño de imagen (opcional)
   imageMaxW="clamp(300px, 38vw, 820px)"
   imageAspect="16/9"
   ctaText="PLAY"
   ctaHref="https://pa2005.itch.io/fib-lab"
 
-  midText="USED: Unity, Photoshop "  // 👈 nuevo
-  midTextColor="#5c57a1ff"                            // (opcional)
+  midText="USED: Unity, Photoshop "  
+  midTextColor="#5c57a1ff"                            
 />
 
 
@@ -176,7 +172,7 @@ export default function ProjectsPage() {
   id="Game Jam 2024"
   title={<>CIRCUS VR </>}
   title2={<>Game Jam 2024</>}
-  kicker="2024 - Universitat Politècnica de Barcelona"   // 👈 ahora sí funciona
+  kicker="2024 - Universitat Politècnica de Barcelona"   
 
   subtitle="Built a functional interactive system with circus props within 48h."
   imageCard= "/circusvr.png"
@@ -185,20 +181,20 @@ export default function ProjectsPage() {
   imageMaxW="clamp(300px, 38vw, 820px)"
   imageAspect="16/9"
 
-  midText="USED: Unreal Engine (for VR), Blender, Photoshop, Git "  // 👈 nuevo
-  midTextColor="#5c57a1ff"                            // (opcional)
+  midText="USED: Unreal Engine (for VR), Blender, Photoshop, Git "  
+  midTextColor="#5c57a1ff"                            
 
 
 
   ctaText="About Game Jam"
-  ctaHref="#VirtualReality"
+  ctaHref="https://gamejambcn.com/"
 />
 
 <SectionPage
   id="TR"
   title={<>VR EXPERIENCE </>}
   title2={<>TREBALL DE RECERCA</>}
-  kicker="2022 - Institut Tecnològic de Barcelona"   // 👈 ahora sí funciona
+  kicker="2022 - Institut Tecnològic de Barcelona"   
 
   subtitle="Made a Virtual Reality experience to show the capacities of the Metaverse."
   imageCard= "/portada.png"
@@ -207,8 +203,8 @@ export default function ProjectsPage() {
   imageMaxW="clamp(300px, 38vw, 820px)"
   imageAspect="16/9"
 
-  midText="USED: Unreal Engine (for VR), Blender, Photoshop, MetaHumans "  // 👈 nuevo
-  midTextColor="#5c57a1ff"                            // (opcional)
+  midText="USED: Unreal Engine (for VR), Blender, Photoshop, MetaHumans "  
+  midTextColor="#5c57a1ff"                            
   ctaText="RESULTS"
   ctaHref="https://gamejolt.com/games/realyexperience/728307"
 />
@@ -217,7 +213,7 @@ export default function ProjectsPage() {
   id="DROVO"
   title={<>DROVO</>}
   title2={<>ONLINE MULTIPLAYER PROTOTYPE</>}
-  kicker="2023 - Personal Project"   // 👈 ahora sí funciona
+  kicker="2023 - Personal Project"   
 
   subtitle="Built a fun project to play with friends."
   imageCard= "/drovo.png"
@@ -226,8 +222,8 @@ export default function ProjectsPage() {
   imageMaxW="clamp(300px, 38vw, 820px)"
   imageAspect="16/9"
 
-  midText="USED: Unreal Engine, Blender, Photoshop, Mixamo "  // 👈 nuevo
-  midTextColor="#5c57a1ff"                            // (opcional)
+  midText="USED: Unreal Engine, Blender, Photoshop, Mixamo "  
+  midTextColor="#5c57a1ff"                           
   ctaText="VIEW PROTOTYPE"
   ctaHref="https://gamejolt.com/games/drovo/726952"
 />
@@ -236,7 +232,7 @@ export default function ProjectsPage() {
   id="Salmon Infinite 1"
   title={<>ONLINE VIDEOGAME</>}
   title2={<>PART 1</>}
-  kicker="2020 - Personal Project"   // 👈 ahora sí funciona
+  kicker="2020 - Personal Project"   
 
   subtitle="My first contact with programming."
   imageCard= "/salmon1.png"
@@ -245,8 +241,8 @@ export default function ProjectsPage() {
   imageMaxW="clamp(300px, 38vw, 820px)"
   imageAspect="16/9"
 
-  midText="USED: Unreal Engine, Blender, Substance Painter, Photoshop, Networking (listen server), C++, Mixamo "  // 👈 nuevo
-  midTextColor="#5c57a1ff"                            // (opcional)
+  midText="USED: Unreal Engine, Blender, Substance Painter, Photoshop, Networking (listen server), C++, Mixamo "  
+  midTextColor="#5c57a1ff"                            
   ctaText="RESULTS"
   ctaHref="https://gamejolt.com/games/salmon_infinite_experimental/712867"
 />
@@ -255,7 +251,7 @@ export default function ProjectsPage() {
   id="Impresora3D"
   title={<>3D PRINTING</>}
   title2={<>MAKER PROJECT</>}
-  kicker="2020 - Personal Project"   // 👈 ahora sí funciona
+  kicker="2020 - Personal Project"   
 
   subtitle="Adapted complex 3D big models."
   imageCard= "/impresora3D.jpg"
@@ -264,8 +260,8 @@ export default function ProjectsPage() {
   imageMaxW="clamp(300px, 38vw, 820px)"
   imageAspect="16/9"
 
-  midText="USED: FreeCad, Blender, UltiMaker Cura, Photoshop, FDM Printers "  // 👈 nuevo
-  midTextColor="#5c57a1ff"                            // (opcional)
+  midText="USED: FreeCad, Blender, UltiMaker Cura, Photoshop, FDM Printers "  
+  midTextColor="#5c57a1ff"                           
 
 
   ctaText=""

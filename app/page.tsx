@@ -93,11 +93,11 @@ export default function HomePage() {
   style={{
     position: "relative",
     width: "100%",
-    // height: "20vh",              // ❌ quita esto
-    minHeight: "20vh",              // ✅ por si quieres altura mínima
-    height: "auto",                 // ✅ que crezca con el contenido
-    overflow: "visible",            // ✅ no recortes en stacking
-    padding: "24px 0",              // ✅ un poco de aire vertical
+    // height: "20vh",              
+    minHeight: "20vh",              
+    height: "auto",                 
+    overflow: "visible",            
+    padding: "24px 0",              
   }}
 >
 
