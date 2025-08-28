@@ -89,7 +89,7 @@ export default function SkillsPage() {
             </div>
 
             < div className="scroll-wrap">
-                          <CurriculumButton href="/curriculum.pdf" bgColor="#215aaa" textColor="#ffffffff" />
+                          <CurriculumButton href="/PauPedrejonCV.pdf" bgColor="#215aaa" textColor="#ffffffff" />
 
                         </div>
             < div className="scroll-wrap">

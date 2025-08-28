@@ -81,7 +81,7 @@ export default function ProjectsPage() {
               PAU <span>PEDREJON</span>
             </div>
             < div className="scroll-wrap">
-            <CurriculumButton href="/curriculum.pdf" bgColor="#rgba(65, 90, 201, 0.9)" textColor="#ffffffff" />
+            <CurriculumButton href="/PauPedrejonCV.pdf" bgColor="#rgba(65, 90, 201, 0.9)" textColor="#ffffffff" />
 
                         </div>
         </div>

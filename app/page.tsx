@@ -77,7 +77,7 @@ export default function HomePage() {
               PAU <span>PEDREJON</span>
             </div>
             < div className="scroll-wrap">
-              <CurriculumButton href="/curriculum.pdf" bgColor="#333333ff" textColor="#ffffffff" />
+              <CurriculumButton href="/PauPedrejonCV.pdf" bgColor="#333333ff" textColor="#ffffffff" />
             </div>
 
             
