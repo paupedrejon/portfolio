@@ -136,9 +136,9 @@ export default function SkillsPage() {
           FRONT-END
         </h2>
         <AdaptiveCardsRow>
-          <SkillItem icon={<SiHtml5 />} title="HTML / CSS" percent={50}  />
-          <SkillItem icon={<SiReact />} title="React / Next.js" percent={50}  />
-          <SkillItem icon={<SiTailwindcss />} title="TailwindCSS" percent={50}  />
+          <SkillItem icon={<SiHtml5 />} title="HTML / CSS" percent={50} color = "rose"  />
+          <SkillItem icon={<SiReact />} title="React / Next.js" percent={50} color = "rose"  />
+          <SkillItem icon={<SiTailwindcss />} title="TailwindCSS" percent={50} color = "rose"  />
         </AdaptiveCardsRow>
 <div className="section-separator" />
 
@@ -173,12 +173,12 @@ export default function SkillsPage() {
           DEVELOPMENT
         </h2>
         <AdaptiveCardsRow>
-          <SkillItem icon={<SiUnrealengine />} title="Unreal Engine" percent={85}  />
-          <SkillItem icon={<SiUnity/>} title="Unity   ‎  " percent={25}  />
-          <SkillItem icon={<SiBlender />} title="Blender" percent={33}  />
-          <SkillItem icon={<SiAdobephotoshop />} title="Photoshop" percent={65}  />
-          <SkillItem icon={<SiAdobe  />} title="Substance" percent={55}  />
-          <SkillItem icon={<SiAdobeaftereffects />} title="After Effects" percent={25}  />
+          <SkillItem icon={<SiUnrealengine />} title="Unreal Engine" percent={85} color = "rose"  />
+          <SkillItem icon={<SiUnity/>} title="Unity   ‎  " percent={25} color = "rose"  />
+          <SkillItem icon={<SiBlender />} title="Blender" percent={33} color = "rose"  />
+          <SkillItem icon={<SiAdobephotoshop />} title="Photoshop" percent={65} color = "rose"  />
+          <SkillItem icon={<SiAdobe  />} title="Substance" percent={55} color = "rose"  />
+          <SkillItem icon={<SiAdobeaftereffects />} title="After Effects" percent={25} color = "rose"  />
           
         </AdaptiveCardsRow>
 <div className="section-separator" />
@@ -215,9 +215,9 @@ export default function SkillsPage() {
         </h2>
         
         <AdaptiveCardsRow>
-          <SkillItem icon={<SiPrintables />} title="3D Printing" percent={70}  />
-          <SkillItem icon={<FaMicrochip />} title="Proteus" percent={30}  />
-          <SkillItem icon={<SiFreebsd />} title="Computer Systems" percent={50}  />
+          <SkillItem icon={<SiPrintables />} title="3D Printing" percent={70} color = "rose"  />
+          <SkillItem icon={<FaMicrochip />} title="Proteus" percent={30} color = "rose"  />
+          <SkillItem icon={<SiFreebsd />} title="Computer Systems" percent={50}  color = "rose" />
         </AdaptiveCardsRow>
       </section>
 
