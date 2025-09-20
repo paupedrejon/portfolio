@@ -202,6 +202,15 @@ export default function AboutMePage() {
               </h2>
 
       <div className="edu-list">
+
+        <EducationItem
+          icon={<FaCertificate size={20} />}
+          title="10x Developer with Artificial Intelligence"
+          school="Instituto de Inteligencia Artificial (IIA)"
+          href="https://iia.es/formacion/formaciones-intensivas/desarrollador-10x/"
+          years="2025–2026*"
+        />
+
         <EducationItem
           icon={<FaGraduationCap size={22} />}
           title="Bachelor’s degree in Computer Engineering"

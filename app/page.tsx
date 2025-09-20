@@ -53,7 +53,7 @@ export default function HomePage() {
             zIndex: 2,
           }}
         >
-          <div style={{ textAlign: "center", color: "#575757", padding: "0 1rem" }}>
+          <div style={{ textAlign: "center", color: "#3b3b3e", padding: "0 1rem" }}>
             <h1
               className={poppins.className}
               style={{
