@@ -46,13 +46,15 @@ El sistema tiene dos partes:
      - **Name**: `study-agents-backend`
      - **Root Directory**: `study_agents`
      - **Environment**: `Python 3`
-     - **Python Version**: `3.11` (importante: especifica 3.11 en lugar de 3.13 para mejor compatibilidad)
      - **Build Command**: `pip install -r requirements.txt`
      - **Start Command**: `cd api && uvicorn main:app --host 0.0.0.0 --port $PORT`
    
-   **Nota sobre Python Version**: 
-   - En la sección de configuración avanzada, busca "Python Version" o añade una variable de entorno `PYTHON_VERSION=3.11.9`
-   - Esto evitará problemas de compatibilidad con librerías que aún no soportan Python 3.13
+   **⚠️ IMPORTANTE - Especificar Python 3.11:**
+   - En la sección **"Environment Variables"**, añade:
+     - **Key**: `PYTHON_VERSION`
+     - **Value**: `3.11.9`
+   - O si hay un campo "Python Version" en la configuración, selecciónalo ahí
+   - Esto es CRÍTICO porque Python 3.13 tiene problemas de compatibilidad con algunas librerías antiguas
 
 3. **Obtener la URL del backend**
    - Render te dará una URL como: `https://study-agents-backend.onrender.com`
