@@ -57,68 +57,82 @@ El sistema tiene dos partes:
    - Esto es CRÍTICO porque Python 3.13 tiene problemas de compatibilidad con algunas librerías antiguas
 
 3. **Obtener la URL del backend**
-   - Render te dará una URL como: `https://study-agents-backend.onrender.com`
-   - **Copia esta URL**
+   - Una vez que el deploy termine en Render, verás la URL de tu servicio
+   - La URL será algo como: `https://study-agents-backend-xxxx.onrender.com`
+   - **Copia esta URL completa** (con el `https://`)
+   - ⚠️ **Nota**: En el plan gratuito de Render, el servicio puede tardar 30-60 segundos en "despertar" si ha estado inactivo
+   - Puedes probar que funciona visitando: `https://tu-url.onrender.com/health`
+   - Deberías ver: `{"status":"ok","message":"Study Agents API is running"}`
 
 ---
 
 ## 🌐 Paso 2: Desplegar el Frontend (Next.js) en Vercel
 
-1. **Conectar repositorio a Vercel**
+### 1. **Conectar repositorio a Vercel**
    - Ve a https://vercel.com
    - Inicia sesión con GitHub
-   - Click en "Add New Project"
-   - Selecciona tu repositorio
+   - Click en **"Add New Project"** o **"New Project"**
+   - Selecciona tu repositorio `portfolio`
+   - Vercel detectará automáticamente que es un proyecto Next.js
 
-2. **Configurar variables de entorno**
+### 2. **Configurar variables de entorno (CRÍTICO)**
    
-   **Pasos detallados:**
+   **⚠️ ANTES de hacer deploy, configura la variable:**
    
-   a. Una vez que Vercel haya detectado tu proyecto, ve a la página del proyecto
+   a. En la pantalla de configuración del proyecto, busca la sección **"Environment Variables"**
    
-   b. En el menú superior, haz clic en **"Settings"** (Configuración)
+   b. Si no la ves, después del primer deploy:
+      - Ve a tu proyecto en Vercel
+      - Click en **"Settings"** (Configuración) en el menú superior
+      - En el menú lateral, click en **"Environment Variables"**
    
-   c. En el menú lateral izquierdo, busca y haz clic en **"Environment Variables"** (Variables de Entorno)
+   c. Añade la variable:
+      - **Key** (Nombre): `FASTAPI_URL`
+      - **Value** (Valor): Pega la URL completa de Render (ej: `https://study-agents-backend-xxxx.onrender.com`)
+         - ⚠️ **IMPORTANTE**: Asegúrate de incluir `https://` pero NO incluyas `/` al final
+      - **Environment** (Entornos): Selecciona:
+        - ✅ **Production** (Producción)
+        - ✅ **Preview** (Previsualización) 
+        - ✅ **Development** (Desarrollo) - opcional
    
-   d. Verás un formulario con tres campos:
-      - **Key** (Clave): Escribe `FASTAPI_URL`
-      - **Value** (Valor): Pega la URL de tu backend (ej: `https://tu-backend.railway.app`)
-      - **Environment** (Entorno): Selecciona los entornos donde quieres que esté disponible:
-        - ✅ Production (Producción)
-        - ✅ Preview (Previsualización)
-        - ✅ Development (Desarrollo) - opcional
+   d. Click en **"Save"** (Guardar)
    
-   e. Haz clic en **"Save"** (Guardar)
-   
-   f. **IMPORTANTE**: Después de añadir la variable, necesitas **redesplegar** el proyecto:
-      - Ve a la pestaña **"Deployments"** (Despliegues)
-      - Haz clic en los tres puntos (⋯) del último despliegue
-      - Selecciona **"Redeploy"** (Redesplegar)
-      - O simplemente haz un nuevo commit y push a tu repositorio
-   
-   **Nota**: Si aún no has desplegado el backend, primero despliega el backend en Railway/Render, obtén su URL, y luego añade esta variable en Vercel.
+   e. **MUY IMPORTANTE**: Después de añadir/modificar variables:
+      - Si ya desplegaste antes, necesitas **redesplegar**:
+        - Ve a la pestaña **"Deployments"**
+        - Haz clic en los tres puntos (⋯) del último despliegue
+        - Selecciona **"Redeploy"**
+        - Marca la casilla "Use existing Build Cache" (opcional)
+        - Click en **"Redeploy"**
+      - O simplemente haz un nuevo commit y push a tu repositorio (Vercel redesplegará automáticamente)
 
 3. **Desplegar**
    - Vercel detectará automáticamente que es Next.js
    - Click en "Deploy"
    - Espera a que termine el build
 
-4. **Verificar**
+4. **Desplegar**
+   - Si ya configuraste la variable `FASTAPI_URL`, click en **"Deploy"**
+   - Espera a que termine el build (puede tardar 2-5 minutos)
    - Una vez desplegado, Vercel te dará una URL como: `https://tu-proyecto.vercel.app`
-   - Abre la URL y verifica que todo funcione
 
 ---
 
-## ✅ Verificación
+## ✅ Verificación Final
 
-1. **Verificar backend**
-   - Abre: `https://tu-backend.railway.app/health`
-   - Deberías ver: `{"status":"ok"}`
+### 1. **Verificar backend en Render**
+   - Abre: `https://tu-backend.onrender.com/health`
+   - Deberías ver: `{"status":"ok","message":"Study Agents API is running"}`
+   - ⚠️ Si tarda mucho, es normal en el plan gratuito (puede tardar 30-60 segundos en "despertar")
 
-2. **Verificar frontend**
-   - Abre tu URL de Vercel
+### 2. **Verificar frontend en Vercel**
+   - Abre tu URL de Vercel (ej: `https://tu-proyecto.vercel.app`)
    - Ve a `/study-agents`
-   - Intenta subir un PDF y verificar que se conecta al backend
+   - Intenta subir un PDF y verifica que se conecta al backend
+   - Si ves errores de conexión, verifica que:
+     - La variable `FASTAPI_URL` esté correctamente configurada en Vercel
+     - Haya sido redesplegado después de añadir la variable
+     - La URL del backend no termine en `/`
 
 ---
 
