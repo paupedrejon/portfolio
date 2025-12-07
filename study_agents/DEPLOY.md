@@ -46,8 +46,13 @@ El sistema tiene dos partes:
      - **Name**: `study-agents-backend`
      - **Root Directory**: `study_agents`
      - **Environment**: `Python 3`
+     - **Python Version**: `3.11` (importante: especifica 3.11 en lugar de 3.13 para mejor compatibilidad)
      - **Build Command**: `pip install -r requirements.txt`
      - **Start Command**: `cd api && uvicorn main:app --host 0.0.0.0 --port $PORT`
+   
+   **Nota sobre Python Version**: 
+   - En la sección de configuración avanzada, busca "Python Version" o añade una variable de entorno `PYTHON_VERSION=3.11.9`
+   - Esto evitará problemas de compatibilidad con librerías que aún no soportan Python 3.13
 
 3. **Obtener la URL del backend**
    - Render te dará una URL como: `https://study-agents-backend.onrender.com`
@@ -124,6 +129,24 @@ El sistema tiene dos partes:
 ---
 
 ## 🐛 Troubleshooting
+
+### Render no redespliega automáticamente
+
+Si Render no detecta los cambios automáticamente:
+
+1. **Forzar redespliegue manual:**
+   - Ve a tu servicio en Render
+   - En la pestaña "Events" o "Deploys"
+   - Haz clic en "Manual Deploy" → "Deploy latest commit"
+   - O haz clic en los tres puntos (⋯) del último deploy → "Redeploy"
+
+2. **Verificar configuración de auto-deploy:**
+   - Ve a "Settings" → "Build & Deploy"
+   - Asegúrate de que "Auto-Deploy" esté activado
+   - Verifica que el "Branch" sea correcto (main/master)
+
+3. **Verificar que el commit esté en la rama correcta:**
+   - Asegúrate de que hiciste push a la rama que Render está monitoreando
 
 ### Error: "No se pudo conectar al backend FastAPI"
 
