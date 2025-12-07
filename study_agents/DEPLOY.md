@@ -64,12 +64,32 @@ El sistema tiene dos partes:
    - Selecciona tu repositorio
 
 2. **Configurar variables de entorno**
-   - En la configuración del proyecto, ve a "Environment Variables"
-   - Añade:
-     ```
-     FASTAPI_URL=https://tu-backend.railway.app
-     ```
-     (Reemplaza con la URL de tu backend)
+   
+   **Pasos detallados:**
+   
+   a. Una vez que Vercel haya detectado tu proyecto, ve a la página del proyecto
+   
+   b. En el menú superior, haz clic en **"Settings"** (Configuración)
+   
+   c. En el menú lateral izquierdo, busca y haz clic en **"Environment Variables"** (Variables de Entorno)
+   
+   d. Verás un formulario con tres campos:
+      - **Key** (Clave): Escribe `FASTAPI_URL`
+      - **Value** (Valor): Pega la URL de tu backend (ej: `https://tu-backend.railway.app`)
+      - **Environment** (Entorno): Selecciona los entornos donde quieres que esté disponible:
+        - ✅ Production (Producción)
+        - ✅ Preview (Previsualización)
+        - ✅ Development (Desarrollo) - opcional
+   
+   e. Haz clic en **"Save"** (Guardar)
+   
+   f. **IMPORTANTE**: Después de añadir la variable, necesitas **redesplegar** el proyecto:
+      - Ve a la pestaña **"Deployments"** (Despliegues)
+      - Haz clic en los tres puntos (⋯) del último despliegue
+      - Selecciona **"Redeploy"** (Redesplegar)
+      - O simplemente haz un nuevo commit y push a tu repositorio
+   
+   **Nota**: Si aún no has desplegado el backend, primero despliega el backend en Railway/Render, obtén su URL, y luego añade esta variable en Vercel.
 
 3. **Desplegar**
    - Vercel detectará automáticamente que es Next.js
