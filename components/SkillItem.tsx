@@ -1,25 +1,40 @@
 "use client";
 import React from "react";
-import { Poppins, Roboto_Mono } from "next/font/google";
-
-const poppins = Poppins({ subsets: ["latin"], weight: ["400", "600", "800"] });
-const robotoMono = Roboto_Mono({ subsets: ["latin"], weight: ["400", "700"] });
 
 type SkillItemProps = {
   icon: React.ReactNode;
   title: string;
   subtitle?: string;
-  percent?: number;              // opcional por si no quieres barra
+  percent?: number;
   color?: "indigo" | "emerald" | "rose" | "amber";
-  showScroll?: boolean;          // si true muestra barra (progreso)
-  /** Enlace click: soporta https://  mailto:  tel:  o rutas internas (/about) */
+  showScroll?: boolean;
   href?: string;
-  /** Si true, abre en nueva pestaña (sólo tiene efecto cuando hay href) */
   external?: boolean;
-  /** Manejador opcional si quieres comportamiento personalizado */
   onClick?: (e: React.MouseEvent) => void;
-  /** aria-label accesible (recomendado cuando sea click) */
   ariaLabel?: string;
+};
+
+const colorStyles = {
+  indigo: {
+    gradient: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+    border: "rgba(99, 102, 241, 0.3)",
+    bg: "rgba(99, 102, 241, 0.1)",
+  },
+  emerald: {
+    gradient: "linear-gradient(135deg, #10b981, #059669)",
+    border: "rgba(16, 185, 129, 0.3)",
+    bg: "rgba(16, 185, 129, 0.1)",
+  },
+  rose: {
+    gradient: "linear-gradient(135deg, #f43f5e, #e11d48)",
+    border: "rgba(244, 63, 94, 0.3)",
+    bg: "rgba(244, 63, 94, 0.1)",
+  },
+  amber: {
+    gradient: "linear-gradient(135deg, #f59e0b, #d97706)",
+    border: "rgba(245, 158, 11, 0.3)",
+    bg: "rgba(245, 158, 11, 0.1)",
+  },
 };
 
 export default function SkillItem({
@@ -27,7 +42,7 @@ export default function SkillItem({
   title,
   percent = 0,
   showScroll = false,
-  subtitle = "skill",
+  subtitle,
   color = "indigo",
   href,
   external = false,
@@ -35,75 +50,115 @@ export default function SkillItem({
   ariaLabel,
 }: SkillItemProps) {
   const pct = Math.max(0, Math.min(100, percent));
+  const styles = colorStyles[color];
 
-  const colorClass =
-    color === "emerald"
-      ? "pill-card--emerald"
-      : color === "rose"
-      ? "pill-card--rose"
-      : color === "amber"
-      ? "pill-card--amber"
-      : "pill-card--indigo";
-
-  // Clase común de la tarjeta clickable (añado cursor y focus visible)
-  const cardClass = `pill-card ${colorClass} skill-card focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 cursor-pointer`;
-
-  // Contenido común de la tarjeta
-  const content = (
+  const cardContent = (
     <>
       <div className="skill-card__header">
-        <div className="pill-card__icon text-xl">{icon}</div>
-        <div className="pill-card__text">
-          <p className={`${robotoMono.className} pill-card__kicker`}>{subtitle}</p>
-          <h3 className={`${robotoMono.className} pill-card__title`}>{title}</h3>
+        <div 
+          className="skill-card__icon"
+          style={{ background: styles.gradient }}
+        >
+          {icon}
+        </div>
+        <div className="skill-card__text">
+          {subtitle && (
+            <p 
+              className="skill-card__kicker"
+              style={{ fontFamily: 'var(--font-mono)' }}
+            >
+              {subtitle}
+            </p>
+          )}
+          <h3 
+            className="skill-card__title"
+            style={{ fontFamily: 'var(--font-body)' }}
+          >
+            {title}
+          </h3>
         </div>
       </div>
 
       {showScroll && (
         <div className="skill-card__bar">
           <div className="skill-card__barTrack">
-            <div className="skill-card__barFill" style={{ width: `${pct}%` }} />
+            <div 
+              className="skill-card__barFill" 
+              style={{ 
+                width: `${pct}%`,
+                background: styles.gradient,
+              }} 
+            />
           </div>
         </div>
       )}
     </>
   );
 
-  return (
-    <div className="skill-cell">
-      {/* 1) Si hay HREF => <a>  */}
-      {href ? (
+  const cardStyles: React.CSSProperties = {
+    width: "100%",
+    borderColor: styles.border,
+  };
+
+  const hoverStyles = `
+    transition: all 0.3s ease;
+  `;
+
+  if (href) {
+    return (
+      <div className="skill-cell">
         <a
           href={href}
-          className={cardClass}
-          style={{ width: "100%", maxWidth: 520, height: 70, display: "flex", alignItems: "center" }}
+          className="skill-card"
+          style={cardStyles}
           target={external ? "_blank" : undefined}
           rel={external ? "noopener noreferrer" : undefined}
           aria-label={ariaLabel ?? title}
         >
-          {content}
+          {cardContent}
+          <svg 
+            className="ml-auto opacity-40"
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2"
+          >
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" y1="14" x2="21" y2="3" />
+          </svg>
         </a>
-      ) : // 2) Si NO hay href pero sí onClick => <button>
-      onClick ? (
+      </div>
+    );
+  }
+
+  if (onClick) {
+    return (
+      <div className="skill-cell">
         <button
           type="button"
-          className={cardClass}
-          style={{ width: "100%", maxWidth: 520, height: 70, display: "flex", alignItems: "center" }}
+          className="skill-card cursor-pointer"
+          style={cardStyles}
           onClick={onClick}
           aria-label={ariaLabel ?? title}
         >
-          {content}
+          {cardContent}
         </button>
-      ) : (
-        // 3) No clickable: <div>
-        <div
-          className={`pill-card ${colorClass} skill-card`}
-          style={{ width: "100%", maxWidth: 520, height: 70, display: "flex", alignItems: "center" }}
-          aria-label={ariaLabel ?? title}
-        >
-          {content}
-        </div>
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="skill-cell">
+      <div 
+        className="skill-card"
+        style={cardStyles}
+        aria-label={ariaLabel ?? title}
+      >
+        {cardContent}
+      </div>
     </div>
   );
 }

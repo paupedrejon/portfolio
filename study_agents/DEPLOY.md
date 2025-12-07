@@ -1,0 +1,127 @@
+# 🚀 Guía de Despliegue - StudyAgents
+
+Esta guía explica cómo desplegar StudyAgents en producción.
+
+## 📋 Arquitectura
+
+El sistema tiene dos partes:
+1. **Frontend (Next.js)** → Se despliega en **Vercel**
+2. **Backend (FastAPI)** → Se despliega en **Railway** o **Render**
+
+---
+
+## 🔧 Paso 1: Desplegar el Backend (FastAPI)
+
+### Opción A: Railway (Recomendado)
+
+1. **Crear cuenta en Railway**
+   - Ve a https://railway.app
+   - Inicia sesión con GitHub
+
+2. **Crear nuevo proyecto**
+   - Click en "New Project"
+   - Selecciona "Deploy from GitHub repo"
+   - Conecta tu repositorio
+   - Selecciona el directorio `study_agents`
+
+3. **Configurar el despliegue**
+   - Railway detectará automáticamente que es Python
+   - El archivo `railway.json` configurará el comando de inicio
+   - Railway asignará automáticamente un puerto
+
+4. **Obtener la URL del backend**
+   - Una vez desplegado, Railway te dará una URL como: `https://tu-proyecto.railway.app`
+   - **Copia esta URL** - la necesitarás para el frontend
+
+### Opción B: Render
+
+1. **Crear cuenta en Render**
+   - Ve a https://render.com
+   - Inicia sesión con GitHub
+
+2. **Crear nuevo Web Service**
+   - Click en "New" → "Web Service"
+   - Conecta tu repositorio
+   - Configuración:
+     - **Name**: `study-agents-backend`
+     - **Root Directory**: `study_agents`
+     - **Environment**: `Python 3`
+     - **Build Command**: `pip install -r requirements.txt`
+     - **Start Command**: `cd api && uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+3. **Obtener la URL del backend**
+   - Render te dará una URL como: `https://study-agents-backend.onrender.com`
+   - **Copia esta URL**
+
+---
+
+## 🌐 Paso 2: Desplegar el Frontend (Next.js) en Vercel
+
+1. **Conectar repositorio a Vercel**
+   - Ve a https://vercel.com
+   - Inicia sesión con GitHub
+   - Click en "Add New Project"
+   - Selecciona tu repositorio
+
+2. **Configurar variables de entorno**
+   - En la configuración del proyecto, ve a "Environment Variables"
+   - Añade:
+     ```
+     FASTAPI_URL=https://tu-backend.railway.app
+     ```
+     (Reemplaza con la URL de tu backend)
+
+3. **Desplegar**
+   - Vercel detectará automáticamente que es Next.js
+   - Click en "Deploy"
+   - Espera a que termine el build
+
+4. **Verificar**
+   - Una vez desplegado, Vercel te dará una URL como: `https://tu-proyecto.vercel.app`
+   - Abre la URL y verifica que todo funcione
+
+---
+
+## ✅ Verificación
+
+1. **Verificar backend**
+   - Abre: `https://tu-backend.railway.app/health`
+   - Deberías ver: `{"status":"ok"}`
+
+2. **Verificar frontend**
+   - Abre tu URL de Vercel
+   - Ve a `/study-agents`
+   - Intenta subir un PDF y verificar que se conecta al backend
+
+---
+
+## 🔒 Notas de Seguridad
+
+- **No subas el `.env`** al repositorio (ya está en `.gitignore`)
+- Los usuarios proporcionan su propia API key desde el frontend
+- El backend no necesita variables de entorno (todo viene del frontend)
+
+---
+
+## 🐛 Troubleshooting
+
+### Error: "No se pudo conectar al backend FastAPI"
+
+1. Verifica que `FASTAPI_URL` esté configurada correctamente en Vercel
+2. Verifica que el backend esté corriendo (visita `/health`)
+3. Verifica que no haya problemas de CORS (ya configurado en `main.py`)
+
+### Error: "Backend no disponible"
+
+1. Verifica los logs del backend en Railway/Render
+2. Asegúrate de que el puerto esté configurado correctamente
+3. Verifica que todas las dependencias estén instaladas
+
+---
+
+## 📝 Archivos de Configuración
+
+- `Procfile`: Para Render/Heroku
+- `railway.json`: Para Railway
+- `runtime.txt`: Versión de Python (opcional)
+

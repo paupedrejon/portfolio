@@ -1,0 +1,203 @@
+"use client";
+
+import { spaceGrotesk, outfit, jetbrainsMono } from "../fonts";
+import { useEffect, useState, useRef } from "react";
+import StudyChat from "@/components/StudyChat";
+
+export default function StudyAgentsPage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <>
+      {/* Hero Section */}
+      <section className="hero-section" style={{ minHeight: '50vh', position: 'relative', overflow: 'hidden' }}>
+        <div className="hero-grid" />
+        
+        {/* Animated Background Orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div 
+            className="absolute rounded-full blur-[120px] opacity-25"
+            style={{
+              width: '600px',
+              height: '600px',
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              top: "10%",
+              left: "20%",
+              animation: "floatOrb1 60s ease-in-out infinite",
+            }}
+          />
+          <div 
+            className="absolute rounded-full blur-[100px] opacity-20"
+            style={{
+              width: '500px',
+              height: '500px',
+              background: "linear-gradient(135deg, #8b5cf6, #6366f1)",
+              bottom: "20%",
+              right: "15%",
+              animation: "floatOrb2 70s ease-in-out infinite reverse",
+            }}
+          />
+        </div>
+
+        {/* Rising Lines - Usar valores determinísticos para evitar errores de hidratación */}
+        {mounted && [...Array(15)].map((_, i) => {
+          // Usar valores determinísticos basados en el índice para evitar errores de hidratación
+          const seed = i * 7 + 13; // Semilla determinística
+          const width = (seed % 20) / 10 + 1; // 1-3px
+          const height = (seed % 200) + 100; // 100-300px
+          const left = (seed * 7) % 100; // 0-100%
+          const duration = (seed % 80) / 10 + 6; // 6-14s
+          const delay = (seed % 50) / 10; // 0-5s
+          const opacity = (seed % 40) / 100 + 0.2; // 0.2-0.6
+          const shadowSize = (seed % 100) / 10 + 5; // 5-15px
+          return (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                width: `${width}px`,
+                height: `${height}px`,
+                background: `linear-gradient(to top, rgba(99, 102, 241, 0), rgba(99, 102, 241, ${opacity}))`,
+                left: `${left}%`,
+                bottom: '-200px',
+                borderRadius: '2px',
+                animation: `riseLine ${duration}s linear infinite`,
+                animationDelay: `${delay}s`,
+                boxShadow: `0 0 ${shadowSize}px rgba(99, 102, 241, 0.3)`,
+              }}
+            />
+          );
+        })}
+
+        <div 
+          className={`relative z-10 flex flex-col items-center text-center px-6 ${mounted ? 'opacity-100' : 'opacity-0'}`}
+          style={{ transition: 'opacity 0.8s ease-out', paddingTop: '6rem', paddingBottom: '3rem' }}
+        >
+          {/* Logo de Study Agents */}
+          <div 
+            className={`${mounted ? 'animate-fade-in-up' : ''}`}
+            style={{ 
+              animationDelay: '0s', 
+              animationFillMode: 'both',
+              marginBottom: '2rem',
+            }}
+          >
+            <img 
+              src="/StudyAgentsLogo.png" 
+              alt="Study Agents Logo"
+              style={{
+                maxWidth: '180px',
+                height: 'auto',
+                opacity: 0.95,
+                filter: 'drop-shadow(0 8px 24px rgba(99, 102, 241, 0.3))',
+              }}
+              onError={(e) => {
+                // Si el logo no se carga, ocultar el contenedor
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
+          </div>
+
+          <div 
+            className={`${mounted ? 'animate-fade-in-up' : ''}`}
+            style={{ 
+              animationDelay: '0.1s', 
+              animationFillMode: 'both',
+              marginBottom: '1.5rem',
+            }}
+          >
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1.25rem',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                color: 'rgba(99, 102, 241, 0.9)',
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                border: '1px solid rgba(99, 102, 241, 0.2)',
+                borderRadius: '50px',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 4px 20px rgba(99, 102, 241, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                position: 'relative',
+                overflow: 'hidden',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              <span style={{ position: 'relative', zIndex: 1 }}>AI Study Assistant</span>
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent)',
+                  animation: 'shimmer 3s ease-in-out infinite',
+                }}
+              />
+            </div>
+          </div>
+
+          <h1 
+            className={`${spaceGrotesk.className} hero-title ${mounted ? 'animate-fade-in-up' : ''}`}
+            style={{ animationDelay: '0.2s', animationFillMode: 'both' }}
+          >
+            <span className="gradient-text">STUDY</span>
+            <br />
+            <span style={{ color: 'var(--text-primary)' }}>AGENTS</span>
+          </h1>
+
+          <p 
+            className={`${outfit.className} hero-tagline ${mounted ? 'animate-fade-in-up' : ''}`}
+            style={{ animationDelay: '0.4s', animationFillMode: 'both', maxWidth: '700px' }}
+          >
+            Tu asistente inteligente para generar apuntes, resolver dudas y crear tests personalizados. 
+            Sube tus documentos y empieza a aprender de manera más eficiente.
+          </p>
+        </div>
+
+        <style jsx>{`
+          @keyframes floatOrb1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(60px, -100px) scale(1.1); }
+            50% { transform: translate(-40px, 80px) scale(0.9); }
+            75% { transform: translate(100px, 50px) scale(1.05); }
+          }
+          @keyframes floatOrb2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-80px, -120px) scale(1.15); }
+            66% { transform: translate(60px, 100px) scale(0.85); }
+          }
+          @keyframes riseLine {
+            0% {
+              transform: translateY(0);
+              opacity: 0;
+            }
+            10% {
+              opacity: 1;
+            }
+            90% {
+              opacity: 1;
+            }
+            100% {
+              transform: translateY(calc(-100vh - 200px));
+              opacity: 0;
+            }
+          }
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+          }
+        `}</style>
+      </section>
+
+      {/* Chat Interface */}
+      <StudyChat />
+    </>
+  );
+}

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Agents - Sistema Multi-Agente</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.2rem;
+        }
+
+        .section {
+            background: rgba(26, 26, 36, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .section h2 {
+            color: #6366f1;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: rgba(99, 102, 241, 0.6);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        button {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 0.5rem;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        textarea, input[type="text"], select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            background: rgba(26, 26, 36, 0.6);
+            color: #e0e0e0;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .response {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            white-space: pre-wrap;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .test-question {
+            background: rgba(26, 26, 36, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .test-question h4 {
+            color: #6366f1;
+            margin-bottom: 0.5rem;
+        }
+
+        .test-options {
+            margin-top: 0.5rem;
+        }
+
+        .test-options label {
+            display: block;
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .test-options label:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .test-options input[type="radio"] {
+            margin-right: 0.5rem;
+        }
+
+        .feedback-item {
+            background: rgba(26, 26, 36, 0.6);
+            border-left: 3px solid #6366f1;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+        }
+
+        .feedback-item.correct {
+            border-left-color: #10b981;
+        }
+
+        .feedback-item.incorrect {
+            border-left-color: #ef4444;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(99, 102, 241, 0.3);
+            border-radius: 50%;
+            border-top-color: #6366f1;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .file-list {
+            margin-top: 1rem;
+        }
+
+        .file-item {
+            background: rgba(26, 26, 36, 0.6);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin: 0.25rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 Study Agents</h1>
+            <p class="subtitle">Sistema Multi-Agente para Autoaprendizaje</p>
+        </header>
+
+        <!-- Sección 1: Subir Documentos -->
+        <div class="section">
+            <h2>📄 1. Subir Documentos</h2>
+            <div class="upload-area" id="uploadArea">
+                <p>Arrastra archivos PDF aquí o haz clic para seleccionar</p>
+                <input type="file" id="fileInput" multiple accept=".pdf">
+                <div class="file-list" id="fileList"></div>
+            </div>
+            <button onclick="uploadDocuments()" id="uploadBtn">Procesar Documentos</button>
+            <div id="uploadResponse"></div>
+        </div>
+
+        <!-- Sección 2: Generar Explicaciones -->
+        <div class="section">
+            <h2>📖 2. Generar Explicaciones</h2>
+            <button onclick="generateExplanations()" id="explainBtn">Generar Explicaciones</button>
+            <div id="explainResponse"></div>
+        </div>
+
+        <!-- Sección 3: Hacer Preguntas -->
+        <div class="section">
+            <h2>❓ 3. Hacer Preguntas</h2>
+            <textarea id="questionInput" placeholder="Escribe tu pregunta aquí..."></textarea>
+            <button onclick="askQuestion()" id="askBtn">Enviar Pregunta</button>
+            <div id="questionResponse"></div>
+        </div>
+
+        <!-- Sección 4: Generar Test -->
+        <div class="section">
+            <h2>📝 4. Generar Test</h2>
+            <label>Dificultad:</label>
+            <select id="difficultySelect">
+                <option value="easy">Fácil</option>
+                <option value="medium" selected>Medio</option>
+                <option value="hard">Difícil</option>
+            </select>
+            <label>Número de preguntas:</label>
+            <input type="number" id="numQuestions" value="5" min="1" max="20">
+            <button onclick="generateTest()" id="testBtn">Generar Test</button>
+            <div id="testContainer"></div>
+        </div>
+
+        <!-- Sección 5: Corregir Test -->
+        <div class="section">
+            <h2>✏️ 5. Ver Resultados del Test</h2>
+            <div id="testResults"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api';
+        let currentTest = null;
+        let testAnswers = {};
+
+        // Configurar drag & drop
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            fileInput.files = e.dataTransfer.files;
+            updateFileList();
+        });
+
+        fileInput.addEventListener('change', updateFileList);
+
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            Array.from(fileInput.files).forEach(file => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.textContent = file.name;
+                fileList.appendChild(div);
+            });
+        }
+
+        async function uploadDocuments() {
+            const btn = document.getElementById('uploadBtn');
+            const responseDiv = document.getElementById('uploadResponse');
+            
+            if (fileInput.files.length === 0) {
+                showError(responseDiv, 'Por favor selecciona al menos un archivo PDF');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Procesando... <span class="loading"></span>';
+            responseDiv.innerHTML = '';
+
+            const formData = new FormData();
+            Array.from(fileInput.files).forEach(file => {
+                formData.append('files', file);
+            });
+
+            try {
+                const response = await fetch(`${API_URL}/upload-documents`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess(responseDiv, `✅ ${data.message}<br>Documentos: ${data.data.total_documents}<br>Chunks: ${data.data.total_chunks}`);
+                } else {
+                    showError(responseDiv, data.message || 'Error al procesar documentos');
+                }
+            } catch (error) {
+                showError(responseDiv, `Error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Procesar Documentos';
+            }
+        }
+
+        async function generateExplanations() {
+            const btn = document.getElementById('explainBtn');
+            const responseDiv = document.getElementById('explainResponse');
+            
+            btn.disabled = true;
+            btn.innerHTML = 'Generando... <span class="loading"></span>';
+            responseDiv.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_URL}/generate-explanations`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = '<h3>Explicaciones Generadas:</h3>';
+                    for (const [key, value] of Object.entries(data.data)) {
+                        if (key !== 'error') {
+                            html += `<div class="response"><strong>${key}:</strong><br>${value}</div>`;
+                        }
+                    }
+                    responseDiv.innerHTML = html;
+                } else {
+                    showError(responseDiv, data.data?.error || 'Error al generar explicaciones');
+                }
+            } catch (error) {
+                showError(responseDiv, `Error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Generar Explicaciones';
+            }
+        }
+
+        async function askQuestion() {
+            const input = document.getElementById('questionInput');
+            const btn = document.getElementById('askBtn');
+            const responseDiv = document.getElementById('questionResponse');
+            const question = input.value.trim();
+
+            if (!question) {
+                showError(responseDiv, 'Por favor escribe una pregunta');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Pensando... <span class="loading"></span>';
+            responseDiv.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_URL}/ask-question`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    responseDiv.innerHTML = `
+                        <div class="response">
+                            <strong>Pregunta:</strong> ${data.question}<br><br>
+                            <strong>Respuesta:</strong><br>${data.answer}
+                        </div>
+                    `;
+                } else {
+                    showError(responseDiv, 'Error al obtener respuesta');
+                }
+            } catch (error) {
+                showError(responseDiv, `Error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Enviar Pregunta';
+            }
+        }
+
+        async function generateTest() {
+            const btn = document.getElementById('testBtn');
+            const container = document.getElementById('testContainer');
+            const difficulty = document.getElementById('difficultySelect').value;
+            const numQuestions = parseInt(document.getElementById('numQuestions').value);
+
+            btn.disabled = true;
+            btn.innerHTML = 'Generando test... <span class="loading"></span>';
+            container.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_URL}/generate-test`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ difficulty, num_questions: numQuestions })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentTest = data.data;
+                    testAnswers = {};
+                    renderTest(data.data);
+                } else {
+                    showError(container, data.message || 'Error al generar test');
+                }
+            } catch (error) {
+                showError(container, `Error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Generar Test';
+            }
+        }
+
+        function renderTest(test) {
+            const container = document.getElementById('testContainer');
+            let html = `<h3>Test: ${test.test_id} (${test.difficulty})</h3>`;
+            
+            test.questions.forEach((q, index) => {
+                html += `<div class="test-question">`;
+                html += `<h4>Pregunta ${index + 1}: ${q.question}</h4>`;
+                
+                if (q.type === 'multiple_choice') {
+                    html += `<div class="test-options">`;
+                    q.options.forEach((opt, optIndex) => {
+                        const optionId = `q${q.id}_opt${optIndex}`;
+                        html += `
+                            <label>
+                                <input type="radio" name="${q.id}" value="${opt}" onchange="saveAnswer('${q.id}', '${opt}')">
+                                ${opt}
+                            </label>
+                        `;
+                    });
+                    html += `</div>`;
+                } else if (q.type === 'true_false') {
+                    html += `<div class="test-options">`;
+                    ['True', 'False'].forEach(tf => {
+                        html += `
+                            <label>
+                                <input type="radio" name="${q.id}" value="${tf}" onchange="saveAnswer('${q.id}', '${tf}')">
+                                ${tf}
+                            </label>
+                        `;
+                    });
+                    html += `</div>`;
+                } else {
+                    html += `<textarea id="${q.id}" placeholder="Escribe tu respuesta..." onchange="saveAnswer('${q.id}', this.value)"></textarea>`;
+                }
+                
+                html += `</div>`;
+            });
+            
+            html += `<button onclick="submitTest()">Enviar Test</button>`;
+            container.innerHTML = html;
+        }
+
+        function saveAnswer(questionId, answer) {
+            testAnswers[questionId] = answer;
+        }
+
+        async function submitTest() {
+            if (!currentTest) {
+                showError(document.getElementById('testResults'), 'No hay test para corregir');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = 'Corrigiendo... <span class="loading"></span>';
+
+            try {
+                const response = await fetch(`${API_URL}/grade-test`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        test_id: currentTest.test_id,
+                        answers: testAnswers
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderFeedback(data.data);
+                } else {
+                    showError(resultsDiv, 'Error al corregir test');
+                }
+            } catch (error) {
+                showError(resultsDiv, `Error: ${error.message}`);
+            }
+        }
+
+        function renderFeedback(feedback) {
+            const resultsDiv = document.getElementById('testResults');
+            const score = (feedback.score * 100).toFixed(1);
+            
+            let html = `
+                <h3>Resultados del Test</h3>
+                <div class="response">
+                    <strong>Puntuación: ${score}%</strong><br>
+                    Correctas: ${feedback.correct_answers}/${feedback.total_questions}
+                </div>
+                <div class="response">
+                    <strong>Feedback General:</strong><br>
+                    ${feedback.general_feedback}
+                </div>
+                <h4>Feedback por Pregunta:</h4>
+            `;
+            
+            feedback.question_feedback.forEach(item => {
+                const className = item.is_correct ? 'correct' : 'incorrect';
+                html += `
+                    <div class="feedback-item ${className}">
+                        <strong>Pregunta ${item.question_id}:</strong> ${item.is_correct ? '✅' : '❌'}<br>
+                        Tu respuesta: ${item.student_answer}<br>
+                        ${item.feedback}
+                    </div>
+                `;
+            });
+            
+            if (feedback.recommendations) {
+                html += `<div class="response"><strong>Recomendaciones:</strong><ul>`;
+                feedback.recommendations.forEach(rec => {
+                    html += `<li>${rec}</li>`;
+                });
+                html += `</ul></div>`;
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function showSuccess(container, message) {
+            container.innerHTML = `<div class="response">${message}</div>`;
+        }
+
+        function showError(container, message) {
+            container.innerHTML = `<div class="response error">❌ ${message}</div>`;
+        }
+    </script>
+</body>
+</html>
+

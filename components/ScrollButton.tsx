@@ -1,53 +1,48 @@
 "use client";
 
-import React, { useCallback, useRef } from "react";
+import { useState } from "react";
 
-type Props = {
+interface ScrollButtonProps {
   targetId: string;
-  className?: string;
-  color?: string;     // color del fondo del botón
-  iconColor?: string; // color del icono (flecha)
-};
+  color?: string;
+  iconColor?: string;
+}
 
-export default function ScrollButton({ targetId, className, color, iconColor }: Props) {
-  const ref = useRef<HTMLButtonElement>(null);
+export default function ScrollButton({ 
+  targetId, 
+  color = "transparent", 
+  iconColor = "var(--text-secondary)" 
+}: ScrollButtonProps) {
+  const [clicked, setClicked] = useState(false);
 
-  const handleClick = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-
-      const btn = ref.current;
-      if (btn) {
-        btn.classList.add("clicked");
-        setTimeout(() => btn.classList.remove("clicked"), 450);
-      }
-
-      document.getElementById(targetId)?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    },
-    [targetId]
-  );
+  const handleClick = () => {
+    setClicked(true);
+    setTimeout(() => setClicked(false), 500);
+    
+    const target = document.getElementById(targetId);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
-    <div className="scroll-wrap">
-      <button
-        ref={ref}
-        className={`scroll-btn ${className ?? ""}`}
-        aria-label="Scroll to sections"
-        onClick={handleClick}
-        style={{
-          background: color ?? "rgba(65, 90, 201, 0)", // color del fondo
-        }}
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`scroll-btn ${clicked ? "clicked" : ""}`}
+      style={{ background: color }}
+      aria-label={`Scroll to ${targetId}`}
+    >
+      <svg 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke={iconColor} 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M12 15.5 5 8.5l1.4-1.4L12 12.7l5.6-5.6L19 8.5z"
-            fill={iconColor ?? "#fff"} // color de la flecha
-          />
-        </svg>
-      </button>
-    </div>
+        <path d="M12 5v14M5 12l7 7 7-7" />
+      </svg>
+    </button>
   );
 }
