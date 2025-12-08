@@ -17,8 +17,11 @@ try:
     import openai_proxy_patch  # noqa: F401
     # Forzar aplicación del parche de LangChain también
     openai_proxy_patch.patch_langchain_openai()
+    print("✅ Parche de proxies aplicado en api/main.py")
 except Exception as e:
     print(f"⚠️ Warning: Error al aplicar parche de proxies: {e}")
+    import traceback
+    traceback.print_exc()
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,12 +32,29 @@ from threading import Lock
 # El path ya fue añadido arriba para el parche
 
 # Importar desde el directorio raíz usando importlib para evitar conflictos de nombres
+# IMPORTANTE: El parche ya debe estar aplicado antes de importar main.py
 import importlib.util
 main_module_path = os.path.join(parent_dir, "main.py")
 spec = importlib.util.spec_from_file_location("study_agents_main", main_module_path)
 study_agents_main = importlib.util.module_from_spec(spec)
+
+# Aplicar el parche nuevamente antes de ejecutar el módulo
+# Esto es crítico porque el módulo puede importar cosas que usan OpenAI
+print("🔧 Aplicando parche de proxies antes de cargar main.py...")
+try:
+    import openai_proxy_patch  # noqa: F401
+    openai_proxy_patch.patch_openai_client()
+    openai_proxy_patch.patch_langchain_openai()
+    print("✅ Parche aplicado correctamente antes de cargar main.py")
+except Exception as e:
+    print(f"⚠️ Error al aplicar parche antes de cargar main.py: {e}")
+    import traceback
+    traceback.print_exc()
+
+# Ahora ejecutar el módulo (esto importará los agentes y memory_manager)
 spec.loader.exec_module(study_agents_main)
 StudyAgentsSystem = study_agents_main.StudyAgentsSystem
+print("✅ Módulo main.py cargado correctamente")
 
 # Inicializar FastAPI
 app = FastAPI(

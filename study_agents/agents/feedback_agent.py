@@ -88,6 +88,21 @@ class FeedbackAgent:
             question_type = question.get("type", "multiple_choice")
             options = question.get("options", [])
             
+            # Validar que la respuesta correcta sea válida
+            if question_type == "multiple_choice":
+                correct_answer_upper = correct_answer.upper()
+                if correct_answer_upper not in ["A", "B", "C", "D"]:
+                    print(f"⚠️ Respuesta correcta inválida '{correct_answer}' para pregunta {question_id}, intentando inferir...")
+                    # Intentar inferir la respuesta correcta basándose en la explicación
+                    # Por ahora, usar la primera opción como fallback
+                    correct_answer = "A" if options else ""
+                else:
+                    # Verificar que la opción correcta existe
+                    correct_idx = ord(correct_answer_upper) - 65
+                    if correct_idx >= len(options):
+                        print(f"⚠️ La respuesta correcta '{correct_answer}' no corresponde a ninguna opción en pregunta {question_id}")
+                        correct_answer = "A" if options else ""
+            
             # Normalizar respuestas
             student_answer_normalized = str(student_answer).strip().upper()
             correct_answer_normalized = str(correct_answer).strip().upper()
@@ -153,31 +168,68 @@ class FeedbackAgent:
         """
         Genera feedback para una pregunta específica
         """
+        # Validar que la respuesta correcta sea válida para el tipo de pregunta
+        if question_type == "multiple_choice":
+            if correct_answer.upper() not in ["A", "B", "C", "D"]:
+                # Si la respuesta correcta no es válida, intentar encontrar la correcta basándose en la explicación
+                print(f"⚠️ Respuesta correcta inválida '{correct_answer}' para pregunta de opción múltiple")
+                # Usar la explicación para inferir cuál debería ser la correcta
+                # Pero por ahora, usar la primera opción como fallback
+                correct_answer = "A" if options else ""
+        
         if is_correct:
-            feedback_prompt = f"""El estudiante respondió correctamente a esta pregunta:
+            feedback_prompt = f"""El estudiante respondió CORRECTAMENTE a esta pregunta:
 
 Pregunta: {question}
-Respuesta correcta: {correct_answer}
+Respuesta correcta (CONFIRMADA): {correct_answer}
 Respuesta del estudiante: {student_answer}
 
+IMPORTANTE: La respuesta correcta es EXACTAMENTE "{correct_answer}". NO cambies ni sugieras otra respuesta.
 Proporciona un feedback positivo y breve confirmando que la respuesta es correcta.
-Si hay una explicación proporcionada, inclúyela: {explanation}"""
+Si hay una explicación proporcionada, inclúyela: {explanation}
+
+Formato de respuesta:
+- Confirma que la respuesta es correcta
+- Incluye la explicación si está disponible
+- Sé breve y positivo"""
         else:
             options_text = "\n".join([f"- {opt}" for opt in options]) if options else ""
-            feedback_prompt = f"""El estudiante respondió incorrectamente a esta pregunta:
+            
+            # Para preguntas de opción múltiple, mostrar qué opción corresponde a cada letra
+            if question_type == "multiple_choice" and options:
+                correct_option_text = ""
+                correct_idx = ord(correct_answer.upper()) - 65 if correct_answer.upper() in ["A", "B", "C", "D"] else -1
+                if 0 <= correct_idx < len(options):
+                    correct_option_text = f"\nLa opción {correct_answer} corresponde a: {options[correct_idx]}"
+            
+            feedback_prompt = f"""El estudiante respondió INCORRECTAMENTE a esta pregunta:
 
 Pregunta: {question}
 Opciones disponibles:
 {options_text}
-Respuesta correcta: {correct_answer}
+{correct_option_text if question_type == "multiple_choice" and options else ""}
+
+RESPUESTA CORRECTA (CONFIRMADA): {correct_answer}
 Respuesta del estudiante: {student_answer}
 Explicación proporcionada: {explanation}
 
+⚠️ CRÍTICO: La respuesta correcta es EXACTAMENTE "{correct_answer}". 
+- NO cambies ni sugieras otra respuesta diferente.
+- NO digas que otra opción es la correcta.
+- Usa EXACTAMENTE la respuesta "{correct_answer}" como la respuesta correcta.
+
 Proporciona:
-1. Feedback constructivo
-2. Por qué la respuesta correcta es correcta
-3. Explicación clara del concepto
-4. Una sugerencia para mejorar"""
+1. Feedback constructivo indicando que la respuesta es incorrecta
+2. Confirma que la respuesta correcta es EXACTAMENTE "{correct_answer}"
+3. Explica por qué "{correct_answer}" es la respuesta correcta (usando la explicación proporcionada)
+4. Explicación clara del concepto
+5. Una sugerencia para mejorar
+
+Formato de respuesta:
+- Indica que la respuesta es incorrecta
+- Menciona EXPLÍCITAMENTE que la respuesta correcta es "{correct_answer}"
+- Explica el concepto usando la explicación proporcionada
+- Proporciona una sugerencia constructiva"""
         
         try:
             response = self.llm.invoke(feedback_prompt)

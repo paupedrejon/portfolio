@@ -3,12 +3,24 @@ Memory Manager - Gestiona la memoria del sistema con RAG
 Usa ChromaDB para almacenar y recuperar documentos con embeddings
 """
 
-from typing import List, Dict, Any, Optional
-import chromadb
+# APLICAR PARCHE DE PROXIES ANTES DE CUALQUIER IMPORTACIÓN
+import sys
 import os
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
+# Importar y aplicar el parche ANTES de importar chromadb (que puede importar openai internamente)
+try:
+    import openai_proxy_patch  # noqa: F401
+    openai_proxy_patch.patch_langchain_openai()
+except Exception as e:
+    print(f"⚠️ Warning: Error al aplicar parche de proxies en memory_manager: {e}")
+
+from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
-# Asegurar parche de proxies aplicado antes de usar openai
-import openai_proxy_patch  # noqa: F401
+# Ahora importar chromadb después del parche
+import chromadb
 import openai
 
 load_dotenv()

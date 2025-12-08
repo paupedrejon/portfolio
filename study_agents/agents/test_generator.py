@@ -281,9 +281,14 @@ REGLAS CRÍTICAS PARA PREGUNTAS DE OPCIÓN MÚLTIPLE:
    - Si la pregunta es "¿Cuánto es 3+3?", NO puedes tener dos opciones con el mismo valor (ej: "6" en A y "6" en D).
    - Fracciones equivalentes como 1/2, 2/4, 3/6 NO pueden aparecer juntas. Solo una forma debe estar presente.
 2. **UNA SOLA RESPUESTA CORRECTA**: DEBE haber exactamente UNA respuesta correcta. Si hay múltiples opciones que son matemáticamente correctas, solo UNA debe estar marcada como "correct_answer".
-3. **VERIFICA LA RESPUESTA CORRECTA**: El campo "correct_answer" DEBE corresponder exactamente a una de las opciones (A, B, C o D). La opción indicada en "correct_answer" DEBE ser realmente la respuesta correcta a la pregunta.
+3. **VERIFICA LA RESPUESTA CORRECTA**: 
+   - El campo "correct_answer" DEBE corresponder exactamente a una de las opciones (A, B, C o D).
+   - La opción indicada en "correct_answer" DEBE ser REALMENTE la respuesta correcta a la pregunta.
+   - ANTES de marcar una opción como "correct_answer", VERIFICA que esa opción sea realmente la respuesta correcta.
+   - NO marques una opción como correcta solo porque "suena bien" o "parece correcta". DEBE ser objetivamente la respuesta correcta.
+   - Si tienes dudas sobre cuál es la respuesta correcta, revisa el contenido proporcionado y asegúrate de que la opción marcada como "correct_answer" sea realmente la correcta.
 4. **OPCIONES DISTINTAS**: Cada opción debe representar un valor o concepto diferente. No uses formas equivalentes de la misma respuesta.
-5. **COHERENCIA**: La explicación debe justificar por qué la opción marcada como "correct_answer" es la correcta y por qué las otras son incorrectas.
+5. **COHERENCIA**: La explicación debe justificar por qué la opción marcada como "correct_answer" es la correcta y por qué las otras son incorrectas. La explicación DEBE coincidir con la opción marcada como correcta.
 
 IMPORTANTE:
 - Solo devuelve el JSON, sin texto adicional
