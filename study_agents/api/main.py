@@ -6,8 +6,6 @@ Soporta API keys por usuario
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 import os
@@ -101,9 +99,7 @@ class TestRequest(BaseModel):
     difficulty: str = "medium"
     num_questions: int = 10
     topics: Optional[List[str]] = None
-    model: Optional[str] = "gpt-4-turbo"
     constraints: Optional[str] = None
-    apiKey: Optional[str] = None
     model: Optional[str] = "gpt-4-turbo"
 
 
@@ -130,10 +126,15 @@ class UploadDocumentsRequest(BaseModel):
 # ENDPOINTS DE LA API
 # ============================================================================
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
 async def read_root():
-    """Sirve la interfaz web"""
-    return FileResponse("api/static/index.html")
+    """Endpoint raíz de la API"""
+    return {
+        "message": "Study Agents API",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/health"
+    }
 
 
 @app.get("/health")
