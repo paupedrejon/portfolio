@@ -1331,7 +1331,7 @@ export default function StudyChat() {
                     color: colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563",
                     lineHeight: 1.6,
                   }}>
-                    Di "genera test"
+                    Di &quot;genera test&quot;
                   </p>
                 </div>
               </div>
@@ -1375,7 +1375,6 @@ export default function StudyChat() {
                     <NotesViewer 
                       content={message.content} 
                       colorTheme={colorTheme}
-                      setColorTheme={setColorTheme}
                     />
                     {message.costEstimate && (
                       <div style={{
@@ -2180,12 +2179,10 @@ export default function StudyChat() {
 // Componente mejorado para renderizar apuntes con markdown completo - ULTRA VISUAL
 function NotesViewer({ 
   content, 
-  colorTheme, 
-  setColorTheme 
+  colorTheme
 }: { 
   content: string;
   colorTheme: "dark" | "light";
-  setColorTheme: (theme: "dark" | "light") => void;
 }) {
   const notesContainerRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
@@ -2309,7 +2306,7 @@ function NotesViewer({
         
         pdf.addImage(processedLogo, 'PNG', logoX, logoY, logoWidth, logoHeight);
       } catch (error) {
-        console.log("No se pudo cargar el logo, continuando sin él");
+        console.error("No se pudo cargar el logo, continuando sin él", error);
       }
       
       // Título principal (título de los apuntes)
@@ -2454,7 +2451,6 @@ function NotesViewer({
                 }
                 
                 const pageHeight = Math.min(availableHeight, imgScaledHeight - (p * availableHeight));
-                const sourceY = p * availableHeight / ratio;
                 
                 // Usar la imagen completa pero posicionarla correctamente
                 pdf.addImage(
@@ -2845,10 +2841,10 @@ function NotesViewer({
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
-          h2: ({ node, ...props }) => (
+          h2: ({ ...props }) => (
             <h2 {...props} style={{ display: "flex", alignItems: "center", gap: "0.75rem" }} />
           ),
-          h3: ({ node, ...props }) => {
+        h3: ({ ...props }) => {
             // Usar un índice determinístico basado en el contenido para evitar problemas de hidratación
             const icons = [
               <SparkleIcon key="sparkle" size={18} color="#6366f1" />,
@@ -2868,7 +2864,7 @@ function NotesViewer({
               </h3>
             );
           },
-          p: ({ node, ...props }) => {
+        p: ({ ...props }) => {
             const text = String(props.children || "");
             // Detectar patrones especiales para crear tarjetas visuales
             if (text.startsWith("**Definición:**") || text.startsWith("**DEFINICIÓN:**")) {
@@ -2906,7 +2902,7 @@ function NotesViewer({
             }
             return <p {...props} />;
           },
-          code: ({ node, inline, className, children, ...props }: any) => {
+        code: ({ className, children, ...props }: { className?: string; children?: React.ReactNode }) => {
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : '';
             const codeString = String(children).replace(/\n$/, '');
@@ -3137,7 +3133,7 @@ function TestComponent({
   const progress = (answeredCount / totalQuestions) * 100;
   
   // Calcular estadísticas en tiempo real
-  const correctCount = Object.entries(questionResults).filter(([_, result]) => result.isCorrect).length;
+  const correctCount = Object.entries(questionResults).filter(([, result]) => result.isCorrect).length;
   const currentScore = totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
   
   // Manejar cambio de respuesta con corrección inmediata
@@ -3298,7 +3294,6 @@ function TestComponent({
           const isCorrect = result?.isCorrect ?? false;
           const showFeedback = result?.showFeedback ?? false;
           const correctAnswer = q.correct_answer;
-          const userAnswer = answers[q.id];
           
           // Determinar colores según el resultado
           let questionBg = colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "rgba(255, 255, 255, 0.8)";
@@ -3851,10 +3846,10 @@ function SuccessMessage({
   data,
   colorTheme = "dark",
 }: {
-  data: string | any;
+  data: unknown;
   colorTheme?: "dark" | "light";
 }) {
-  let successData: any;
+  let successData: unknown;
   
   try {
     if (typeof data === 'string') {
@@ -3865,10 +3860,13 @@ function SuccessMessage({
       throw new Error('Invalid success data');
     }
   } catch (error) {
+    console.error("Error parsing success data", error);
     return null;
   }
 
-  const { fileNames = [] } = successData;
+  const fileNames = Array.isArray((successData as { fileNames?: unknown }).fileNames)
+    ? (successData as { fileNames?: string[] }).fileNames ?? []
+    : [];
   const bgColor = colorTheme === "dark" 
     ? "linear-gradient(135deg, rgba(26, 26, 36, 0.95), rgba(30, 30, 45, 0.95))"
     : "linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98))";
@@ -4156,10 +4154,10 @@ function FeedbackComponent({
   feedbackData,
   colorTheme = "dark",
 }: {
-  feedbackData: string | any;
+  feedbackData: unknown;
   colorTheme?: "dark" | "light";
 }) {
-  let feedback: any;
+  let feedback: unknown;
   
   // Manejar si feedbackData ya es un objeto o es un string
   try {
@@ -4172,6 +4170,7 @@ function FeedbackComponent({
     }
   } catch (error) {
     // Si no es JSON válido o es un objeto inválido, mostrar como texto normal
+    console.error("Error parsing feedback data", error);
     return (
       <div style={{
         whiteSpace: "pre-wrap",
@@ -4200,7 +4199,13 @@ function FeedbackComponent({
     );
   }
 
-  const { score = 0, correctCount = 0, totalQuestions = 0, failedQuestions = [], recommendations = [] } = feedback;
+  const { score = 0, correctCount = 0, totalQuestions = 0, failedQuestions = [], recommendations = [] } = feedback as {
+    score?: number;
+    correctCount?: number;
+    totalQuestions?: number;
+    failedQuestions?: { question: string; userAnswer: string; correctAnswer: string; explanation?: string }[];
+    recommendations?: string[];
+  };
   const bgColor = colorTheme === "dark" 
     ? "linear-gradient(135deg, rgba(26, 26, 36, 0.95), rgba(30, 30, 45, 0.95))"
     : "linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98))";
@@ -4302,7 +4307,7 @@ function FeedbackComponent({
             </h3>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            {failedQuestions.map((failed: any, index: number) => (
+            {failedQuestions.map((failed: { question: string; userAnswer: string; correctAnswer: string; explanation?: string }, index: number) => (
               <div
                 key={index}
                 style={{
