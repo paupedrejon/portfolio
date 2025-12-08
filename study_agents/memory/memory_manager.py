@@ -31,26 +31,17 @@ class MemoryManager:
         
         embedding_function = self._build_embedding_function()
         
-        # Inicializar ChromaDB (limpiar disco antes para evitar configuraciones antiguas con proxies)
-        import shutil
-        chroma_path = "./chroma_db"
-        shutil.rmtree(chroma_path, ignore_errors=True)
+        # Inicializar ChromaDB en memoria (evita configuraciones persistidas con proxies)
+        from chromadb.config import Settings
+        self.client = chromadb.Client(Settings(anonymized_telemetry=False))
 
-        self.client = chromadb.PersistentClient(path=chroma_path)
-
-        # Siempre recrear la colección con el embedding_function actual para evitar restos incompatibles
-        try:
-            self.client.delete_collection(name="study_content")
-            print("🗑️ Colección anterior eliminada para evitar configuraciones incompatibles")
-        except Exception:
-            pass
-
+        # Crear la colección siempre con el embedder actualizado
         self.collection = self.client.create_collection(
             name="study_content",
             embedding_function=embedding_function,
             metadata={"description": "Contenido educativo procesado"}
         )
-        print("✨ Nueva colección creada con embedder actualizado")
+        print("✨ Colección en memoria creada con embedder actualizado")
         
         # Historial de conversación por usuario (en memoria por ahora)
         self.conversation_histories: Dict[str, List[Dict[str, str]]] = {}
