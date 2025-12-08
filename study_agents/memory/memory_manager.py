@@ -29,19 +29,18 @@ class MemoryManager:
         # Usar API key proporcionada o de entorno
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         
-        embedding_function = self._build_embedding_function()
+        self.embedding_function = self._build_embedding_function()
         
         # Inicializar ChromaDB en memoria (evita configuraciones persistidas con proxies)
         from chromadb.config import Settings
         self.client = chromadb.Client(Settings(anonymized_telemetry=False))
 
-        # Crear la colección siempre con el embedder actualizado
+        # Crear la colección sin embedding_function; embebemos manualmente
         self.collection = self.client.create_collection(
             name="study_content",
-            embedding_function=embedding_function,
             metadata={"description": "Contenido educativo procesado"}
         )
-        print("✨ Colección en memoria creada con embedder actualizado")
+        print("✨ Colección en memoria creada (embedding manual)")
         
         # Historial de conversación por usuario (en memoria por ahora)
         self.conversation_histories: Dict[str, List[Dict[str, str]]] = {}
@@ -91,11 +90,14 @@ class MemoryManager:
         existing_count = self.collection.count()
         ids = [f"doc_{existing_count + i}" for i in range(len(documents))]
         
-        # Añadir documentos con embeddings automáticos
+        # Generar embeddings manualmente para evitar que Chroma instancie clientes con proxies
+        embeddings = self.embedding_function(documents) if self.embedding_function else None
+
         self.collection.add(
             documents=documents,
             metadatas=metadatas,
-            ids=ids
+            ids=ids,
+            embeddings=embeddings
         )
         
         print(f"📚 {len(documents)} documentos almacenados en memoria")
@@ -117,8 +119,10 @@ class MemoryManager:
             return results.get('documents', [])
         
         try:
+            # Calcular embedding manual
+            query_embedding = self.embedding_function([query]) if self.embedding_function else None
             results = self.collection.query(
-                query_texts=[query],
+                query_embeddings=query_embedding,
                 n_results=min(n_results, self.collection.count())
             )
             
