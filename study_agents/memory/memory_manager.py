@@ -7,7 +7,9 @@ from typing import List, Dict, Any, Optional
 import chromadb
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
+# Asegurar parche de proxies aplicado antes de usar openai
+import openai_proxy_patch  # noqa: F401
+import openai
 
 load_dotenv()
 
@@ -56,7 +58,7 @@ class MemoryManager:
         if self.api_key:
             class OpenAIEmbeddingAdapter:
                 def __init__(self, api_key: str, model: str = "text-embedding-3-small"):
-                    self.client = OpenAI(api_key=api_key)
+                    self.client = openai.OpenAI(api_key=api_key)
                     self.model = model
 
                 def __call__(self, texts: List[str]) -> List[List[float]]:
