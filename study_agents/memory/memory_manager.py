@@ -50,10 +50,11 @@ class MemoryManager:
             path="./chroma_db"
         )
         
-        # Intentar obtener la colección existente primero
+        # Intentar obtener la colección existente primero (inyectando embedding_function para evitar configuraciones antiguas)
         try:
             self.collection = self.client.get_collection(
-                name="study_content"
+                name="study_content",
+                embedding_function=embedding_function
             )
             # Si existe, verificar que la función de embedding sea compatible
             print("📚 Colección existente encontrada")
