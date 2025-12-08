@@ -29,7 +29,38 @@ class MemoryManager:
         # Usar API key proporcionada o de entorno
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         
-        # Configurar función de embeddings evitando pasar argumentos incompatibles (proxies)
+        embedding_function = self._build_embedding_function()
+        
+        # Inicializar ChromaDB
+        self.client = chromadb.PersistentClient(
+            path="./chroma_db"
+        )
+
+        # Siempre recrear la colección con el embedding_function actual para evitar restos de configuraciones antiguas (que incluían proxies)
+        try:
+            self.client.delete_collection(name="study_content")
+            print("🗑️ Colección anterior eliminada para evitar configuraciones incompatibles")
+        except Exception:
+            pass
+
+        self.collection = self.client.create_collection(
+            name="study_content",
+            embedding_function=embedding_function,
+            metadata={"description": "Contenido educativo procesado"}
+        )
+        print("✨ Nueva colección creada con embedder actualizado")
+        
+        # Historial de conversación por usuario (en memoria por ahora)
+        self.conversation_histories: Dict[str, List[Dict[str, str]]] = {}
+        
+        print(f"💾 Memoria inicializada: {memory_type}")
+        if self.api_key:
+            print("✅ Usando embeddings de OpenAI")
+
+    def _build_embedding_function(self):
+        """
+        Construye una función de embeddings usando OpenAI sin pasar argumentos incompatibles (como proxies).
+        """
         if self.api_key:
             class OpenAIEmbeddingAdapter:
                 def __init__(self, api_key: str, model: str = "text-embedding-3-small"):
@@ -40,54 +71,10 @@ class MemoryManager:
                     result = self.client.embeddings.create(model=self.model, input=texts)
                     return [item.embedding for item in result.data]
 
-            embedding_function = OpenAIEmbeddingAdapter(self.api_key)
+            return OpenAIEmbeddingAdapter(self.api_key)
         else:
             from chromadb.utils import embedding_functions
-            embedding_function = embedding_functions.DefaultEmbeddingFunction()
-        
-        # Inicializar ChromaDB
-        self.client = chromadb.PersistentClient(
-            path="./chroma_db"
-        )
-        
-        # Intentar obtener la colección existente primero (inyectando embedding_function para evitar configuraciones antiguas)
-        try:
-            self.collection = self.client.get_collection(
-                name="study_content",
-                embedding_function=embedding_function
-            )
-            # Si existe, verificar que la función de embedding sea compatible
-            print("📚 Colección existente encontrada")
-        except Exception:
-            # Si no existe, crear una nueva con la función de embedding especificada
-            try:
-                self.collection = self.client.create_collection(
-                    name="study_content",
-                    embedding_function=embedding_function,
-                    metadata={"description": "Contenido educativo procesado"}
-                )
-                print("✨ Nueva colección creada")
-            except Exception as e:
-                # Si falla, puede ser por conflicto de embedding function
-                # Eliminar y recrear
-                try:
-                    self.client.delete_collection(name="study_content")
-                    print("🗑️ Colección anterior eliminada (conflicto de embedding)")
-                except:
-                    pass
-                self.collection = self.client.create_collection(
-                    name="study_content",
-                    embedding_function=embedding_function,
-                    metadata={"description": "Contenido educativo procesado"}
-                )
-                print("✨ Nueva colección creada después de limpiar conflicto")
-        
-        # Historial de conversación por usuario (en memoria por ahora)
-        self.conversation_histories: Dict[str, List[Dict[str, str]]] = {}
-        
-        print(f"💾 Memoria inicializada: {memory_type}")
-        if self.api_key:
-            print("✅ Usando embeddings de OpenAI")
+            return embedding_functions.DefaultEmbeddingFunction()
     
     def get_memory_type(self) -> str:
         """Retorna el tipo de memoria"""
@@ -249,15 +236,8 @@ class MemoryManager:
             # Si falla, intentar eliminar la colección y recrearla
             try:
                 self.client.delete_collection(name="study_content")
-                # Recrear la colección
-                if self.api_key:
-                    embedding_function = embedding_functions.OpenAIEmbeddingFunction(
-                        api_key=self.api_key,
-                        model_name="text-embedding-3-small"
-                    )
-                else:
-                    embedding_function = embedding_functions.DefaultEmbeddingFunction()
-                
+                # Recrear la colección con la misma función de embeddings
+                embedding_function = self._build_embedding_function()
                 self.collection = self.client.create_collection(
                     name="study_content",
                     embedding_function=embedding_function,
