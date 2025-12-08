@@ -6,6 +6,8 @@ Sistema principal que coordina todos los agentes
 import os
 from typing import Optional
 from dotenv import load_dotenv
+# Parche para eliminar 'proxies' en openai.Client que algunas libs antiguas envían
+import openai_proxy_patch  # noqa: F401
 from agents.content_processor import ContentProcessorAgent
 from agents.explanation_agent import ExplanationAgent
 from agents.qa_assistant import QAAssistantAgent
