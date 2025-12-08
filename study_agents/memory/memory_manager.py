@@ -31,12 +31,14 @@ class MemoryManager:
         
         embedding_function = self._build_embedding_function()
         
-        # Inicializar ChromaDB
-        self.client = chromadb.PersistentClient(
-            path="./chroma_db"
-        )
+        # Inicializar ChromaDB (limpiar disco antes para evitar configuraciones antiguas con proxies)
+        import shutil
+        chroma_path = "./chroma_db"
+        shutil.rmtree(chroma_path, ignore_errors=True)
 
-        # Siempre recrear la colección con el embedding_function actual para evitar restos de configuraciones antiguas (que incluían proxies)
+        self.client = chromadb.PersistentClient(path=chroma_path)
+
+        # Siempre recrear la colección con el embedding_function actual para evitar restos incompatibles
         try:
             self.client.delete_collection(name="study_content")
             print("🗑️ Colección anterior eliminada para evitar configuraciones incompatibles")
