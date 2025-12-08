@@ -191,7 +191,6 @@ export default function SkillsPage() {
               background: "linear-gradient(135deg, #10b981, #059669)",
               top: "50%",
               left: "50%",
-              transform: 'translate(-50%, -50%)',
               animation: "floatOrb3 80s ease-in-out infinite",
               transform: 'translate(-50%, -50%)',
             }}

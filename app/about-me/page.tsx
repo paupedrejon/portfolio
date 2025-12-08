@@ -54,7 +54,6 @@ export default function AboutMePage() {
               background: "linear-gradient(135deg, #a855f7, #6366f1)",
               top: "50%",
               left: "50%",
-              transform: 'translate(-50%, -50%)',
               animation: "floatOrb3 80s ease-in-out infinite",
               transform: 'translate(-50%, -50%)',
             }}

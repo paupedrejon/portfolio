@@ -90,7 +90,6 @@ export default function ContactPage() {
               background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
               top: "50%",
               left: "50%",
-              transform: 'translate(-50%, -50%)',
               animation: "floatOrb3 80s ease-in-out infinite",
               transform: 'translate(-50%, -50%)',
             }}

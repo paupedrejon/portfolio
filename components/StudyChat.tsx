@@ -22,18 +22,12 @@ import {
   LightbulbIcon,
   DownloadIcon,
   UploadIcon,
-  SparklesIcon,
-  ClipboardIcon,
-  MessageIcon,
   QuestionIcon,
-  SettingsIcon,
   KeyIcon,
   SparkleIcon,
   StarIcon,
   TargetIcon,
   ZapIcon,
-  LinkIcon,
-  LoaderIcon,
 } from "./Icons";
 import { calculateCost, formatCost, estimateTokens, CostEstimate, MODEL_PRICING } from "./costCalculator";
 
@@ -41,7 +35,7 @@ interface Message {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
-  type?: "message" | "notes" | "test" | "feedback";
+  type?: "message" | "notes" | "test" | "feedback" | "success";
   timestamp: Date;
   costEstimate?: CostEstimate;
 }
@@ -149,7 +143,7 @@ export default function StudyChat() {
           } else {
             setShowAPIKeyConfig(true);
           }
-        } catch (e) {
+    } catch {
           setShowAPIKeyConfig(true);
         }
       } else {
@@ -209,10 +203,11 @@ export default function StudyChat() {
           type: "message",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error al subir archivos";
       addMessage({
         role: "assistant",
-        content: `Error al subir archivos: ${error.message}`,
+        content: `Error al subir archivos: ${message}`,
         type: "message",
       });
     } finally {
@@ -364,10 +359,11 @@ export default function StudyChat() {
       } else {
         await askQuestion(userMessage);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error inesperado";
       addMessage({
         role: "assistant",
-        content: `Error: ${error.message}`,
+        content: `Error: ${message}`,
         type: "message",
       });
     } finally {
@@ -434,15 +430,13 @@ export default function StudyChat() {
       } else {
         throw new Error(data.error || 'No se pudieron generar los apuntes');
       }
-    } catch (error: any) {
-      let errorMessage = 'No se pudieron generar los apuntes. Asegúrate de haber subido documentos primero.';
-      
-      if (error.name === 'AbortError') {
-        errorMessage = 'La solicitud tardó demasiado tiempo. Por favor, intenta de nuevo o verifica que el servidor esté funcionando.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
+    } catch (error: unknown) {
+      const isAbort = error instanceof Error && error.name === "AbortError";
+      const errorMessage = isAbort
+        ? "La solicitud tardó demasiado tiempo. Por favor, intenta de nuevo o verifica que el servidor esté funcionando."
+        : error instanceof Error && error.message
+          ? error.message
+          : "No se pudieron generar los apuntes. Asegúrate de haber subido documentos primero.";
       addMessage({
         role: "assistant",
         content: `Error: ${errorMessage}`,
@@ -548,10 +542,11 @@ export default function StudyChat() {
           type: "test",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error generando test";
       addMessage({
         role: "assistant",
-        content: `Error: ${error.message}`,
+        content: `Error: ${message}`,
         type: "message",
       });
     } finally {
@@ -621,8 +616,9 @@ export default function StudyChat() {
           });
         }, 1500);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Fallback a simulación
+      const message = error instanceof Error ? error.message : "Error desconocido";
       setTimeout(() => {
         addMessage({
           role: "assistant",
@@ -710,7 +706,7 @@ export default function StudyChat() {
         type: "feedback",
         costEstimate,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Fallback con cálculo local
       const correctCount = Object.entries(testAnswers).filter(
         ([id, answer]) => {
@@ -1205,7 +1201,7 @@ export default function StudyChat() {
                     color: colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563",
                     lineHeight: 1.6,
                   }}>
-                    Di "genera apuntes"
+                    Di &quot;genera apuntes&quot;
                   </p>
                 </div>
                 <div
@@ -3604,7 +3600,9 @@ function TestComponent({
                       gap: "0.75rem",
                       alignItems: "flex-start",
                     }}>
-                      <LightbulbIcon size={18} color={isCorrect ? "#10b981" : "#f59e0b"} style={{ marginTop: "0.125rem", flexShrink: 0 }} />
+                  <div style={{ marginTop: "0.125rem", flexShrink: 0 }}>
+                    <LightbulbIcon size={18} color={isCorrect ? "#10b981" : "#f59e0b"} />
+                  </div>
                       <div>
                         <div style={{ fontSize: "0.875rem", color: secondaryTextColor, marginBottom: "0.25rem", fontWeight: 600 }}>
                           Explicación:
@@ -3774,7 +3772,9 @@ function TestComponent({
                       gap: "0.75rem",
                       alignItems: "flex-start",
                     }}>
-                      <LightbulbIcon size={18} color={isCorrect ? "#10b981" : "#f59e0b"} style={{ marginTop: "0.125rem", flexShrink: 0 }} />
+                  <div style={{ marginTop: "0.125rem", flexShrink: 0 }}>
+                    <LightbulbIcon size={18} color={isCorrect ? "#10b981" : "#f59e0b"} />
+                  </div>
                       <div>
                         <div style={{ fontSize: "0.875rem", color: secondaryTextColor, marginBottom: "0.25rem", fontWeight: 600 }}>
                           Explicación:
@@ -4325,7 +4325,9 @@ function FeedbackComponent({
                   gap: "0.75rem",
                   marginBottom: "1rem",
                 }}>
-                  <XIcon size={20} color="#ef4444" style={{ marginTop: "0.125rem", flexShrink: 0 }} />
+                <div style={{ marginTop: "0.125rem", flexShrink: 0 }}>
+                  <XIcon size={20} color="#ef4444" />
+                </div>
                   <div style={{ flex: 1 }}>
                     <div style={{
                       fontWeight: 600,
@@ -4375,7 +4377,9 @@ function FeedbackComponent({
                       gap: "0.75rem",
                       alignItems: "flex-start",
                     }}>
-                      <LightbulbIcon size={18} color="#f59e0b" style={{ marginTop: "0.125rem", flexShrink: 0 }} />
+                    <div style={{ marginTop: "0.125rem", flexShrink: 0 }}>
+                      <LightbulbIcon size={18} color="#f59e0b" />
+                    </div>
                       <div>
                         <div style={{
                           fontSize: "0.875rem",
@@ -4444,7 +4448,9 @@ function FeedbackComponent({
                   alignItems: "flex-start",
                 }}
               >
-                <ZapIcon size={18} color="#6366f1" style={{ marginTop: "0.125rem", flexShrink: 0 }} />
+            <div style={{ marginTop: "0.125rem", flexShrink: 0 }}>
+              <ZapIcon size={18} color="#6366f1" />
+            </div>
                 <span style={{ color: textColor, lineHeight: 1.6 }}>{rec}</span>
               </li>
             ))}

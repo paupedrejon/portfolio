@@ -49,10 +49,11 @@ export async function POST(request: NextRequest) {
       inputTokens: data.inputTokens || 0,
       outputTokens: data.outputTokens || 0,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error grading test:', error);
+    const message = error instanceof Error ? error.message : 'Error al corregir test';
     return NextResponse.json(
-      { error: error.message || 'Error al corregir test' },
+      { error: message },
       { status: 500 }
     );
   }

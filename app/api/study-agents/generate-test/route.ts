@@ -5,7 +5,7 @@ const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { apiKey, difficulty = 'medium', numQuestions = 5, topics, model } = body;
+    const { apiKey, difficulty = 'medium', numQuestions = 5, topics, model, constraints } = body;
 
     if (!apiKey) {
       return NextResponse.json(
@@ -45,10 +45,11 @@ export async function POST(request: NextRequest) {
       inputTokens: data.inputTokens || 0,
       outputTokens: data.outputTokens || 0,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error generating test:', error);
+    const message = error instanceof Error ? error.message : 'Error al generar test';
     return NextResponse.json(
-      { error: error.message || 'Error al generar test' },
+      { error: message },
       { status: 500 }
     );
   }

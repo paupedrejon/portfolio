@@ -42,12 +42,13 @@ export async function POST(request: NextRequest) {
           { status: 503 }
         );
       }
-    } catch (healthError: any) {
+    } catch (healthError: unknown) {
+      const details = healthError instanceof Error ? healthError.message : 'Error desconocido';
       return NextResponse.json(
         { 
           error: `No se pudo conectar al backend FastAPI en ${FASTAPI_URL}`,
           hint: 'Asegúrate de que FastAPI esté corriendo: cd study_agents && python api/main.py',
-          details: healthError.message
+          details
         },
         { status: 503 }
       );
@@ -117,13 +118,13 @@ export async function POST(request: NextRequest) {
       files: data.data?.processed_files || files.map(f => f.name),
       data: data.data,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Upload] Error general:', error);
     
     // Mensajes de error más descriptivos
     let errorMessage = 'Error al subir archivos';
     
-    if (error.message) {
+    if (error instanceof Error && error.message) {
       if (error.message.includes('fetch failed') || 
           error.message.includes('ECONNREFUSED') ||
           error.message.includes('network')) {
