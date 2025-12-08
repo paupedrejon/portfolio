@@ -4,18 +4,29 @@ Interfaz web para interactuar con los agentes
 Soporta API keys por usuario
 """
 
+# APLICAR PARCHE DE PROXIES ANTES DE CUALQUIER OTRA IMPORTACIÓN
+import os
+import sys
+# Añadir el directorio padre al path para importar el parche
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
+# Importar y aplicar el parche ANTES de cualquier otra cosa
+try:
+    import openai_proxy_patch  # noqa: F401
+    # Forzar aplicación del parche de LangChain también
+    openai_proxy_patch.patch_langchain_openai()
+except Exception as e:
+    print(f"⚠️ Warning: Error al aplicar parche de proxies: {e}")
+
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict
-import os
-import sys
 from threading import Lock
 
-# Añadir el directorio padre al path para importar los módulos
-parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if parent_dir not in sys.path:
-    sys.path.insert(0, parent_dir)
+# El path ya fue añadido arriba para el parche
 
 # Importar desde el directorio raíz usando importlib para evitar conflictos de nombres
 import importlib.util

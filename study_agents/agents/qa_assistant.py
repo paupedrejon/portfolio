@@ -3,10 +3,21 @@ Q&A Assistant Agent - Responde preguntas del estudiante
 Usa RAG para buscar información relevante y responde con contexto
 """
 
+# Aplicar parche de proxies antes de importar ChatOpenAI
+import sys
+import os
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+try:
+    import openai_proxy_patch  # noqa: F401
+    openai_proxy_patch.patch_langchain_openai()
+except:
+    pass
+
 from typing import List, Optional
 from langchain_openai import ChatOpenAI
 from memory.memory_manager import MemoryManager
-import os
 import re
 
 class QAAssistantAgent:

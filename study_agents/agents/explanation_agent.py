@@ -3,11 +3,22 @@ Explanation Agent - Transforma información en explicaciones claras y resumidas
 Genera apuntes estructurados del contenido procesado
 """
 
+# Aplicar parche de proxies antes de importar ChatOpenAI
+import sys
+import os
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+try:
+    import openai_proxy_patch  # noqa: F401
+    openai_proxy_patch.patch_langchain_openai()
+except:
+    pass
+
 from typing import List, Dict, Optional
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from memory.memory_manager import MemoryManager
-import os
 import tiktoken
 
 class ExplanationAgent:

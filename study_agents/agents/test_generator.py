@@ -3,13 +3,24 @@ Test Generator Agent - Genera tests personalizados
 Crea preguntas de opción múltiple, verdadero/falso y respuesta corta
 """
 
+# Aplicar parche de proxies antes de importar ChatOpenAI
+import sys
+import os
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+try:
+    import openai_proxy_patch  # noqa: F401
+    openai_proxy_patch.patch_langchain_openai()
+except:
+    pass
+
 from typing import List, Dict, Optional
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from memory.memory_manager import MemoryManager
 import json
 import uuid
-import os
 import re
 from fractions import Fraction
 
