@@ -5,10 +5,9 @@ Usa ChromaDB para almacenar y recuperar documentos con embeddings
 
 from typing import List, Dict, Any, Optional
 import chromadb
-from chromadb.config import Settings
-from chromadb.utils import embedding_functions
 import os
 from dotenv import load_dotenv
+from openai import OpenAI
 
 load_dotenv()
 
@@ -30,14 +29,20 @@ class MemoryManager:
         # Usar API key proporcionada o de entorno
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         
-        # Configurar función de embeddings
+        # Configurar función de embeddings evitando pasar argumentos incompatibles (proxies)
         if self.api_key:
-            embedding_function = embedding_functions.OpenAIEmbeddingFunction(
-                api_key=self.api_key,
-                model_name="text-embedding-3-small"
-            )
+            class OpenAIEmbeddingAdapter:
+                def __init__(self, api_key: str, model: str = "text-embedding-3-small"):
+                    self.client = OpenAI(api_key=api_key)
+                    self.model = model
+
+                def __call__(self, texts: List[str]) -> List[List[float]]:
+                    result = self.client.embeddings.create(model=self.model, input=texts)
+                    return [item.embedding for item in result.data]
+
+            embedding_function = OpenAIEmbeddingAdapter(self.api_key)
         else:
-            # Usar embeddings por defecto si no hay API key
+            from chromadb.utils import embedding_functions
             embedding_function = embedding_functions.DefaultEmbeddingFunction()
         
         # Inicializar ChromaDB
