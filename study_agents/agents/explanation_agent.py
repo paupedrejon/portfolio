@@ -20,48 +20,63 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from memory.memory_manager import MemoryManager
 import tiktoken
+import sys
+
+# Importar model_manager
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
+try:
+    from model_manager import ModelManager
+except ImportError:
+    ModelManager = None
+    print("⚠️ Warning: model_manager no disponible, usando OpenAI directamente")
 
 class ExplanationAgent:
     """
     Agente especializado en generar explicaciones claras y resumidas
     """
     
-    def __init__(self, memory: MemoryManager, api_key: Optional[str] = None):
+    def __init__(self, memory: MemoryManager, api_key: Optional[str] = None, mode: str = "auto"):
         """
         Inicializa el agente de explicaciones
         
         Args:
             memory: Gestor de memoria del sistema
             api_key: API key de OpenAI (opcional)
+            mode: Modo de selección de modelo ("auto" = optimizar costes, "manual" = usar modelo especificado)
         """
         self.memory = memory
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.mode = mode
         self.llm = None  # Se inicializará cuando se necesite
+        self.model_manager = None
+        self.current_model_config = None
         
-        if self.api_key:
+        # Inicializar model_manager si está disponible
+        if ModelManager:
             try:
-                # Usar gpt-4-turbo que tiene 128k tokens de contexto (más reciente y estable)
-                # Si no está disponible, usar gpt-4o que también tiene contexto amplio
+                self.model_manager = ModelManager(api_key=self.api_key, mode=mode)
+                print("🤖 Explanation Agent inicializado con ModelManager (modo automático)")
+            except Exception as e:
+                print(f"⚠️ Warning: No se pudo inicializar ModelManager: {e}")
+                self.model_manager = None
+        else:
+            # Fallback a OpenAI directo
+            if self.api_key:
                 try:
                     self.llm = ChatOpenAI(
-                        model="gpt-4-turbo",
+                        model="gpt-3.5-turbo",  # Usar modelo más barato por defecto
                         temperature=0.7,
                         api_key=self.api_key,
                         max_tokens=None
                     )
-                except:
-                    # Fallback a gpt-4o si gpt-4-turbo no está disponible
-                    self.llm = ChatOpenAI(
-                        model="gpt-4o",
-                        temperature=0.7,
-                        api_key=self.api_key,
-                        max_tokens=None
-                    )
-                print("🤖 Explanation Agent inicializado con API key")
-            except Exception as e:
-                print(f"⚠️ Warning: No se pudo inicializar el LLM: {e}")
-        else:
-            print("⚠️ Explanation Agent inicializado sin API key (se requerirá para usar)")
+                    print("🤖 Explanation Agent inicializado (sin ModelManager, usando gpt-3.5-turbo)")
+                except Exception as e:
+                    print(f"⚠️ Warning: No se pudo inicializar el LLM: {e}")
+            else:
+                print("⚠️ Explanation Agent inicializado sin API key (se requerirá para usar)")
     
     def generate_explanations(self, max_concepts: int = 20) -> Dict[str, str]:
         """
@@ -73,38 +88,63 @@ class ExplanationAgent:
         Returns:
             Diccionario con explicaciones por concepto o texto completo
         """
-        # Verificar API key
-        if not self.api_key:
-            return {
-                "error": "Se requiere configurar una API key de OpenAI para generar explicaciones.",
-                "status": "error"
-            }
-        
-        # Inicializar LLM si no está inicializado
-        if not self.llm:
+        # Usar model_manager si está disponible (modo automático)
+        if self.model_manager:
             try:
-                # Usar gpt-4-turbo que tiene 128k tokens de contexto (más reciente y estable)
-                # Si no está disponible, usar gpt-4o que también tiene contexto amplio
-                try:
-                    self.llm = ChatOpenAI(
-                        model="gpt-4-turbo",
-                        temperature=0.7,
-                        api_key=self.api_key,
-                        max_tokens=None
-                    )
-                except:
-                    # Fallback a gpt-4o si gpt-4-turbo no está disponible
-                    self.llm = ChatOpenAI(
-                        model="gpt-4o",
-                        temperature=0.7,
-                        api_key=self.api_key,
-                        max_tokens=None
-                    )
+                # Seleccionar modelo automáticamente (prioriza gratis > barato > caro)
+                # Para generación de explicaciones, necesitamos contexto amplio
+                self.current_model_config, self.llm = self.model_manager.select_model(
+                    task_type="generation",
+                    min_quality="medium",
+                    context_length=8000  # Necesitamos contexto amplio
+                )
+                print(f"✅ Usando modelo: {self.current_model_config.name} (costo: ${self.current_model_config.cost_per_1k_input:.4f}/{self.current_model_config.cost_per_1k_output:.4f} por 1k tokens)")
             except Exception as e:
+                error_msg = f"⚠️ Error al seleccionar modelo automáticamente: {str(e)}"
+                print(error_msg)
+                # Fallback: intentar con OpenAI si hay API key
+                if self.api_key:
+                    try:
+                        self.llm = ChatOpenAI(
+                            model="gpt-3.5-turbo",  # Modelo más barato
+                            temperature=0.7,
+                            api_key=self.api_key,
+                            max_tokens=None
+                        )
+                        print("✅ Fallback a gpt-3.5-turbo")
+                    except Exception as e2:
+                        return {
+                            "error": f"Error al inicializar el modelo: {str(e2)}",
+                            "status": "error"
+                        }
+                else:
+                    return {
+                        "error": "Se requiere configurar una API key de OpenAI o tener Ollama instalado.",
+                        "status": "error"
+                    }
+        else:
+            # Fallback: usar OpenAI directamente
+            if not self.api_key:
                 return {
-                    "error": f"Error al inicializar el modelo: {str(e)}",
+                    "error": "Se requiere configurar una API key de OpenAI para generar explicaciones.",
                     "status": "error"
                 }
+            
+            # Inicializar LLM si no está inicializado
+            if not self.llm:
+                try:
+                    # Usar gpt-3.5-turbo (más barato) en lugar de gpt-4-turbo
+                    self.llm = ChatOpenAI(
+                        model="gpt-3.5-turbo",
+                        temperature=0.7,
+                        api_key=self.api_key,
+                        max_tokens=None
+                    )
+                except Exception as e:
+                    return {
+                        "error": f"Error al inicializar el modelo: {str(e)}",
+                        "status": "error"
+                    }
         
         # Recuperar todo el contenido de la memoria
         all_content = self.memory.get_all_documents(limit=100)
@@ -151,45 +191,67 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
                 "status": "error"
             }
     
-    def generate_notes(self, topics: Optional[List[str]] = None, model: Optional[str] = "gpt-4-turbo") -> str:
+    def generate_notes(self, topics: Optional[List[str]] = None, model: Optional[str] = None) -> str:
         """
         Genera apuntes completos en formato Markdown
         
         Args:
             topics: Lista de temas específicos a cubrir (opcional)
-            model: Modelo de OpenAI a usar (opcional, por defecto gpt-4-turbo)
+            model: Modelo preferido (opcional, si no se especifica usa modo automático)
             
         Returns:
             Apuntes en formato Markdown
         """
-        # Verificar API key
-        if not self.api_key:
-            return "# Error\n\n⚠️ Se requiere configurar una API key de OpenAI para generar apuntes. Por favor, configura tu API key."
-        
-        # Inicializar LLM con el modelo especificado
-        try:
-            self.llm = ChatOpenAI(
-                model=model,
-                temperature=0.7,
-                api_key=self.api_key,
-                max_tokens=None
-            )
-        except Exception as e:
-            # Si el modelo especificado falla, intentar con gpt-4-turbo como fallback
+        # Usar model_manager si está disponible (modo automático)
+        if self.model_manager:
             try:
-                print(f"⚠️ Modelo {model} no disponible, usando gpt-4-turbo como fallback")
+                # Seleccionar modelo automáticamente (prioriza gratis > barato > caro)
+                # Para generación de apuntes, necesitamos contexto amplio y buena calidad
+                self.current_model_config, self.llm = self.model_manager.select_model(
+                    task_type="generation",
+                    min_quality="medium",
+                    preferred_model=model if model else None,
+                    context_length=8000  # Necesitamos contexto amplio
+                )
+                print(f"✅ Usando modelo: {self.current_model_config.name} (costo: ${self.current_model_config.cost_per_1k_input:.4f}/{self.current_model_config.cost_per_1k_output:.4f} por 1k tokens)")
+            except Exception as e:
+                error_msg = f"⚠️ Error al seleccionar modelo automáticamente: {str(e)}"
+                print(error_msg)
+                # Fallback: intentar con OpenAI si hay API key
+                if self.api_key:
+                    try:
+                        self.llm = ChatOpenAI(
+                            model="gpt-3.5-turbo",  # Modelo más barato
+                            temperature=0.7,
+                            api_key=self.api_key,
+                            max_tokens=None
+                        )
+                        print("✅ Fallback a gpt-3.5-turbo")
+                    except Exception as e2:
+                        return f"# Error\n\n⚠️ Error al inicializar el modelo: {str(e2)}"
+                else:
+                    return "# Error\n\n⚠️ Se requiere configurar una API key de OpenAI o tener Ollama instalado. Por favor, configura tu API key o instala Ollama."
+        else:
+            # Fallback: usar OpenAI directamente
+            if not self.api_key:
+                return "# Error\n\n⚠️ Se requiere configurar una API key de OpenAI para generar apuntes. Por favor, configura tu API key."
+            
+            # Usar modelo especificado o el más barato disponible
+            model_to_use = model if model else "gpt-3.5-turbo"  # Por defecto usar el más barato
+            
+            try:
                 self.llm = ChatOpenAI(
-                    model="gpt-4-turbo",
+                    model=model_to_use,
                     temperature=0.7,
                     api_key=self.api_key,
                     max_tokens=None
                 )
-            except:
-                # Último fallback a gpt-4o
+            except Exception as e:
+                # Si el modelo especificado falla, intentar con gpt-3.5-turbo como fallback
                 try:
-                    print("⚠️ gpt-4-turbo no disponible, usando gpt-4o como fallback")
+                    print(f"⚠️ Modelo {model_to_use} no disponible, usando gpt-3.5-turbo como fallback")
                     self.llm = ChatOpenAI(
-                        model="gpt-4o",
+                        model="gpt-3.5-turbo",
                         temperature=0.7,
                         api_key=self.api_key,
                         max_tokens=None
@@ -265,14 +327,36 @@ Para CADA concepto importante del contenido, usa este formato visual:
   * Listas estructuradas con fechas
   * Texto organizado por secciones con fechas
 
-**OBLIGATORIO**: Crea esquemas conceptuales SIMPLES usando JSON estructurado para CADA apartado o grupo de conceptos del contenido.
+**OBJETIVO DE LOS ESQUEMAS CONCEPTUALES**: Los esquemas conceptuales deben ayudar al estudiante a entender y memorizar los conceptos clave del tema. Deben mostrar:
+- **Relaciones jerárquicas**: concepto principal → subconceptos → detalles
+- **Categorías claras**: agrupa conceptos relacionados por categorías (usando colores diferentes)
+- **Información educativa**: cada nodo debe contener información que realmente ayude a entender el tema
+- **Estructura lógica**: los conceptos deben estar organizados de manera que tenga sentido pedagógico
+
+**⚠️ NO GENERES ESQUEMAS GENÉRICOS O VACÍOS**:
+- NO uses etiquetas genéricas como "Concepto 1", "Característica A", "Elemento X"
+- NO crees esquemas con solo 2-3 nodos que no aporten información
+- NO repitas la misma estructura para todos los temas
+- SOLO crea esquemas cuando realmente ayuden a entender el tema
+
+**OBLIGATORIO**: Crea esquemas conceptuales EDUCATIVOS usando JSON estructurado para CADA apartado o grupo de conceptos del contenido.
 
 ### REGLAS IMPORTANTES:
 
 1. **Crea UN esquema por cada apartado/sección** - El esquema debe estar DENTRO del apartado correspondiente, justo después de la explicación
-2. **Máximo 5 nodos por esquema** - mantén los diagramas simples y claros
-3. **Usa solo letras mayúsculas** para IDs de nodos (A, B, C, D, E)
-4. **Estructura OBLIGATORIA**: Cada apartado debe tener su esquema dentro de él:
+2. **Mínimo 4 nodos, máximo 8 nodos** - Los esquemas deben tener suficiente información para ser útiles, pero no demasiada para ser confusos
+3. **Usa solo letras mayúsculas** para IDs de nodos (A, B, C, D, E, F, G, H)
+4. **Estructura jerárquica clara**: 
+   - Nodo A: Concepto principal del tema
+   - Nodos B, C, D: Categorías principales o aspectos fundamentales
+   - Nodos E, F, G, H: Subconceptos o detalles importantes de cada categoría
+5. **Usa colores para categorizar**: 
+   - Color morado (#6366f1): Concepto principal
+   - Color verde (#10b981): Categorías o aspectos principales
+   - Color azul (#06b6d4): Subconceptos o detalles
+   - Color naranja (#f59e0b): Ejemplos o aplicaciones
+   - Color rosa (#ec4899): Características especiales
+6. **Estructura OBLIGATORIA**: Cada apartado debe tener su esquema dentro de él:
 
 ```
 ## [Nombre del Apartado]
@@ -283,16 +367,19 @@ Para CADA concepto importante del contenido, usa este formato visual:
 
 \`\`\`diagram-json
 {
+  "title": "Concepto Principal del Apartado",
   "nodes": [
     {"id": "A", "label": "Concepto Principal del Apartado", "color": "#6366f1"},
-    {"id": "B", "label": "Característica 1", "color": "#10b981"},
-    {"id": "C", "label": "Característica 2", "color": "#10b981"},
-    {"id": "D", "label": "Característica 3", "color": "#10b981"}
+    {"id": "B", "label": "Categoría 1 (nombre específico del contenido)", "color": "#a855f7", "description": "Descripción detallada de la categoría 1 con información específica del contenido", "letter": "H"},
+    {"id": "C", "label": "Categoría 2 (nombre específico del contenido)", "color": "#f59e0b", "description": "Descripción detallada de la categoría 2 con información específica del contenido", "letter": "D"},
+    {"id": "D", "label": "Categoría 3 (nombre específico del contenido)", "color": "#06b6d4", "description": "Descripción detallada de la categoría 3 con información específica del contenido", "letter": "T"},
+    {"id": "E", "label": "Categoría 4 (nombre específico del contenido)", "color": "#ec4899", "description": "Descripción detallada de la categoría 4 con información específica del contenido", "letter": "C"}
   ],
   "edges": [
     {"from": "A", "to": "B"},
     {"from": "A", "to": "C"},
-    {"from": "A", "to": "D"}
+    {"from": "A", "to": "D"},
+    {"from": "A", "to": "E"}
   ]
 }
 \`\`\`
@@ -304,6 +391,7 @@ Para CADA concepto importante del contenido, usa este formato visual:
 - Los esquemas DEBEN estar dentro de cada apartado (##), no al final de todo
 - Un esquema por cada grupo de conceptos relacionados
 - NO uses código Mermaid, SOLO JSON estructurado dentro de bloques \`\`\`diagram-json
+- **Cada nodo debe tener información ESPECÍFICA del contenido**, no genérica
 
 **FORMATO PARA ESQUEMAS - USA SOLO JSON ESTRUCTURADO**:
 
@@ -339,61 +427,28 @@ En lugar de código Mermaid, genera datos estructurados en JSON dentro de bloque
 2. **NODOS**:
    - IDs: A, B, C, D, E (una letra mayúscula)
    - Labels: Texto descriptivo del concepto (puede tener cualquier carácter)
-   - Colors: Usa colores hexadecimales (#6366f1, #10b981, #8b5cf6, #06b6d4, #f59e0b)
+   - Colors: Usa colores hexadecimales (#a855f7 morado, #f59e0b naranja, #06b6d4 teal, #ec4899 rosa) para las categorías
+   - Description: (OPCIONAL pero RECOMENDADO) Descripción detallada de cada categoría que ayude a entender el concepto
+   - Letter: (OPCIONAL) Letra para el cuadrante (H, D, T, C, etc.). Si no se especifica, se generará automáticamente
 
 3. **CONEXIONES**:
    - "from": ID del nodo origen
    - "to": ID del nodo destino
    - Sin etiquetas en las flechas por ahora
 
-**EJEMPLO SIMPLE**:
-Si el concepto es "Normalización", genera:
+**EJEMPLOS DE ESQUEMAS CONCEPTUALES EDUCATIVOS**:
+
+**Ejemplo 1 - Esquema Jerárquico con Categorías**:
+Si el concepto es "Cocodrilos", genera un esquema que muestre las categorías principales:
 \`\`\`diagram-json
 {
+  "title": "Cocodrilos",
   "nodes": [
-    {"id": "A", "label": "Normalización", "color": "#6366f1"},
-    {"id": "B", "label": "Primera Forma Normal", "color": "#10b981"},
-    {"id": "C", "label": "Segunda Forma Normal", "color": "#10b981"},
-    {"id": "D", "label": "Tercera Forma Normal", "color": "#10b981"}
-  ],
-  "edges": [
-    {"from": "A", "to": "B"},
-    {"from": "A", "to": "C"},
-    {"from": "A", "to": "D"}
-  ]
-}
-\`\`\`
-
-**IMPORTANTE**: 
-- Mantén los esquemas SIMPLES. Máximo 5 nodos.
-- El JSON DEBE ser válido y estar correctamente formateado.
-- NO uses código Mermaid, solo JSON estructurado.
-
-### Reglas SIMPLES para Esquemas:
-
-- **Crea 1-2 esquemas** por cada tema principal (mantén simple)
-- Cada esquema debe tener **máximo 5 nodos**
-- Usa **conexiones simples** (sin etiquetas en flechas por ahora)
-- Asegúrate de que el JSON sea válido y esté correctamente formateado
-
-### EJEMPLO SIMPLE:
-
-Para un contenido sobre "Fotosíntesis", crea algo así:
-
-## Fotosíntesis
-
-La fotosíntesis es el proceso por el cual las plantas convierten la luz solar en energía química.
-
-### Esquema Conceptual: Proceso de Fotosíntesis
-
-\`\`\`diagram-json
-{
-  "nodes": [
-    {"id": "A", "label": "Fotosíntesis", "color": "#6366f1"},
-    {"id": "B", "label": "Luz Solar", "color": "#10b981"},
-    {"id": "C", "label": "Clorofila", "color": "#10b981"},
-    {"id": "D", "label": "ATP y NADPH", "color": "#10b981"},
-    {"id": "E", "label": "Glucosa", "color": "#10b981"}
+    {"id": "A", "label": "Cocodrilos", "color": "#6366f1"},
+    {"id": "B", "label": "Clasificación", "color": "#a855f7", "description": "Los cocodrilos pertenecen al orden Crocodylia y se clasifican en diferentes familias según sus características anatómicas y hábitat.", "letter": "C"},
+    {"id": "C", "label": "Características Físicas", "color": "#f59e0b", "description": "Poseen un cuerpo alargado, cola poderosa, mandíbulas fuertes con dientes cónicos, y piel gruesa con escamas duras que les protege.", "letter": "F"},
+    {"id": "D", "label": "Alimentación", "color": "#06b6d4", "description": "Son carnívoros que se alimentan principalmente de peces, aves, mamíferos y otros animales acuáticos y terrestres.", "letter": "A"},
+    {"id": "E", "label": "Comportamiento", "color": "#ec4899", "description": "Son animales territoriales, excelentes nadadores, y pueden permanecer sumergidos durante largos períodos de tiempo.", "letter": "B"}
   ],
   "edges": [
     {"from": "A", "to": "B"},
@@ -404,30 +459,161 @@ La fotosíntesis es el proceso por el cual las plantas convierten la luz solar e
 }
 \`\`\`
 
+**Ejemplo 2 - Esquema de Comparación (VS) - PLANTILLA FIJA**:
+Si el concepto es una comparación como "Rinocerontes vs Ardillas", usa esta PLANTILLA EXACTA y solo completa los textos:
+\`\`\`diagram-json
+{
+  "title": "Rinocerontes vs Ardillas",
+  "nodes": [
+    {"id": "A", "label": "VS", "color": "#6366f1"},
+    {"id": "B", "label": "Rinocerontes", "color": "#c084fc", "characteristic": "ALTURA", "description": "TAMAÑO: 3000 kg de masa corporal. ALTURA: Hasta 1.8 metros. ESTRATEGIA DE DEFENSA: Carga frontal con cuerno, uso del cuerno como arma, resistencia al daño físico. Cómo podría ganar: Su enorme masa y fuerza le permitirían aplastar o embestir al oponente. El cuerno puede causar heridas graves. Su piel gruesa le protege de ataques menores. Su velocidad de carga (hasta 50 km/h) le da ventaja en embestidas. Cómo podría perder: Su falta de agilidad le hace vulnerable a ataques rápidos desde los lados o por detrás. No puede trepar ni escapar fácilmente. Su gran tamaño lo hace un blanco fácil. Ventajas: Masa corporal superior, defensa natural con cuerno, resistencia al daño, fuerza física abrumadora. Desventajas: Falta de agilidad, incapacidad de trepar, movilidad limitada en espacios pequeños.", "letter": "H"},
+    {"id": "C", "label": "Ardillas", "color": "#67e8f9", "characteristic": "ESTRATEGIA DE DEFENSA", "description": "TAMAÑO: 0.5-1 kg de peso. ALTURA: 20-30 cm. AGILIDAD: Movimiento extremadamente rápido y ágil. ESTRATEGIA DE DEFENSA: Huida rápida, capacidad de trepar árboles y estructuras verticales, esconderse en espacios pequeños. Cómo podría ganar: Su agilidad extrema le permitiría esquivar ataques y atacar desde ángulos inesperados. Puede trepar para escapar o atacar desde arriba. Sus dientes afilados pueden causar heridas en puntos vulnerables. Su pequeño tamaño le permite esconderse y atacar por sorpresa. Cómo podría perder: Su pequeño tamaño lo hace vulnerable a un solo golpe del oponente. No tiene defensa natural contra ataques directos. Su falta de fuerza física le impide causar daño significativo a oponentes grandes. Ventajas: Agilidad superior, capacidad de trepar, movilidad en espacios pequeños, velocidad de escape. Desventajas: Tamaño pequeño, falta de fuerza, vulnerabilidad a ataques directos, sin defensa natural.", "letter": "D"}
+  ],
+  "edges": [
+    {"from": "A", "to": "B"},
+    {"from": "A", "to": "C"}
+  ]
+}
+\`\`\`
+
+**PLANTILLA FIJA PARA COMPARACIONES - SOLO COMPLETA LOS TEXTOS**:
+- **Estructura FIJA**: Siempre usa esta estructura exacta con 3 nodos (A=VS, B=primer elemento, C=segundo elemento)
+- **Nodo A**: Siempre {"id": "A", "label": "VS", "color": "#6366f1"}
+- **Nodo B (izquierda)**: 
+  * "label": Nombre exacto del primer elemento (ej: "Rinocerontes", "Peces", "Ardillas", "Gojo Satoru", "Goku", "Sukuna")
+  * "color": "#c084fc" (morado pastel)
+  * "characteristic": Una característica clave en MAYÚSCULAS para la caja superior (ej: "ALTURA", "AGILIDAD", "TAMAÑO", "ESTRATEGIA DE DEFENSA", "LIMITLESS (TÉCNICA)", "TRANSFORMACIONES", "MANIPULACIÓN DE ENERGÍA MALDITA", "POWER-UPS")
+  * "description": Descripción COMPLETA y DETALLADA con el siguiente formato EXACTO (mínimo 250-350 palabras):
+    
+    **FORMATO OBLIGATORIO PARA LA DESCRIPCIÓN**:
+    
+    [Breve introducción del elemento - 2-3 líneas]
+    
+    Ventajas:
+    
+    - [Nombre de la ventaja 1]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil en el enfrentamiento, incluyendo ejemplos específicos y situaciones concretas]
+    
+    - [Nombre de la ventaja 2]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil]
+    
+    - [Nombre de la ventaja 3]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil]
+    
+    - [Nombre de la ventaja 4]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil]
+    
+    - [Nombre de la ventaja 5]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil]
+    
+    - [Nombre de la ventaja 6]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil]
+    
+    - [Nombre de la ventaja 7]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil]
+    
+    Desventajas:
+    
+    - [Nombre de la desventaja 1]: [Explicación DETALLADA (3-5 líneas) de por qué esta desventaja podría ser problemática, incluyendo ejemplos específicos]
+    
+    - [Nombre de la desventaja 2]: [Explicación DETALLADA (3-5 líneas) de por qué esta desventaja podría ser problemática]
+    
+    - [Nombre de la desventaja 3]: [Explicación DETALLADA (3-5 líneas) de por qué esta desventaja podría ser problemática]
+    
+    - [Nombre de la desventaja 4]: [Explicación DETALLADA (3-5 líneas) de por qué esta desventaja podría ser problemática]
+    
+    **EJEMPLO CONCRETO COMPLETO**:
+    "Sukuna es un poderoso hechicero maldito con habilidades excepcionales que le convierten en uno de los oponentes más temibles.\n\nVentajas:\n\n- Manipulación de energía maldita: Esta habilidad le permite crear técnicas devastadoras que pueden destruir objetivos a gran escala, dándole una ventaja ofensiva abrumadora contra oponentes que no pueden defenderse de ataques de energía. Puede lanzar ondas de energía destructiva que atraviesan múltiples objetivos, y su dominio sobre la energía maldita le permite adaptar sus ataques a diferentes situaciones de combate. En enfrentamientos contra múltiples enemigos, esta capacidad le da una clara ventaja táctica.\n\n- Regeneración: Su capacidad de regeneración le permite recuperarse rápidamente de heridas graves, permitiéndole mantener la presión en combates prolongados donde otros se debilitarían. Incluso heridas que serían fatales para otros combatientes pueden ser curadas en cuestión de minutos, lo que le permite continuar luchando sin perder efectividad. Esta resistencia le convierte en un oponente extremadamente difícil de derrotar mediante daño acumulativo.\n\n- Experiencia de combate: Con siglos de experiencia, puede anticipar movimientos y adaptarse rápidamente a las tácticas del oponente, dándole una ventaja estratégica significativa. Ha enfrentado innumerables tipos de oponentes y técnicas, lo que le permite reconocer patrones de ataque y desarrollar contramedidas efectivas en tiempo real. Su conocimiento táctico es invaluable en combates complejos.\n\n- Fuerza física sobrehumana: Su cuerpo mejorado le permite ejercer una fuerza física que supera ampliamente a la mayoría de oponentes, permitiéndole romper defensas físicas y causar daño devastador con ataques cuerpo a cuerpo. Puede destruir estructuras sólidas con golpes simples y su resistencia física le permite soportar impactos que incapacitarían a otros combatientes.\n\n- Versatilidad táctica: Su amplio arsenal de técnicas le permite adaptarse a diferentes tipos de enfrentamientos, desde combates a distancia hasta peleas cuerpo a cuerpo. Puede cambiar de estrategia instantáneamente según las circunstancias, lo que le hace impredecible y difícil de contrarrestar. Esta flexibilidad le da una ventaja significativa sobre oponentes con estilos de combate más limitados.\n\n- Intimidación psicológica: Su reputación y presencia abrumadora pueden afectar psicológicamente a sus oponentes, reduciendo su efectividad en combate. Muchos combatientes se ven afectados por el miedo antes incluso de comenzar el enfrentamiento, lo que le da una ventaja inicial significativa. Esta presión psicológica puede llevar a errores tácticos por parte del oponente.\n\n- Resistencia a técnicas especiales: Su naturaleza única le otorga resistencia a muchas técnicas especiales que serían efectivas contra otros combatientes. Puede neutralizar o contrarrestar habilidades que dependen de manipulación espiritual o energética, lo que limita las opciones tácticas de sus oponentes.\n\nDesventajas:\n\n- Arrogancia: Su excesiva confianza puede llevarle a subestimar oponentes, dejándole vulnerable a ataques sorpresa o tácticas inesperadas. A menudo no toma en serio a oponentes que considera inferiores, lo que puede resultar en errores tácticos costosos. Esta arrogancia puede ser explotada por oponentes astutos que sepan cómo manipular su ego.\n\n- Dependencia de energía: Si se agota su reserva de energía maldita, pierde gran parte de su poder ofensivo, dejándole en desventaja. Aunque tiene reservas considerables, en combates extremadamente prolongados puede verse limitado. Esta dependencia le hace vulnerable a tácticas diseñadas para agotar sus recursos energéticos.\n\n- Limitaciones físicas: A pesar de su poder, su cuerpo físico tiene limitaciones que pueden ser explotadas. Ciertos tipos de ataques o técnicas pueden ser más efectivos contra él de lo que él mismo reconoce. Su confianza en sus habilidades regenerativas puede llevarle a ignorar daño que, aunque no sea inmediatamente fatal, puede acumularse y debilitarle.\n\n- Vulnerabilidad a técnicas específicas: Algunas técnicas o habilidades especiales pueden ser particularmente efectivas contra él, especialmente aquellas diseñadas específicamente para contrarrestar energía maldita. Oponentes con conocimiento especializado pueden tener ventajas tácticas significativas si conocen sus debilidades específicas."
+    
+  * "letter": "H" (siempre H para el primero)
+- **Nodo C (derecha)**:
+  * "label": Nombre exacto del segundo elemento
+  * "color": "#67e8f9" (teal pastel)
+  * "characteristic": Una característica clave diferente en MAYÚSCULAS (ej: "EVASIÓN", "VELOCIDAD", "ESTRATEGIA DE DEFENSA", "TRANSFORMACIONES", "KI", "POWER-UPS")
+  * "description": Descripción COMPLETA y DETALLADA con el MISMO formato que el nodo B (mínimo 250-350 palabras, usando el formato de Ventajas/Desventajas)
+  * "letter": "D" (siempre D para el segundo)
+- **Edges**: Siempre [{"from": "A", "to": "B"}, {"from": "A", "to": "C"}]
+- **CRÍTICO**: 
+  * Las descripciones DEBEN seguir el formato EXACTO de Ventajas/Desventajas con explicaciones DETALLADAS
+  * MÍNIMO 7 ventajas y 4 desventajas para cada elemento (más es mejor)
+  * Cada ventaja/desventaja debe tener una explicación DETALLADA de 3-5 líneas (no corta) explicando por qué es útil o problemática, incluyendo ejemplos específicos y situaciones concretas
+  * Usa saltos de línea (\n) para separar secciones y elementos de lista
+  * El texto debe ser MUY EXPLICATIVO y DETALLADO (mínimo 500-700 palabras por elemento, más es mejor)
+  * NO uses descripciones cortas o genéricas - cada punto debe ser específico y educativo
+  * Incluye detalles concretos, ejemplos de situaciones, y explicaciones extensas sobre cómo cada ventaja/desventaja afecta el enfrentamiento
+
+**Ejemplo 2 - Esquema con Descripciones**:
+Para "Elefantes", muestra las categorías principales con descripciones:
+\`\`\`diagram-json
+{
+  "title": "Elefantes",
+  "nodes": [
+    {"id": "A", "label": "Elefantes", "color": "#6366f1"},
+    {"id": "B", "label": "Hábitats Diversos", "color": "#a855f7", "description": "Los elefantes viven en hábitats diversos como sabanas, bosques, desiertos y zonas montañosas, adaptándose a diferentes condiciones climáticas.", "letter": "H"},
+    {"id": "C", "label": "Dieta Herbívora", "color": "#f59e0b", "description": "Se alimentan principalmente de hierba, hojas, frutas, cortezas y raíces, consumiendo grandes cantidades de vegetación diariamente.", "letter": "D"},
+    {"id": "D", "label": "Tamaño Gigante", "color": "#06b6d4", "description": "Son gigantes, siendo el animal terrestre más grande del mundo, con pesos que pueden superar las 6 toneladas.", "letter": "T"},
+    {"id": "E", "label": "Comportamiento Social", "color": "#ec4899", "description": "Viven en manadas matriarcales complejas, mostrando comportamientos sociales avanzados como el cuidado de crías y la comunicación.", "letter": "C"}
+  ],
+  "edges": [
+    {"from": "A", "to": "B"},
+    {"from": "A", "to": "C"},
+    {"from": "A", "to": "D"},
+    {"from": "A", "to": "E"}
+  ]
+}
+\`\`\`
+
+**REGLAS CRÍTICAS PARA ESQUEMAS ÚTILES**:
+
+1. **Información específica**: Cada nodo debe contener información REAL y ESPECÍFICA del contenido, no genérica
+2. **Relaciones claras**: Las conexiones deben mostrar relaciones lógicas (jerarquía, categorización, proceso, etc.)
+3. **Mínimo 4 nodos**: Un esquema con menos de 4 nodos no aporta suficiente información
+4. **Máximo 8 nodos**: Más de 8 nodos puede ser confuso
+5. **Colores con significado**: Usa colores diferentes para diferentes categorías o tipos de conceptos
+6. **Estructura pedagógica**: Organiza los conceptos de manera que tenga sentido educativo (de lo general a lo específico, o por categorías)
+7. **NO esquemas genéricos**: Si no puedes crear un esquema con información específica y útil, NO lo incluyas
+
+**IMPORTANTE**: 
+- El JSON DEBE ser válido y estar correctamente formateado.
+- NO uses código Mermaid, solo JSON estructurado.
+- Cada esquema debe ayudar REALMENTE a entender el tema, no ser decorativo.
+
 ---
 
 ### INSTRUCCIONES FINALES CRÍTICAS:
 
-1. **NO GENERES APARTADOS VACÍOS**: Si un apartado no tiene conceptos clave o información suficiente para crear un esquema, NO lo incluyas en la respuesta. Solo crea apartados que tengan contenido real y esquemas válidos.
+1. **ESQUEMAS DEBEN SER EDUCATIVOS Y ÚTILES**: 
+   - Cada esquema debe ayudar REALMENTE a entender el tema
+   - NO generes esquemas genéricos o vacíos que no aporten información
+   - Cada nodo debe contener información ESPECÍFICA del contenido, no etiquetas genéricas
+   - Si no puedes crear un esquema útil con información específica, NO lo incluyas
 
-2. **JSON DE DIAGRAMA REAL**: NO uses placeholders. DEBES escribir el JSON completo y válido dentro de bloques \`\`\`diagram-json. El JSON DEBE estar completo - NO lo cortes a mitad de un campo, NO dejes campos incompletos, asegúrate de cerrar todas las llaves y corchetes.
+2. **ESTRUCTURA JERÁRQUICA CLARA**: 
+   - Organiza los conceptos de manera pedagógica (de lo general a lo específico)
+   - Usa colores para diferenciar categorías o tipos de conceptos
+   - Muestra relaciones lógicas entre conceptos (jerarquía, categorización, proceso, etc.)
 
-3. **NO GENERES DIAGRAMAS GANTT**: Si el contenido incluye calendarios, cronogramas o líneas de tiempo, NO uses diagramas gantt de Mermaid. En su lugar, presenta la información en formato de tabla o lista estructurada.
+3. **NO GENERES APARTADOS VACÍOS**: Si un apartado no tiene conceptos clave o información suficiente para crear un esquema útil, NO lo incluyas en la respuesta. Solo crea apartados que tengan contenido real y esquemas válidos.
 
-4. **ESTRUCTURA OBLIGATORIA**: Cada apartado DEBE tener:
+4. **JSON DE DIAGRAMA REAL**: NO uses placeholders. DEBES escribir el JSON completo y válido dentro de bloques \`\`\`diagram-json. El JSON DEBE estar completo - NO lo cortes a mitad de un campo, NO dejes campos incompletos, asegúrate de cerrar todas las llaves y corchetes.
+
+5. **NO GENERES DIAGRAMAS GANTT**: Si el contenido incluye calendarios, cronogramas o líneas de tiempo, NO uses diagramas gantt de Mermaid. En su lugar, presenta la información en formato de tabla o lista estructurada.
+
+6. **ESTRUCTURA OBLIGATORIA**: Cada apartado DEBE tener:
    - Título del apartado (##)
    - Explicación del apartado con conceptos clave
-   - Al menos UN esquema conceptual con JSON de diagrama completo dentro del apartado
+   - Al menos UN esquema conceptual EDUCATIVO con JSON de diagrama completo dentro del apartado
+   - El esquema debe tener mínimo 4 nodos y máximo 8 nodos
    
-5. **NO INCLUYAS MENSAJES DE ERROR**: Si no hay información suficiente, NO escribas mensajes como "no es posible crear esquemas" o "ausencia de información". Simplemente omite ese apartado completamente.
+7. **NO INCLUYAS MENSAJES DE ERROR**: Si no hay información suficiente, NO escribas mensajes como "no es posible crear esquemas" o "ausencia de información". Simplemente omite ese apartado completamente.
 
-6. **VERIFICACIÓN**: Antes de finalizar, cuenta cuántos apartados/temas/conceptos clave identificaste. Asegúrate de haber creado al menos un esquema por cada uno.
+8. **VERIFICACIÓN DE CALIDAD**: Antes de finalizar, verifica que:
+   - Cada esquema tiene información específica del contenido (no genérica)
+   - Los nodos muestran conceptos reales y útiles
+   - Las relaciones entre nodos tienen sentido pedagógico
+   - Los colores ayudan a categorizar los conceptos
 
-7. **PRIORIDAD**: Los esquemas son MÁS IMPORTANTES que el texto descriptivo. Si tienes que elegir entre más texto o más esquemas, elige más esquemas.
+9. **PRIORIDAD**: Los esquemas EDUCATIVOS son MÁS IMPORTANTES que el texto descriptivo. Si tienes que elegir entre más texto o más esquemas útiles, elige más esquemas útiles.
 
-8. **ÚLTIMA VERIFICACIÓN CRÍTICA**: Antes de enviar la respuesta, revisa que NO haya ningún bloque de código que comience con \`\`\`mermaid, \`\`\`gantt, \`\`\`flowchart, \`\`\`graph, \`\`\`sequenceDiagram, \`\`\`classDiagram, \`\`\`mindmap, etc. Si encuentras alguno, elimínalo completamente y reemplázalo con JSON estructurado (para diagramas conceptuales) o texto/tablas (para calendarios y cronogramas).
+10. **ÚLTIMA VERIFICACIÓN CRÍTICA**: Antes de enviar la respuesta, revisa que:
+    - NO haya ningún bloque de código que comience con \`\`\`mermaid, \`\`\`gantt, \`\`\`flowchart, \`\`\`graph, \`\`\`sequenceDiagram, \`\`\`classDiagram, \`\`\`mindmap, etc.
+    - Todos los esquemas tienen información específica y útil
+    - Los esquemas ayudan realmente a entender el tema
 
-**RECUERDA**: El objetivo es que un estudiante pueda repasar visualmente antes de un examen. Los esquemas son la herramienta principal para esto.
+**RECUERDA**: El objetivo es que un estudiante pueda entender y memorizar los conceptos clave del tema. Los esquemas conceptuales deben mostrar relaciones jerárquicas, categorías claras y información educativa específica que realmente ayude al aprendizaje.
 
 ## Detalles Importantes
 

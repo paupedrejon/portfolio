@@ -1,0 +1,26 @@
+{
+  "chat_id": "chat-1767439035981",
+  "user_id": "8109d3ff-dd73-4632-8bb9-c25793dcb5de",
+  "title": "GPS",
+  "messages": [
+    {
+      "role": "user",
+      "content": "hola",
+      "type": "message",
+      "timestamp": "2026-01-03T11:17:20.127Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## ¡Hola! Bienvenido\n\n¡Hola! Me alegra que estés aquí. Estoy aquí para ayudarte con tus preguntas y para aprender juntos. ¿Hay algún tema específico sobre el que te gustaría hablar o alguna pregunta que tengas en mente? \n\n---\n\n### **¿Qué puedo ofrecerte?**\n\nPuedo ayudarte con:\n\n- **Conceptos de matemáticas**: desde contar hasta operaciones más complejas.\n- **Temas de ciencias**: biología, química, física, etc.\n- **Lenguaje y literatura**: gramática, análisis de textos, etc.\n- **Historia**: eventos importantes, figuras clave, etc.\n- **Consejos de estudio**: estrategias para aprender mejor.\n\n---\n\n### **¿Cómo puedo ayudarte hoy?**\n\nSi tienes alguna pregunta o un tema específico en mente, ¡no dudes en decírmelo! Estoy aquí para hacer el aprendizaje fácil y divertido. 😊",
+      "type": "notes",
+      "timestamp": "2026-01-03T11:17:24.460Z"
+    }
+  ],
+  "created_at": "2026-01-03T12:17:25.528035",
+  "updated_at": "2026-01-03T12:36:46.280983",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#f59e0b"
+  }
+}

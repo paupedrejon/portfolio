@@ -1,15 +1,67 @@
 "use client";
 
 import { spaceGrotesk, outfit, jetbrainsMono } from "../fonts";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import StudyChat from "@/components/StudyChat";
 
 export default function StudyAgentsPage() {
   const [mounted, setMounted] = useState(false);
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Redirigir a login si no está autenticado
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/signin?callbackUrl=/study-agents");
+    }
+  }, [status, router]);
+
+  // Mostrar loading mientras se verifica la sesión
+  if (status === "loading" || !mounted) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #1a1a24 0%, #2d2d44 100%)",
+        }}
+      >
+        <div
+          style={{
+            width: "40px",
+            height: "40px",
+            border: "4px solid rgba(99, 102, 241, 0.2)",
+            borderTop: "4px solid #6366f1",
+            borderRadius: "50%",
+            animation: "spin 0.8s linear infinite",
+          }}
+        />
+        <style jsx>{`
+          @keyframes spin {
+            0% {
+              transform: rotate(0deg);
+            }
+            100% {
+              transform: rotate(360deg);
+            }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Si no hay sesión, no renderizar nada (el useEffect redirigirá)
+  if (!session) {
+    return null;
+  }
 
   return (
     <>

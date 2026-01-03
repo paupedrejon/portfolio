@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         apiKey,
         question,
         user_id: userId,
-        model: model || "gpt-4-turbo",
+        model: model || null, // null = modo automático
       }),
     });
 

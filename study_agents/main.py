@@ -34,30 +34,35 @@ class StudyAgentsSystem:
     Sistema principal que coordina todos los agentes
     """
     
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, mode: str = "auto"):
         """
         Inicializa el sistema y todos los agentes
         
         Args:
             api_key: API key de OpenAI del usuario (opcional)
+            mode: Modo de selección de modelo ("auto" = optimizar costes, "manual" = usar modelo especificado)
         """
         # Usar API key proporcionada o de entorno
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.mode = mode
         
         # Inicializar memoria con API key
         self.memory = MemoryManager(api_key=self.api_key)
         
-        # Inicializar todos los agentes con la misma API key
+        # Inicializar todos los agentes con la misma API key y modo automático
         self.content_processor = ContentProcessorAgent(memory=self.memory)
-        self.explanation_agent = ExplanationAgent(memory=self.memory, api_key=self.api_key)
-        self.qa_assistant = QAAssistantAgent(memory=self.memory, api_key=self.api_key)
-        self.test_generator = TestGeneratorAgent(memory=self.memory, api_key=self.api_key)
-        self.feedback_agent = FeedbackAgent(memory=self.memory, api_key=self.api_key)
+        self.explanation_agent = ExplanationAgent(memory=self.memory, api_key=self.api_key, mode=mode)
+        self.qa_assistant = QAAssistantAgent(memory=self.memory, api_key=self.api_key, mode=mode)
+        self.test_generator = TestGeneratorAgent(memory=self.memory, api_key=self.api_key, mode=mode)
+        self.feedback_agent = FeedbackAgent(memory=self.memory, api_key=self.api_key, mode=mode)
         
         print("✅ Sistema Study Agents inicializado correctamente")
         print(f"📚 Memoria: {self.memory.get_memory_type()}")
+        print(f"🔧 Modo: {mode} (optimización automática de costes activada)")
         if self.api_key:
             print("🔑 API Key configurada")
+        else:
+            print("💡 Sin API key - intentando usar Ollama (gratis) si está disponible")
     
     def upload_documents(self, document_paths: list[str]) -> dict:
         """
@@ -93,40 +98,42 @@ class StudyAgentsSystem:
         print("✅ Explicaciones generadas")
         return explanations
     
-    def generate_notes(self, topics: Optional[list[str]] = None, model: Optional[str] = "gpt-4-turbo") -> str:
+    def generate_notes(self, topics: Optional[list[str]] = None, model: Optional[str] = None) -> str:
         """
         Genera apuntes completos en formato Markdown
         
         Args:
             topics: Lista de temas específicos (opcional)
-            model: Modelo de OpenAI a usar (opcional, por defecto gpt-4-turbo)
+            model: Modelo preferido (opcional, si no se especifica usa modo automático)
             
         Returns:
             Apuntes en formato Markdown
         """
-        print(f"\n📝 Generando apuntes con modelo {model}...")
+        model_str = model if model else "automático (optimizando costes)"
+        print(f"\n📝 Generando apuntes con modelo {model_str}...")
         notes = self.explanation_agent.generate_notes(topics=topics, model=model)
         print("✅ Apuntes generados")
         return notes
     
-    def ask_question(self, question: str, user_id: str = "default", model: Optional[str] = "gpt-4-turbo") -> tuple[str, dict]:
+    def ask_question(self, question: str, user_id: str = "default", model: Optional[str] = None) -> tuple[str, dict]:
         """
         Responde una pregunta del estudiante
         
         Args:
             question: Pregunta del estudiante
             user_id: ID del usuario (para historial)
-            model: Modelo de OpenAI a usar (opcional, por defecto gpt-4-turbo)
+            model: Modelo preferido (opcional, si no se especifica usa modo automático)
             
         Returns:
             Tupla con (respuesta contextualizada, información de tokens)
         """
-        print(f"\n❓ Pregunta: {question} (modelo: {model})")
+        model_str = model if model else "automático (optimizando costes)"
+        print(f"\n❓ Pregunta: {question} (modelo: {model_str})")
         answer, usage_info = self.qa_assistant.answer_question(question, user_id, model=model)
         print(f"💡 Respuesta generada")
         return answer, usage_info
     
-    def generate_test(self, difficulty: str = "medium", num_questions: int = 10, topics: Optional[list[str]] = None, constraints: Optional[str] = None, model: Optional[str] = "gpt-4-turbo") -> tuple[dict, dict]:
+    def generate_test(self, difficulty: str = "medium", num_questions: int = 10, topics: Optional[list[str]] = None, constraints: Optional[str] = None, model: Optional[str] = None, conversation_history: Optional[list[dict]] = None) -> tuple[dict, dict]:
         """
         Genera un test personalizado
         
@@ -135,13 +142,15 @@ class StudyAgentsSystem:
             num_questions: Número de preguntas
             topics: Temas específicos (opcional)
             constraints: Restricciones o condiciones específicas para las preguntas (opcional)
-            model: Modelo de OpenAI a usar (opcional, por defecto gpt-4-turbo)
+            model: Modelo preferido (opcional, si no se especifica usa modo automático)
+            conversation_history: Historial de conversación del chat (opcional)
             
         Returns:
             Tupla con (test generado, información de tokens)
         """
-        print(f"\n📝 Generando test ({difficulty}, {num_questions} preguntas) con modelo {model}...")
-        test = self.test_generator.generate_test(difficulty, num_questions, topics, constraints=constraints, model=model)
+        model_str = model if model else "automático (optimizando costes)"
+        print(f"\n📝 Generando test ({difficulty}, {num_questions} preguntas) con modelo {model_str}...")
+        test = self.test_generator.generate_test(difficulty, num_questions, topics, constraints=constraints, model=model, conversation_history=conversation_history)
         print("✅ Test generado")
         
         # Extraer información de tokens del test

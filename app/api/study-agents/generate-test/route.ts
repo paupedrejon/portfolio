@@ -5,7 +5,7 @@ const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { apiKey, difficulty = 'medium', numQuestions = 5, topics, model, constraints } = body;
+    const { apiKey, difficulty = 'medium', numQuestions = 5, topics, constraints, model, conversation_history } = body;
 
     if (!apiKey) {
       return NextResponse.json(
@@ -13,6 +13,14 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    console.log('📝 [Next.js API] Enviando request a FastAPI:', {
+      hasConversationHistory: !!conversation_history,
+      conversationHistoryLength: conversation_history?.length || 0,
+      topics,
+      difficulty,
+      numQuestions
+    });
 
     // Llamar al backend FastAPI
     const response = await fetch(`${FASTAPI_URL}/api/generate-test`, {
@@ -26,7 +34,8 @@ export async function POST(request: NextRequest) {
         num_questions: numQuestions,
         topics: topics || null,
         constraints: constraints || null,
-        model: model || "gpt-4-turbo",
+        model: model || null, // null = modo automático
+        conversation_history: conversation_history || null,
       }),
     });
 
@@ -45,13 +54,15 @@ export async function POST(request: NextRequest) {
       inputTokens: data.inputTokens || 0,
       outputTokens: data.outputTokens || 0,
     });
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('Error generating test:', error);
-    const message = error instanceof Error ? error.message : 'Error al generar test';
     return NextResponse.json(
-      { error: message },
+      { error: error.message || 'Error al generar test' },
       { status: 500 }
     );
   }
 }
+
+
+
 

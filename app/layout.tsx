@@ -1,6 +1,7 @@
 // app/layout.tsx
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
+import { Providers } from "./providers";
 import Header from "@/components/Header";
 import { spaceGrotesk, outfit, jetbrainsMono } from "./fonts";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
@@ -28,11 +29,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${spaceGrotesk.variable} ${outfit.variable} ${jetbrainsMono.variable}`}
     >
       <body className="overflow-x-hidden w-full">
-        <Header />
-        
-        <main className="pt-0 w-full">
-          {children}
-        </main>
+        <Providers>
+          <Header />
+          
+          <main className="pt-0 w-full">
+            {children}
+          </main>
 
         {/* Footer */}
         <footer className="footer">
@@ -70,7 +72,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </footer>
 
-        <Analytics />
+          <Analytics />
+        </Providers>
       </body>
     </html>
   );

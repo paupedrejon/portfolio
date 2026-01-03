@@ -1,11 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { spaceGrotesk, outfit, jetbrainsMono } from "../app/fonts";
 import APIKeyConfig from "./APIKeyConfig";
+import ChatSidebar from "./ChatSidebar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import DiagramRenderer from "./DiagramRenderer";
+import ConceptualSchemaRenderer from "./ConceptualSchemaRenderer";
+import SectionBasedSchemaRenderer from "./SectionBasedSchemaRenderer";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import {
@@ -56,6 +60,7 @@ interface Test {
 }
 
 export default function StudyChat() {
+  const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -66,6 +71,131 @@ export default function StudyChat() {
   const [testAnswers, setTestAnswers] = useState<Record<string, string>>({});
   const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
   const [apiKeys, setApiKeys] = useState<{ openai: string } | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const currentChatIdRef = useRef<string | null>(null);
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [newChatName, setNewChatName] = useState("");
+  const [newChatColor, setNewChatColor] = useState<string>("#6366f1");
+  const [newChatIcon, setNewChatIcon] = useState<string>("chat");
+  const userId = session?.user?.id || "";
+
+  // Colores disponibles para los chats
+  const chatColors = [
+    { name: "Morado", value: "#6366f1" },
+    { name: "Azul", value: "#3b82f6" },
+    { name: "Verde", value: "#10b981" },
+    { name: "Amarillo", value: "#f59e0b" },
+    { name: "Rojo", value: "#ef4444" },
+    { name: "Rosa", value: "#ec4899" },
+    { name: "Cian", value: "#06b6d4" },
+    { name: "Naranja", value: "#f97316" },
+    { name: "Índigo", value: "#8b5cf6" },
+    { name: "Esmeralda", value: "#14b8a6" },
+    { name: "Verde Lima", value: "#84cc16" },
+    { name: "Magenta", value: "#d946ef" },
+  ];
+
+  // Iconos disponibles para los chats
+  const chatIcons = [
+    { name: "Chat", value: "chat" },
+    { name: "Libro", value: "book" },
+    { name: "Notas", value: "notes" },
+    { name: "Objetivo", value: "target" },
+    { name: "Estrella", value: "star" },
+  ];
+
+  // Función para renderizar el icono según el tipo
+  const renderIcon = (iconType: string = "chat", color: string = "#6366f1", isSelected: boolean = false) => {
+    const iconColor = color || "#6366f1";
+    // Si está seleccionado, usar blanco. Si no, usar el color del tema
+    const strokeColor = isSelected 
+      ? (iconColor ? "white" : "#6366f1")
+      : (colorTheme === "dark" ? "rgba(226, 232, 240, 0.9)" : "rgba(26, 36, 52, 0.9)");
+    
+    switch (iconType) {
+      case "book":
+        return (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+          </svg>
+        );
+      case "notes":
+        return (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+          </svg>
+        );
+      case "target":
+        return (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="6" />
+            <circle cx="12" cy="12" r="2" />
+          </svg>
+        );
+      case "star":
+        return (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        );
+      case "chat":
+      default:
+        return (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        );
+    }
+  };
+  
+  // Sincronizar ref con state
+  useEffect(() => {
+    currentChatIdRef.current = currentChatId;
+  }, [currentChatId]);
+  
+  // Cargar chat "General" al iniciar si no hay chat seleccionado
+  useEffect(() => {
+    if (userId && !currentChatId) {
+      loadOrCreateGeneralChat();
+    }
+  }, [userId]);
+  
+  const loadOrCreateGeneralChat = async () => {
+    if (!userId) return;
+    
+    try {
+      // Buscar chat "General" en la lista
+      const response = await fetch("/api/study-agents/list-chats", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      });
+      
+      const data = await response.json();
+      if (data.success && data.chats) {
+        const generalChat = data.chats.find((chat: any) => chat.title === "General");
+        if (generalChat) {
+          // Cargar el chat General existente
+          await loadChat(generalChat.chat_id);
+        } else {
+          // Crear nuevo chat General
+          const newChatId = `general-${Date.now()}`;
+          setCurrentChatId(newChatId);
+          currentChatIdRef.current = newChatId;
+          setMessages([]);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading General chat:", error);
+    }
+  };
   // Inicializar colorTheme solo en el cliente para evitar errores de hidratación
   const [colorTheme, setColorTheme] = useState<"dark" | "light">(() => {
     // Solo leer de localStorage en el cliente
@@ -87,7 +217,7 @@ export default function StudyChat() {
         return savedModel;
       }
     }
-    return "gpt-4-turbo";
+    return "auto"; // Modo automático por defecto
   });
   // Estados para acumular tokens y costos totales
   const [totalStats, setTotalStats] = useState<{
@@ -103,6 +233,9 @@ export default function StudyChat() {
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   
   // Marcar como montado después de la hidratación
   useEffect(() => {
@@ -131,6 +264,46 @@ export default function StudyChat() {
     scrollToBottom();
   }, [messages]);
 
+  // Detectar si el usuario está al final del chat
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container || messages.length === 0) {
+      setShowScrollToBottom(false);
+      return;
+    }
+
+    const checkScrollPosition = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      // Verificar si hay contenido suficiente para hacer scroll
+      const hasScrollableContent = scrollHeight > clientHeight;
+      // Verificar si está cerca del final (con un margen más generoso)
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+      const isAtBottom = distanceFromBottom < 200; // 200px de margen
+      const shouldShow = hasScrollableContent && !isAtBottom && messages.length > 0;
+      setShowScrollToBottom(shouldShow);
+    };
+
+    // Verificar inmediatamente
+    setTimeout(checkScrollPosition, 100);
+    
+    container.addEventListener('scroll', checkScrollPosition);
+    
+    // También verificar cuando cambian los mensajes
+    const observer = new MutationObserver(() => {
+      setTimeout(checkScrollPosition, 100);
+    });
+    observer.observe(container, { childList: true, subtree: true });
+
+    // Verificar periódicamente también
+    const interval = setInterval(checkScrollPosition, 500);
+
+    return () => {
+      container.removeEventListener('scroll', checkScrollPosition);
+      observer.disconnect();
+      clearInterval(interval);
+    };
+  }, [messages]);
+
   // Verificar si hay API keys configuradas al cargar
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -143,13 +316,42 @@ export default function StudyChat() {
           } else {
             setShowAPIKeyConfig(true);
           }
-    } catch {
+        } catch {
           setShowAPIKeyConfig(true);
         }
       } else {
         setShowAPIKeyConfig(true);
       }
     }
+  }, []);
+
+  // Escuchar cambios en las API keys (cuando se actualizan desde el Header)
+  useEffect(() => {
+    const handleApiKeysUpdate = () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("study_agents_api_keys");
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed.openai && parsed.openai.startsWith("sk-")) {
+              setApiKeys(parsed);
+            } else {
+              setApiKeys(null);
+            }
+          } catch (e) {
+            console.error("Error loading API keys:", e);
+            setApiKeys(null);
+          }
+        } else {
+          setApiKeys(null);
+        }
+      }
+    };
+
+    window.addEventListener("apiKeysUpdated", handleApiKeysUpdate);
+    return () => {
+      window.removeEventListener("apiKeysUpdated", handleApiKeysUpdate);
+    };
   }, []);
 
   const handleFileUpload = async (files: FileList | null) => {
@@ -221,7 +423,21 @@ export default function StudyChat() {
       id: Date.now().toString(),
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages((prev) => {
+      const updated = [...prev, newMessage];
+      // Guardar automáticamente después de agregar mensaje
+      // Usar el userId actual del scope, no del closure
+      const currentUserId = session?.user?.id || "";
+      if (currentUserId) {
+        // Usar setTimeout para asegurar que el estado se actualice primero
+        setTimeout(() => {
+          saveChatDebounced(updated);
+        }, 0);
+      } else {
+        console.warn("Cannot save chat: userId not available", { userId: currentUserId, session });
+      }
+      return updated;
+    });
     
     // Acumular tokens y costos si hay costEstimate
     if (message.costEstimate) {
@@ -246,6 +462,281 @@ export default function StudyChat() {
     }
   };
 
+  // Función para guardar chat (con debounce)
+  const saveChatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveChatAttemptIdRef = useRef<number>(0);
+  const saveChatDebounced = (messagesToSave: Message[]) => {
+    // Cancelar cualquier guardado pendiente
+    if (saveChatTimeoutRef.current) {
+      clearTimeout(saveChatTimeoutRef.current);
+      saveChatTimeoutRef.current = null;
+    }
+    
+    // Incrementar el ID del intento
+    saveChatAttemptIdRef.current += 1;
+    const attemptId = saveChatAttemptIdRef.current;
+    
+    // Programar el guardado (siempre se guarda en "General" si no hay chat seleccionado)
+    saveChatTimeoutRef.current = setTimeout(() => {
+      // Verificar que este intento sigue siendo el más reciente
+      if (attemptId !== saveChatAttemptIdRef.current) {
+        console.log("⏳ Cancelando guardado: hay un intento más reciente");
+        return;
+      }
+      
+      saveChat(messagesToSave);
+      saveChatTimeoutRef.current = null;
+    }, 1000); // Guardar después de 1 segundo de inactividad
+  };
+
+  const saveChat = async (messagesToSave: Message[] = messages) => {
+    // Obtener userId actualizado del session (no usar la variable userId del closure)
+    const currentUserId = session?.user?.id || "";
+    
+    if (!currentUserId) {
+      console.warn("⚠️ No userId available, cannot save chat", { session, userId });
+      return;
+    }
+    
+    if (messagesToSave.length === 0) {
+      console.warn("⚠️ No messages to save");
+      return;
+    }
+
+    // Obtener o crear chat_id (si no hay uno, usar "General")
+    let chatIdToUse = currentChatIdRef.current;
+    let chatTitle = "General";
+    
+    if (!chatIdToUse) {
+      // Buscar chat "General" existente
+      try {
+        const listResponse = await fetch("/api/study-agents/list-chats", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: currentUserId }),
+        });
+        
+        const listData = await listResponse.json();
+        if (listData.success && listData.chats) {
+          const generalChat = listData.chats.find((chat: any) => chat.title === "General");
+          if (generalChat) {
+            chatIdToUse = generalChat.chat_id;
+            setCurrentChatId(generalChat.chat_id);
+            currentChatIdRef.current = generalChat.chat_id;
+          } else {
+            // Crear nuevo chat General
+            chatIdToUse = `general-${Date.now()}`;
+            setCurrentChatId(chatIdToUse);
+            currentChatIdRef.current = chatIdToUse;
+          }
+        } else {
+          // Crear nuevo chat General
+          chatIdToUse = `general-${Date.now()}`;
+          setCurrentChatId(chatIdToUse);
+          currentChatIdRef.current = chatIdToUse;
+        }
+      } catch (error) {
+        console.error("Error finding General chat:", error);
+        // Crear nuevo chat General como fallback
+        chatIdToUse = `general-${Date.now()}`;
+        setCurrentChatId(chatIdToUse);
+        currentChatIdRef.current = chatIdToUse;
+      }
+    } else {
+      // Si hay un chat_id, obtener su título para verificar si es "General"
+      try {
+        const loadResponse = await fetch("/api/study-agents/load-chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: currentUserId, chatId: chatIdToUse }),
+        });
+        
+        const loadData = await loadResponse.json();
+        if (loadData.success && loadData.chat) {
+          chatTitle = loadData.chat.title || "General";
+        }
+      } catch (error) {
+        console.error("Error loading chat title:", error);
+      }
+    }
+
+    try {
+      console.log("💾 Saving chat...", { 
+        userId: currentUserId, 
+        messageCount: messagesToSave.length, 
+        chatId: chatIdToUse,
+        chatTitle
+      });
+      
+      // Usar el título del chat si existe, o "General" por defecto
+      const title = chatTitle;
+
+      // Convertir mensajes al formato esperado por el backend
+      const messagesForBackend = messagesToSave.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+        type: msg.type || "message",
+        timestamp: msg.timestamp.toISOString(),
+      }));
+
+      const response = await fetch("/api/study-agents/save-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: currentUserId,
+          chatId: chatIdToUse,
+          title,
+          messages: messagesForBackend,
+          metadata: {
+            uploadedFiles,
+            selectedModel,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("❌ Error saving chat - response not ok:", errorData);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("✅ Chat saved successfully:", data);
+      
+      if (data.success && data.chat) {
+        // Actualizar currentChatId si no estaba establecido
+        if (!currentChatIdRef.current) {
+          setCurrentChatId(data.chat.chat_id);
+          currentChatIdRef.current = data.chat.chat_id;
+        }
+        // Refrescar sidebar si está disponible
+        if (typeof window !== "undefined" && (window as any).refreshChatSidebar) {
+          (window as any).refreshChatSidebar();
+        }
+      } else {
+        console.error("❌ Chat save response indicates failure:", data);
+      }
+    } catch (error) {
+      console.error("❌ Error saving chat:", error);
+    }
+  };
+
+  const loadChat = async (chatId: string) => {
+    if (!userId) return;
+
+    try {
+      const response = await fetch("/api/study-agents/load-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, chatId }),
+      });
+
+      const data = await response.json();
+      if (data.success && data.chat) {
+        // Convertir mensajes del backend al formato del frontend
+        const loadedMessages: Message[] = data.chat.messages.map((msg: any) => ({
+          id: Date.now().toString() + Math.random(),
+          role: msg.role,
+          content: msg.content,
+          type: msg.type || "message",
+          timestamp: new Date(msg.timestamp),
+        }));
+
+        setMessages(loadedMessages);
+        setCurrentChatId(chatId);
+        currentChatIdRef.current = chatId;
+
+        // Restaurar metadata si existe
+        if (data.chat.metadata) {
+          if (data.chat.metadata.uploadedFiles) {
+            setUploadedFiles(data.chat.metadata.uploadedFiles);
+          }
+          if (data.chat.metadata.selectedModel) {
+            setSelectedModel(data.chat.metadata.selectedModel);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error loading chat:", error);
+    }
+  };
+
+  const createNewChat = () => {
+    setShowNewChatModal(true);
+    setNewChatName("");
+    setNewChatColor("#6366f1");
+  };
+  
+  const handleCreateNewChat = async () => {
+    if (!newChatName.trim()) {
+      alert("Por favor, introduce un nombre para el chat");
+      return;
+    }
+    
+    if (!userId) return;
+    
+    // Crear nuevo chat con el nombre proporcionado
+    const newChatId = `chat-${Date.now()}`;
+    
+    try {
+      const response = await fetch("/api/study-agents/save-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          chatId: newChatId,
+          title: newChatName.trim(),
+          messages: [],
+          metadata: {
+            uploadedFiles: [],
+            selectedModel,
+            color: newChatColor,
+            icon: newChatIcon,
+          },
+        }),
+      });
+      
+      const data = await response.json();
+      if (data.success && data.chat) {
+        // Limpiar estado y cargar el nuevo chat
+        setMessages([]);
+        setCurrentChatId(newChatId);
+        currentChatIdRef.current = newChatId;
+        setUploadedFiles([]);
+        setCurrentTest(null);
+        setTestAnswers({});
+        setTotalStats({
+          totalInputTokens: 0,
+          totalOutputTokens: 0,
+          totalCost: 0,
+          byModel: {},
+        });
+        setShowNewChatModal(false);
+        setNewChatName("");
+        setNewChatColor("#6366f1");
+        setNewChatIcon("chat");
+        
+        // Refrescar sidebar
+        if (typeof window !== "undefined" && (window as any).refreshChatSidebar) {
+          (window as any).refreshChatSidebar();
+        }
+      }
+    } catch (error) {
+      console.error("Error creating new chat:", error);
+      alert("Error al crear el chat. Por favor, intenta de nuevo.");
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading || isGeneratingTest) return;
 
@@ -262,6 +753,10 @@ export default function StudyChat() {
 
     const userMessage = input.trim();
     setInput("");
+    // Resetear altura del textarea
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "48px";
+    }
     setIsLoading(true);
 
     addMessage({
@@ -393,7 +888,7 @@ export default function StudyChat() {
         body: JSON.stringify({
           apiKey: apiKeys.openai,
           uploadedFiles: uploadedFiles,
-          model: selectedModel,
+          model: selectedModel === "auto" ? null : selectedModel,
         }),
         signal: controller.signal,
       });
@@ -464,6 +959,25 @@ export default function StudyChat() {
     // No añadir mensaje de texto, solo mostrar la animación de carga
 
     try {
+      // Preparar historial de conversación (incluir mensajes y apuntes)
+      const conversationHistory = messages
+        .filter(msg => 
+          (msg.role === "user" || msg.role === "assistant") && 
+          (msg.type === "message" || msg.type === "notes") && // Incluir apuntes también
+          msg.content && 
+          msg.content.trim().length > 0
+        )
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+      
+      console.log("📝 Enviando historial de conversación al generar test:", {
+        totalMessages: messages.length,
+        conversationHistoryLength: conversationHistory.length,
+        lastMessages: conversationHistory.slice(-5).map(m => ({ role: m.role, contentPreview: m.content.substring(0, 100) }))
+      });
+
       // Llamar a la API con la key del usuario y el modelo seleccionado
       const response = await fetch("/api/study-agents/generate-test", {
         method: "POST",
@@ -475,13 +989,14 @@ export default function StudyChat() {
           topics: topic ? [topic] : null,
           constraints: constraints || null,
           uploadedFiles: uploadedFiles,
-          model: selectedModel,
+          model: selectedModel === "auto" ? null : selectedModel,
+          conversation_history: conversationHistory.length > 0 ? conversationHistory : null,
         }),
       });
 
       const data = await response.json();
 
-      if (data.success && data.test) {
+      if (data.success && data.test && data.test.questions && Array.isArray(data.test.questions)) {
         setCurrentTest(data.test);
         setTestAnswers({});
 
@@ -500,11 +1015,17 @@ export default function StudyChat() {
           costEstimate = calculateCost(estimatedInput, estimatedOutput, selectedModel);
         }
 
-        addMessage({
-          role: "assistant",
-          content: `Test generado con ${data.test.questions.length} preguntas`,
-          type: "test",
-          costEstimate,
+        // Limpiar tests anteriores antes de añadir el nuevo
+        setMessages((prev) => {
+          const filtered = prev.filter(msg => msg.type !== "test");
+          return [...filtered, {
+            id: Date.now().toString() + Math.random(),
+            role: "assistant" as const,
+            content: `Test generado con ${data.test?.questions?.length || 0} preguntas`,
+            type: "test" as const,
+            timestamp: new Date(),
+            costEstimate,
+          }];
         });
       } else {
         // Fallback a simulación
@@ -536,10 +1057,16 @@ export default function StudyChat() {
         setCurrentTest(test);
         setTestAnswers({});
 
-        addMessage({
-          role: "assistant",
-          content: `Test generado con ${test.questions.length} preguntas`,
-          type: "test",
+        // Limpiar tests anteriores antes de añadir el nuevo
+        setMessages((prev) => {
+          const filtered = prev.filter(msg => msg.type !== "test");
+          return [...filtered, {
+            id: Date.now().toString() + Math.random(),
+            role: "assistant" as const,
+            content: `Test generado con ${test?.questions?.length || 0} preguntas`,
+            type: "test" as const,
+            timestamp: new Date(),
+          }];
         });
       }
     } catch (error: unknown) {
@@ -572,7 +1099,7 @@ export default function StudyChat() {
           apiKey: apiKeys.openai,
           question,
           uploadedFiles: uploadedFiles,
-          model: selectedModel,
+          model: selectedModel === "auto" ? null : selectedModel,
         }),
       });
 
@@ -654,6 +1181,15 @@ export default function StudyChat() {
       const data = await response.json();
 
       // Calcular estadísticas y conceptos fallados
+      if (!currentTest || !currentTest.questions || currentTest.questions.length === 0) {
+        addMessage({
+          role: "assistant",
+          content: "Error: No hay test disponible para evaluar",
+          type: "message",
+        });
+        return;
+      }
+
       const correctCount = Object.entries(testAnswers).filter(
         ([id, answer]) => {
           const question = currentTest.questions.find((q) => q.id === id);
@@ -695,6 +1231,8 @@ export default function StudyChat() {
           explanation: q.explanation || "No hay explicación disponible",
           correctAnswer: q.correct_answer,
           userAnswer: testAnswers[q.id],
+          options: q.options || [],
+          type: q.type,
         })),
         feedbackItems: data.success && data.feedback?.feedback_items ? data.feedback.feedback_items : [],
         recommendations: data.success && data.feedback?.recommendations ? data.feedback.recommendations : [],
@@ -708,6 +1246,15 @@ export default function StudyChat() {
       });
     } catch (error: unknown) {
       // Fallback con cálculo local
+      if (!currentTest || !currentTest.questions || currentTest.questions.length === 0) {
+        addMessage({
+          role: "assistant",
+          content: "Error: No hay test disponible para evaluar",
+          type: "message",
+        });
+        return;
+      }
+
       const correctCount = Object.entries(testAnswers).filter(
         ([id, answer]) => {
           const question = currentTest.questions.find((q) => q.id === id);
@@ -732,6 +1279,8 @@ export default function StudyChat() {
           explanation: q.explanation || "No hay explicación disponible",
           correctAnswer: q.correct_answer,
           userAnswer: testAnswers[q.id],
+          options: q.options || [],
+          type: q.type,
         })),
         feedbackItems: [],
         recommendations: [],
@@ -791,14 +1340,282 @@ export default function StudyChat() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "calc(100vh - 50vh)",
-        background: colorTheme === "light" ? "#ffffff" : "var(--bg-secondary)",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <>
+      {/* Modal para crear nuevo chat */}
+      {showNewChatModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.8)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "1rem",
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowNewChatModal(false);
+              setNewChatName("");
+            }
+          }}
+        >
+          <div
+            style={{
+              background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.95)" : "rgba(255, 255, 255, 0.95)",
+              border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+              borderRadius: "24px",
+              padding: "2rem",
+              maxWidth: "500px",
+              width: "100%",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2
+              className={spaceGrotesk.className}
+              style={{
+                fontSize: "1.5rem",
+                fontWeight: 700,
+                color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
+                marginBottom: "1.5rem",
+              }}
+            >
+              Nuevo Chat
+            </h2>
+            <p
+              className={outfit.className}
+              style={{
+                fontSize: "0.875rem",
+                color: colorTheme === "dark" ? "rgba(226, 232, 240, 0.7)" : "rgba(26, 36, 52, 0.7)",
+                marginBottom: "0.75rem",
+              }}
+            >
+              Introduce un nombre para el nuevo chat:
+            </p>
+            <input
+              type="text"
+              value={newChatName}
+              onChange={(e) => setNewChatName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleCreateNewChat();
+                } else if (e.key === "Escape") {
+                  setShowNewChatModal(false);
+                  setNewChatName("");
+                  setNewChatColor("#6366f1");
+                  setNewChatIcon("chat");
+                }
+              }}
+              autoFocus
+              placeholder="Nombre del chat..."
+              style={{
+                width: "100%",
+                padding: "0.75rem 1rem",
+                background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "rgba(255, 255, 255, 0.9)",
+                border: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.3)"}`,
+                borderRadius: "10px",
+                color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
+                fontSize: "1rem",
+                outline: "none",
+                marginBottom: "1.5rem",
+              }}
+            />
+            <p
+              className={outfit.className}
+              style={{
+                fontSize: "0.875rem",
+                color: colorTheme === "dark" ? "rgba(226, 232, 240, 0.7)" : "rgba(26, 36, 52, 0.7)",
+                marginBottom: "0.75rem",
+              }}
+            >
+              Selecciona un color:
+            </p>
+            <div
+              style={{
+                display: "flex",
+                gap: "0.75rem",
+                flexWrap: "wrap",
+                marginBottom: "1.5rem",
+              }}
+            >
+              {chatColors.map((color) => (
+                <button
+                  key={color.value}
+                  onClick={() => setNewChatColor(color.value)}
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "10px",
+                    background: color.value,
+                    border: newChatColor === color.value 
+                      ? `3px solid ${colorTheme === "dark" ? "#fff" : "#000"}` 
+                      : `2px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.3)" : "rgba(148, 163, 184, 0.4)"}`,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    boxShadow: newChatColor === color.value
+                      ? `0 0 0 3px ${colorTheme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)"}`
+                      : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (newChatColor !== color.value) {
+                      e.currentTarget.style.transform = "scale(1.1)";
+                      e.currentTarget.style.boxShadow = `0 4px 12px ${color.value}40`;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow = newChatColor === color.value
+                      ? `0 0 0 3px ${colorTheme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)"}`
+                      : "none";
+                  }}
+                  title={color.name}
+                />
+              ))}
+            </div>
+            <p
+              className={outfit.className}
+              style={{
+                fontSize: "0.875rem",
+                color: colorTheme === "dark" ? "rgba(226, 232, 240, 0.7)" : "rgba(26, 36, 52, 0.7)",
+                marginBottom: "0.75rem",
+              }}
+            >
+              Selecciona un icono:
+            </p>
+            <div
+              style={{
+                display: "flex",
+                gap: "0.75rem",
+                flexWrap: "wrap",
+                marginBottom: "1.5rem",
+              }}
+            >
+              {chatIcons.map((icon) => (
+                <button
+                  key={icon.value}
+                  onClick={() => setNewChatIcon(icon.value)}
+                  style={{
+                    width: "48px",
+                    height: "48px",
+                    borderRadius: "10px",
+                    background: newChatIcon === icon.value
+                      ? newChatColor
+                      : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.1)"),
+                    border: newChatIcon === icon.value 
+                      ? `3px solid ${colorTheme === "dark" ? "#fff" : "#000"}` 
+                      : `2px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.5)"}`,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s ease",
+                    boxShadow: newChatIcon === icon.value
+                      ? `0 0 0 3px ${colorTheme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)"}`
+                      : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (newChatIcon !== icon.value) {
+                      e.currentTarget.style.transform = "scale(1.1)";
+                      e.currentTarget.style.background = newChatColor || (colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.2)");
+                      // Actualizar el color del SVG en hover
+                      const svg = e.currentTarget.querySelector('svg');
+                      if (svg) {
+                        svg.style.stroke = newChatColor ? "white" : "#6366f1";
+                      }
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.background = newChatIcon === icon.value
+                      ? newChatColor
+                      : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.1)");
+                    e.currentTarget.style.boxShadow = newChatIcon === icon.value
+                      ? `0 0 0 3px ${colorTheme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)"}`
+                      : "none";
+                    // Restaurar el color del SVG
+                    const svg = e.currentTarget.querySelector('svg');
+                    if (svg) {
+                      svg.style.stroke = newChatIcon === icon.value
+                        ? (newChatColor ? "white" : "#6366f1")
+                        : (colorTheme === "dark" ? "rgba(226, 232, 240, 0.9)" : "rgba(26, 36, 52, 0.9)");
+                    }
+                  }}
+                  title={icon.name}
+                >
+                  {renderIcon(icon.value, newChatIcon === icon.value ? (newChatColor || "#6366f1") : (colorTheme === "dark" ? "rgba(226, 232, 240, 0.9)" : "rgba(26, 36, 52, 0.9)"), newChatIcon === icon.value)}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => {
+                  setShowNewChatModal(false);
+                  setNewChatName("");
+                }}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  background: "transparent",
+                  border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+                  borderRadius: "10px",
+                  color: colorTheme === "dark" ? "rgba(226, 232, 240, 0.7)" : "rgba(26, 36, 52, 0.7)",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCreateNewChat}
+                style={{
+                  padding: "0.75rem 1.5rem",
+                  background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                  border: "none",
+                  borderRadius: "10px",
+                  color: "white",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 4px 12px rgba(99, 102, 241, 0.3)",
+                }}
+              >
+                Crear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <ChatSidebar
+        isOpen={sidebarOpen}
+        onToggle={() => {
+          setSidebarOpen(!sidebarOpen);
+          if (!sidebarOpen) {
+            // Si se está cerrando, resetear el estado de colapsado
+            setSidebarCollapsed(false);
+          }
+        }}
+        onSelectChat={loadChat}
+        currentChatId={currentChatId}
+        onNewChat={createNewChat}
+        colorTheme={colorTheme}
+        onCollapsedChange={setSidebarCollapsed}
+      />
+      <div
+        style={{
+          marginLeft: sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0",
+          transition: "margin-left 0.3s ease",
+          minHeight: "calc(100vh - 50vh)",
+          background: colorTheme === "light" ? "#ffffff" : "var(--bg-secondary)",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
       {/* API Key Configuration Modal */}
       {showAPIKeyConfig && (
         <APIKeyConfig
@@ -861,7 +1678,8 @@ export default function StudyChat() {
                   zIndex: 1,
                 }}
               >
-                {selectedModel === "gpt-4-turbo" ? "GPT-4 Turbo" :
+                {selectedModel === "auto" ? "Automático (Optimiza Costes)" :
+                 selectedModel === "gpt-4-turbo" ? "GPT-4 Turbo" :
                  selectedModel === "gpt-4o" ? "GPT-4o" :
                  selectedModel === "gpt-4" ? "GPT-4" :
                  selectedModel === "gpt-3.5-turbo" ? "GPT-3.5 Turbo" :
@@ -908,6 +1726,15 @@ export default function StudyChat() {
                   
                   return (
                     <>
+                      <option value="auto" style={{ color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24", fontWeight: 600 }}>
+                        Automático
+                      </option>
+                      <option value="gpt-3.5-turbo" style={{ color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24" }}>
+                        GPT-3.5 Turbo ({getPricePer1K("gpt-3.5-turbo")}/1K tokens)
+                      </option>
+                      <option value="gpt-4o-mini" style={{ color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24" }}>
+                        GPT-4o Mini ({getPricePer1K("gpt-4o-mini")}/1K tokens)
+                      </option>
                       <option value="gpt-4-turbo" style={{ color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24" }}>
                         GPT-4 Turbo ({getPricePer1K("gpt-4-turbo")}/1K tokens)
                       </option>
@@ -916,9 +1743,6 @@ export default function StudyChat() {
                       </option>
                       <option value="gpt-4" style={{ color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24" }}>
                         GPT-4 ({getPricePer1K("gpt-4")}/1K tokens)
-                      </option>
-                      <option value="gpt-3.5-turbo" style={{ color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24" }}>
-                        GPT-3.5 Turbo ({getPricePer1K("gpt-3.5-turbo")}/1K tokens)
                       </option>
                     </>
                   );
@@ -1037,15 +1861,19 @@ export default function StudyChat() {
           width: "100%",
           margin: "0 auto",
           padding: "2rem 1rem",
+          position: "relative",
         }}
       >
         {/* Messages */}
         <div
+          ref={messagesContainerRef}
           style={{
             flex: 1,
             overflowY: "auto",
             marginBottom: "1rem",
             padding: "1rem",
+            paddingBottom: "2rem",
+            position: "relative",
           }}
         >
           {messages.length === 0 && (
@@ -1059,9 +1887,12 @@ export default function StudyChat() {
               <h3
                 className={spaceGrotesk.className}
                 style={{
-                  fontSize: "1.5rem",
-                  marginBottom: "1rem",
+                  fontSize: "clamp(1.5rem, 4vw, 2rem)",
+                  marginBottom: "1.5rem",
+                  fontWeight: 600,
                   color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                  letterSpacing: "-0.01em",
+                  lineHeight: 1.3,
                 }}
               >
                 ¡Hola! Soy tu asistente de estudio
@@ -1080,48 +1911,35 @@ export default function StudyChat() {
               >
                 <div
                   style={{
-                    padding: "1.75rem",
+                    padding: "1.5rem",
                     background: colorTheme === "dark"
-                      ? "linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1))"
-                      : "linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.08))",
-                    borderRadius: "20px",
-                    border: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"}`,
+                      ? "rgba(26, 26, 36, 0.8)"
+                      : "#ffffff",
+                    borderRadius: "12px",
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
                     boxShadow: colorTheme === "dark"
-                      ? "0 8px 24px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
-                      : "0 8px 24px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)",
-                    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                      ? "0 2px 8px rgba(0, 0, 0, 0.2)"
+                      : "0 2px 8px rgba(0, 0, 0, 0.08)",
+                    transition: "all 0.2s ease",
                     cursor: "pointer",
-                    position: "relative",
-                    overflow: "hidden",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-6px) scale(1.03)";
-                    e.currentTarget.style.boxShadow = colorTheme === "dark"
-                      ? "0 16px 40px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15)"
-                      : "0 16px 40px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.6)";
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(99, 102, 241, 0.5)" : "rgba(99, 102, 241, 0.6)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.5)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0) scale(1)";
-                    e.currentTarget.style.boxShadow = colorTheme === "dark"
-                      ? "0 8px 24px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
-                      : "0 8px 24px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)";
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
                   }}
                 >
                   <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}>
                     <div style={{
-                      padding: "1rem",
+                      padding: "0.75rem",
                       background: colorTheme === "dark"
-                        ? "linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.2))"
-                        : "linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.15))",
-                      borderRadius: "16px",
+                        ? "rgba(99, 102, 241, 0.1)"
+                        : "rgba(99, 102, 241, 0.08)",
+                      borderRadius: "8px",
                       display: "inline-flex",
-                      boxShadow: colorTheme === "dark"
-                        ? "0 4px 12px rgba(99, 102, 241, 0.3)"
-                        : "0 4px 12px rgba(99, 102, 241, 0.2)",
                     }}>
-                      <FileIcon size={32} color="#6366f1" />
+                      <FileIcon size={24} color="#6366f1" />
                     </div>
                   </div>
                   <strong style={{ 
@@ -1143,48 +1961,35 @@ export default function StudyChat() {
                 </div>
                 <div
                   style={{
-                    padding: "1.75rem",
+                    padding: "1.5rem",
                     background: colorTheme === "dark"
-                      ? "linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1))"
-                      : "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.08))",
-                    borderRadius: "20px",
-                    border: `2px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.4)"}`,
+                      ? "rgba(26, 26, 36, 0.8)"
+                      : "#ffffff",
+                    borderRadius: "12px",
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
                     boxShadow: colorTheme === "dark"
-                      ? "0 8px 24px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
-                      : "0 8px 24px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)",
-                    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                      ? "0 2px 8px rgba(0, 0, 0, 0.2)"
+                      : "0 2px 8px rgba(0, 0, 0, 0.08)",
+                    transition: "all 0.2s ease",
                     cursor: "pointer",
-                    position: "relative",
-                    overflow: "hidden",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-6px) scale(1.03)";
-                    e.currentTarget.style.boxShadow = colorTheme === "dark"
-                      ? "0 16px 40px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15)"
-                      : "0 16px 40px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.6)";
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(16, 185, 129, 0.5)" : "rgba(16, 185, 129, 0.6)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(16, 185, 129, 0.4)" : "rgba(16, 185, 129, 0.5)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0) scale(1)";
-                    e.currentTarget.style.boxShadow = colorTheme === "dark"
-                      ? "0 8px 24px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
-                      : "0 8px 24px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)";
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.4)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
                   }}
                 >
                   <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}>
                     <div style={{
-                      padding: "1rem",
+                      padding: "0.75rem",
                       background: colorTheme === "dark"
-                        ? "linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.2))"
-                        : "linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.15))",
-                      borderRadius: "16px",
+                        ? "rgba(16, 185, 129, 0.1)"
+                        : "rgba(16, 185, 129, 0.08)",
+                      borderRadius: "8px",
                       display: "inline-flex",
-                      boxShadow: colorTheme === "dark"
-                        ? "0 4px 12px rgba(16, 185, 129, 0.3)"
-                        : "0 4px 12px rgba(16, 185, 129, 0.2)",
                     }}>
-                      <NotesIcon size={32} color="#10b981" />
+                      <NotesIcon size={24} color="#10b981" />
                     </div>
                   </div>
                   <strong style={{ 
@@ -1206,48 +2011,35 @@ export default function StudyChat() {
                 </div>
                 <div
                   style={{
-                    padding: "1.75rem",
+                    padding: "1.5rem",
                     background: colorTheme === "dark"
-                      ? "linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1))"
-                      : "linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.08))",
-                    borderRadius: "20px",
-                    border: `2px solid ${colorTheme === "dark" ? "rgba(245, 158, 11, 0.3)" : "rgba(245, 158, 11, 0.4)"}`,
+                      ? "rgba(26, 26, 36, 0.8)"
+                      : "#ffffff",
+                    borderRadius: "12px",
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
                     boxShadow: colorTheme === "dark"
-                      ? "0 8px 24px rgba(245, 158, 11, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
-                      : "0 8px 24px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)",
-                    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                      ? "0 2px 8px rgba(0, 0, 0, 0.2)"
+                      : "0 2px 8px rgba(0, 0, 0, 0.08)",
+                    transition: "all 0.2s ease",
                     cursor: "pointer",
-                    position: "relative",
-                    overflow: "hidden",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-6px) scale(1.03)";
-                    e.currentTarget.style.boxShadow = colorTheme === "dark"
-                      ? "0 16px 40px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15)"
-                      : "0 16px 40px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.6)";
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(245, 158, 11, 0.5)" : "rgba(245, 158, 11, 0.6)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(245, 158, 11, 0.4)" : "rgba(245, 158, 11, 0.5)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0) scale(1)";
-                    e.currentTarget.style.boxShadow = colorTheme === "dark"
-                      ? "0 8px 24px rgba(245, 158, 11, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
-                      : "0 8px 24px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)";
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(245, 158, 11, 0.3)" : "rgba(245, 158, 11, 0.4)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
                   }}
                 >
                   <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}>
                     <div style={{
-                      padding: "1rem",
+                      padding: "0.75rem",
                       background: colorTheme === "dark"
-                        ? "linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.2))"
-                        : "linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.15))",
-                      borderRadius: "16px",
+                        ? "rgba(245, 158, 11, 0.1)"
+                        : "rgba(245, 158, 11, 0.08)",
+                      borderRadius: "8px",
                       display: "inline-flex",
-                      boxShadow: colorTheme === "dark"
-                        ? "0 4px 12px rgba(245, 158, 11, 0.3)"
-                        : "0 4px 12px rgba(245, 158, 11, 0.2)",
                     }}>
-                      <QuestionIcon size={32} color="#f59e0b" />
+                      <QuestionIcon size={24} color="#f59e0b" />
                     </div>
                   </div>
                   <strong style={{ 
@@ -1269,48 +2061,35 @@ export default function StudyChat() {
                 </div>
                 <div
                   style={{
-                    padding: "1.75rem",
+                    padding: "1.5rem",
                     background: colorTheme === "dark"
-                      ? "linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(219, 39, 119, 0.1))"
-                      : "linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(219, 39, 119, 0.08))",
-                    borderRadius: "20px",
-                    border: `2px solid ${colorTheme === "dark" ? "rgba(236, 72, 153, 0.3)" : "rgba(236, 72, 153, 0.4)"}`,
+                      ? "rgba(26, 26, 36, 0.8)"
+                      : "#ffffff",
+                    borderRadius: "12px",
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
                     boxShadow: colorTheme === "dark"
-                      ? "0 8px 24px rgba(236, 72, 153, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
-                      : "0 8px 24px rgba(236, 72, 153, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)",
-                    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                      ? "0 2px 8px rgba(0, 0, 0, 0.2)"
+                      : "0 2px 8px rgba(0, 0, 0, 0.08)",
+                    transition: "all 0.2s ease",
                     cursor: "pointer",
-                    position: "relative",
-                    overflow: "hidden",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-6px) scale(1.03)";
-                    e.currentTarget.style.boxShadow = colorTheme === "dark"
-                      ? "0 16px 40px rgba(236, 72, 153, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15)"
-                      : "0 16px 40px rgba(236, 72, 153, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.6)";
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(236, 72, 153, 0.5)" : "rgba(236, 72, 153, 0.6)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(236, 72, 153, 0.4)" : "rgba(236, 72, 153, 0.5)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0) scale(1)";
-                    e.currentTarget.style.boxShadow = colorTheme === "dark"
-                      ? "0 8px 24px rgba(236, 72, 153, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
-                      : "0 8px 24px rgba(236, 72, 153, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)";
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(236, 72, 153, 0.3)" : "rgba(236, 72, 153, 0.4)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
                   }}
                 >
                   <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}>
                     <div style={{
-                      padding: "1rem",
+                      padding: "0.75rem",
                       background: colorTheme === "dark"
-                        ? "linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(219, 39, 119, 0.2))"
-                        : "linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(219, 39, 119, 0.15))",
-                      borderRadius: "16px",
+                        ? "rgba(236, 72, 153, 0.1)"
+                        : "rgba(236, 72, 153, 0.08)",
+                      borderRadius: "8px",
                       display: "inline-flex",
-                      boxShadow: colorTheme === "dark"
-                        ? "0 4px 12px rgba(236, 72, 153, 0.3)"
-                        : "0 4px 12px rgba(236, 72, 153, 0.2)",
                     }}>
-                      <TestIcon size={32} color="#ec4899" />
+                      <TestIcon size={24} color="#ec4899" />
                     </div>
                   </div>
                   <strong style={{ 
@@ -1345,24 +2124,25 @@ export default function StudyChat() {
             >
               <div
                 style={{
-                  maxWidth: "85%",
-                  padding: "1.5rem 2rem",
-                  borderRadius: "20px",
+                  maxWidth: message.type === "notes" || message.type === "test" ? "100%" : "85%",
+                  width: message.type === "notes" || message.type === "test" ? "100%" : undefined,
+                  padding: "1.25rem 1.5rem",
+                  borderRadius: "12px",
                   background:
                     message.role === "user"
-                      ? "linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(139, 92, 246, 0.95))"
+                      ? "#6366f1"
                       : colorTheme === "dark"
-                      ? "linear-gradient(135deg, rgba(26, 26, 36, 0.95), rgba(30, 30, 45, 0.95))"
-                      : "linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98))",
+                      ? "rgba(26, 26, 36, 0.8)"
+                      : "#ffffff",
                   border:
                     message.role === "assistant"
-                      ? `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.5)"}`
+                      ? `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`
                       : "none",
                   boxShadow: message.role === "user"
-                    ? "0 8px 32px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                    ? "0 2px 8px rgba(99, 102, 241, 0.2)"
                     : colorTheme === "dark"
-                    ? "0 8px 32px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
-                    : "0 8px 32px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                    ? "0 2px 8px rgba(0, 0, 0, 0.2)"
+                    : "0 2px 8px rgba(0, 0, 0, 0.08)",
                   color: message.role === "user" ? "white" : (colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"),
                 }}
               >
@@ -1471,14 +2251,53 @@ export default function StudyChat() {
                   />
                 ) : (
                   <>
-                    <div
-                      style={{
-                        whiteSpace: "pre-wrap",
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      {message.content}
-                    </div>
+                    {message.role === "assistant" ? (
+                      <div
+                        style={{
+                          lineHeight: 1.6,
+                          color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                        }}
+                        className="message-content"
+                      >
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            h1: ({ ...props }) => <h1 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
+                            h2: ({ ...props }) => <h2 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
+                            h3: ({ ...props }) => <h3 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
+                            h4: ({ ...props }) => <h4 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
+                            h5: ({ ...props }) => <h5 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
+                            h6: ({ ...props }) => <h6 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
+                            strong: ({ ...props }) => <strong {...props} style={{ 
+                              textDecoration: "none !important", 
+                              borderBottom: "none !important",
+                              textUnderlineOffset: "0 !important",
+                              textUnderlinePosition: "unset !important",
+                              fontWeight: 700,
+                              background: "none !important",
+                              backgroundColor: "transparent !important",
+                              padding: 0,
+                              borderRadius: 0,
+                            }} />,
+                            p: ({ ...props }) => <p {...props} style={{ margin: "0.5rem 0", textDecoration: "none" }} />,
+                            li: ({ ...props }) => <li {...props} style={{ textDecoration: "none" }} />,
+                            span: ({ ...props }) => <span {...props} style={{ textDecoration: "none" }} />,
+                            div: ({ ...props }) => <div {...props} style={{ textDecoration: "none" }} />,
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          whiteSpace: "pre-wrap",
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        {message.content}
+                      </div>
+                    )}
                     {message.costEstimate && (
                       <div style={{
                         marginTop: "1rem",
@@ -1519,15 +2338,15 @@ export default function StudyChat() {
             >
               <div
                 style={{
-                  padding: "1.5rem 2rem",
-                  borderRadius: "20px",
+                  padding: "1.25rem 1.5rem",
+                  borderRadius: "12px",
                   background: colorTheme === "dark" 
-                    ? "linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1))"
-                    : "linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.08))",
-                  border: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"}`,
+                    ? "rgba(26, 26, 36, 0.8)"
+                    : "#ffffff",
+                  border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
                   boxShadow: colorTheme === "dark"
-                    ? "0 8px 24px rgba(99, 102, 241, 0.2)"
-                    : "0 8px 24px rgba(99, 102, 241, 0.15)",
+                    ? "0 2px 8px rgba(0, 0, 0, 0.2)"
+                    : "0 2px 8px rgba(0, 0, 0, 0.08)",
                   display: "flex",
                   alignItems: "center",
                   gap: "1rem",
@@ -1583,25 +2402,85 @@ export default function StudyChat() {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Botón flotante para ir al final - arriba del input */}
+        {showScrollToBottom && (
+          <button
+            onClick={scrollToBottom}
+            style={{
+              position: "absolute",
+              bottom: "120px",
+              right: "2rem",
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              background: colorTheme === "dark"
+                ? "rgba(99, 102, 241, 0.3)"
+                : "rgba(99, 102, 241, 0.25)",
+              border: `1.5px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.5)" : "rgba(99, 102, 241, 0.4)"}`,
+              color: "white",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: colorTheme === "dark"
+                ? "0 2px 8px rgba(99, 102, 241, 0.3)"
+                : "0 2px 8px rgba(99, 102, 241, 0.25)",
+              transition: "all 0.2s ease",
+              zIndex: 200,
+              backdropFilter: "blur(8px)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "scale(1.1)";
+              e.currentTarget.style.boxShadow = colorTheme === "dark"
+                ? "0 6px 16px rgba(99, 102, 241, 0.5)"
+                : "0 6px 16px rgba(99, 102, 241, 0.4)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = colorTheme === "dark"
+                ? "0 4px 12px rgba(99, 102, 241, 0.4)"
+                : "0 4px 12px rgba(99, 102, 241, 0.3)";
+            }}
+            title="Ir al final del chat"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+        )}
+
         {/* Input Area */}
         <div
           style={{
+            position: "sticky",
+            bottom: 0,
             display: "flex",
             flexDirection: "column",
-            gap: "0.5rem",
+            gap: "0.75rem",
             padding: "1rem",
-            background: colorTheme === "light" ? "#ffffff" : "rgba(26, 26, 36, 0.6)",
-            borderRadius: "16px",
+            background: colorTheme === "light" ? "#ffffff" : "rgba(26, 26, 36, 0.95)",
+            borderRadius: "12px",
             border: colorTheme === "light" 
-              ? "1px solid rgba(148, 163, 184, 0.2)" 
-              : "1px solid rgba(148, 163, 184, 0.1)",
+              ? "1px solid rgba(148, 163, 184, 0.3)" 
+              : "1px solid rgba(148, 163, 184, 0.2)",
             boxShadow: colorTheme === "light"
-              ? "0 4px 20px rgba(0, 0, 0, 0.08)"
-              : "none",
+              ? "0 -4px 12px rgba(0, 0, 0, 0.1)"
+              : "0 -4px 12px rgba(0, 0, 0, 0.3)",
+            zIndex: 100,
+            marginTop: "auto",
           }}
         >
           {/* File Upload and Settings */}
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
             <input
               ref={fileInputRef}
               type="file"
@@ -1611,116 +2490,195 @@ export default function StudyChat() {
               onChange={(e) => handleFileUpload(e.target.files)}
             />
             <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isLoading}
+              onClick={() => {
+                setInput("");
+                generateNotes();
+              }}
+              disabled={isLoading || isGeneratingTest}
+              title="Generar apuntes del contenido"
               style={{
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: "0.5rem",
-                padding: "0.375rem 0.875rem",
-                background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
-                border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"}`,
-                borderRadius: "10px",
-                color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                cursor: isLoading ? "not-allowed" : "pointer",
-                fontSize: "0.8125rem",
-                fontWeight: 600,
-                opacity: isLoading ? 0.5 : 1,
-                transition: "all 0.3s ease",
+                height: "48px",
+                padding: "0 1rem",
+                background: (isLoading || isGeneratingTest)
+                  ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.2)")
+                  : (colorTheme === "light" ? "#ffffff" : "#ffffff"),
+                border: colorTheme === "light" && !(isLoading || isGeneratingTest)
+                  ? `1px solid rgba(148, 163, 184, 0.2)`
+                  : (colorTheme === "dark" ? `1px solid rgba(148, 163, 184, 0.2)` : `1px solid rgba(148, 163, 184, 0.2)`),
+                borderRadius: "24px",
+                cursor: (isLoading || isGeneratingTest) ? "not-allowed" : "pointer",
+                transition: "all 0.2s ease",
+                opacity: (isLoading || isGeneratingTest) ? 0.6 : 1,
+                boxShadow: !(isLoading || isGeneratingTest)
+                  ? "0 1px 3px rgba(0, 0, 0, 0.1)"
+                  : "none",
+                flexShrink: 0,
               }}
               onMouseEnter={(e) => {
-                if (!isLoading) {
-                  e.currentTarget.style.transform = "translateX(4px)";
-                  e.currentTarget.style.background = colorTheme === "dark" ? "rgba(99, 102, 241, 0.15)" : "rgba(99, 102, 241, 0.12)";
+                if (!isLoading && !isGeneratingTest) {
+                  e.currentTarget.style.background = "#f8f9fa";
                 }
               }}
               onMouseLeave={(e) => {
-                if (!isLoading) {
-                  e.currentTarget.style.transform = "translateX(0)";
-                  e.currentTarget.style.background = colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)";
+                if (!isLoading && !isGeneratingTest) {
+                  e.currentTarget.style.background = "#ffffff";
                 }
               }}
             >
-              <div style={{
-                width: "22px",
-                height: "22px",
-                borderRadius: "6px",
-                background: "linear-gradient(135deg, #6366f1, #4f46e5)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}>
-                <UploadIcon size={13} color="white" />
-              </div>
-              <span>Subir PDF</span>
+              <NotesIcon 
+                size={20} 
+                color={
+                  (isLoading || isGeneratingTest)
+                    ? "rgba(26, 36, 52, 0.4)"
+                    : "#1a1a24"
+                } 
+              />
+              <span style={{
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                color: (isLoading || isGeneratingTest)
+                  ? "rgba(26, 36, 52, 0.4)"
+                  : "#1a1a24"
+              }}>Apuntes</span>
             </button>
             <button
-              onClick={() => setShowAPIKeyConfig(true)}
-              title="Configurar API Keys"
+              onClick={() => {
+                setInput("");
+                generateTest("medium", null, null);
+              }}
+              disabled={isLoading || isGeneratingTest}
+              title="Generar test de evaluación"
               style={{
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: "0.5rem",
-                padding: "0.375rem 0.875rem",
-                background: apiKeys?.openai
-                  ? (colorTheme === "dark" ? "rgba(16, 185, 129, 0.1)" : "rgba(16, 185, 129, 0.08)")
-                  : (colorTheme === "dark" ? "rgba(245, 158, 11, 0.1)" : "rgba(245, 158, 11, 0.08)"),
-                border: apiKeys?.openai
-                  ? `1px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.4)"}`
-                  : `1px solid ${colorTheme === "dark" ? "rgba(245, 158, 11, 0.3)" : "rgba(245, 158, 11, 0.4)"}`,
-                borderRadius: "10px",
-                color: apiKeys?.openai ? "#10b981" : "#f59e0b",
-                cursor: "pointer",
-                fontSize: "0.8125rem",
-                fontWeight: 600,
-                transition: "all 0.3s ease",
+                height: "48px",
+                padding: "0 1rem",
+                background: (isLoading || isGeneratingTest)
+                  ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.2)")
+                  : (colorTheme === "light" ? "#ffffff" : "#ffffff"),
+                border: `1px solid rgba(148, 163, 184, 0.2)`,
+                borderRadius: "24px",
+                cursor: (isLoading || isGeneratingTest) ? "not-allowed" : "pointer",
+                transition: "all 0.2s ease",
+                opacity: (isLoading || isGeneratingTest) ? 0.6 : 1,
+                boxShadow: !(isLoading || isGeneratingTest)
+                  ? "0 1px 3px rgba(0, 0, 0, 0.1)"
+                  : "none",
+                flexShrink: 0,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateX(4px)";
-                if (apiKeys?.openai) {
-                  e.currentTarget.style.background = colorTheme === "dark" ? "rgba(16, 185, 129, 0.15)" : "rgba(16, 185, 129, 0.12)";
-                } else {
-                  e.currentTarget.style.background = colorTheme === "dark" ? "rgba(245, 158, 11, 0.15)" : "rgba(245, 158, 11, 0.12)";
+                if (!isLoading && !isGeneratingTest) {
+                  e.currentTarget.style.background = "#f8f9fa";
                 }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateX(0)";
-                if (apiKeys?.openai) {
-                  e.currentTarget.style.background = colorTheme === "dark" ? "rgba(16, 185, 129, 0.1)" : "rgba(16, 185, 129, 0.08)";
-                } else {
-                  e.currentTarget.style.background = colorTheme === "dark" ? "rgba(245, 158, 11, 0.1)" : "rgba(245, 158, 11, 0.08)";
+                if (!isLoading && !isGeneratingTest) {
+                  e.currentTarget.style.background = "#ffffff";
                 }
               }}
             >
-              <div style={{
-                width: "22px",
-                height: "22px",
-                borderRadius: "6px",
-                background: apiKeys?.openai 
-                  ? "linear-gradient(135deg, #10b981, #059669)"
-                  : "linear-gradient(135deg, #f59e0b, #d97706)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}>
-                <KeyIcon size={13} color="white" />
-              </div>
-              <span>{apiKeys?.openai ? "API Configurada" : "Configurar API"}</span>
+              <TestIcon 
+                size={20} 
+                color={
+                  (isLoading || isGeneratingTest)
+                    ? "rgba(26, 36, 52, 0.4)"
+                    : "#1a1a24"
+                } 
+              />
+              <span style={{
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                color: (isLoading || isGeneratingTest)
+                  ? "rgba(26, 36, 52, 0.4)"
+                  : "#1a1a24"
+              }}>{isGeneratingTest ? "Generando test..." : "Test"}</span>
             </button>
             {uploadedFiles.length > 0 && (
-              <div style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
+              <div style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginLeft: "auto" }}>
                 {uploadedFiles.length} archivo(s) subido(s)
               </div>
             )}
           </div>
 
           {/* Text Input */}
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-end" }}>
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "stretch" }}>
+            {/* Botón Subir PDF */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              title="Subir PDF"
+              style={{
+                width: "48px",
+                height: "48px",
+                minWidth: "48px",
+                padding: 0,
+                background:
+                  isLoading
+                    ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(99, 102, 241, 0.3)")
+                    : (colorTheme === "light" ? "#ffffff" : "#6366f1"),
+                border: colorTheme === "light" && !isLoading
+                  ? `1px solid rgba(148, 163, 184, 0.2)`
+                  : "none",
+                borderRadius: "50%",
+                cursor: isLoading ? "not-allowed" : "pointer",
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: isLoading ? 0.6 : 1,
+                boxShadow: colorTheme === "light" && !isLoading
+                  ? "0 1px 3px rgba(0, 0, 0, 0.1)"
+                  : "none",
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading) {
+                  if (colorTheme === "light") {
+                    e.currentTarget.style.background = "#f8f9fa";
+                  } else {
+                    e.currentTarget.style.background = "#4f46e5";
+                  }
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isLoading) {
+                  if (colorTheme === "light") {
+                    e.currentTarget.style.background = "#ffffff";
+                  } else {
+                    e.currentTarget.style.background = "#6366f1";
+                  }
+                }
+              }}
+            >
+              <UploadIcon 
+                size={20} 
+                color={
+                  isLoading
+                    ? (colorTheme === "light" ? "rgba(26, 36, 52, 0.4)" : "rgba(255, 255, 255, 0.5)")
+                    : (colorTheme === "light" ? "#1a1a24" : "white")
+                } 
+              />
+            </button>
             <textarea
+              ref={textareaRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                // Ajustar altura automáticamente
+                if (textareaRef.current) {
+                  textareaRef.current.style.height = "48px";
+                  const scrollHeight = textareaRef.current.scrollHeight;
+                  if (scrollHeight > 48) {
+                    textareaRef.current.style.height = `${Math.min(scrollHeight, 150)}px`;
+                  }
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -1731,173 +2689,84 @@ export default function StudyChat() {
               disabled={isLoading}
               style={{
                 flex: 1,
-                padding: "1.25rem 1.5rem",
+                padding: "0.5rem 1rem",
                 background: colorTheme === "dark" 
-                  ? "linear-gradient(135deg, rgba(26, 26, 36, 0.95), rgba(30, 30, 45, 0.95))" 
-                  : "linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98))",
-                border: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.5)"}`,
-                borderRadius: "20px",
+                  ? "rgba(26, 26, 36, 0.8)" 
+                  : "#ffffff",
+                border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+                borderRadius: "24px",
                 color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
                 fontSize: "1rem",
                 resize: "none",
-                minHeight: "70px",
+                minHeight: "48px",
+                height: "48px",
                 maxHeight: "150px",
                 fontFamily: "inherit",
                 boxShadow: colorTheme === "dark"
-                  ? "0 8px 32px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
-                  : "0 8px 32px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                  ? "0 2px 8px rgba(0, 0, 0, 0.2)"
+                  : "0 2px 8px rgba(0, 0, 0, 0.08)",
+                lineHeight: "1.5",
+                overflowY: "auto",
               }}
+              className="custom-textarea"
             />
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: "120px" }}>
-              {/* Botones de acción rápida */}
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <button
-                  onClick={() => {
-                    setInput("");
-                    generateNotes();
-                  }}
-                  disabled={isLoading || isGeneratingTest}
-                  title="Generar apuntes del contenido"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    padding: "0.375rem 0.875rem",
-                    background: (isLoading || isGeneratingTest)
-                      ? (colorTheme === "dark" ? "rgba(99, 102, 241, 0.15)" : "rgba(99, 102, 241, 0.12)")
-                      : (colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)"),
-                    border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"}`,
-                    borderRadius: "10px",
-                    color: (isLoading || isGeneratingTest) ? "rgba(99, 102, 241, 0.5)" : (colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"),
-                    cursor: (isLoading || isGeneratingTest) ? "not-allowed" : "pointer",
-                    fontSize: "0.8125rem",
-                    fontWeight: 600,
-                    transition: "all 0.3s ease",
-                    whiteSpace: "nowrap",
-                    flex: 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isLoading && !isGeneratingTest) {
-                      e.currentTarget.style.transform = "translateX(4px)";
-                      e.currentTarget.style.background = colorTheme === "dark" ? "rgba(99, 102, 241, 0.15)" : "rgba(99, 102, 241, 0.12)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isLoading && !isGeneratingTest) {
-                      e.currentTarget.style.transform = "translateX(0)";
-                      e.currentTarget.style.background = colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)";
-                    }
-                  }}
-                >
-                  <div style={{
-                    width: "22px",
-                    height: "22px",
-                    borderRadius: "6px",
-                    background: "linear-gradient(135deg, #6366f1, #4f46e5)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    opacity: (isLoading || isGeneratingTest) ? 0.5 : 1,
-                  }}>
-                    <NotesIcon size={13} color="white" />
-                  </div>
-                  <span>Apuntes</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setInput("");
-                    generateTest("medium", null, null);
-                  }}
-                  disabled={isLoading || isGeneratingTest}
-                  title="Generar test de evaluación"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    padding: "0.375rem 0.875rem",
-                    background: (isLoading || isGeneratingTest)
-                      ? (colorTheme === "dark" ? "rgba(236, 72, 153, 0.15)" : "rgba(236, 72, 153, 0.12)")
-                      : (colorTheme === "dark" ? "rgba(236, 72, 153, 0.1)" : "rgba(236, 72, 153, 0.08)"),
-                    border: `1px solid ${colorTheme === "dark" ? "rgba(236, 72, 153, 0.3)" : "rgba(236, 72, 153, 0.4)"}`,
-                    borderRadius: "10px",
-                    color: (isLoading || isGeneratingTest) ? "rgba(236, 72, 153, 0.5)" : (colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"),
-                    cursor: (isLoading || isGeneratingTest) ? "not-allowed" : "pointer",
-                    fontSize: "0.8125rem",
-                    fontWeight: 600,
-                    transition: "all 0.3s ease",
-                    whiteSpace: "nowrap",
-                    flex: 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isLoading && !isGeneratingTest) {
-                      e.currentTarget.style.transform = "translateX(4px)";
-                      e.currentTarget.style.background = colorTheme === "dark" ? "rgba(236, 72, 153, 0.15)" : "rgba(236, 72, 153, 0.12)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isLoading && !isGeneratingTest) {
-                      e.currentTarget.style.transform = "translateX(0)";
-                      e.currentTarget.style.background = colorTheme === "dark" ? "rgba(236, 72, 153, 0.1)" : "rgba(236, 72, 153, 0.08)";
-                    }
-                  }}
-                >
-                  <div style={{
-                    width: "22px",
-                    height: "22px",
-                    borderRadius: "6px",
-                    background: "linear-gradient(135deg, #ec4899, #db2777)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    opacity: (isLoading || isGeneratingTest) ? 0.5 : 1,
-                  }}>
-                    <TestIcon size={13} color="white" />
-                  </div>
-                  <span>{isGeneratingTest ? "Generando test..." : "Test"}</span>
-                </button>
-              </div>
-              {/* Botón Enviar */}
-              <button
-                onClick={handleSend}
-                disabled={isLoading || isGeneratingTest || !input.trim()}
-                title="Enviar mensaje"
-                style={{
-                  padding: "0.875rem 1.25rem",
-                  background:
-                    (isLoading || isGeneratingTest || !input.trim())
-                      ? "rgba(99, 102, 241, 0.2)"
-                      : "linear-gradient(135deg, #6366f1, #8b5cf6)",
-                  border: "none",
-                  borderRadius: "10px",
-                  color: "white",
-                  cursor: (isLoading || isGeneratingTest || !input.trim()) ? "not-allowed" : "pointer",
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
-                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem",
-                  opacity: (isLoading || isGeneratingTest || !input.trim()) ? 0.6 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isLoading && !isGeneratingTest && input.trim()) {
-                    e.currentTarget.style.transform = "translateY(-2px) scale(1.02)";
-                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(99, 102, 241, 0.4)";
+            {/* Botón Enviar */}
+            <button
+              onClick={handleSend}
+              disabled={isLoading || isGeneratingTest || !input.trim()}
+              title="Enviar mensaje"
+              style={{
+                width: "48px",
+                height: "48px",
+                minWidth: "48px",
+                padding: 0,
+                background:
+                  (isLoading || isGeneratingTest || !input.trim())
+                    ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(99, 102, 241, 0.3)")
+                    : (colorTheme === "light" ? "#ffffff" : "#6366f1"),
+                border: colorTheme === "light" && (input.trim() && !isLoading && !isGeneratingTest)
+                  ? `1px solid rgba(148, 163, 184, 0.2)`
+                  : "none",
+                borderRadius: "50%",
+                cursor: (isLoading || isGeneratingTest || !input.trim()) ? "not-allowed" : "pointer",
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: (isLoading || isGeneratingTest || !input.trim()) ? 0.6 : 1,
+                boxShadow: colorTheme === "light" && (input.trim() && !isLoading && !isGeneratingTest)
+                  ? "0 1px 3px rgba(0, 0, 0, 0.1)"
+                  : "none",
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading && !isGeneratingTest && input.trim()) {
+                  if (colorTheme === "light") {
+                    e.currentTarget.style.background = "#f8f9fa";
+                  } else {
+                    e.currentTarget.style.background = "#4f46e5";
                   }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0) scale(1)";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
-              >
-                  <SendIcon size={18} color="white" />
-                  <span>Enviar</span>
-              </button>
-            </div>
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isLoading && !isGeneratingTest && input.trim()) {
+                  if (colorTheme === "light") {
+                    e.currentTarget.style.background = "#ffffff";
+                  } else {
+                    e.currentTarget.style.background = "#6366f1";
+                  }
+                }
+              }}
+            >
+              <SendIcon 
+                size={20} 
+                color={
+                  (isLoading || isGeneratingTest || !input.trim())
+                    ? (colorTheme === "light" ? "rgba(26, 36, 52, 0.4)" : "rgba(255, 255, 255, 0.5)")
+                    : (colorTheme === "light" ? "#1a1a24" : "white")
+                } 
+              />
+            </button>
           </div>
         </div>
         
@@ -2135,6 +3004,94 @@ export default function StudyChat() {
       </div>
 
       <style jsx>{`
+        /* Estilos para eliminar subrayados en mensajes normales del asistente - MÁXIMA PRIORIDAD */
+        :global(.message-content),
+        :global(.message-content *),
+        :global(.message-content h1),
+        :global(.message-content h2),
+        :global(.message-content h3),
+        :global(.message-content h4),
+        :global(.message-content h5),
+        :global(.message-content h6),
+        :global(.message-content h1 *),
+        :global(.message-content h2 *),
+        :global(.message-content h3 *),
+        :global(.message-content h4 *),
+        :global(.message-content h5 *),
+        :global(.message-content h6 *),
+        :global(.message-content strong),
+        :global(.message-content strong *),
+        :global(.message-content p),
+        :global(.message-content p *),
+        :global(.message-content li),
+        :global(.message-content li *),
+        :global(.message-content div),
+        :global(.message-content div *),
+        :global(.message-content span),
+        :global(.message-content span *),
+        :global(.message-content p strong),
+        :global(.message-content li strong),
+        :global(.message-content div strong),
+        :global(.message-content span strong),
+        :global(.message-content a) {
+          text-decoration: none !important;
+          border-bottom: none !important;
+          text-underline-offset: 0 !important;
+          text-underline-position: unset !important;
+        }
+        :global(.message-content h1),
+        :global(.message-content h2),
+        :global(.message-content h3),
+        :global(.message-content h4),
+        :global(.message-content h5),
+        :global(.message-content h6) {
+          font-weight: 600;
+          margin: 1rem 0 0.5rem 0;
+        }
+        :global(.message-content strong),
+        :global(.message-content strong *),
+        :global(.message-content p strong),
+        :global(.message-content li strong),
+        :global(.message-content div strong),
+        :global(.message-content span strong),
+        :global(.message-content h1 strong),
+        :global(.message-content h2 strong),
+        :global(.message-content h3 strong),
+        :global(.message-content h4 strong),
+        :global(.message-content h5 strong),
+        :global(.message-content h6 strong) {
+          font-weight: 700 !important;
+          text-decoration: none !important;
+          border-bottom: none !important;
+          text-underline-offset: 0 !important;
+          text-underline-position: unset !important;
+          box-shadow: none !important;
+          outline: none !important;
+          background: none !important;
+          background-color: transparent !important;
+          padding: 0 !important;
+          border-radius: 0 !important;
+        }
+        /* Estilos personalizados para el scrollbar del textarea */
+        :global(.custom-textarea::-webkit-scrollbar) {
+          width: 6px;
+        }
+        :global(.custom-textarea::-webkit-scrollbar-track) {
+          background: transparent;
+          border-radius: 10px;
+        }
+        :global(.custom-textarea::-webkit-scrollbar-thumb) {
+          background: ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.3)" : "rgba(148, 163, 184, 0.4)"};
+          border-radius: 10px;
+        }
+        :global(.custom-textarea::-webkit-scrollbar-thumb:hover) {
+          background: ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.5)" : "rgba(148, 163, 184, 0.6)"};
+        }
+        /* Para Firefox */
+        :global(.custom-textarea) {
+          scrollbar-width: thin;
+          scrollbar-color: ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.3)" : "rgba(148, 163, 184, 0.4)"} transparent;
+        }
         @keyframes bounce {
           0%, 80%, 100% {
             transform: scale(0);
@@ -2166,7 +3123,8 @@ export default function StudyChat() {
           }
         }
       `}</style>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -2561,53 +3519,40 @@ function NotesViewer({
           to { transform: rotate(360deg); }
         }
         .notes-viewer :global(h1) {
-          font-size: 2.5rem;
-          font-weight: 800;
-          margin: 2.5rem 0 1.5rem;
+          font-size: clamp(2rem, 5vw, 3rem);
+          font-weight: 700;
+          margin: 3rem 0 2rem;
           color: ${colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"};
-          background: linear-gradient(135deg, #6366f1, #06b6d4, #ec4899);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          border-bottom: 3px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.5)"};
-          padding-bottom: 1rem;
           letter-spacing: -0.02em;
+          line-height: 1.2;
+          text-decoration: none !important;
         }
         .notes-viewer :global(h2) {
-          font-size: 1.75rem;
-          font-weight: 700;
-          margin: 2.5rem 0 1.25rem;
+          font-size: clamp(1.5rem, 4vw, 2rem);
+          font-weight: 600;
+          margin: 2.5rem 0 1.5rem;
           color: ${colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"};
-          background: ${colorTheme === "dark" 
-            ? "linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(6, 182, 212, 0.15))"
-            : "linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(6, 182, 212, 0.1))"};
-          padding: 1rem 1.5rem;
-          border-radius: 12px;
-          border-left: 5px solid #6366f1;
-          box-shadow: ${colorTheme === "dark" 
-            ? "0 4px 12px rgba(99, 102, 241, 0.1)"
-            : "0 4px 12px rgba(99, 102, 241, 0.2)"};
+          padding: 0.75rem 0;
           display: flex;
           align-items: center;
           gap: 0.75rem;
-        }
-        .notes-viewer :global(h2::before) {
-          content: "";
-          font-size: 1.5rem;
+          text-decoration: none !important;
         }
         .notes-viewer :global(h3) {
-          font-size: 1.4rem;
-          font-weight: 700;
+          font-size: clamp(1.25rem, 3vw, 1.5rem);
+          font-weight: 600;
           margin: 2rem 0 1rem;
-          color: ${colorTheme === "dark" ? "#6366f1" : "#4f46e5"};
-          padding-left: 0.5rem;
-          border-left: 4px solid #6366f1;
+          color: ${colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"};
+          padding-left: 0.75rem;
+          border-left: 3px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"};
+          text-decoration: none !important;
         }
         .notes-viewer :global(h4) {
-          font-size: 1.2rem;
+          font-size: clamp(1.1rem, 2.5vw, 1.3rem);
           font-weight: 600;
           margin: 1.5rem 0 0.75rem;
           color: ${colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"};
+          text-decoration: none !important;
         }
         .notes-viewer :global(p) {
           margin: 1.25rem 0;
@@ -2641,23 +3586,36 @@ function NotesViewer({
             : "rgba(99, 102, 241, 0.15)"};
           padding: 0.15rem 0.4rem;
           border-radius: 4px;
+          text-decoration: none !important;
+        }
+        .notes-viewer :global(strong *), .notes-viewer :global(* strong) {
+          text-decoration: none !important;
+        }
+        .notes-viewer :global(h1), .notes-viewer :global(h2), .notes-viewer :global(h3), .notes-viewer :global(h4), .notes-viewer :global(h5), .notes-viewer :global(h6) {
+          text-decoration: none !important;
+        }
+        .notes-viewer :global(h1 *), .notes-viewer :global(h2 *), .notes-viewer :global(h3 *), .notes-viewer :global(h4 *), .notes-viewer :global(h5 *), .notes-viewer :global(h6 *) {
+          text-decoration: none !important;
+        }
+        .notes-viewer :global(p strong), .notes-viewer :global(li strong), .notes-viewer :global(div strong), .notes-viewer :global(span strong) {
+          text-decoration: none !important;
+        }
+        .notes-viewer :global(strong strong) {
+          text-decoration: none !important;
         }
         .notes-viewer :global(em) {
           color: #06b6d4;
           font-style: italic;
         }
         .notes-viewer :global(code) {
-          background: ${colorTheme === "dark" 
-            ? "rgba(99, 102, 241, 0.15)"
-            : "rgba(99, 102, 241, 0.2)"};
-          padding: 0.25rem 0.5rem;
-          border-radius: 6px;
+          background: none !important;
+          background-color: transparent !important;
+          padding: 0;
+          border-radius: 0;
           font-family: ${jetbrainsMono.style.fontFamily};
           font-size: 0.95em;
           color: ${colorTheme === "dark" ? "#22d3ee" : "#0891b2"};
-          border: 1px solid ${colorTheme === "dark" 
-            ? "rgba(99, 102, 241, 0.2)"
-            : "rgba(99, 102, 241, 0.3)"};
+          border: none !important;
         }
         .notes-viewer :global(pre) {
           background: ${colorTheme === "dark"
@@ -2721,29 +3679,45 @@ function NotesViewer({
             : "rgba(99, 102, 241, 0.3)"};
         }
         .notes-viewer :global(th), .notes-viewer :global(td) {
-          border: 1px solid ${colorTheme === "dark"
+          border-left: 1px solid ${colorTheme === "dark"
             ? "rgba(148, 163, 184, 0.15)"
             : "rgba(148, 163, 184, 0.3)"};
+          border-right: 1px solid ${colorTheme === "dark"
+            ? "rgba(148, 163, 184, 0.15)"
+            : "rgba(148, 163, 184, 0.3)"};
+          border-top: none;
+          border-bottom: none;
           padding: 1rem 1.25rem;
           text-align: left;
+          text-decoration: none;
         }
         .notes-viewer :global(th) {
-          background: ${colorTheme === "dark"
-            ? "linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(6, 182, 212, 0.15))"
-            : "linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(6, 182, 212, 0.1))"};
+          border-top: 1px solid ${colorTheme === "dark"
+            ? "rgba(148, 163, 184, 0.15)"
+            : "rgba(148, 163, 184, 0.3)"};
+        }
+        .notes-viewer :global(tr:last-child td) {
+          border-bottom: 1px solid ${colorTheme === "dark"
+            ? "rgba(148, 163, 184, 0.15)"
+            : "rgba(148, 163, 184, 0.3)"};
+        }
+        .notes-viewer :global(th *), .notes-viewer :global(td *) {
+          text-decoration: none;
+        }
+        .notes-viewer :global(th) {
+          background: none !important;
+          background-color: transparent !important;
           font-weight: 700;
           color: ${colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"};
           font-size: 1.05rem;
         }
         .notes-viewer :global(td) {
-          background: ${colorTheme === "dark"
-            ? "rgba(26, 26, 36, 0.6)"
-            : "rgba(255, 255, 255, 0.7)"};
+          background: none !important;
+          background-color: transparent !important;
         }
         .notes-viewer :global(tr:hover td) {
-          background: ${colorTheme === "dark"
-            ? "rgba(99, 102, 241, 0.1)"
-            : "rgba(99, 102, 241, 0.15)"};
+          background: none !important;
+          background-color: transparent !important;
         }
         .notes-viewer :global(hr) {
           border: none;
@@ -2753,13 +3727,11 @@ function NotesViewer({
         }
         .notes-viewer :global(a) {
           color: #6366f1;
-          text-decoration: underline;
-          text-decoration-color: rgba(99, 102, 241, 0.4);
+          text-decoration: none;
           transition: all 0.2s ease;
         }
         .notes-viewer :global(a:hover) {
           color: #06b6d4;
-          text-decoration-color: #06b6d4;
         }
         /* Tarjetas especiales para conceptos clave */
         .notes-viewer :global(.concept-card) {
@@ -2999,7 +3971,45 @@ function NotesViewer({
                   diagramData.edges = [];
                 }
                 
-                return <DiagramRenderer data={diagramData} colorTheme={colorTheme} />;
+                // Usar SIEMPRE SectionBasedSchemaRenderer (diseño de la segunda imagen)
+                console.log('Parsed diagram data:', diagramData);
+                
+                // Encontrar nodos hijos
+                const rootNodes = diagramData.nodes.filter((node: any) => {
+                  const hasIncoming = (diagramData.edges || []).some((edge: any) => edge.to === node.id);
+                  return !hasIncoming;
+                });
+                const rootNode = rootNodes[0] || diagramData.nodes[0];
+                console.log('Root node:', rootNode);
+                
+                let childNodes = diagramData.nodes.filter((node: any) => {
+                  if (node.id === rootNode.id) return false;
+                  if ((diagramData.edges || []).length === 0) {
+                    return true;
+                  }
+                  return (diagramData.edges || []).some((edge: any) => edge.from === rootNode.id && edge.to === node.id);
+                });
+                
+                if (childNodes.length === 0 && diagramData.nodes.length > 1) {
+                  childNodes = diagramData.nodes.slice(1);
+                }
+                
+                console.log('Child nodes:', childNodes);
+                console.log('Using SectionBasedSchemaRenderer with:', {
+                  ...diagramData,
+                  title: diagramData.title || rootNode.label,
+                });
+                
+                // Usar SectionBasedSchemaRenderer para todos los esquemas
+                return (
+                  <SectionBasedSchemaRenderer 
+                    data={{
+                      ...diagramData,
+                      title: diagramData.title || rootNode.label,
+                    }} 
+                    colorTheme={colorTheme} 
+                  />
+                );
               } catch (e) {
                 console.error('Error parsing diagram JSON:', e, 'Code string:', codeString.substring(0, 200));
                 return (
@@ -3122,11 +4132,12 @@ function TestComponent({
   onSubmit: () => void;
   colorTheme?: "dark" | "light";
 }) {
-  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [questionResults, setQuestionResults] = useState<Record<string, { isCorrect: boolean; showFeedback: boolean }>>({});
   const answeredCount = Object.keys(answers).length;
   const totalQuestions = test.questions.length;
   const progress = (answeredCount / totalQuestions) * 100;
+  const currentQuestion = test.questions[currentQuestionIndex];
   
   // Calcular estadísticas en tiempo real
   const correctCount = Object.entries(questionResults).filter(([, result]) => result.isCorrect).length;
@@ -3154,8 +4165,8 @@ function TestComponent({
   };
   
   const bgColor = colorTheme === "dark" 
-    ? "linear-gradient(135deg, rgba(26, 26, 36, 0.95), rgba(30, 30, 45, 0.95))"
-    : "linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98))";
+    ? "rgba(26, 26, 36, 0.8)"
+    : "#ffffff";
   const textColor = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
   const secondaryTextColor = colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563";
   
@@ -3163,128 +4174,222 @@ function TestComponent({
     <div
       style={{
         background: bgColor,
-        borderRadius: "20px",
-        padding: "2rem",
-        border: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.5)"}`,
+        borderRadius: "24px",
+        padding: "1.5rem",
+        border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
         boxShadow: colorTheme === "dark"
-          ? "0 8px 32px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
-          : "0 8px 32px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+          ? "0 2px 8px rgba(0, 0, 0, 0.2)"
+          : "0 2px 8px rgba(0, 0, 0, 0.08)",
+        width: "100%",
+        boxSizing: "border-box",
       }}
     >
-      {/* Header del Test con Estadísticas en Tiempo Real */}
-      <div style={{ marginBottom: "2rem" }}>
+      {/* Header del Test */}
+      <div style={{ marginBottom: "1.5rem" }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "1.5rem",
+            marginBottom: "1rem",
             flexWrap: "wrap",
             gap: "1rem",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-            <div style={{
-              padding: "0.75rem",
-              background: "linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.15))",
-              borderRadius: "12px",
-              border: "2px solid rgba(99, 102, 241, 0.3)",
-            }}>
-              <TestIcon size={24} color="#6366f1" />
-            </div>
-            <div>
-              <h3
-                className={spaceGrotesk.className}
-                style={{
-                  fontSize: "1.5rem",
-                  fontWeight: 700,
-                  background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  margin: 0,
-                }}
-              >
-                Test de Evaluación
-              </h3>
-              <p style={{ margin: "0.25rem 0 0 0", fontSize: "0.875rem", color: secondaryTextColor }}>
-                Nivel: <strong style={{ color: "#6366f1" }}>{test.difficulty}</strong>
-              </p>
-            </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <TestIcon size={20} color="#6366f1" />
+            <h3
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: 600,
+                color: textColor,
+                margin: 0,
+              }}
+            >
+              Test de Evaluación
+            </h3>
+            <span style={{ fontSize: "0.875rem", color: secondaryTextColor }}>
+              · Nivel: {test.difficulty}
+            </span>
           </div>
           
           {/* Puntuación en tiempo real */}
           {answeredCount > 0 && (
             <div style={{
-              padding: "1rem 1.5rem",
+              padding: "0.5rem 1rem",
               background: colorTheme === "dark"
-                ? "linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1))"
-                : "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.08))",
+                ? "rgba(16, 185, 129, 0.1)"
+                : "rgba(16, 185, 129, 0.08)",
               borderRadius: "12px",
-              border: `2px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.4)"}`,
+              border: `1px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.2)" : "rgba(16, 185, 129, 0.3)"}`,
               textAlign: "center",
             }}>
               <div style={{ fontSize: "0.75rem", color: secondaryTextColor, marginBottom: "0.25rem" }}>
-                Puntuación Actual
+                Puntuación
               </div>
               <div style={{
-                fontSize: "1.75rem",
+                fontSize: "1.25rem",
                 fontWeight: 700,
-                background: "linear-gradient(135deg, #10b981, #059669)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
+                color: "#10b981",
               }}>
                 {currentScore.toFixed(0)}%
-              </div>
-              <div style={{ fontSize: "0.75rem", color: secondaryTextColor, marginTop: "0.25rem" }}>
-                {correctCount}/{answeredCount} correctas
               </div>
             </div>
           )}
         </div>
         
-        {/* Barra de progreso mejorada */}
+        {/* Barra de progreso */}
         <div style={{ marginBottom: "1rem" }}>
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
-              marginBottom: "0.75rem",
+              marginBottom: "0.5rem",
               fontSize: "0.875rem",
               color: secondaryTextColor,
               fontWeight: 500,
             }}
           >
             <span>Progreso: {answeredCount}/{totalQuestions} preguntas</span>
-            <span style={{ fontWeight: 700, color: "#6366f1" }}>{Math.round(progress)}%</span>
+            <span style={{ fontWeight: 600, color: "#6366f1" }}>{Math.round(progress)}%</span>
           </div>
           <div
             style={{
               width: "100%",
-              height: "12px",
+              height: "8px",
               background: colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.2)",
               borderRadius: "8px",
               overflow: "hidden",
-              position: "relative",
             }}
           >
             <div
               style={{
                 width: `${progress}%`,
                 height: "100%",
-                background: "linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4)",
+                background: "#6366f1",
                 borderRadius: "8px",
-                transition: "width 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
-                boxShadow: "0 0 20px rgba(99, 102, 241, 0.4)",
+                transition: "width 0.3s ease",
               }}
             />
           </div>
         </div>
       </div>
 
-      {/* Preguntas */}
-      <div style={{ marginBottom: "2rem" }}>
-        {test.questions.map((q, index) => {
-          const isSelected = selectedQuestion === q.id;
+      {/* Navegación de preguntas */}
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        marginBottom: "1.5rem",
+        gap: "1rem"
+      }}>
+        <button
+          onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+          disabled={currentQuestionIndex === 0}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+            padding: "0.5rem 1rem",
+            background: currentQuestionIndex === 0
+              ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.15)")
+              : (colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff"),
+            border: `1px solid ${currentQuestionIndex === 0 
+              ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)")
+              : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)")}`,
+            borderRadius: "12px",
+            color: currentQuestionIndex === 0 
+              ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.5)" : "rgba(148, 163, 184, 0.6)")
+              : textColor,
+            cursor: currentQuestionIndex === 0 ? "not-allowed" : "pointer",
+            fontWeight: 500,
+            fontSize: "0.875rem",
+            transition: "all 0.2s ease",
+            opacity: currentQuestionIndex === 0 ? 0.5 : 1,
+          }}
+          onMouseEnter={(e) => {
+            if (currentQuestionIndex > 0) {
+              e.currentTarget.style.background = colorTheme === "dark" 
+                ? "rgba(148, 163, 184, 0.15)" 
+                : "rgba(148, 163, 184, 0.1)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (currentQuestionIndex > 0) {
+              e.currentTarget.style.background = colorTheme === "dark" 
+                ? "rgba(26, 26, 36, 0.8)" 
+                : "#ffffff";
+            }
+          }}
+        >
+          <span style={{ fontSize: "1.25rem" }}>‹</span>
+          <span>Anterior</span>
+        </button>
+
+        <div style={{
+          padding: "0.5rem 1rem",
+          background: colorTheme === "dark" 
+            ? "rgba(26, 26, 36, 0.8)" 
+            : "#ffffff",
+          borderRadius: "12px",
+          border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+          fontWeight: 500,
+          color: textColor,
+          fontSize: "0.875rem",
+        }}>
+          Pregunta {currentQuestionIndex + 1} de {totalQuestions}
+        </div>
+
+        <button
+          onClick={() => setCurrentQuestionIndex(prev => Math.min(totalQuestions - 1, prev + 1))}
+          disabled={currentQuestionIndex === totalQuestions - 1}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+            padding: "0.5rem 1rem",
+            background: currentQuestionIndex === totalQuestions - 1
+              ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.15)")
+              : (colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff"),
+            border: `1px solid ${currentQuestionIndex === totalQuestions - 1 
+              ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)")
+              : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)")}`,
+            borderRadius: "12px",
+            color: currentQuestionIndex === totalQuestions - 1 
+              ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.5)" : "rgba(148, 163, 184, 0.6)")
+              : textColor,
+            cursor: currentQuestionIndex === totalQuestions - 1 ? "not-allowed" : "pointer",
+            fontWeight: 600,
+            fontSize: "0.875rem",
+            transition: "all 0.2s ease",
+            opacity: currentQuestionIndex === totalQuestions - 1 ? 0.5 : 1,
+          }}
+          onMouseEnter={(e) => {
+            if (currentQuestionIndex < totalQuestions - 1) {
+              e.currentTarget.style.background = colorTheme === "dark" 
+                ? "rgba(148, 163, 184, 0.15)" 
+                : "rgba(148, 163, 184, 0.1)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (currentQuestionIndex < totalQuestions - 1) {
+              e.currentTarget.style.background = colorTheme === "dark" 
+                ? "rgba(26, 26, 36, 0.8)" 
+                : "#ffffff";
+            }
+          }}
+        >
+          <span>Siguiente</span>
+          <span style={{ fontSize: "1.25rem" }}>›</span>
+        </button>
+      </div>
+
+      {/* Pregunta actual */}
+      <div style={{ marginBottom: "2rem", width: "100%", boxSizing: "border-box" }}>
+        {currentQuestion && (() => {
+          const q = currentQuestion;
           const isAnswered = answers[q.id] !== undefined;
           const result = questionResults[q.id];
           const isCorrect = result?.isCorrect ?? false;
@@ -3292,54 +4397,36 @@ function TestComponent({
           const correctAnswer = q.correct_answer;
           
           // Determinar colores según el resultado
-          let questionBg = colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "rgba(255, 255, 255, 0.8)";
-          let questionBorder = colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.2)";
+          let questionBg = colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff";
+          let questionBorder = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
           
           if (showFeedback) {
             if (isCorrect) {
               questionBg = colorTheme === "dark" 
-                ? "linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1))"
-                : "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.08))";
-              questionBorder = colorTheme === "dark" ? "rgba(16, 185, 129, 0.4)" : "rgba(16, 185, 129, 0.5)";
+                ? "rgba(16, 185, 129, 0.1)"
+                : "rgba(16, 185, 129, 0.08)";
+              questionBorder = colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.4)";
             } else {
               questionBg = colorTheme === "dark"
-                ? "linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1))"
-                : "linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.08))";
-              questionBorder = colorTheme === "dark" ? "rgba(239, 68, 68, 0.4)" : "rgba(239, 68, 68, 0.5)";
+                ? "rgba(239, 68, 68, 0.1)"
+                : "rgba(239, 68, 68, 0.08)";
+              questionBorder = colorTheme === "dark" ? "rgba(239, 68, 68, 0.3)" : "rgba(239, 68, 68, 0.4)";
             }
-          } else if (isSelected) {
-            questionBg = colorTheme === "dark" ? "rgba(99, 102, 241, 0.15)" : "rgba(99, 102, 241, 0.1)";
-            questionBorder = "#6366f1";
           }
           
           return (
             <div
               key={q.id}
               style={{
+                width: "100%",
                 marginBottom: "1.5rem",
-                padding: "1.5rem",
+                padding: "1.25rem",
                 background: questionBg,
                 borderRadius: "16px",
-                border: `2px solid ${questionBorder}`,
-                transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-                cursor: "pointer",
+                border: `1px solid ${questionBorder}`,
+                transition: "all 0.2s ease",
                 position: "relative",
-                overflow: "hidden",
-              }}
-              onClick={() => setSelectedQuestion(q.id === selectedQuestion ? null : q.id)}
-              onMouseEnter={(e) => {
-                if (!isSelected) {
-                  e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow = colorTheme === "dark"
-                    ? "0 12px 32px rgba(99, 102, 241, 0.2)"
-                    : "0 12px 32px rgba(99, 102, 241, 0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isSelected) {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "none";
-                }
+                boxSizing: "border-box",
               }}
             >
               {/* Indicador de resultado animado */}
@@ -3408,7 +4495,7 @@ function TestComponent({
                   ) : isAnswered ? (
                     <span style={{ fontSize: "1.25rem" }}>✓</span>
                   ) : (
-                    index + 1
+                    currentQuestionIndex + 1
                   )}
                 </div>
                 <p
@@ -3429,9 +4516,11 @@ function TestComponent({
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
                     gap: "0.75rem",
                     marginTop: "1rem",
+                    width: "100%",
+                    boxSizing: "border-box",
                   }}
                 >
                   {q.options.map((opt, optIndex) => {
@@ -3483,7 +4572,9 @@ function TestComponent({
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            color: "white",
+                            color: isSelectedOption 
+                              ? "white" 
+                              : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.7)" : "#64748b"),
                             fontSize: "0.75rem",
                             fontWeight: 700,
                             flexShrink: 0,
@@ -3538,8 +4629,8 @@ function TestComponent({
                 </div>
               )}
               
-              {/* Feedback con explicación */}
-              {showFeedback && (
+              {/* Feedback con explicación para multiple_choice */}
+              {q.type === "multiple_choice" && showFeedback && (
                 <div style={{
                   marginTop: "1.5rem",
                   padding: "1.25rem",
@@ -3622,6 +4713,8 @@ function TestComponent({
                     display: "flex",
                     gap: "1rem",
                     marginTop: "1rem",
+                    width: "100%",
+                    boxSizing: "border-box",
                   }}
                 >
                   {["True", "False"].map((tf) => {
@@ -3636,30 +4729,32 @@ function TestComponent({
                           alignItems: "center",
                           justifyContent: "center",
                           gap: "0.5rem",
-                          padding: "1rem",
+                          padding: "0.75rem 1rem",
                           background: isSelectedOption
-                            ? tf === "True"
-                              ? "rgba(16, 185, 129, 0.2)"
-                              : "rgba(239, 68, 68, 0.2)"
-                            : "rgba(148, 163, 184, 0.05)",
-                          borderRadius: "8px",
+                            ? (colorTheme === "dark" 
+                                ? (tf === "True" ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)")
+                                : (tf === "True" ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)"))
+                            : (colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff"),
+                          borderRadius: "12px",
                           border: isSelectedOption
-                            ? `2px solid ${tf === "True" ? "#10b981" : "#ef4444"}`
-                            : "1px solid rgba(148, 163, 184, 0.2)",
+                            ? `1px solid ${tf === "True" ? "#10b981" : "#ef4444"}`
+                            : `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
                           cursor: "pointer",
                           transition: "all 0.2s ease",
-                          fontWeight: 600,
+                          fontWeight: 500,
                         }}
                         onMouseEnter={(e) => {
                           if (!isSelectedOption) {
-                            e.currentTarget.style.background = "rgba(99, 102, 241, 0.1)";
-                            e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.5)";
+                            e.currentTarget.style.background = colorTheme === "dark" 
+                              ? "rgba(148, 163, 184, 0.1)" 
+                              : "rgba(148, 163, 184, 0.08)";
                           }
                         }}
                         onMouseLeave={(e) => {
                           if (!isSelectedOption) {
-                            e.currentTarget.style.background = "rgba(148, 163, 184, 0.05)";
-                            e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.2)";
+                            e.currentTarget.style.background = colorTheme === "dark" 
+                              ? "rgba(26, 26, 36, 0.8)" 
+                              : "#ffffff";
                           }
                         }}
                       >
@@ -3711,22 +4806,17 @@ function TestComponent({
               )}
               
               {/* Feedback con explicación para true/false */}
-              {showFeedback && (
+              {q.type === "true_false" && showFeedback && (
                 <div style={{
-                  marginTop: "1.5rem",
-                  padding: "1.25rem",
+                  marginTop: "1rem",
+                  padding: "1rem",
                   background: isCorrect
-                    ? (colorTheme === "dark"
-                        ? "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05))"
-                        : "linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.05))")
-                    : (colorTheme === "dark"
-                        ? "linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05))"
-                        : "linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.05))"),
+                    ? (colorTheme === "dark" ? "rgba(16, 185, 129, 0.1)" : "rgba(16, 185, 129, 0.08)")
+                    : (colorTheme === "dark" ? "rgba(239, 68, 68, 0.1)" : "rgba(239, 68, 68, 0.08)"),
                   borderRadius: "12px",
                   border: `1px solid ${isCorrect 
                     ? (colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.4)")
                     : (colorTheme === "dark" ? "rgba(239, 68, 68, 0.3)" : "rgba(239, 68, 68, 0.4)")}`,
-                  animation: "slideDown 0.3s ease-out",
                 }}>
                   <div style={{
                     display: "flex",
@@ -3789,7 +4879,7 @@ function TestComponent({
               )}
             </div>
           );
-        })}
+        })()}
       </div>
 
       {/* Botón de envío */}
@@ -3798,33 +4888,43 @@ function TestComponent({
         disabled={answeredCount !== totalQuestions}
         style={{
           width: "100%",
-          padding: "1rem 2rem",
+          padding: "0.5rem 1rem",
           background:
             answeredCount === totalQuestions
-              ? "linear-gradient(135deg, #10b981, #059669)"
-              : "rgba(99, 102, 241, 0.3)",
-          border: "none",
+              ? "#10b981"
+              : (colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff"),
+          border: `1px solid ${answeredCount === totalQuestions
+            ? "#10b981"
+            : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)")}`,
           borderRadius: "12px",
-          color: "white",
-          fontSize: "1.1rem",
-          fontWeight: 700,
+          color: answeredCount === totalQuestions 
+            ? "white" 
+            : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.5)" : "rgba(148, 163, 184, 0.6)"),
+          fontSize: "0.875rem",
+          fontWeight: answeredCount === totalQuestions ? 600 : 500,
           cursor: answeredCount === totalQuestions ? "pointer" : "not-allowed",
-          transition: "all 0.3s ease",
-          boxShadow:
-            answeredCount === totalQuestions
-              ? "0 4px 16px rgba(16, 185, 129, 0.4)"
-              : "none",
+          transition: "all 0.2s ease",
+          opacity: answeredCount === totalQuestions ? 1 : 0.5,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
         onMouseEnter={(e) => {
           if (answeredCount === totalQuestions) {
-            e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.5)";
+            e.currentTarget.style.background = "#059669";
+          } else {
+            e.currentTarget.style.background = colorTheme === "dark" 
+              ? "rgba(148, 163, 184, 0.15)" 
+              : "rgba(148, 163, 184, 0.1)";
           }
         }}
         onMouseLeave={(e) => {
           if (answeredCount === totalQuestions) {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.boxShadow = "0 4px 16px rgba(16, 185, 129, 0.4)";
+            e.currentTarget.style.background = "#10b981";
+          } else {
+            e.currentTarget.style.background = colorTheme === "dark" 
+              ? "rgba(26, 26, 36, 0.8)" 
+              : "#ffffff";
           }
         }}
       >
@@ -3907,10 +5007,12 @@ function SuccessMessage({
         <div>
           <h3 style={{
             margin: 0,
-            fontSize: "1.5rem",
-            fontWeight: 700,
+            fontSize: "clamp(1.5rem, 4vw, 2rem)",
+            fontWeight: 600,
             color: textColor,
-            marginBottom: "0.25rem",
+            marginBottom: "0.5rem",
+            letterSpacing: "-0.01em",
+            lineHeight: 1.3,
           }}>
             ¡Documento procesado correctamente!
           </h3>
@@ -3974,13 +5076,14 @@ function SuccessMessage({
       <div>
         <h4 style={{
           margin: 0,
-          marginBottom: "1rem",
-          fontSize: "1.1rem",
+          marginBottom: "1.5rem",
+          fontSize: "clamp(1.1rem, 2.5vw, 1.3rem)",
           fontWeight: 600,
           color: textColor,
           display: "flex",
           alignItems: "center",
           gap: "0.75rem",
+          letterSpacing: "-0.01em",
         }}>
           <TargetIcon size={20} color="#6366f1" />
           ¿Qué quieres hacer ahora?
@@ -4203,8 +5306,28 @@ function FeedbackComponent({
     score?: number;
     correctCount?: number;
     totalQuestions?: number;
-    failedQuestions?: { question: string; userAnswer: string; correctAnswer: string; explanation?: string }[];
+    failedQuestions?: { question: string; userAnswer: string; correctAnswer: string; explanation?: string; options?: string[]; type?: string }[];
     recommendations?: string[];
+  };
+  
+  // Función para obtener el texto de la opción desde la letra
+  const getOptionText = (letter: string, options?: string[], type?: string): string => {
+    if (!options || options.length === 0) {
+      // Si no hay opciones, devolver la letra o el valor directamente
+      if (type === "true_false") {
+        return letter === "True" ? "Verdadero" : "Falso";
+      }
+      return letter;
+    }
+    
+    // Convertir letra a índice (A=0, B=1, C=2, D=3, etc.)
+    const index = letter.charCodeAt(0) - 65; // 'A' = 65
+    if (index >= 0 && index < options.length) {
+      const optionText = options[index];
+      // Remover el prefijo "A) ", "B) ", etc. si existe
+      return optionText.replace(/^[A-Z]\)\s*/, "").trim();
+    }
+    return letter;
   };
   const bgColor = colorTheme === "dark" 
     ? "linear-gradient(135deg, rgba(26, 26, 36, 0.95), rgba(30, 30, 45, 0.95))"
@@ -4299,15 +5422,17 @@ function FeedbackComponent({
             <BookIcon size={24} color="#f59e0b" />
             <h3 style={{
               margin: 0,
-              fontSize: "1.25rem",
-              fontWeight: 700,
+              fontSize: "clamp(1.25rem, 3vw, 1.5rem)",
+              fontWeight: 600,
               color: textColor,
+              letterSpacing: "-0.01em",
+              lineHeight: 1.3,
             }}>
               Conceptos a Repasar ({failedQuestions.length})
             </h3>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            {failedQuestions.map((failed: { question: string; userAnswer: string; correctAnswer: string; explanation?: string }, index: number) => (
+            {(failedQuestions as { question: string; userAnswer: string; correctAnswer: string; explanation?: string; options?: string[]; type?: string }[]).map((failed, index: number) => (
               <div
                 key={index}
                 style={{
@@ -4350,7 +5475,7 @@ function FeedbackComponent({
                         fontSize: "0.875rem",
                       }}>
                         <span style={{ color: secondaryTextColor }}>Tu respuesta: </span>
-                        <strong style={{ color: "#ef4444" }}>{failed.userAnswer}</strong>
+                        <strong style={{ color: "#ef4444" }}>{getOptionText(failed.userAnswer, failed.options, failed.type)}</strong>
                       </div>
                       <div style={{
                         padding: "0.5rem 1rem",
@@ -4359,7 +5484,7 @@ function FeedbackComponent({
                         fontSize: "0.875rem",
                       }}>
                         <span style={{ color: secondaryTextColor }}>Correcta: </span>
-                        <strong style={{ color: "#10b981" }}>{failed.correctAnswer}</strong>
+                        <strong style={{ color: "#10b981" }}>{getOptionText(failed.correctAnswer, failed.options, failed.type)}</strong>
                       </div>
                     </div>
                   </div>
@@ -4418,9 +5543,11 @@ function FeedbackComponent({
             <SparkleIcon size={24} color="#6366f1" />
             <h3 style={{
               margin: 0,
-              fontSize: "1.25rem",
-              fontWeight: 700,
+              fontSize: "clamp(1.25rem, 3vw, 1.5rem)",
+              fontWeight: 600,
               color: textColor,
+              letterSpacing: "-0.01em",
+              lineHeight: 1.3,
             }}>
               Recomendaciones
             </h3>

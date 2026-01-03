@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { KeyIcon } from "./Icons";
+import APIKeyConfig from "./APIKeyConfig";
 
 const links = [
   { href: "/", label: "Home" },
@@ -16,9 +19,13 @@ const links = [
 
 export default function Header() {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [compact, setCompact] = useState(false);
+  const isStudyAgentsPage = pathname?.startsWith("/study-agents");
+  const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
+  const [apiKeys, setApiKeys] = useState<{ openai: string } | null>(null);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -41,6 +48,64 @@ export default function Header() {
     window.addEventListener("resize", checkWidth);
     return () => window.removeEventListener("resize", checkWidth);
   }, []);
+
+  // Cargar API keys desde localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined" && isStudyAgentsPage) {
+      const saved = localStorage.getItem("study_agents_api_keys");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.openai && parsed.openai.startsWith("sk-")) {
+            setApiKeys(parsed);
+          }
+        } catch (e) {
+          console.error("Error loading API keys:", e);
+        }
+      }
+    }
+  }, [isStudyAgentsPage]);
+
+  // Escuchar cambios en localStorage (cuando se actualizan desde otro componente)
+  useEffect(() => {
+    if (!isStudyAgentsPage) return;
+
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem("study_agents_api_keys");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.openai && parsed.openai.startsWith("sk-")) {
+            setApiKeys(parsed);
+          } else {
+            setApiKeys(null);
+          }
+        } catch (e) {
+          console.error("Error loading API keys:", e);
+        }
+      } else {
+        setApiKeys(null);
+      }
+    };
+
+    // Escuchar evento personalizado cuando se actualizan las keys
+    window.addEventListener("apiKeysUpdated", handleStorageChange);
+    
+    // También escuchar cambios directos en localStorage (aunque solo funciona entre pestañas)
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("apiKeysUpdated", handleStorageChange);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [isStudyAgentsPage]);
+
+  const handleKeysConfigured = (keys: { openai: string }) => {
+    setApiKeys(keys);
+    setShowAPIKeyConfig(false);
+    // Disparar evento personalizado para que StudyChat actualice su estado
+    window.dispatchEvent(new CustomEvent("apiKeysUpdated"));
+  };
 
   return (
     <header
@@ -165,6 +230,90 @@ export default function Header() {
               );
             })}
           </nav>
+        )}
+
+        {/* API Config Button and Logout Button (Study Agents) */}
+        {isStudyAgentsPage && session && (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            {/* API Config Button */}
+            <button
+              onClick={() => setShowAPIKeyConfig(true)}
+              title="Configurar API Keys"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                padding: "0.625rem 1.25rem",
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                color: "#f8fafc",
+                background: apiKeys?.openai
+                  ? "rgba(16, 185, 129, 0.1)"
+                  : "rgba(245, 158, 11, 0.1)",
+                border: apiKeys?.openai
+                  ? "1px solid rgba(16, 185, 129, 0.3)"
+                  : "1px solid rgba(245, 158, 11, 0.3)",
+                borderRadius: "12px",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (apiKeys?.openai) {
+                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
+                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
+                } else {
+                  e.currentTarget.style.background = "rgba(245, 158, 11, 0.2)";
+                  e.currentTarget.style.borderColor = "rgba(245, 158, 11, 0.5)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (apiKeys?.openai) {
+                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.3)";
+                } else {
+                  e.currentTarget.style.background = "rgba(245, 158, 11, 0.1)";
+                  e.currentTarget.style.borderColor = "rgba(245, 158, 11, 0.3)";
+                }
+              }}
+            >
+              <KeyIcon size={16} color={apiKeys?.openai ? "#10b981" : "#f59e0b"} />
+              <span>{apiKeys?.openai ? "API Configurada" : "Configurar API"}</span>
+            </button>
+            
+            {/* Logout Button */}
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                padding: "0.625rem 1.25rem",
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                color: "#f8fafc",
+                background: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                borderRadius: "12px",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)";
+                e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.5)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.3)";
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Cerrar sesión
+            </button>
+          </div>
         )}
 
         {/* Mobile Menu Button */}
@@ -343,6 +492,18 @@ export default function Header() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* API Key Configuration Modal */}
+      {showAPIKeyConfig && isStudyAgentsPage && (
+        <APIKeyConfig
+          onKeysConfigured={handleKeysConfigured}
+          onClose={() => {
+            if (apiKeys?.openai) {
+              setShowAPIKeyConfig(false);
+            }
+          }}
+        />
       )}
     </header>
   );

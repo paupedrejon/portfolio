@@ -70,6 +70,8 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
     // Guardar en localStorage
     if (typeof window !== "undefined") {
       localStorage.setItem("study_agents_api_keys", JSON.stringify(keys));
+      // Disparar evento personalizado para que otros componentes se actualicen
+      window.dispatchEvent(new CustomEvent("apiKeysUpdated"));
     }
 
     // Notificar al componente padre

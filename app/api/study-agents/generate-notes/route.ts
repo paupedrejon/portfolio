@@ -30,13 +30,12 @@ export async function POST(request: NextRequest) {
           { status: 503 }
         );
       }
-    } catch (healthError: unknown) {
-      const details = healthError instanceof Error ? healthError.message : 'Error desconocido';
+    } catch (healthError: any) {
       return NextResponse.json(
         { 
           error: `No se pudo conectar al backend FastAPI en ${FASTAPI_URL}`,
           hint: 'Asegúrate de que FastAPI esté corriendo: cd study_agents && python api/main.py',
-          details
+          details: healthError.message
         },
         { status: 503 }
       );
@@ -51,7 +50,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         apiKey,
         topics: topics || null,
-        model: model || "gpt-4-turbo",
+        model: model || null, // null = modo automático
       }),
     });
 
@@ -80,13 +79,18 @@ export async function POST(request: NextRequest) {
       success: true,
       notes: data.notes,
     });
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('Error generating notes:', error);
-    const message = error instanceof Error ? error.message : 'Error al generar apuntes';
     return NextResponse.json(
-      { error: message },
+      { error: error.message || 'Error al generar apuntes' },
       { status: 500 }
     );
   }
 }
+
+
+
+
+
+
 

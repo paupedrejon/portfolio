@@ -4,6 +4,7 @@
 
 // Precios por 1000 tokens (en USD) - actualizados a precios de OpenAI 2024
 export const MODEL_PRICING: Record<string, { input: number; output: number }> = {
+  "auto": { input: 0.0, output: 0.0 }, // Modo automático: gratis (Ollama) o muy barato (GPT-3.5)
   "gpt-4": { input: 0.03, output: 0.06 },
   "gpt-4-turbo": { input: 0.01, output: 0.03 },
   "gpt-4o": { input: 0.005, output: 0.015 },
@@ -88,4 +89,10 @@ export function estimateTokens(text: string): number {
   // Esto es una estimación, no es exacto
   return Math.ceil(text.length / 4);
 }
+
+
+
+
+
+
 

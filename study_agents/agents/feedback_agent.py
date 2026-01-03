@@ -19,36 +19,62 @@ from typing import Dict, List, Optional
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from memory.memory_manager import MemoryManager
+import sys
+
+# Importar model_manager
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
+try:
+    from model_manager import ModelManager
+except ImportError:
+    ModelManager = None
+    print("⚠️ Warning: model_manager no disponible, usando OpenAI directamente")
 
 class FeedbackAgent:
     """
     Agente especializado en corregir respuestas y proporcionar feedback
     """
     
-    def __init__(self, memory: MemoryManager, api_key: Optional[str] = None):
+    def __init__(self, memory: MemoryManager, api_key: Optional[str] = None, mode: str = "auto"):
         """
         Inicializa el agente de feedback
         
         Args:
             memory: Gestor de memoria del sistema
             api_key: API key de OpenAI (opcional)
+            mode: Modo de selección de modelo ("auto" = optimizar costes, "manual" = usar modelo especificado)
         """
         self.memory = memory
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.mode = mode
         self.llm = None  # Se inicializará cuando se necesite
+        self.model_manager = None
+        self.current_model_config = None
         
-        if self.api_key:
+        # Inicializar model_manager si está disponible
+        if ModelManager:
             try:
-                self.llm = ChatOpenAI(
-                    model="gpt-4",
-                    temperature=0.7,
-                    api_key=self.api_key
-                )
-                print("🤖 Feedback Agent inicializado")
+                self.model_manager = ModelManager(api_key=self.api_key, mode=mode)
+                print("🤖 Feedback Agent inicializado con ModelManager (modo automático)")
             except Exception as e:
-                print(f"⚠️ Warning: No se pudo inicializar el LLM: {e}")
+                print(f"⚠️ Warning: No se pudo inicializar ModelManager: {e}")
+                self.model_manager = None
         else:
-            print("⚠️ Feedback Agent inicializado sin API key (se requerirá para usar)")
+            # Fallback a OpenAI directo
+            if self.api_key:
+                try:
+                    self.llm = ChatOpenAI(
+                        model="gpt-3.5-turbo",  # Usar modelo más barato por defecto
+                        temperature=0.7,
+                        api_key=self.api_key
+                    )
+                    print("🤖 Feedback Agent inicializado (sin ModelManager, usando gpt-3.5-turbo)")
+                except Exception as e:
+                    print(f"⚠️ Warning: No se pudo inicializar el LLM: {e}")
+            else:
+                print("⚠️ Feedback Agent inicializado sin API key (se requerirá para usar)")
     
     def grade_test(self, test_id: str, answers: Dict[str, str], test_data: Optional[Dict] = None) -> Dict:
         """
@@ -231,6 +257,40 @@ Formato de respuesta:
 - Explica el concepto usando la explicación proporcionada
 - Proporciona una sugerencia constructiva"""
         
+        # Inicializar LLM si no está inicializado (usar modo automático)
+        if not self.llm:
+            if self.model_manager:
+                try:
+                    self.current_model_config, self.llm = self.model_manager.select_model(
+                        task_type="analysis",
+                        min_quality="medium"
+                    )
+                    print(f"✅ Usando modelo: {self.current_model_config.name} (costo: ${self.current_model_config.cost_per_1k_input:.4f}/{self.current_model_config.cost_per_1k_output:.4f} por 1k tokens)")
+                except Exception as e:
+                    print(f"⚠️ Error al seleccionar modelo automáticamente: {e}")
+                    if self.api_key:
+                        try:
+                            self.llm = ChatOpenAI(
+                                model="gpt-3.5-turbo",
+                                temperature=0.7,
+                                api_key=self.api_key
+                            )
+                        except:
+                            pass
+            elif self.api_key:
+                try:
+                    self.llm = ChatOpenAI(
+                        model="gpt-3.5-turbo",
+                        temperature=0.7,
+                        api_key=self.api_key
+                    )
+                except:
+                    pass
+        
+        if not self.llm:
+            error_msg = f"✅ Correcto. {explanation if explanation else 'Bien hecho!'}" if is_correct else f"❌ Incorrecto. La respuesta correcta es {correct_answer}. {explanation if explanation else 'Revisa este concepto.'}"
+            return error_msg, {"inputTokens": 0, "outputTokens": 0}
+        
         try:
             response = self.llm.invoke(feedback_prompt)
             
@@ -312,20 +372,39 @@ Formato de respuesta:
         Returns:
             Explicación detallada
         """
-        # Verificar API key
-        if not self.api_key:
-            return "⚠️ Se requiere configurar una API key de OpenAI para proporcionar explicaciones detalladas."
-        
-        # Inicializar LLM si no está inicializado
+        # Inicializar LLM si no está inicializado (usar modo automático)
         if not self.llm:
-            try:
-                self.llm = ChatOpenAI(
-                    model="gpt-4",
-                    temperature=0.7,
-                    api_key=self.api_key
-                )
-            except Exception as e:
-                return f"⚠️ Error al inicializar el modelo: {str(e)}"
+            if self.model_manager:
+                try:
+                    self.current_model_config, self.llm = self.model_manager.select_model(
+                        task_type="analysis",
+                        min_quality="medium"
+                    )
+                    print(f"✅ Usando modelo: {self.current_model_config.name} (costo: ${self.current_model_config.cost_per_1k_input:.4f}/{self.current_model_config.cost_per_1k_output:.4f} por 1k tokens)")
+                except Exception as e:
+                    print(f"⚠️ Error al seleccionar modelo automáticamente: {e}")
+                    if self.api_key:
+                        try:
+                            self.llm = ChatOpenAI(
+                                model="gpt-3.5-turbo",
+                                temperature=0.7,
+                                api_key=self.api_key
+                            )
+                        except Exception as e2:
+                            return f"⚠️ Error al inicializar el modelo: {str(e2)}"
+                    else:
+                        return "⚠️ Se requiere configurar una API key de OpenAI o tener Ollama instalado."
+            elif self.api_key:
+                try:
+                    self.llm = ChatOpenAI(
+                        model="gpt-3.5-turbo",
+                        temperature=0.7,
+                        api_key=self.api_key
+                    )
+                except Exception as e:
+                    return f"⚠️ Error al inicializar el modelo: {str(e)}"
+            else:
+                return "⚠️ Se requiere configurar una API key de OpenAI para proporcionar explicaciones detalladas."
         
         relevant_content = self.memory.retrieve_relevant_content(concept, n_results=3)
         
