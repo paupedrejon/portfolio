@@ -458,10 +458,64 @@
       "content": "{\"score\":37.5,\"correctCount\":6,\"totalQuestions\":16,\"failedQuestions\":[{\"question\":\"¿Cuál de las siguientes sopas es un ejemplo de sopa clara?\",\"explanation\":\"El consomé es un tipo de sopa clara, que se caracteriza por ser a base de caldo y generalmente transparente.\",\"correctAnswer\":\"C\",\"userAnswer\":\"B\"},{\"question\":\"¿Cuál de los siguientes ingredientes es común en la preparación de sopas?\",\"explanation\":\"El caldo es una base líquida común en muchas recetas de sopas, ya sea de carne, pollo, pescado o verduras.\",\"correctAnswer\":\"B\",\"userAnswer\":\"C\"},{\"question\":\"Las sopas espesas se caracterizan por:\",\"explanation\":\"Las sopas espesas tienen una textura más densa, a menudo debido a la inclusión de purés de verduras.\",\"correctAnswer\":\"B\",\"userAnswer\":\"C\"},{\"question\":\"¿Qué tipo de sopa es el Pho?\",\"explanation\":\"El Pho es un ejemplo de sopa tradicional que forma parte de la cultura culinaria de Vietnam.\",\"correctAnswer\":\"D\",\"userAnswer\":\"C\"},{\"question\":\"¿Cuál de los siguientes ingredientes NO es común en sopas?\",\"explanation\":\"El helado no es un ingrediente común en la preparación de sopas, mientras que zanahorias, cebollas y arroz son comunes.\",\"correctAnswer\":\"C\",\"userAnswer\":\"B\"},{\"question\":\"¿Cuál de las siguientes sopas es un ejemplo de sopa espesa?\",\"explanation\":\"La crema de champiñones es un ejemplo de sopa espesa, ya que tiene una textura densa.\",\"correctAnswer\":\"C\",\"userAnswer\":\"B\"},{\"question\":\"¿Qué ingrediente se añade a menudo para hacer la sopa más sustanciosa?\",\"explanation\":\"Los fideos o el arroz son ingredientes que se añaden a menudo para hacer la sopa más sustanciosa.\",\"correctAnswer\":\"B\",\"userAnswer\":\"C\"},{\"question\":\"El consomé es un tipo de sopa espesa.\",\"explanation\":\"El consomé es una sopa clara, caracterizada por su ligereza y transparencia.\",\"correctAnswer\":\"False\",\"userAnswer\":\"True\"},{\"question\":\"¿Cuál de las siguientes opciones describe mejor las sopas tradicionales?\",\"explanation\":\"Las sopas tradicionales son aquellas que forman parte de la cultura culinaria de un país específico.\",\"correctAnswer\":\"B\",\"userAnswer\":\"A\"},{\"question\":\"Las especias y hierbas se utilizan en las sopas para:\",\"explanation\":\"Las especias y hierbas se utilizan en las sopas principalmente para realzar su sabor.\",\"correctAnswer\":\"B\",\"userAnswer\":\"C\"}],\"feedbackItems\":[],\"recommendations\":[]}",
       "type": "feedback",
       "timestamp": "2026-01-03T20:20:20.683Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Error: Not Found",
+      "type": "message",
+      "timestamp": "2026-01-03T21:03:21.603Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Error: Not Found",
+      "type": "message",
+      "timestamp": "2026-01-03T21:03:57.065Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Error: Not Found",
+      "type": "message",
+      "timestamp": "2026-01-03T21:05:38.195Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Ejercicio generado",
+      "type": "exercise",
+      "timestamp": "2026-01-03T21:08:05.876Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Ejercicio generado",
+      "type": "exercise",
+      "timestamp": "2026-01-03T21:21:15.836Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Ejercicio generado",
+      "type": "exercise",
+      "timestamp": "2026-01-03T21:24:59.808Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Ejercicio generado",
+      "type": "exercise",
+      "timestamp": "2026-01-03T21:46:23.526Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Ejercicio generado",
+      "type": "exercise",
+      "timestamp": "2026-01-03T22:19:48.906Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":0,\"score_percentage\":0,\"is_correct\":false,\"feedback\":\"La respuesta proporcionada no contiene ningún contenido relevante o útil para resolver el problema planteado. Es importante intentar abordar la tarea asignada, incluso si solo es para discutir posibles enfoques o dificultades encontradas.\",\"strengths\":[],\"weaknesses\":[\"Falta de intento en resolver la tarea\",\"No proporciona ninguna solución o explicación\"],\"suggestions\":[\"Intenta leer y entender el enunciado del problema antes de responder\",\"Si no estás seguro de cómo comenzar, intenta describir lo que entiendes del problema y qué información necesitarías para avanzar\"],\"detailed_analysis\":\"La respuesta del estudiante 'no se' no aborda ninguna parte del enunciado del problema. No se proporciona ningún código ni explicación sobre cómo se podría implementar la solución requerida. Esto indica una falta de intento o comprensión del problema.\",\"correct_answer_explanation\":\"La respuesta esperada detalla cómo usar Python y pandas para agrupar y analizar datos de ventas por mes y producto, identificando los productos más vendidos en términos de unidades y ventas totales. Además, aborda cómo manejar empates seleccionando el primer producto listado, lo cual es una estrategia válida para simplificar la implementación del script.\"}",
+      "type": "exercise_result",
+      "timestamp": "2026-01-03T22:20:48.185Z"
     }
   ],
   "created_at": "2026-01-03T12:07:11.990600",
-  "updated_at": "2026-01-03T21:20:22.893140",
+  "updated_at": "2026-01-03T23:20:49.885014",
   "metadata": {
     "uploadedFiles": [],
     "selectedModel": "auto",

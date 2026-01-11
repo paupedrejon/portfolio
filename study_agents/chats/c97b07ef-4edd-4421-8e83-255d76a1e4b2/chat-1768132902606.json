@@ -1,0 +1,53 @@
+{
+  "chat_id": "chat-1768132902606",
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "title": "C++",
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "¡Excelente elección! Vamos a darle caña a **C++**. Para poder ayudarte mejor, dime:\n\n¿Qué nivel tienes (Principiante, Intermedio, Avanzado)?\n\nEn cuanto me digas, empezamos.",
+      "type": "level_selection",
+      "timestamp": "2026-01-11T12:01:43.603Z",
+      "topic": "C++"
+    },
+    {
+      "role": "assistant",
+      "content": "Error: name 'level_note' is not defined",
+      "type": "message",
+      "timestamp": "2026-01-11T16:57:40.221Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Error: name 'level_note' is not defined",
+      "type": "message",
+      "timestamp": "2026-01-11T17:00:49.904Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Error: name 'level_note' is not defined",
+      "type": "message",
+      "timestamp": "2026-01-11T17:00:57.955Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Error: name 'level_note' is not defined",
+      "type": "message",
+      "timestamp": "2026-01-11T17:01:01.322Z"
+    },
+    {
+      "role": "assistant",
+      "content": "No hay suficiente información para generar un resumen.",
+      "type": "notes",
+      "timestamp": "2026-01-11T17:01:41.362Z"
+    }
+  ],
+  "created_at": "2026-01-11T13:01:43.596963",
+  "updated_at": "2026-01-11T18:01:42.446036",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#10b981",
+    "icon": "icon_cpp",
+    "topic": "C++"
+  }
+}

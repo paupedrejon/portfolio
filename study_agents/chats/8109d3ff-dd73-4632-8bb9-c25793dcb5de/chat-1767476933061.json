@@ -1,0 +1,105 @@
+{
+  "chat_id": "chat-1767476933061",
+  "user_id": "8109d3ff-dd73-4632-8bb9-c25793dcb5de",
+  "title": "SQL",
+  "messages": [
+    {
+      "role": "user",
+      "content": "estoy empezando con sql, creame apuntes",
+      "type": "message",
+      "timestamp": "2026-01-03T21:49:08.299Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## Apuntes Introductorios sobre SQL\n\nSQL, o **Structured Query Language**, es un lenguaje de programación utilizado para gestionar y manipular bases de datos relacionales. A continuación, te presento un resumen de los conceptos clave que debes conocer.\n\n---\n\n### 1. **Conceptos Fundamentales de SQL**\n\n- **Base de Datos**: Conjunto organizado de datos, que se pueden almacenar y gestionar mediante sistemas de gestión de bases de datos (DBMS).\n  \n- **Tabla**: Estructura que organiza los datos en filas y columnas dentro de una base de datos.\n\n- **Registro (Fila)**: Cada entrada en una tabla que contiene datos sobre un elemento específico.\n\n- **Campo (Columna)**: Cada atributo de un registro que define el tipo de información que se almacena.\n\n---\n\n### 2. **Operaciones Básicas en SQL**\n\nLas operaciones más comunes que puedes realizar con SQL son:\n\n- **SELECT**: Recupera datos de una o más tablas.\n- **INSERT**: Agrega nuevos registros a una tabla.\n- **UPDATE**: Modifica registros existentes en una tabla.\n- **DELETE**: Elimina registros de una tabla.\n\n---\n\n### 3. **Sintaxis Básica de SQL**\n\nAquí hay ejemplos de la sintaxis básica para cada operación:\n\n| **Operación** | **Sintaxis**                                                    | **Descripción**                                                  |\n|---------------|---------------------------------------------------------------|------------------------------------------------------------------|\n| **SELECT**    | `SELECT columna1, columna2 FROM tabla;`                      | Selecciona columnas específicas de una tabla.                   |\n| **INSERT**    | `INSERT INTO tabla (columna1, columna2) VALUES (valor1, valor2);` | Inserta nuevos datos en la tabla.                              |\n| **UPDATE**    | `UPDATE tabla SET columna1 = nuevo_valor WHERE condición;`  | Actualiza registros en una tabla que cumplen una condición.    |\n| **DELETE**    | `DELETE FROM tabla WHERE condición;`                          | Elimina registros de la tabla que cumplen una condición.       |\n\n---\n\n### 4. **Filtros y Condiciones**\n\nPara hacer las consultas más específicas, puedes usar **condiciones** con la cláusula **WHERE**. Algunos operadores útiles son:\n\n- **=** (igual a)\n- **<>** (diferente de)\n- **>** (mayor que)\n- **<** (menor que)\n- **LIKE** (búsqueda de patrones)\n\n---\n\n### 5. **Funciones Agregadas**\n\nSQL también incluye funciones que permiten realizar cálculos sobre un conjunto de datos. Algunas funciones comunes son:\n\n- **COUNT()**: Cuenta el número de registros.\n- **SUM()**: Suma los valores de una columna.\n- **AVG()**: Calcula el promedio de los valores.\n- **MAX()**: Encuentra el valor máximo.\n- **MIN()**: Encuentra el valor mínimo.\n\n---\n\n### 6. **Esquema Conceptual de SQL**\n\nPara ayudarte a visualizar y entender mejor estos conceptos, aquí tienes un esquema conceptual sobre SQL:\n\n```diagram-json\n{\n  \"title\": \"Introducción a SQL\",\n  \"nodes\": [\n    {\"id\": \"A\", \"label\": \"SQL\", \"color\": \"#6366f1\"},\n    {\"id\": \"B\", \"label\": \"Conceptos Fundamentales\", \"color\": \"#10b981\", \"description\": \"Base de datos, tabla, registro y campo.\", \"letter\": \"C\"},\n    {\"id\": \"C\", \"label\": \"Operaciones Básicas\", \"color\": \"#10b981\", \"description\": \"SELECT, INSERT, UPDATE, DELETE.\", \"letter\": \"O\"},\n    {\"id\": \"D\", \"label\": \"Sintaxis Básica\", \"color\": \"#06b6d4\", \"description\": \"Ejemplos de sintaxis para cada operación.\", \"letter\": \"S\"},\n    {\"id\": \"E\", \"label\": \"Filtros y Condiciones\", \"color\": \"#06b6d4\", \"description\": \"Uso de WHERE y operadores de comparación.\", \"letter\": \"F\"},\n    {\"id\": \"F\", \"label\": \"Funciones Agregadas\", \"color\": \"#06b6d4\", \"description\": \"COUNT, SUM, AVG, MAX, MIN para cálculos.\", \"letter\": \"FAG\"}\n  ],\n  \"edges\": [\n    {\"from\": \"A\", \"to\": \"B\"},\n    {\"from\": \"A\", \"to\": \"C\"},\n    {\"from\": \"A\", \"to\": \"D\"},\n    {\"from\": \"A\", \"to\": \"E\"},\n    {\"from\": \"A\", \"to\": \"F\"}\n  ]\n}\n```\n\n---\n\n### 7. **Consejos Prácticos**\n\n- **Practica**: Utiliza plataformas como SQL Fiddle o DB Fiddle para experimentar con consultas SQL.\n- **Documentación**: Siempre consulta la documentación del sistema de gestión de base de datos que estés utilizando para entender mejor su sintaxis y funciones específicas.\n\n---\n\nEspero que estos apuntes te sean útiles y te ayuden a comenzar tu aprendizaje en SQL. Si tienes alguna pregunta o necesitas más información, ¡no dudes en preguntar!",
+      "type": "notes",
+      "timestamp": "2026-01-03T21:49:26.633Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Ejercicio generado",
+      "type": "exercise",
+      "timestamp": "2026-01-03T21:49:53.009Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":3,\"score_percentage\":30,\"is_correct\":false,\"feedback\":\"Tu respuesta aborda solo una de las tres tareas solicitadas en el enunciado. Has intentado filtrar los pedidos del año 2022, lo cual es correcto en intención, pero la implementación y el formato tienen errores. Además, no has incluido las operaciones de actualización y eliminación que eran parte esencial del ejercicio.\",\"strengths\":[\"Entendiste la necesidad de filtrar los pedidos por fecha para obtener los del año 2022.\",\"Usaste correctamente la cláusula FROM para especificar la tabla de donde se extraen los datos.\"],\"weaknesses\":[\"No completaste las tareas de actualizar y eliminar registros, que eran requerimientos clave del ejercicio.\",\"Tu sintaxis para seleccionar todas las columnas es incorrecta; debería ser '*' en lugar de '(*)'.\"],\"suggestions\":[\"Asegúrate de leer completamente el enunciado y de responder a todas las partes del ejercicio.\",\"Revisa la sintaxis de SQL, especialmente cómo seleccionar columnas y cómo usar correctamente las funciones y operadores.\"],\"detailed_analysis\":\"En la primera parte de tu respuesta, intentaste seleccionar los pedidos del año 2022 usando un rango de fechas. Aunque la idea es correcta, la implementación tiene errores de sintaxis y podría simplificarse usando la función YEAR() como en la respuesta esperada. Además, no abordaste las partes 2 y 3 del ejercicio, que involucraban actualizar y eliminar registros, respectivamente. Estas son operaciones fundamentales en SQL que debías demostrar.\",\"correct_answer_explanation\":\"La respuesta esperada utiliza la función YEAR() para filtrar los pedidos del año 2022, lo cual es más directo y menos propenso a errores que especificar un rango de fechas. Además, incluye las instrucciones UPDATE y DELETE para modificar y eliminar registros según las condiciones dadas, completando así todas las tareas requeridas.\"}",
+      "type": "exercise_result",
+      "timestamp": "2026-01-03T21:54:51.917Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Ejercicio generado",
+      "type": "exercise",
+      "timestamp": "2026-01-03T21:56:59.369Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Ejercicio generado",
+      "type": "exercise",
+      "timestamp": "2026-01-03T22:01:31.493Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Ejercicio generado",
+      "type": "exercise",
+      "timestamp": "2026-01-03T22:12:02.610Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":8.5,\"score_percentage\":85,\"is_correct\":false,\"feedback\":\"Tu respuesta muestra un buen entendimiento de los comandos SQL básicos necesarios para realizar las tareas asignadas. Sin embargo, no puedo ver el contenido exacto de tu respuesta debido a que fue subida como una imagen, lo cual no permite evaluar el texto de los comandos SQL que escribiste. Asegúrate de proporcionar tus respuestas en un formato que pueda ser revisado directamente.\",\"strengths\":[\"Comprensión adecuada de los comandos SELECT, INSERT, UPDATE y DELETE.\",\"Intento de responder todas las partes del ejercicio propuesto.\"],\"weaknesses\":[\"Uso de un formato de imagen para la respuesta, lo cual impide una revisión detallada del contenido.\",\"Falta de confirmación textual que permita verificar la exactitud de los comandos SQL.\"],\"suggestions\":[\"Para futuras ocasiones, proporciona tus respuestas en texto plano dentro del cuerpo del mensaje o documento para facilitar la revisión.\",\"Revisa tus respuestas antes de enviarlas para asegurarte de que cumplen con los requisitos del formato solicitado.\"],\"detailed_analysis\":\"Dado que la respuesta fue proporcionada en formato de imagen, no es posible realizar un análisis detallado de los comandos SQL específicos utilizados. Sin embargo, la intención de responder a cada parte del ejercicio es clara y parece que comprendes los conceptos básicos de las operaciones en SQL.\",\"correct_answer_explanation\":\"La respuesta esperada incluye comandos SQL precisos para cada tarea requerida. El comando SELECT se usa para filtrar y mostrar datos específicos, el comando INSERT INTO para añadir nuevos registros, el comando UPDATE para modificar registros existentes, y el comando DELETE para eliminar registros bajo ciertas condiciones. Cada comando debe ser usado correctamente para manipular los datos de la base de acuerdo con los requisitos.\"}",
+      "type": "exercise_result",
+      "timestamp": "2026-01-03T22:15:16.726Z"
+    },
+    {
+      "role": "user",
+      "content": "hazme un ejercicio facil de selects",
+      "type": "message",
+      "timestamp": "2026-01-03T22:22:20.049Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## Ejercicio Fácil de SELECT en SQL\n\n¡Claro! Vamos a realizar un ejercicio sencillo usando la operación **SELECT**. Este tipo de consulta te permite recuperar datos de una tabla en una base de datos.\n\n---\n\n### 1. **Ejemplo de Tabla**\n\nImaginemos que tenemos una tabla llamada `Estudiantes` que contiene la siguiente información:\n\n| **ID** | **Nombre** | **Edad** | **Curso**     |\n|--------|------------|----------|---------------|\n| 1      | Ana        | 20       | Matemáticas   |\n| 2      | Luis       | 22       | Historia      |\n| 3      | Marta      | 21       | Ciencias      |\n| 4      | Pablo      | 23       | Matemáticas   |\n\n---\n\n### 2. **Consulta Básica**\n\nSi deseas ver todos los nombres y edades de los estudiantes, puedes usar el siguiente comando SQL:\n\n```sql\nSELECT Nombre, Edad FROM Estudiantes;\n```\n\n### 3. **Resultados Esperados**\n\nLa consulta anterior debería devolverte algo como esto:\n\n| **Nombre** | **Edad** |\n|------------|----------|\n| Ana        | 20       |\n| Luis       | 22       |\n| Marta      | 21       |\n| Pablo      | 23       |\n\n---\n\n### 4. **Consulta con Condición**\n\nSi solo quieres ver los estudiantes que están en el curso de **Matemáticas**, puedes agregar una cláusula **WHERE**:\n\n```sql\nSELECT Nombre FROM Estudiantes WHERE Curso = 'Matemáticas';\n```\n\n### 5. **Resultados Esperados con Condición**\n\nLa consulta anterior debería devolverte:\n\n| **Nombre** |\n|------------|\n| Ana        |\n| Pablo      |\n\n---\n\n### 6. **Ejercicio Propuesto**\n\nAhora, ¡es tu turno! Intenta responder a la siguiente pregunta:\n\n**Pregunta**: ¿Qué consulta SQL utilizarías para obtener la lista de estudiantes cuya **Edad** es mayor a 21?\n\n**Consejo**: Recuerda usar la cláusula **WHERE** para establecer tu condición.\n\n---\n\n### 7. **Esquema Conceptual de SELECT**\n\nPara ayudarte a entender mejor la estructura de una consulta **SELECT**, aquí tienes un esquema conceptual:\n\n```diagram-json\n{\n  \"title\": \"Consulta SQL - SELECT\",\n  \"nodes\": [\n    {\"id\": \"A\", \"label\": \"Consulta SQL\", \"color\": \"#6366f1\"},\n    {\"id\": \"B\", \"label\": \"SELECT\", \"color\": \"#10b981\", \"description\": \"Inicia la consulta para seleccionar datos.\"},\n    {\"id\": \"C\", \"label\": \"Columnas\", \"color\": \"#06b6d4\", \"description\": \"Especifica las columnas que deseas recuperar.\"},\n    {\"id\": \"D\", \"label\": \"FROM\", \"color\": \"#10b981\", \"description\": \"Indica la tabla desde la cual se seleccionan los datos.\"},\n    {\"id\": \"E\", \"label\": \"WHERE\", \"color\": \"#10b981\", \"description\": \"Opcional: Filtra los resultados según condiciones específicas.\"}\n  ],\n  \"edges\": [\n    {\"from\": \"A\", \"to\": \"B\"},\n    {\"from\": \"B\", \"to\": \"C\"},\n    {\"from\": \"B\", \"to\": \"D\"},\n    {\"from\": \"A\", \"to\": \"E\"}\n  ]\n}\n```\n\n---\n\n### 8. **Conclusión**\n\n¡Espero que este ejercicio te haya ayudado a comprender mejor cómo funciona la consulta SELECT en SQL! Si tienes más preguntas o deseas practicar más, ¡no dudes en decírmelo!",
+      "type": "notes",
+      "timestamp": "2026-01-03T22:22:31.473Z"
+    },
+    {
+      "role": "user",
+      "content": "hazme un ejercicio facil de selects de sql",
+      "type": "message",
+      "timestamp": "2026-01-03T22:26:52.869Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Ejercicio generado",
+      "type": "exercise",
+      "timestamp": "2026-01-03T22:27:09.513Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Test generado con 7 preguntas",
+      "type": "test",
+      "timestamp": "2026-01-03T22:38:22.172Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-03T22:39:15.189Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":71.42857142857143,\"correctCount\":5,\"totalQuestions\":7,\"failedQuestions\":[{\"question\":\"¿Cuál de las siguientes opciones describe mejor el uso de 'hazme'?\",\"explanation\":\"'Hazme' se utiliza para solicitar a alguien que realice una acción específica para el hablante.\",\"correctAnswer\":\"B\",\"userAnswer\":\"A\",\"options\":[\"Es una expresión de gratitud\",\"Es una solicitud de acción\",\"Es una afirmación de conocimiento\",\"Es un comando de rechazo\"],\"type\":\"multiple_choice\"},{\"question\":\"¿Qué tipo de verbo se utiliza comúnmente en frases que comienzan con 'hazme'?\",\"explanation\":\"Las frases que comienzan con 'hazme' suelen requerir un verbo de acción, ya que implican que se realice una tarea.\",\"correctAnswer\":\"B\",\"userAnswer\":\"C\",\"options\":[\"Verbos de estado\",\"Verbos de acción\",\"Verbos de percepción\",\"Verbos de emoción\"],\"type\":\"multiple_choice\"}],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-03T22:39:16.003Z"
+    }
+  ],
+  "created_at": "2026-01-03T22:48:53.092383",
+  "updated_at": "2026-01-03T23:39:18.292241",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#f97316",
+    "icon": "notes"
+  }
+}

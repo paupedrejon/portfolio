@@ -1,0 +1,47 @@
+{
+  "chat_id": "chat-1768155068254",
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "title": "Ruso",
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "¡Excelente elección! Vamos a darle caña a **Ruso**. Para poder ayudarte mejor, dime:\n\n¿Qué nivel tienes (Principiante, Intermedio, Avanzado)?\n\nEn cuanto me digas, empezamos.",
+      "type": "level_selection",
+      "timestamp": "2026-01-11T18:11:09.310Z",
+      "topic": "Ruso"
+    },
+    {
+      "role": "assistant",
+      "content": "# Ruso\n\n## ⚡ Conceptos Blitz (Lo esencial)\n- **Alfabeto Cirílico**: Sistema de escritura usado en ruso.\n- **Pronombres**: Palabras que sustituyen a los sustantivos (yo, tú, él).\n- **Verbo**: Palabra que expresa acción o estado.\n- **Sustantivo**: Nombre de personas, lugares o cosas.\n- **Adjetivo**: Describe o califica a un sustantivo.\n\n## 📚 Núcleo del Conocimiento\n\n### 1. Alfabeto Cirílico\n| Letra | Sonido | Ejemplo |\n|-------|--------|---------|\n| А     | a      | мама (mamá) |\n| Б     | b      | брат (hermano) |\n| В     | v      | вода (agua) |\n| Г     | g      | город (ciudad) |\n| Д     | d      | дом (casa) |\n\n### 2. Pronombres Personales\n| Pronombre | Traducción |\n|-----------|------------|\n| Я         | Yo         |\n| Ты        | Tú         |\n| Он        | Él         |\n| Она       | Ella       |\n| Мы        | Nosotros   |\n| Вы        | Ustedes    |\n| Они       | Ellos      |\n\n### 3. Estructura de Oraciones\n- **Sujeto + Verbo + Complemento**\n  - Ejemplo: Я читаю книгу. (Yo leo un libro.)\n  \n### 4. Verbos Comunes\n| Verbo     | Traducción | Conjugación (Yo) |\n|-----------|------------|------------------|\n| Читать    | Leer       | Я читаю          |\n| Писать    | Escribir   | Я пишу           |\n| Говорить  | Hablar     | Я говорю         |\n| Есть      | Comer      | Я ем             |\n\n### 5. Adjetivos\n- Los adjetivos concuerdan en género y número con el sustantivo.\n  - Ejemplo: красный (rojo) con мяч (pelota - masculino) → красный мяч (pelota roja).\n\n## ⚠️ Errores Comunes / Trampas\n- Confundir el alfabeto latino con el cirílico.\n- Olvidar la concordancia de adjetivos y sustantivos.\n- Mal uso de pronombres en plural y singular.\n\n## 💎 Ejemplo Práctico\n- Frase: Я люблю учить русский язык. \n  - Traducción: Yo amo aprender el idioma ruso.",
+      "type": "notes",
+      "timestamp": "2026-01-11T18:11:38.261Z"
+    },
+    {
+      "role": "user",
+      "content": "Avanzado",
+      "type": "message",
+      "timestamp": "2026-01-11T18:11:56.428Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Perfecto, nivel **Avanzado** (7/10) seleccionado. ¡Empecemos a trabajar con **Ruso**! ¿En qué te gustaría enfocarnos primero?",
+      "type": "message",
+      "timestamp": "2026-01-11T18:11:56.428Z"
+    },
+    {
+      "role": "assistant",
+      "content": "# Ruso\n\n## ⚡ Conceptos Blitz (Lo esencial)\n- **Alfabeto Cirílico**: Sistema de escritura del ruso.\n- **Pronunciación**: Forma en que se articulan las palabras.\n- **Verbo**: Palabra que indica acción.\n- **Sustantivo**: Nombre de personas, lugares o cosas.\n- **Adjetivo**: Describen características de un sustantivo.\n\n## 📚 Núcleo del Conocimiento\n\n### Alfabeto Cirílico\n| Letra | Sonido | Ejemplo |\n|-------|--------|---------|\n| А     | /a/    | мама (mamá)|\n| Б     | /b/    | брат (hermano)|\n| В     | /v/    | вода (agua)|\n| Г     | /g/    | город (ciudad)|\n| Д     | /d/    | дом (casa)|\n\n### Pronunciación\n- **Tónicas**: La sílaba acentuada en una palabra.\n- **Diptongos**: Combinación de dos vocales en una sílaba.\n\n### Gramática Básica\n- **Sustantivos**: \n  - Género: Masculino, femenino, neutro.\n  - Número: Singular, plural.\n- **Verbos**:\n  - Conjugación: Cambian según el tiempo y la persona.\n  \n#### Ejemplo de Conjugación\n- *Говорить (hablar)*:\n  - Yo hablo: я говорю\n  - Tú hablas: ты говоришь \n  - Él/Ella habla: он/она говорит\n\n### Frases Comunes\n| Frase en Ruso      | Traducción          |\n|--------------------|---------------------|\n| Привет!            | ¡Hola!              |\n| Спасибо!           | ¡Gracias!           |\n| Как дела?          | ¿Cómo estás?        |\n| Да/Нет             | Sí/No               |\n\n## ⚠️ Errores Comunes / Trampas\n- Confundir sonidos similares en el alfabeto.\n- Olvidar el género de los sustantivos.\n- Usar incorrectamente las terminaciones verbales.\n\n## 💎 Ejemplo Práctico\n- Frase completa: *Я люблю русский язык.* (Me gusta el idioma ruso.)\n\n",
+      "type": "notes",
+      "timestamp": "2026-01-11T18:12:08.201Z"
+    }
+  ],
+  "created_at": "2026-01-11T19:11:09.295467",
+  "updated_at": "2026-01-11T19:12:09.334481",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#3b82f6",
+    "icon": "flag_ruso",
+    "topic": "Ruso"
+  }
+}

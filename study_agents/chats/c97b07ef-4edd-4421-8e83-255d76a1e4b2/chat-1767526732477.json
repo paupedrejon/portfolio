@@ -1,0 +1,135 @@
+{
+  "chat_id": "chat-1767526732477",
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "title": "MESES",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Me quiero aprender los meses del año",
+      "type": "message",
+      "timestamp": "2026-01-04T11:39:01.482Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## Meses del Año\n\nLos **meses del año** son una forma de organizar el tiempo en el calendario. Hay un total de **12 meses**, cada uno con su propio nombre y características. A continuación, te presento una lista con los meses y algunos detalles interesantes sobre cada uno.\n\n### Lista de los Meses\n\n- **Enero**: \n  - Comienza el año nuevo.\n  - Asociado con el invierno en el hemisferio norte.\n\n- **Febrero**:\n  - Es el mes más corto (28 días, 29 en años bisiestos).\n  - Celebramos el Día de San Valentín.\n\n- **Marzo**:\n  - Comienza la primavera en el hemisferio norte.\n  - Día de San Patricio (17 de marzo).\n\n- **Abril**: \n  - Conocido por sus lluvias que traen flores.\n  - Día de los Inocentes (1 de abril).\n\n- **Mayo**:\n  - Mes de las flores.\n  - Celebramos el Día de la Madre en muchos países.\n\n- **Junio**:\n  - Comienza el verano en el hemisferio norte.\n  - Día del Padre en muchos lugares.\n\n- **Julio**:\n  - Generalmente el mes más caluroso en muchas regiones.\n  - Celebraciones del Día de la Independencia en EE.UU. (4 de julio).\n\n- **Agosto**:\n  - Último mes del verano en el hemisferio norte.\n  - Vacaciones para muchos estudiantes.\n\n- **Septiembre**:\n  - Comienza el otoño en el hemisferio norte.\n  - Regreso a clases para muchos estudiantes.\n\n- **Octubre**:\n  - Mes de Halloween (31 de octubre).\n  - Comienza a refrescar el clima en muchos lugares.\n\n- **Noviembre**:\n  - Mes de Acción de Gracias en EE.UU. (cuarto jueves de noviembre).\n  - Días más cortos y clima más fresco.\n\n- **Diciembre**:\n  - Mes de festividades como la Navidad (25 de diciembre).\n  - Termina el año.\n\n---\n\n### Esquema Conceptual de los Meses del Año\n\nA continuación, te presento un esquema que resume la información sobre los meses:\n\n```diagram-json\n{\n  \"title\": \"Meses del Año\",\n  \"nodes\": [\n    {\"id\": \"A\", \"label\": \"Meses del Año\", \"color\": \"#6366f1\"},\n    {\"id\": \"B\", \"label\": \"Enero\", \"color\": \"#10b981\", \"description\": \"Comienza el año nuevo.\"},\n    {\"id\": \"C\", \"label\": \"Febrero\", \"color\": \"#10b981\", \"description\": \"Mes más corto; Día de San Valentín.\"},\n    {\"id\": \"D\", \"label\": \"Marzo\", \"color\": \"#10b981\", \"description\": \"Comienza la primavera; Día de San Patricio.\"},\n    {\"id\": \"E\", \"label\": \"Abril\", \"color\": \"#10b981\", \"description\": \"Conocido por lluvias; Día de los Inocentes.\"},\n    {\"id\": \"F\", \"label\": \"Mayo\", \"color\": \"#10b981\", \"description\": \"Mes de las flores; Día de la Madre.\"},\n    {\"id\": \"G\", \"label\": \"Junio\", \"color\": \"#10b981\", \"description\": \"Comienza el verano; Día del Padre.\"},\n    {\"id\": \"H\", \"label\": \"Julio\", \"color\": \"#10b981\", \"description\": \"Generalmente el mes más caluroso.\"},\n    {\"id\": \"I\", \"label\": \"Agosto\", \"color\": \"#10b981\", \"description\": \"Último mes del verano.\"},\n    {\"id\": \"J\", \"label\": \"Septiembre\", \"color\": \"#10b981\", \"description\": \"Comienza el otoño; regreso a clases.\"},\n    {\"id\": \"K\", \"label\": \"Octubre\", \"color\": \"#10b981\", \"description\": \"Mes de Halloween.\"},\n    {\"id\": \"L\", \"label\": \"Noviembre\", \"color\": \"#10b981\", \"description\": \"Mes de Acción de Gracias.\"},\n    {\"id\": \"M\", \"label\": \"Diciembre\", \"color\": \"#10b981\", \"description\": \"Mes de Navidad; fin de año.\"}\n  ],\n  \"edges\": [\n    {\"from\": \"A\", \"to\": \"B\"},\n    {\"from\": \"A\", \"to\": \"C\"},\n    {\"from\": \"A\", \"to\": \"D\"},\n    {\"from\": \"A\", \"to\": \"E\"},\n    {\"from\": \"A\", \"to\": \"F\"},\n    {\"from\": \"A\", \"to\": \"G\"},\n    {\"from\": \"A\", \"to\": \"H\"},\n    {\"from\": \"A\", \"to\": \"I\"},\n    {\"from\": \"A\", \"to\": \"J\"},\n    {\"from\": \"A\", \"to\": \"K\"},\n    {\"from\": \"A\", \"to\": \"L\"},\n    {\"from\": \"A\", \"to\": \"M\"}\n  ]\n}\n```\n\n---\n\nEspero que esta información te sea útil para aprender los meses del año. Si tienes alguna otra duda, ¡no dudes en preguntar!",
+      "type": "notes",
+      "timestamp": "2026-01-04T11:39:37.296Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T11:40:44.968Z"
+    },
+    {
+      "role": "assistant",
+      "content": " **¡Felicidades!** Has subido **2 niveles** (0 → 2) en **General**! 🎉🎉\n\n✨ Ganaste **50 puntos de experiencia**.\n\n\n📚 **Conceptos clave a repasar en este nivel:**\n• Conceptos básicos\n• Fundamentos esenciales\n• Principios fundamentales\n• Aplicación básica\n• Ejemplos prácticos\n• Casos de uso simples\n\n💪 ¡Sigue así y continúa mejorando!",
+      "type": "success",
+      "timestamp": "2026-01-04T11:40:46.004Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":100,\"correctCount\":5,\"totalQuestions\":5,\"failedQuestions\":[],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T11:40:46.004Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T11:41:12.822Z"
+    },
+    {
+      "role": "assistant",
+      "content": " **¡Felicidades!** Has subido **2 niveles** (2 → 4) en **General**! 🎉🎉\n\n✨ Ganaste **50 puntos de experiencia**.\n\n\n📚 **Conceptos clave a repasar en este nivel:**\n• Casos de uso simples\n• Conceptos intermedios\n• Técnicas básicas\n• Mejores prácticas\n• Aplicación intermedia\n• Patrones comunes\n• Optimización básica\n\n💪 ¡Sigue así y continúa mejorando!",
+      "type": "success",
+      "timestamp": "2026-01-04T11:41:12.941Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":100,\"correctCount\":5,\"totalQuestions\":5,\"failedQuestions\":[],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T11:41:12.941Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T11:42:06.355Z"
+    },
+    {
+      "role": "assistant",
+      "content": " **¡Felicidades!** Has subido **2 niveles** (4 → 6) en **General**! 🎉🎉\n\n✨ Ganaste **50 puntos de experiencia**.\n\n\n📚 **Conceptos clave a repasar en este nivel:**\n• Optimización básica\n• Conceptos avanzados\n• Técnicas avanzadas\n• Arquitectura\n• Aplicación avanzada\n• Patrones complejos\n• Optimización avanzada\n\n💪 ¡Sigue así y continúa mejorando!",
+      "type": "success",
+      "timestamp": "2026-01-04T11:42:06.464Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":100,\"correctCount\":10,\"totalQuestions\":10,\"failedQuestions\":[],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T11:42:06.464Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T11:43:06.195Z"
+    },
+    {
+      "role": "assistant",
+      "content": " **¡Felicidades!** Has subido **2 niveles** (6 → 8) en **General**! 🎉🎉\n\n✨ Ganaste **50 puntos de experiencia**.\n\n\n📚 **Conceptos clave a repasar en este nivel:**\n• Optimización avanzada\n• Dominio experto\n• Técnicas especializadas\n• Diseño avanzado\n• Maestría técnica\n• Optimización experta\n• Arquitectura compleja\n\n💪 ¡Sigue así y continúa mejorando!",
+      "type": "success",
+      "timestamp": "2026-01-04T11:43:06.311Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":100,\"correctCount\":10,\"totalQuestions\":10,\"failedQuestions\":[],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T11:43:06.311Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T11:43:35.496Z"
+    },
+    {
+      "role": "assistant",
+      "content": " **¡Felicidades!** Has subido **2 niveles** (8 → 10) en **General**! 🎉🎉\n\n✨ Ganaste **50 puntos de experiencia**.\n\n\n📚 **Conceptos clave a repasar en este nivel:**\n• Arquitectura compleja\n• Nivel experto\n• Técnicas de élite\n• Diseño de sistemas\n• Maestría total\n• Dominio completo\n• Excelencia técnica\n\n💪 ¡Sigue así y continúa mejorando!",
+      "type": "success",
+      "timestamp": "2026-01-04T11:43:35.616Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":100,\"correctCount\":5,\"totalQuestions\":5,\"failedQuestions\":[],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T11:43:35.616Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Test generado con 5 preguntas",
+      "type": "test",
+      "timestamp": "2026-01-04T11:47:36.937Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T11:48:03.507Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":100,\"correctCount\":5,\"totalQuestions\":5,\"failedQuestions\":[],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T11:48:05.054Z"
+    }
+  ],
+  "created_at": "2026-01-04T12:38:53.015402",
+  "updated_at": "2026-01-04T12:48:07.725166",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#06b6d4",
+    "icon": "target"
+  }
+}

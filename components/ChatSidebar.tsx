@@ -3,6 +3,149 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { spaceGrotesk, outfit } from "../app/fonts";
+// Importar iconos de react-icons y banderas
+import {
+  FlagUKIcon,
+  FlagFRIcon,
+  FlagDEIcon,
+  FlagITIcon,
+  FlagPTIcon,
+  FlagCNIcon,
+  FlagJPIcon,
+  FlagKRIcon,
+  FlagCAIcon,
+  FlagRUIcon,
+} from "./Icons";
+import {
+  SiPython,
+  SiJavascript,
+  SiReact,
+  SiGit,
+  SiHtml5,
+  SiTypescript,
+  SiSwift,
+  SiCplusplus,
+} from "react-icons/si";
+import {
+  HiCodeBracket,
+  HiCpuChip,
+  HiUserGroup,
+  HiHeart,
+  HiPaintBrush,
+  HiCircleStack,
+  HiCalculator,
+  HiAcademicCap,
+  HiBriefcase,
+  HiClock,
+  HiCamera,
+  HiMusicalNote,
+  HiPresentationChartBar,
+  HiBuildingOffice2,
+  HiScale,
+  HiArrowTrendingUp,
+  HiDocumentText,
+  HiSparkles,
+  HiLightBulb,
+  HiKey,
+  HiBolt,
+  HiGlobeAlt,
+  HiChartBar,
+  HiCube,
+  HiHome,
+  HiLockClosed,
+  HiCloud,
+  HiWifi,
+  HiUser,
+} from "react-icons/hi2";
+import {
+  FaAtom,
+  FaBook,
+  FaHistory,
+  FaFlask,
+  FaDna,
+  FaChartLine,
+  FaFileContract,
+  FaShieldAlt,
+  FaUserTie,
+  FaComments,
+  FaHandshake,
+  FaPills,
+  FaCube,
+  FaTshirt,
+  FaGraduationCap,
+  FaLandmark,
+  FaBalanceScale,
+  FaScroll,
+  FaBookOpen,
+  FaPenFancy,
+  FaStethoscope,
+  FaPaintBrush,
+} from "react-icons/fa";
+import {
+  MdPsychology,
+  MdScience,
+  MdGavel,
+  MdSecurity,
+  MdWork,
+  MdEmojiPeople,
+  MdHealthAndSafety,
+  MdLocalHospital,
+  MdDesignServices,
+  MdDraw,
+  MdMovie,
+  MdTrendingUp,
+  MdShoppingCart,
+  MdLightbulb,
+  MdStore,
+  MdAccountBalance,
+  MdCalculate,
+  MdFunctions,
+  MdAutoAwesome,
+  MdSpeed,
+  MdPublic,
+  MdGroups,
+  MdRestaurant,
+  MdLocalLibrary,
+  MdPalette,
+  MdArchitecture,
+} from "react-icons/md";
+import {
+  TbBrain,
+  TbMathFunction,
+  TbAtom,
+  TbCalculator,
+  TbChartBar,
+  TbFlask,
+  TbDna,
+  TbScale,
+  TbFileText,
+  TbShield,
+  TbBriefcase,
+  TbChartLine,
+  TbShoppingBag,
+  TbBulb,
+  TbUserStar,
+  TbTrendingUp,
+  TbBuildingStore,
+  TbHistory,
+  TbPaint,
+  TbBook,
+  TbWorld,
+  TbUsers,
+  TbUser,
+  TbHeartbeat,
+  TbHeart,
+  TbPill,
+  TbMicroscope,
+  TbHospital,
+  TbPencil,
+  TbPhoto,
+  TbBox,
+  TbHome,
+  TbMusic,
+  TbShirt,
+  TbBuilding,
+} from "react-icons/tb";
 
 interface Chat {
   chat_id: string;
@@ -13,6 +156,7 @@ interface Chat {
   metadata?: {
     color?: string;
     icon?: string;
+    topic?: string; // Tema del chat si fue creado desde una sugerencia
     uploadedFiles?: string[];
     selectedModel?: string;
   };
@@ -74,10 +218,153 @@ export default function ChatSidebar({
     { name: "Estrella", value: "star" },
   ];
 
+  // Función helper para detectar si es un idioma (para banderas)
+  const isLanguageTopic = (topic: string): boolean => {
+    const topicLower = topic.toLowerCase();
+    return topicLower.includes("inglés") || topicLower.includes("english") ||
+      topicLower.includes("francés") || topicLower.includes("francais") ||
+      topicLower.includes("alemán") || topicLower.includes("deutsch") ||
+      topicLower.includes("italiano") || topicLower.includes("portugués") ||
+      topicLower.includes("chino") || topicLower.includes("mandarín") || topicLower.includes("simplificado") ||
+      topicLower.includes("japonés") || topicLower.includes("japones") ||
+      topicLower.includes("coreano") || topicLower.includes("catalán") ||
+      topicLower.includes("catalan") || topicLower.includes("ruso");
+  };
+
+  // Función para obtener el icono basado en el tema (para el sidebar, tamaño 16px)
+  const getTopicIconForSidebar = (topic: string, isSelected: boolean = false) => {
+    const topicLower = topic.toLowerCase();
+    const iconSize = 16;
+    const iconColor = colorTheme === "dark" ? "rgba(226, 232, 240, 0.8)" : "rgba(26, 36, 52, 0.8)";
+    const selectedColor = "white";
+    const finalColor = isSelected ? selectedColor : iconColor;
+    
+    // Idiomas - Banderas
+    if (topicLower.includes("inglés") || topicLower.includes("english")) return <FlagUKIcon size={iconSize} />;
+    if (topicLower.includes("francés") || topicLower.includes("francais")) return <FlagFRIcon size={iconSize} />;
+    if (topicLower.includes("alemán") || topicLower.includes("deutsch")) return <FlagDEIcon size={iconSize} />;
+    if (topicLower.includes("italiano")) return <FlagITIcon size={iconSize} />;
+    if (topicLower.includes("portugués")) return <FlagPTIcon size={iconSize} />;
+    if (topicLower.includes("chino") || topicLower.includes("mandarín") || topicLower.includes("simplificado")) return <FlagCNIcon size={iconSize} />;
+    if (topicLower.includes("japonés") || topicLower.includes("japones")) return <FlagJPIcon size={iconSize} />;
+    if (topicLower.includes("coreano")) return <FlagKRIcon size={iconSize} />;
+    if (topicLower.includes("catalán") || topicLower.includes("catalan")) return <FlagCAIcon size={iconSize} />;
+    if (topicLower.includes("ruso")) return <FlagRUIcon size={iconSize} />;
+    // Programación
+    if (topicLower.includes("python")) return <SiPython size={iconSize} color={finalColor} />;
+    if (topicLower.includes("javascript") || topicLower.includes("js")) return <SiJavascript size={iconSize} color={finalColor} />;
+    if (topicLower.includes("sql")) return <HiCircleStack size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("java")) return <HiCodeBracket size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("html") || topicLower.includes("css")) return <SiHtml5 size={iconSize} color={finalColor} />;
+    if (topicLower.includes("react")) return <SiReact size={iconSize} color={finalColor} />;
+    if (topicLower.includes("c++") || topicLower.includes("cpp")) return <SiCplusplus size={iconSize} color={finalColor} />;
+    if (topicLower.includes("git")) return <SiGit size={iconSize} color={finalColor} />;
+    if (topicLower.includes("typescript") || topicLower.includes("ts")) return <SiTypescript size={iconSize} color={finalColor} />;
+    if (topicLower.includes("swift")) return <SiSwift size={iconSize} color={finalColor} />;
+    // Ciencias y Matemáticas
+    if (topicLower.includes("cálculo") || topicLower.includes("calculo")) return <TbCalculator size={iconSize} color={finalColor} />;
+    if (topicLower.includes("álgebra") || topicLower.includes("algebra")) return <TbMathFunction size={iconSize} color={finalColor} />;
+    if (topicLower.includes("estadística") || topicLower.includes("estadistica")) return <TbChartBar size={iconSize} color={finalColor} />;
+    if (topicLower.includes("física") || topicLower.includes("fisica")) return <TbAtom size={iconSize} color={finalColor} />;
+    if (topicLower.includes("química") || topicLower.includes("quimica")) return <TbFlask size={iconSize} color={finalColor} />;
+    if (topicLower.includes("biología") || topicLower.includes("biologia")) return <TbDna size={iconSize} color={finalColor} />;
+    if (topicLower.includes("matemáticas") || topicLower.includes("matematicas") || topicLower.includes("matematica")) return <HiCalculator size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("lógica") || topicLower.includes("logica")) return <TbBrain size={iconSize} color={finalColor} />;
+    if (topicLower.includes("geometría") || topicLower.includes("geometria")) return <MdFunctions size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("termodinámica") || topicLower.includes("termodinamica")) return <FaAtom size={iconSize} style={{ color: finalColor }} />;
+    // Oposiciones y Leyes - Orden específico para evitar conflictos
+    if (topicLower.includes("constitución") || topicLower.includes("constitucion")) return <FaBalanceScale size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("derecho administrativo")) return <FaLandmark size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("derecho civil")) return <FaBookOpen size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("derecho tributario")) return <MdAccountBalance size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("derecho")) return <MdGavel size={iconSize} style={{ color: finalColor }} />; // Fallback para otros tipos de derecho
+    if (topicLower.includes("estatuto")) return <FaScroll size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("código") || topicLower.includes("codigo")) return <TbFileText size={iconSize} color={finalColor} />;
+    if (topicLower.includes("ley") && topicLower.includes("contratos")) return <FaFileContract size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("protección") || topicLower.includes("proteccion")) return <TbShield size={iconSize} color={finalColor} />;
+    if (topicLower.includes("oposiciones") || (topicLower.includes("administrativo") && !topicLower.includes("derecho"))) return <MdWork size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("fuerzas") || (topicLower.includes("cuerpos") && topicLower.includes("seguridad"))) return <HiLockClosed size={iconSize} style={{ color: finalColor }} />;
+    // Negocios y Finanzas
+    if (topicLower.includes("excel")) return <MdCalculate size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("contabilidad")) return <MdAccountBalance size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("finanzas")) return <TbChartLine size={iconSize} color={finalColor} />;
+    if (topicLower.includes("gestión") || topicLower.includes("gestion") || topicLower.includes("proyectos")) return <TbBriefcase size={iconSize} color={finalColor} />;
+    if (topicLower.includes("marketing")) return <TbTrendingUp size={iconSize} color={finalColor} />;
+    if (topicLower.includes("comercio") || topicLower.includes("ecommerce") || topicLower.includes("electrónico")) return <TbShoppingBag size={iconSize} color={finalColor} />;
+    if (topicLower.includes("emprendimiento")) return <TbBulb size={iconSize} color={finalColor} />;
+    if (topicLower.includes("liderazgo")) return <TbUserStar size={iconSize} color={finalColor} />;
+    if (topicLower.includes("economía") || topicLower.includes("economia")) return <HiArrowTrendingUp size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("ventas")) return <TbBuildingStore size={iconSize} color={finalColor} />;
+    // Humanidades e Historia
+    if (topicLower.includes("moda") && topicLower.includes("historia")) return <TbShirt size={iconSize} color={finalColor} />; // Historia de la Moda
+    if (topicLower.includes("historia")) return <TbHistory size={iconSize} color={finalColor} />;
+    if (topicLower.includes("arte")) return <TbPaint size={iconSize} color={finalColor} />;
+    if (topicLower.includes("filosofía") || topicLower.includes("filosofia")) return <HiSparkles size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("guerra") || topicLower.includes("mundial")) return <HiDocumentText size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("literatura")) return <TbBook size={iconSize} color={finalColor} />;
+    if (topicLower.includes("geografía") || topicLower.includes("geografia")) return <TbWorld size={iconSize} color={finalColor} />;
+    if (topicLower.includes("mitología") || topicLower.includes("mitologia")) return <FaHistory size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("sociología") || topicLower.includes("sociologia")) return <TbUsers size={iconSize} color={finalColor} />;
+    if (topicLower.includes("antropología") || topicLower.includes("antropologia")) return <TbUser size={iconSize} color={finalColor} />;
+    if (topicLower.includes("escritura") || topicLower.includes("creativa")) return <FaPenFancy size={iconSize} style={{ color: finalColor }} />;
+    // Tecnología y Datos
+    if (topicLower.includes("inteligencia") || topicLower.includes("artificial") || topicLower.includes("ia") || topicLower.includes("ai")) return <MdAutoAwesome size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("prompt") || topicLower.includes("engineering")) return <HiCpuChip size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("ciberseguridad")) return <HiKey size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("análisis") || topicLower.includes("analisis") || topicLower.includes("datos")) return <HiChartBar size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("power bi") || topicLower.includes("powerbi")) return <HiCircleStack size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("blockchain")) return <HiCube size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("cloud") || topicLower.includes("computing")) return <HiCloud size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("automatización") || topicLower.includes("automatizacion")) return <MdSpeed size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("iot") || topicLower.includes("internet")) return <HiWifi size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("video") || topicLower.includes("edición") || topicLower.includes("edicion")) return <MdMovie size={iconSize} style={{ color: finalColor }} />;
+    // Habilidades Blandas
+    if (topicLower.includes("hablar") || topicLower.includes("público") || topicLower.includes("publico")) return <HiPresentationChartBar size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("tiempo") || topicLower.includes("gestión")) return <HiClock size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("emocional") || topicLower.includes("inteligencia")) return <MdPsychology size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("conflictos") || topicLower.includes("resolución")) return <FaHandshake size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("crítico") || topicLower.includes("critico") || topicLower.includes("pensamiento")) return <HiLightBulb size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("estudio") || topicLower.includes("técnicas") || topicLower.includes("tecnicas")) return <MdLocalLibrary size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("comunicación") || topicLower.includes("comunicacion") || topicLower.includes("asertiva")) return <FaComments size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("entrevistas") || topicLower.includes("trabajo")) return <HiBriefcase size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("equipo")) return <MdGroups size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("estrés") || topicLower.includes("estres") || topicLower.includes("gestión")) return <TbHeartbeat size={iconSize} color={finalColor} />;
+    // Salud y Ciencias
+    if (topicLower.includes("anatomía") || topicLower.includes("anatomia")) return <TbHeart size={iconSize} color={finalColor} />;
+    if (topicLower.includes("nutrición") || topicLower.includes("nutricion")) return <MdRestaurant size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("fisiología") || topicLower.includes("fisiologia")) return <FaStethoscope size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("auxilios") || topicLower.includes("primeros")) return <TbHospital size={iconSize} color={finalColor} />;
+    if (topicLower.includes("psicología") || topicLower.includes("psicologia")) return <MdPsychology size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("neurociencia") || topicLower.includes("neuro")) return <TbBrain size={iconSize} color={finalColor} />;
+    if (topicLower.includes("farmacología") || topicLower.includes("farmacologia")) return <TbPill size={iconSize} color={finalColor} />;
+    if (topicLower.includes("genética") || topicLower.includes("genetica")) return <TbDna size={iconSize} color={finalColor} />;
+    if (topicLower.includes("microbiología") || topicLower.includes("microbiologia")) return <TbMicroscope size={iconSize} color={finalColor} />;
+    if (topicLower.includes("salud pública") || topicLower.includes("salud publica")) return <MdPublic size={iconSize} style={{ color: finalColor }} />;
+    // Diseño y Creatividad
+    if (topicLower.includes("ux") || topicLower.includes("ui") || topicLower.includes("diseño")) return <MdDesignServices size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("photoshop")) return <MdPalette size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("gráfico") || topicLower.includes("grafico")) return <HiPaintBrush size={iconSize} style={{ color: finalColor }} />;
+    if (topicLower.includes("ilustración") || topicLower.includes("ilustracion")) return <TbPencil size={iconSize} color={finalColor} />;
+    if (topicLower.includes("fotografía") || topicLower.includes("fotografia")) return <TbPhoto size={iconSize} color={finalColor} />;
+    if (topicLower.includes("3d") || topicLower.includes("modelado")) return <TbBox size={iconSize} color={finalColor} />;
+    if (topicLower.includes("interiores")) return <TbHome size={iconSize} color={finalColor} />;
+    if (topicLower.includes("música") || topicLower.includes("musica")) return <TbMusic size={iconSize} color={finalColor} />;
+    if (topicLower.includes("moda")) return <TbShirt size={iconSize} color={finalColor} />;
+    if (topicLower.includes("arquitectura")) return <TbBuilding size={iconSize} color={finalColor} />;
+    // Default
+    return <FaBook size={iconSize} style={{ color: finalColor }} />;
+  };
+
   // Función para renderizar el icono según el tipo
-  const renderIcon = (iconType: string = "chat", color: string = "#6366f1", isSelected: boolean = false) => {
+  const renderIcon = (iconType: string = "chat", color: string = "#6366f1", isSelected: boolean = false, topic?: string) => {
+    // Si hay un tema guardado, usar el icono del tema
+    if (topic) {
+      return getTopicIconForSidebar(topic, isSelected);
+    }
+    
+    // Si el icono es un identificador de tema (comienza con "icon_" o "flag_"), intentar obtener el tema
+    // Por ahora, solo usar el sistema de iconos básicos si no hay tema
     const iconColor = color || "#6366f1";
-    // Si está seleccionado, usar blanco. Si no, usar el color del tema
     const strokeColor = isSelected 
       ? (iconColor ? "white" : "#6366f1")
       : (colorTheme === "dark" ? "rgba(226, 232, 240, 0.8)" : "rgba(26, 36, 52, 0.8)");
@@ -785,7 +1072,7 @@ export default function ChatSidebar({
                 }}
                 title="Cambiar color e icono"
               >
-                {renderIcon(chat.metadata?.icon || "chat", chatColor, true)}
+                {renderIcon(chat.metadata?.icon || "chat", chatColor || "#6366f1", true, chat.metadata?.topic)}
               </div>
               {!isCollapsed && (
                 <>
@@ -1074,14 +1361,20 @@ export default function ChatSidebar({
                                       body: JSON.stringify({ 
                                         userId, 
                                         chatId: chat.chat_id, 
-                                        icon: icon.value 
+                                        icon: icon.value,
+                                        topic: null // Eliminar tema cuando se personaliza el icono
                                       }),
                                     });
                                     const data = await response.json();
                                     if (data.success && data.chat) {
                                       setChats(chats.map((c) => {
                                         if (c.chat_id === chat.chat_id) {
-                                          return { ...c, metadata: data.chat.metadata || { ...c.metadata, icon: icon.value } };
+                                          // Al cambiar el icono manualmente, eliminar el tema (chat personalizado)
+                                          const newMetadata = { ...c.metadata, ...data.chat.metadata, icon: icon.value };
+                                          if (newMetadata.topic) {
+                                            delete newMetadata.topic;
+                                          }
+                                          return { ...c, metadata: newMetadata };
                                         }
                                         return c;
                                       }));

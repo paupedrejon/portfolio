@@ -1,0 +1,87 @@
+{
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "language": "Italiano",
+  "words": [
+    {
+      "word": "Ciao",
+      "translation": "Hola",
+      "source": "flashcards",
+      "example": "Ciao, come stai?",
+      "romanization": null,
+      "learned_at": "2026-01-11T22:10:42.857286"
+    },
+    {
+      "word": "Grazie",
+      "translation": "Gracias",
+      "source": "flashcards",
+      "example": "Grazie mille!",
+      "romanization": null,
+      "learned_at": "2026-01-11T22:10:45.305392"
+    },
+    {
+      "word": "Per favore",
+      "translation": "Por favor",
+      "source": "flashcards",
+      "example": "Mi puoi aiutare, per favore?",
+      "romanization": null,
+      "learned_at": "2026-01-11T22:10:52.489682"
+    },
+    {
+      "word": "Scusa",
+      "translation": "Perdón",
+      "source": "flashcards",
+      "example": "Scusa per il ritardo.",
+      "romanization": null,
+      "learned_at": "2026-01-11T22:11:19.900317"
+    },
+    {
+      "word": "Buongiorno",
+      "translation": "Buenos días",
+      "source": "flashcards",
+      "example": "Buongiorno a tutti!",
+      "romanization": null,
+      "learned_at": "2026-01-11T22:11:23.889833"
+    },
+    {
+      "word": "Buonasera",
+      "translation": "Buenas tardes",
+      "source": "flashcards",
+      "example": "Buonasera, come va?",
+      "romanization": null,
+      "learned_at": "2026-01-11T22:11:30.241472"
+    },
+    {
+      "word": "Arrivederci",
+      "translation": "Adiós",
+      "source": "flashcards",
+      "example": "Arrivederci, a domani!",
+      "romanization": null,
+      "learned_at": "2026-01-11T22:11:33.186639"
+    },
+    {
+      "word": "Sì",
+      "translation": "Sí",
+      "source": "flashcards",
+      "example": "Sì, voglio andare.",
+      "romanization": null,
+      "learned_at": "2026-01-11T22:11:35.943384"
+    },
+    {
+      "word": "No",
+      "translation": "No",
+      "source": "flashcards",
+      "example": "No, non posso.",
+      "romanization": null,
+      "learned_at": "2026-01-11T22:11:39.681420"
+    },
+    {
+      "word": "Mi chiamo",
+      "translation": "Me llamo",
+      "source": "flashcards",
+      "example": "Mi chiamo Marco.",
+      "romanization": null,
+      "learned_at": "2026-01-11T22:11:43.350993"
+    }
+  ],
+  "updated_at": "2026-01-11T22:11:43.350999"
+}

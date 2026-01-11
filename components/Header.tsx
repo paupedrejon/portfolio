@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { KeyIcon } from "./Icons";
+import { KeyIcon, StarIcon } from "./Icons";
 import APIKeyConfig from "./APIKeyConfig";
+import ProfileView from "./ProfileView";
 
 const links = [
   { href: "/", label: "Home" },
@@ -25,6 +26,7 @@ export default function Header() {
   const [compact, setCompact] = useState(false);
   const isStudyAgentsPage = pathname?.startsWith("/study-agents");
   const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [apiKeys, setApiKeys] = useState<{ openai: string } | null>(null);
 
   useEffect(() => {
@@ -232,86 +234,89 @@ export default function Header() {
           </nav>
         )}
 
-        {/* API Config Button and Logout Button (Study Agents) */}
+        {/* API Config Button, Profile Button and Logout Button (Study Agents) */}
         {isStudyAgentsPage && session && (
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            {/* API Config Button */}
+            {/* Profile Button */}
             <button
-              onClick={() => setShowAPIKeyConfig(true)}
-              title="Configurar API Keys"
+              onClick={() => setShowProfile(true)}
+              title="Ver mi progreso"
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.625rem 1.25rem",
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                color: "#f8fafc",
-                background: apiKeys?.openai
-                  ? "rgba(16, 185, 129, 0.1)"
-                  : "rgba(245, 158, 11, 0.1)",
-                border: apiKeys?.openai
-                  ? "1px solid rgba(16, 185, 129, 0.3)"
-                  : "1px solid rgba(245, 158, 11, 0.3)",
-                borderRadius: "12px",
+                justifyContent: "center",
+                width: "48px",
+                height: "48px",
+                background: "#ffffff",
+                border: "none",
+                borderRadius: "24px",
                 cursor: "pointer",
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                if (apiKeys?.openai) {
-                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
-                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
-                } else {
-                  e.currentTarget.style.background = "rgba(245, 158, 11, 0.2)";
-                  e.currentTarget.style.borderColor = "rgba(245, 158, 11, 0.5)";
-                }
+                e.currentTarget.style.opacity = "0.9";
               }}
               onMouseLeave={(e) => {
-                if (apiKeys?.openai) {
-                  e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
-                  e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.3)";
-                } else {
-                  e.currentTarget.style.background = "rgba(245, 158, 11, 0.1)";
-                  e.currentTarget.style.borderColor = "rgba(245, 158, 11, 0.3)";
-                }
+                e.currentTarget.style.opacity = "1";
               }}
             >
-              <KeyIcon size={16} color={apiKeys?.openai ? "#10b981" : "#f59e0b"} />
-              <span>{apiKeys?.openai ? "API Configurada" : "Configurar API"}</span>
+              <StarIcon size={18} color="#1a1a24" />
+            </button>
+            
+            {/* API Config Button */}
+            <button
+              onClick={() => setShowAPIKeyConfig(true)}
+              title={apiKeys?.openai ? "API Configurada" : "Configurar API"}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "48px",
+                height: "48px",
+                background: "#ffffff",
+                border: "none",
+                borderRadius: "24px",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = "0.9";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = "1";
+              }}
+            >
+              <KeyIcon size={18} color="#1a1a24" />
             </button>
             
             {/* Logout Button */}
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
+              title="Cerrar sesión"
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.625rem 1.25rem",
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                color: "#f8fafc",
-                background: "rgba(239, 68, 68, 0.1)",
-                border: "1px solid rgba(239, 68, 68, 0.3)",
-                borderRadius: "12px",
+                justifyContent: "center",
+                width: "48px",
+                height: "48px",
+                background: "#ffffff",
+                border: "none",
+                borderRadius: "24px",
                 cursor: "pointer",
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)";
-                e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.5)";
+                e.currentTarget.style.opacity = "0.9";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
-                e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.3)";
+                e.currentTarget.style.opacity = "1";
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a1a24" strokeWidth="2">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-              Cerrar sesión
             </button>
           </div>
         )}
@@ -503,6 +508,15 @@ export default function Header() {
               setShowAPIKeyConfig(false);
             }
           }}
+        />
+      )}
+      
+      {/* Profile View Modal */}
+      {showProfile && session && isStudyAgentsPage && (
+        <ProfileView
+          userId={session.user?.email || session.user?.id || ""}
+          colorTheme="dark"
+          onClose={() => setShowProfile(false)}
         />
       )}
     </header>

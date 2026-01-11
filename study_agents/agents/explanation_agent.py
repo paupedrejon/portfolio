@@ -191,16 +191,18 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
                 "status": "error"
             }
     
-    def generate_notes(self, topics: Optional[List[str]] = None, model: Optional[str] = None) -> str:
+    def generate_notes(self, topics: Optional[List[str]] = None, model: Optional[str] = None, user_level: Optional[int] = None, conversation_history: Optional[List[dict]] = None, topic: Optional[str] = None) -> str:
         """
-        Genera apuntes completos en formato Markdown
+        Genera resumen completo de la conversación en formato Markdown
         
         Args:
             topics: Lista de temas específicos a cubrir (opcional)
             model: Modelo preferido (opcional, si no se especifica usa modo automático)
+            user_level: Nivel del usuario en el tema (1-10, opcional)
+            conversation_history: Historial de conversación para generar resumen actualizado (opcional)
             
         Returns:
-            Apuntes en formato Markdown
+            Resumen en formato Markdown
         """
         # Usar model_manager si está disponible (modo automático)
         if self.model_manager:
@@ -261,470 +263,261 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
         
         # Definir el prompt template que se usará en ambos casos
         # Usar raw string (r"""...""") para evitar problemas con secuencias de escape
-        prompt_template = r"""Eres un profesor experto. Tu tarea es generar apuntes basándote ÚNICA Y EXCLUSIVAMENTE en el contenido que se te proporciona a continuación.
+        prompt_template = r"""Eres un Arquitecto de Conocimiento experto en crear 'Hojas de Estudio de Alto Rendimiento'.
 
-CONTENIDO DEL DOCUMENTO:
+Tu objetivo NO es resumir, sino destilar la información para que sea memorizable al instante.
+
+CONTENIDO FUENTE:
 {content}
 
-REGLAS ESTRICTAS:
-1. SOLO puedes usar información que aparezca explícitamente en el contenido proporcionado arriba
-2. NO inventes, NO asumas, NO uses conocimiento previo que no esté en el contenido
-3. Si el contenido no menciona algo, NO lo incluyas en los apuntes
-4. NO uses placeholders, templates o texto genérico como "Concepto 1", "Aquí va...", etc.
-5. Extrae y explica SOLO los conceptos, términos, definiciones y explicaciones que aparecen en el contenido proporcionado
-6. Si el contenido está vacío o no tiene información suficiente, di claramente: "El contenido proporcionado no contiene suficiente información para generar apuntes"
+---
 
-**⚠️⚠️⚠️ ADVERTENCIA CRÍTICA ANTES DE COMENZAR ⚠️⚠️⚠️**
+### 🧠 REGLAS DE ORO (STYLE GUIDE):
 
-**NO GENERES CÓDIGO MERMAID DE NINGÚN TIPO. ESTO ES ABSOLUTAMENTE PROHIBIDO.**
+1. **CERO RELLENO:** Prohibido usar frases introductorias como "En este documento...", "A continuación...", "Es importante notar que...". Ve directo al dato.
 
-Si generas código que comience con:
-- \`\`\`mermaid
-- \`\`\`flowchart
-- \`\`\`graph
-- \`\`\`gantt
-- \`\`\`sequenceDiagram
-- \`\`\`classDiagram
-- \`\`\`mindmap
+2. **FORMATO ATÓMICO:** Usa Bullet points (•) para todo. Párrafos de máximo 2 líneas.
 
-Tu respuesta será INCORRECTA y NO se mostrará.
+3. **VISUAL:** Usa **Negritas** para conceptos clave y `código` para términos técnicos.
 
-**SOLO puedes usar:**
-- \`\`\`diagram-json (para diagramas conceptuales)
-- Tablas Markdown (para calendarios/cronogramas)
-- Texto estructurado
+4. **NO MERMAID:** Absolutamente prohibido usar bloques ```mermaid. Si necesitas un diagrama, usa SOLO el formato JSON especificado abajo.
 
-FORMATO DE SALIDA (Markdown ULTRA VISUAL y fácil de leer):
-# Apuntes Generados
+### 📊 ADAPTACIÓN AL NIVEL (CRÍTICO):
 
-## Resumen Ejecutivo
-[Resumen claro y conciso basado SOLO en el contenido proporcionado. Máximo 3-4 párrafos. Si no hay suficiente información, indícalo claramente]
+El nivel del estudiante está indicado en {level_note}. **ADÁPTATE ESTRICTAMENTE AL NIVEL**:
 
-## Conceptos Clave
+**NIVEL 0-1 (Principiante Absoluto):**
+- Solo vocabulario esencial: saludos, números 1-10, colores básicos
+- Frases de supervivencia: "Hola", "Adiós", "Gracias", "¿Cómo estás?"
+- Pronunciación básica explicada con letras
+- Sin gramática compleja, solo estructuras simples
+- Ejemplos muy simples y comunes
 
-Para CADA concepto importante del contenido, usa este formato visual:
+**NIVEL 2-3 (Principiante):**
+- Vocabulario cotidiano: días de la semana, meses, familia, comida básica
+- Frases simples: "Me llamo...", "Tengo hambre", "¿Cuánto cuesta?"
+- Gramática básica: presente simple, artículos básicos
+- Pronunciación con guías fonéticas simples
+- Ejemplos prácticos de uso diario
 
-### [Nombre del Concepto]
+**NIVEL 4-5 (Intermedio Básico):**
+- Vocabulario temático: trabajo, viajes, hobbies, emociones
+- Tiempos verbales: presente, pasado simple, futuro cercano
+- Estructuras complejas básicas: condicionales simples, comparativos
+- Frases útiles para situaciones comunes
+- Ejemplos contextualizados
 
-**Definición:** [Definición exacta y clara del contenido. Una o dos frases máximo]
+**NIVEL 6-7 (Intermedio):**
+- Vocabulario avanzado temático: negocios, tecnología, cultura
+- Tiempos verbales complejos: subjuntivo, condicional, perfecto
+- Expresiones idiomáticas comunes
+- Gramática avanzada: voz pasiva, construcciones impersonales
+- Diferencias regionales básicas
+- Ejemplos de uso formal e informal
 
-**Explicación:** [Explicación detallada pero comprensible del contenido. Usa lenguaje simple y claro]
+**NIVEL 8-9 (Avanzado):**
+- Vocabulario sofisticado: términos académicos, literarios, técnicos
+- Tiempos verbales avanzados: pluscuamperfecto, subjuntivo complejo
+- Expresiones idiomáticas raras y cultas
+- Gramática compleja: perífrasis, construcciones estilísticas
+- Diferencias regionales detalladas (dialectos, acentos)
+- Matices y sutilezas del idioma
+- Ejemplos de literatura o discursos formales
 
-**Ejemplos:** [Si el contenido incluye ejemplos, inclúyelos aquí de forma clara]
+**NIVEL 10 (Experto):**
+- Vocabulario arcaico, literario o extremadamente específico
+- Construcciones gramaticales raras o poco comunes
+- Expresiones idiomáticas obsoletas o regionales muy específicas
+- Excepciones y casos especiales
+- Variaciones dialectales y sociolectales
+- Referencias culturales y históricas
+- Uso estilístico avanzado y figuras retóricas
+- Ejemplos de textos clásicos o académicos especializados
 
-**Aplicaciones:** [Si el contenido menciona aplicaciones prácticas, inclúyelas]
+### 📐 ESTRUCTURA DE SALIDA OBLIGATORIA:
+
+# {topic_name}
+
+## ⚡ Conceptos Blitz (Lo esencial)
+*Lista rápida de definiciones clave. Formato: **Concepto**: Definición ultra-corta.*
+
+## 📚 Núcleo del Conocimiento
+*Organiza el contenido por subtemas. Usa tablas siempre que sea posible para comparar.*
+
+*Si es IDIOMAS (ADÁPTATE AL NIVEL):*
+- **Nivel 0-3**: Tablas simples: | Palabra | Traducción | Pronunciación (letras) |
+- **Nivel 4-6**: Tablas ampliadas: | Vocabulario | Traducción | Contexto/Ejemplo | Notas |
+- **Nivel 7-9**: Tablas avanzadas: | Término | Traducción Literal | Uso | Contexto Formal/Informal | Variaciones Regionales |
+- **Nivel 10**: Tablas expertas: | Término | Etimo | Uso Arcaico/Moderno | Variantes Dialectales | Referencias Culturales |
+
+*Si es PROGRAMACIÓN (ADÁPTATE AL NIVEL):*
+- **Nivel 0-3**: Código simple con comentarios línea por línea, sin conceptos complejos
+- **Nivel 4-6**: Bloques de código con comentarios explicativos y conceptos intermedios
+- **Nivel 7-9**: Código avanzado con patrones, mejores prácticas, optimizaciones
+- **Nivel 10**: Código experto con arquitecturas complejas, patrones avanzados, casos edge
+
+*Si es TEORÍA:* Usa listas anidadas, adaptando la complejidad al nivel.
+
+## ⚠️ Errores Comunes / Trampas
+*Lista de cosas donde los estudiantes suelen fallar o confundirse.*
+
+## 💎 Ejemplo Práctico
+*Un caso de uso real, frase completa o snippet de código.*
 
 ---
 
-## Esquemas Conceptuales para Exámenes
+### 🎨 INSTRUCCIONES PARA DIAGRAMAS (JSON ONLY):
 
-**⚠️ CRÍTICO - LEE ESTO PRIMERO**: 
-- **NO uses código Mermaid de NINGÚN TIPO** (NO flowchart, NO graph, NO gantt, NO sequenceDiagram, NO classDiagram, NO mindmap, NADA de Mermaid)
-- **SOLO usa JSON estructurado** dentro de bloques \`\`\`diagram-json
-- Si generas código Mermaid (incluso gantt), la respuesta será incorrecta y no se mostrará
-- **Para calendarios, cronogramas o líneas de tiempo**: NO uses diagramas gantt. En su lugar, usa:
-  * Tablas en formato Markdown
-  * Listas estructuradas con fechas
-  * Texto organizado por secciones con fechas
+Si el contenido se beneficia de una visualización (jerarquías, procesos, comparaciones VS), genera UN bloque de código `diagram-json` al final de la sección correspondiente.
 
-**OBJETIVO DE LOS ESQUEMAS CONCEPTUALES**: Los esquemas conceptuales deben ayudar al estudiante a entender y memorizar los conceptos clave del tema. Deben mostrar:
-- **Relaciones jerárquicas**: concepto principal → subconceptos → detalles
-- **Categorías claras**: agrupa conceptos relacionados por categorías (usando colores diferentes)
-- **Información educativa**: cada nodo debe contener información que realmente ayude a entender el tema
-- **Estructura lógica**: los conceptos deben estar organizados de manera que tenga sentido pedagógico
+**Plantilla JSON Estricta:**
 
-**⚠️ NO GENERES ESQUEMAS GENÉRICOS O VACÍOS**:
-- NO uses etiquetas genéricas como "Concepto 1", "Característica A", "Elemento X"
-- NO crees esquemas con solo 2-3 nodos que no aporten información
-- NO repitas la misma estructura para todos los temas
-- SOLO crea esquemas cuando realmente ayuden a entender el tema
-
-**OBLIGATORIO**: Crea esquemas conceptuales EDUCATIVOS usando JSON estructurado para CADA apartado o grupo de conceptos del contenido.
-
-### REGLAS IMPORTANTES:
-
-1. **Crea UN esquema por cada apartado/sección** - El esquema debe estar DENTRO del apartado correspondiente, justo después de la explicación
-2. **Mínimo 4 nodos, máximo 8 nodos** - Los esquemas deben tener suficiente información para ser útiles, pero no demasiada para ser confusos
-3. **Usa solo letras mayúsculas** para IDs de nodos (A, B, C, D, E, F, G, H)
-4. **Estructura jerárquica clara**: 
-   - Nodo A: Concepto principal del tema
-   - Nodos B, C, D: Categorías principales o aspectos fundamentales
-   - Nodos E, F, G, H: Subconceptos o detalles importantes de cada categoría
-5. **Usa colores para categorizar**: 
-   - Color morado (#6366f1): Concepto principal
-   - Color verde (#10b981): Categorías o aspectos principales
-   - Color azul (#06b6d4): Subconceptos o detalles
-   - Color naranja (#f59e0b): Ejemplos o aplicaciones
-   - Color rosa (#ec4899): Características especiales
-6. **Estructura OBLIGATORIA**: Cada apartado debe tener su esquema dentro de él:
-
-```
-## [Nombre del Apartado]
-
-[Explicación del apartado con conceptos clave]
-
-### Esquema Conceptual: [Nombre del concepto del apartado]
-
-\`\`\`diagram-json
+```diagram-json
 {
-  "title": "Concepto Principal del Apartado",
+  "title": "Título del Diagrama",
   "nodes": [
-    {"id": "A", "label": "Concepto Principal del Apartado", "color": "#6366f1"},
-    {"id": "B", "label": "Categoría 1 (nombre específico del contenido)", "color": "#a855f7", "description": "Descripción detallada de la categoría 1 con información específica del contenido", "letter": "H"},
-    {"id": "C", "label": "Categoría 2 (nombre específico del contenido)", "color": "#f59e0b", "description": "Descripción detallada de la categoría 2 con información específica del contenido", "letter": "D"},
-    {"id": "D", "label": "Categoría 3 (nombre específico del contenido)", "color": "#06b6d4", "description": "Descripción detallada de la categoría 3 con información específica del contenido", "letter": "T"},
-    {"id": "E", "label": "Categoría 4 (nombre específico del contenido)", "color": "#ec4899", "description": "Descripción detallada de la categoría 4 con información específica del contenido", "letter": "C"}
+    {"id": "A", "label": "Concepto Central", "color": "#6366f1"},
+    {"id": "B", "label": "Subconcepto", "color": "#10b981", "description": "Explicación breve"}
   ],
   "edges": [
-    {"from": "A", "to": "B"},
-    {"from": "A", "to": "C"},
-    {"from": "A", "to": "D"},
-    {"from": "A", "to": "E"}
+    {"from": "A", "to": "B"}
   ]
 }
-\`\`\`
-
-[Continuación del contenido del apartado...]
 ```
 
 **IMPORTANTE**: 
-- Los esquemas DEBEN estar dentro de cada apartado (##), no al final de todo
-- Un esquema por cada grupo de conceptos relacionados
-- NO uses código Mermaid, SOLO JSON estructurado dentro de bloques \`\`\`diagram-json
-- **Cada nodo debe tener información ESPECÍFICA del contenido**, no genérica
+- SOLO genera diagramas para comparaciones directas de DOS elementos (ej: "A vs B")
+- NO generes diagramas para vocabulario, frases, estructuras gramaticales, o listas de conceptos
+- Si tienes dudas, NO generes diagrama. Usa listas o tablas en su lugar.
 
-**FORMATO PARA ESQUEMAS - USA SOLO JSON ESTRUCTURADO**:
+{level_note}"""
 
-En lugar de código Mermaid, genera datos estructurados en JSON dentro de bloques de código marcados como \`\`\`diagram-json
-
-**FORMATO BÁSICO - COPIA EXACTAMENTE ESTO**:
-
-\`\`\`diagram-json
-{
-  "nodes": [
-    {"id": "A", "label": "Concepto Principal", "color": "#6366f1"},
-    {"id": "B", "label": "Característica 1", "color": "#10b981"},
-    {"id": "C", "label": "Característica 2", "color": "#10b981"},
-    {"id": "D", "label": "Característica 3", "color": "#10b981"}
-  ],
-  "edges": [
-    {"from": "A", "to": "B"},
-    {"from": "A", "to": "C"},
-    {"from": "A", "to": "D"}
-  ]
-}
-\`\`\`
-
-**REGLAS BÁSICAS**:
-
-1. **FORMATO JSON**:
-   - DEBE ser JSON válido
-   - Usa comillas dobles para todas las propiedades
-   - NO uses comillas simples
-   - Cada nodo debe tener: "id", "label", "color"
-   - Cada conexión debe tener: "from", "to"
-
-2. **NODOS**:
-   - IDs: A, B, C, D, E (una letra mayúscula)
-   - Labels: Texto descriptivo del concepto (puede tener cualquier carácter)
-   - Colors: Usa colores hexadecimales (#a855f7 morado, #f59e0b naranja, #06b6d4 teal, #ec4899 rosa) para las categorías
-   - Description: (OPCIONAL pero RECOMENDADO) Descripción detallada de cada categoría que ayude a entender el concepto
-   - Letter: (OPCIONAL) Letra para el cuadrante (H, D, T, C, etc.). Si no se especifica, se generará automáticamente
-
-3. **CONEXIONES**:
-   - "from": ID del nodo origen
-   - "to": ID del nodo destino
-   - Sin etiquetas en las flechas por ahora
-
-**EJEMPLOS DE ESQUEMAS CONCEPTUALES EDUCATIVOS**:
-
-**Ejemplo 1 - Esquema Jerárquico con Categorías**:
-Si el concepto es "Cocodrilos", genera un esquema que muestre las categorías principales:
-\`\`\`diagram-json
-{
-  "title": "Cocodrilos",
-  "nodes": [
-    {"id": "A", "label": "Cocodrilos", "color": "#6366f1"},
-    {"id": "B", "label": "Clasificación", "color": "#a855f7", "description": "Los cocodrilos pertenecen al orden Crocodylia y se clasifican en diferentes familias según sus características anatómicas y hábitat.", "letter": "C"},
-    {"id": "C", "label": "Características Físicas", "color": "#f59e0b", "description": "Poseen un cuerpo alargado, cola poderosa, mandíbulas fuertes con dientes cónicos, y piel gruesa con escamas duras que les protege.", "letter": "F"},
-    {"id": "D", "label": "Alimentación", "color": "#06b6d4", "description": "Son carnívoros que se alimentan principalmente de peces, aves, mamíferos y otros animales acuáticos y terrestres.", "letter": "A"},
-    {"id": "E", "label": "Comportamiento", "color": "#ec4899", "description": "Son animales territoriales, excelentes nadadores, y pueden permanecer sumergidos durante largos períodos de tiempo.", "letter": "B"}
-  ],
-  "edges": [
-    {"from": "A", "to": "B"},
-    {"from": "A", "to": "C"},
-    {"from": "A", "to": "D"},
-    {"from": "A", "to": "E"}
-  ]
-}
-\`\`\`
-
-**Ejemplo 2 - Esquema de Comparación (VS) - PLANTILLA FIJA**:
-Si el concepto es una comparación como "Rinocerontes vs Ardillas", usa esta PLANTILLA EXACTA y solo completa los textos:
-\`\`\`diagram-json
-{
-  "title": "Rinocerontes vs Ardillas",
-  "nodes": [
-    {"id": "A", "label": "VS", "color": "#6366f1"},
-    {"id": "B", "label": "Rinocerontes", "color": "#c084fc", "characteristic": "ALTURA", "description": "TAMAÑO: 3000 kg de masa corporal. ALTURA: Hasta 1.8 metros. ESTRATEGIA DE DEFENSA: Carga frontal con cuerno, uso del cuerno como arma, resistencia al daño físico. Cómo podría ganar: Su enorme masa y fuerza le permitirían aplastar o embestir al oponente. El cuerno puede causar heridas graves. Su piel gruesa le protege de ataques menores. Su velocidad de carga (hasta 50 km/h) le da ventaja en embestidas. Cómo podría perder: Su falta de agilidad le hace vulnerable a ataques rápidos desde los lados o por detrás. No puede trepar ni escapar fácilmente. Su gran tamaño lo hace un blanco fácil. Ventajas: Masa corporal superior, defensa natural con cuerno, resistencia al daño, fuerza física abrumadora. Desventajas: Falta de agilidad, incapacidad de trepar, movilidad limitada en espacios pequeños.", "letter": "H"},
-    {"id": "C", "label": "Ardillas", "color": "#67e8f9", "characteristic": "ESTRATEGIA DE DEFENSA", "description": "TAMAÑO: 0.5-1 kg de peso. ALTURA: 20-30 cm. AGILIDAD: Movimiento extremadamente rápido y ágil. ESTRATEGIA DE DEFENSA: Huida rápida, capacidad de trepar árboles y estructuras verticales, esconderse en espacios pequeños. Cómo podría ganar: Su agilidad extrema le permitiría esquivar ataques y atacar desde ángulos inesperados. Puede trepar para escapar o atacar desde arriba. Sus dientes afilados pueden causar heridas en puntos vulnerables. Su pequeño tamaño le permite esconderse y atacar por sorpresa. Cómo podría perder: Su pequeño tamaño lo hace vulnerable a un solo golpe del oponente. No tiene defensa natural contra ataques directos. Su falta de fuerza física le impide causar daño significativo a oponentes grandes. Ventajas: Agilidad superior, capacidad de trepar, movilidad en espacios pequeños, velocidad de escape. Desventajas: Tamaño pequeño, falta de fuerza, vulnerabilidad a ataques directos, sin defensa natural.", "letter": "D"}
-  ],
-  "edges": [
-    {"from": "A", "to": "B"},
-    {"from": "A", "to": "C"}
-  ]
-}
-\`\`\`
-
-**PLANTILLA FIJA PARA COMPARACIONES - SOLO COMPLETA LOS TEXTOS**:
-- **Estructura FIJA**: Siempre usa esta estructura exacta con 3 nodos (A=VS, B=primer elemento, C=segundo elemento)
-- **Nodo A**: Siempre {"id": "A", "label": "VS", "color": "#6366f1"}
-- **Nodo B (izquierda)**: 
-  * "label": Nombre exacto del primer elemento (ej: "Rinocerontes", "Peces", "Ardillas", "Gojo Satoru", "Goku", "Sukuna")
-  * "color": "#c084fc" (morado pastel)
-  * "characteristic": Una característica clave en MAYÚSCULAS para la caja superior (ej: "ALTURA", "AGILIDAD", "TAMAÑO", "ESTRATEGIA DE DEFENSA", "LIMITLESS (TÉCNICA)", "TRANSFORMACIONES", "MANIPULACIÓN DE ENERGÍA MALDITA", "POWER-UPS")
-  * "description": Descripción COMPLETA y DETALLADA con el siguiente formato EXACTO (mínimo 250-350 palabras):
-    
-    **FORMATO OBLIGATORIO PARA LA DESCRIPCIÓN**:
-    
-    [Breve introducción del elemento - 2-3 líneas]
-    
-    Ventajas:
-    
-    - [Nombre de la ventaja 1]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil en el enfrentamiento, incluyendo ejemplos específicos y situaciones concretas]
-    
-    - [Nombre de la ventaja 2]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil]
-    
-    - [Nombre de la ventaja 3]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil]
-    
-    - [Nombre de la ventaja 4]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil]
-    
-    - [Nombre de la ventaja 5]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil]
-    
-    - [Nombre de la ventaja 6]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil]
-    
-    - [Nombre de la ventaja 7]: [Explicación DETALLADA (3-5 líneas) de por qué esta ventaja podría resultarle útil]
-    
-    Desventajas:
-    
-    - [Nombre de la desventaja 1]: [Explicación DETALLADA (3-5 líneas) de por qué esta desventaja podría ser problemática, incluyendo ejemplos específicos]
-    
-    - [Nombre de la desventaja 2]: [Explicación DETALLADA (3-5 líneas) de por qué esta desventaja podría ser problemática]
-    
-    - [Nombre de la desventaja 3]: [Explicación DETALLADA (3-5 líneas) de por qué esta desventaja podría ser problemática]
-    
-    - [Nombre de la desventaja 4]: [Explicación DETALLADA (3-5 líneas) de por qué esta desventaja podría ser problemática]
-    
-    **EJEMPLO CONCRETO COMPLETO**:
-    "Sukuna es un poderoso hechicero maldito con habilidades excepcionales que le convierten en uno de los oponentes más temibles.\n\nVentajas:\n\n- Manipulación de energía maldita: Esta habilidad le permite crear técnicas devastadoras que pueden destruir objetivos a gran escala, dándole una ventaja ofensiva abrumadora contra oponentes que no pueden defenderse de ataques de energía. Puede lanzar ondas de energía destructiva que atraviesan múltiples objetivos, y su dominio sobre la energía maldita le permite adaptar sus ataques a diferentes situaciones de combate. En enfrentamientos contra múltiples enemigos, esta capacidad le da una clara ventaja táctica.\n\n- Regeneración: Su capacidad de regeneración le permite recuperarse rápidamente de heridas graves, permitiéndole mantener la presión en combates prolongados donde otros se debilitarían. Incluso heridas que serían fatales para otros combatientes pueden ser curadas en cuestión de minutos, lo que le permite continuar luchando sin perder efectividad. Esta resistencia le convierte en un oponente extremadamente difícil de derrotar mediante daño acumulativo.\n\n- Experiencia de combate: Con siglos de experiencia, puede anticipar movimientos y adaptarse rápidamente a las tácticas del oponente, dándole una ventaja estratégica significativa. Ha enfrentado innumerables tipos de oponentes y técnicas, lo que le permite reconocer patrones de ataque y desarrollar contramedidas efectivas en tiempo real. Su conocimiento táctico es invaluable en combates complejos.\n\n- Fuerza física sobrehumana: Su cuerpo mejorado le permite ejercer una fuerza física que supera ampliamente a la mayoría de oponentes, permitiéndole romper defensas físicas y causar daño devastador con ataques cuerpo a cuerpo. Puede destruir estructuras sólidas con golpes simples y su resistencia física le permite soportar impactos que incapacitarían a otros combatientes.\n\n- Versatilidad táctica: Su amplio arsenal de técnicas le permite adaptarse a diferentes tipos de enfrentamientos, desde combates a distancia hasta peleas cuerpo a cuerpo. Puede cambiar de estrategia instantáneamente según las circunstancias, lo que le hace impredecible y difícil de contrarrestar. Esta flexibilidad le da una ventaja significativa sobre oponentes con estilos de combate más limitados.\n\n- Intimidación psicológica: Su reputación y presencia abrumadora pueden afectar psicológicamente a sus oponentes, reduciendo su efectividad en combate. Muchos combatientes se ven afectados por el miedo antes incluso de comenzar el enfrentamiento, lo que le da una ventaja inicial significativa. Esta presión psicológica puede llevar a errores tácticos por parte del oponente.\n\n- Resistencia a técnicas especiales: Su naturaleza única le otorga resistencia a muchas técnicas especiales que serían efectivas contra otros combatientes. Puede neutralizar o contrarrestar habilidades que dependen de manipulación espiritual o energética, lo que limita las opciones tácticas de sus oponentes.\n\nDesventajas:\n\n- Arrogancia: Su excesiva confianza puede llevarle a subestimar oponentes, dejándole vulnerable a ataques sorpresa o tácticas inesperadas. A menudo no toma en serio a oponentes que considera inferiores, lo que puede resultar en errores tácticos costosos. Esta arrogancia puede ser explotada por oponentes astutos que sepan cómo manipular su ego.\n\n- Dependencia de energía: Si se agota su reserva de energía maldita, pierde gran parte de su poder ofensivo, dejándole en desventaja. Aunque tiene reservas considerables, en combates extremadamente prolongados puede verse limitado. Esta dependencia le hace vulnerable a tácticas diseñadas para agotar sus recursos energéticos.\n\n- Limitaciones físicas: A pesar de su poder, su cuerpo físico tiene limitaciones que pueden ser explotadas. Ciertos tipos de ataques o técnicas pueden ser más efectivos contra él de lo que él mismo reconoce. Su confianza en sus habilidades regenerativas puede llevarle a ignorar daño que, aunque no sea inmediatamente fatal, puede acumularse y debilitarle.\n\n- Vulnerabilidad a técnicas específicas: Algunas técnicas o habilidades especiales pueden ser particularmente efectivas contra él, especialmente aquellas diseñadas específicamente para contrarrestar energía maldita. Oponentes con conocimiento especializado pueden tener ventajas tácticas significativas si conocen sus debilidades específicas."
-    
-  * "letter": "H" (siempre H para el primero)
-- **Nodo C (derecha)**:
-  * "label": Nombre exacto del segundo elemento
-  * "color": "#67e8f9" (teal pastel)
-  * "characteristic": Una característica clave diferente en MAYÚSCULAS (ej: "EVASIÓN", "VELOCIDAD", "ESTRATEGIA DE DEFENSA", "TRANSFORMACIONES", "KI", "POWER-UPS")
-  * "description": Descripción COMPLETA y DETALLADA con el MISMO formato que el nodo B (mínimo 250-350 palabras, usando el formato de Ventajas/Desventajas)
-  * "letter": "D" (siempre D para el segundo)
-- **Edges**: Siempre [{"from": "A", "to": "B"}, {"from": "A", "to": "C"}]
-- **CRÍTICO**: 
-  * Las descripciones DEBEN seguir el formato EXACTO de Ventajas/Desventajas con explicaciones DETALLADAS
-  * MÍNIMO 7 ventajas y 4 desventajas para cada elemento (más es mejor)
-  * Cada ventaja/desventaja debe tener una explicación DETALLADA de 3-5 líneas (no corta) explicando por qué es útil o problemática, incluyendo ejemplos específicos y situaciones concretas
-  * Usa saltos de línea (\n) para separar secciones y elementos de lista
-  * El texto debe ser MUY EXPLICATIVO y DETALLADO (mínimo 500-700 palabras por elemento, más es mejor)
-  * NO uses descripciones cortas o genéricas - cada punto debe ser específico y educativo
-  * Incluye detalles concretos, ejemplos de situaciones, y explicaciones extensas sobre cómo cada ventaja/desventaja afecta el enfrentamiento
-
-**Ejemplo 2 - Esquema con Descripciones**:
-Para "Elefantes", muestra las categorías principales con descripciones:
-\`\`\`diagram-json
-{
-  "title": "Elefantes",
-  "nodes": [
-    {"id": "A", "label": "Elefantes", "color": "#6366f1"},
-    {"id": "B", "label": "Hábitats Diversos", "color": "#a855f7", "description": "Los elefantes viven en hábitats diversos como sabanas, bosques, desiertos y zonas montañosas, adaptándose a diferentes condiciones climáticas.", "letter": "H"},
-    {"id": "C", "label": "Dieta Herbívora", "color": "#f59e0b", "description": "Se alimentan principalmente de hierba, hojas, frutas, cortezas y raíces, consumiendo grandes cantidades de vegetación diariamente.", "letter": "D"},
-    {"id": "D", "label": "Tamaño Gigante", "color": "#06b6d4", "description": "Son gigantes, siendo el animal terrestre más grande del mundo, con pesos que pueden superar las 6 toneladas.", "letter": "T"},
-    {"id": "E", "label": "Comportamiento Social", "color": "#ec4899", "description": "Viven en manadas matriarcales complejas, mostrando comportamientos sociales avanzados como el cuidado de crías y la comunicación.", "letter": "C"}
-  ],
-  "edges": [
-    {"from": "A", "to": "B"},
-    {"from": "A", "to": "C"},
-    {"from": "A", "to": "D"},
-    {"from": "A", "to": "E"}
-  ]
-}
-\`\`\`
-
-**REGLAS CRÍTICAS PARA ESQUEMAS ÚTILES**:
-
-1. **Información específica**: Cada nodo debe contener información REAL y ESPECÍFICA del contenido, no genérica
-2. **Relaciones claras**: Las conexiones deben mostrar relaciones lógicas (jerarquía, categorización, proceso, etc.)
-3. **Mínimo 4 nodos**: Un esquema con menos de 4 nodos no aporta suficiente información
-4. **Máximo 8 nodos**: Más de 8 nodos puede ser confuso
-5. **Colores con significado**: Usa colores diferentes para diferentes categorías o tipos de conceptos
-6. **Estructura pedagógica**: Organiza los conceptos de manera que tenga sentido educativo (de lo general a lo específico, o por categorías)
-7. **NO esquemas genéricos**: Si no puedes crear un esquema con información específica y útil, NO lo incluyas
-
-**IMPORTANTE**: 
-- El JSON DEBE ser válido y estar correctamente formateado.
-- NO uses código Mermaid, solo JSON estructurado.
-- Cada esquema debe ayudar REALMENTE a entender el tema, no ser decorativo.
-
----
-
-### INSTRUCCIONES FINALES CRÍTICAS:
-
-1. **ESQUEMAS DEBEN SER EDUCATIVOS Y ÚTILES**: 
-   - Cada esquema debe ayudar REALMENTE a entender el tema
-   - NO generes esquemas genéricos o vacíos que no aporten información
-   - Cada nodo debe contener información ESPECÍFICA del contenido, no etiquetas genéricas
-   - Si no puedes crear un esquema útil con información específica, NO lo incluyas
-
-2. **ESTRUCTURA JERÁRQUICA CLARA**: 
-   - Organiza los conceptos de manera pedagógica (de lo general a lo específico)
-   - Usa colores para diferenciar categorías o tipos de conceptos
-   - Muestra relaciones lógicas entre conceptos (jerarquía, categorización, proceso, etc.)
-
-3. **NO GENERES APARTADOS VACÍOS**: Si un apartado no tiene conceptos clave o información suficiente para crear un esquema útil, NO lo incluyas en la respuesta. Solo crea apartados que tengan contenido real y esquemas válidos.
-
-4. **JSON DE DIAGRAMA REAL**: NO uses placeholders. DEBES escribir el JSON completo y válido dentro de bloques \`\`\`diagram-json. El JSON DEBE estar completo - NO lo cortes a mitad de un campo, NO dejes campos incompletos, asegúrate de cerrar todas las llaves y corchetes.
-
-5. **NO GENERES DIAGRAMAS GANTT**: Si el contenido incluye calendarios, cronogramas o líneas de tiempo, NO uses diagramas gantt de Mermaid. En su lugar, presenta la información en formato de tabla o lista estructurada.
-
-6. **ESTRUCTURA OBLIGATORIA**: Cada apartado DEBE tener:
-   - Título del apartado (##)
-   - Explicación del apartado con conceptos clave
-   - Al menos UN esquema conceptual EDUCATIVO con JSON de diagrama completo dentro del apartado
-   - El esquema debe tener mínimo 4 nodos y máximo 8 nodos
-   
-7. **NO INCLUYAS MENSAJES DE ERROR**: Si no hay información suficiente, NO escribas mensajes como "no es posible crear esquemas" o "ausencia de información". Simplemente omite ese apartado completamente.
-
-8. **VERIFICACIÓN DE CALIDAD**: Antes de finalizar, verifica que:
-   - Cada esquema tiene información específica del contenido (no genérica)
-   - Los nodos muestran conceptos reales y útiles
-   - Las relaciones entre nodos tienen sentido pedagógico
-   - Los colores ayudan a categorizar los conceptos
-
-9. **PRIORIDAD**: Los esquemas EDUCATIVOS son MÁS IMPORTANTES que el texto descriptivo. Si tienes que elegir entre más texto o más esquemas útiles, elige más esquemas útiles.
-
-10. **ÚLTIMA VERIFICACIÓN CRÍTICA**: Antes de enviar la respuesta, revisa que:
-    - NO haya ningún bloque de código que comience con \`\`\`mermaid, \`\`\`gantt, \`\`\`flowchart, \`\`\`graph, \`\`\`sequenceDiagram, \`\`\`classDiagram, \`\`\`mindmap, etc.
-    - Todos los esquemas tienen información específica y útil
-    - Los esquemas ayudan realmente a entender el tema
-
-**RECUERDA**: El objetivo es que un estudiante pueda entender y memorizar los conceptos clave del tema. Los esquemas conceptuales deben mostrar relaciones jerárquicas, categorías claras y información educativa específica que realmente ayude al aprendizaje.
-
-## Detalles Importantes
-
-[Información específica del contenido proporcionado. Organiza en listas con viñetas para facilitar la lectura. NO añadas información externa]
-
-## Ejemplos Prácticos
-
-[Si el contenido incluye ejemplos, preséntalos de forma clara y visual. Usa el formato:
-- **Ejemplo 1:** [descripción]
-- **Ejemplo 2:** [descripción]
-]
-
-## Tablas Comparativas
-
-[Si es útil, crea tablas comparativas usando markdown para organizar información del contenido. Las tablas hacen la información más fácil de comparar y entender]
-
-| Concepto | Característica 1 | Característica 2 | Característica 3 |
-|----------|------------------|------------------|------------------|
-| [Del contenido] | [Del contenido] | [Del contenido] | [Del contenido] |
-
-## Puntos Clave a Recordar
-
-[Lista de 3-5 puntos más importantes del contenido. Usa formato de lista con viñetas]
-
-## Relaciones y Conexiones
-
-[Si el contenido describe relaciones entre conceptos, explícalas de forma clara y visual]
-
----
-
-REGLAS DE FORMATO PARA MÁXIMA LEGIBILIDAD:
-1. Usa **negritas** para términos importantes y conceptos clave
-2. Usa listas con viñetas (•) para información que se puede escanear rápidamente
-3. Usa tablas cuando compares conceptos o características
-4. Separa secciones con líneas horizontales (---) para mejor organización visual
-5. **FORMATO VISUAL**: Usa negritas, listas, tablas y diagramas para hacer el contenido más visual y fácil de escanear
-6. Mantén párrafos cortos (máximo 3-4 líneas)
-7. Usa el formato "**Definición:**", "**Ejemplo:**", "**Importante:**" para crear bloques visuales destacados
-
-RECUERDA: 
-- Si el contenido no menciona algo específico, NO lo inventes. Usa SOLO la información del contenido proporcionado.
-- Prioriza la CLARIDAD y FACILIDAD DE LECTURA sobre la cantidad de información
-- El objetivo es que cualquier persona pueda entender el contenido fácilmente
-- Usa lenguaje simple y evita jerga técnica innecesaria (a menos que esté en el contenido original)
-- **IMPORTANTE**: Prioriza la claridad y estructura visual sobre elementos decorativos."""
-
-        if topics:
-            # Buscar contenido relevante para cada tema
-            relevant_content = []
-            for topic in topics:
-                content = self.memory.retrieve_relevant_content(topic, n_results=10)
-                if content:
-                    relevant_content.extend(content)
-            combined_content = "\n\n---\n\n".join(relevant_content) if relevant_content else ""
+        # Preparar historial de conversación si está disponible
+        conversation_text = ""
+        if conversation_history:
+            conversation_text = "\n\n=== HISTORIAL DE CONVERSACIÓN ===\n"
+            for msg in conversation_history:
+                role = msg.get("role", "unknown")
+                content = msg.get("content", "")
+                if role == "user":
+                    conversation_text += f"\n[ESTUDIANTE]: {content}\n"
+                elif role == "assistant":
+                    conversation_text += f"\n[PROFESOR]: {content}\n"
+            conversation_text += "\n=== FIN DEL HISTORIAL ===\n"
+        
+        # Usar topic si está disponible y topics no lo está
+        final_topics = topics
+        if not final_topics and topic:
+            final_topics = [topic]
+        
+        # Determinar si hay historial de conversación relevante al tema
+        has_relevant_conversation = False
+        if conversation_text and final_topics:
+            # Verificar si el historial menciona el tema
+            main_topic_lower = final_topics[0].lower() if isinstance(final_topics, list) else str(final_topics).lower()
+            if main_topic_lower in conversation_text.lower():
+                has_relevant_conversation = True
+                print(f"📝 Historial de conversación contiene información sobre '{final_topics[0]}'")
+        
+        if final_topics:
+            # Si hay historial relevante, usarlo primero
+            if has_relevant_conversation:
+                combined_content = conversation_text
+                print(f"📝 Usando historial de conversación sobre '{final_topics[0]}'")
+            else:
+                # Si no hay historial relevante pero hay tema, generar desde cero
+                # NO buscar en documentos genéricos que pueden no ser relevantes
+                if conversation_text:
+                    # Si hay historial pero no es relevante, aún así incluirlo pero priorizar el tema
+                    print(f"📝 Historial de conversación no es relevante para '{final_topics[0]}', generando desde cero con el tema")
+                else:
+                    print(f"📝 No hay historial de conversación, generando apuntes educativos desde cero para '{final_topics[0]}'")
+                
+                main_topic = final_topics[0] if isinstance(final_topics, list) else str(final_topics)
+                combined_content = f"TEMA: {main_topic}\n\nEste resumen se generará basándose en el conocimiento educativo sobre {main_topic}, adaptado al nivel del estudiante."
+                
+                # Si hay historial no relevante, añadirlo al final pero con menor prioridad
+                if conversation_text:
+                    combined_content += f"\n\n---\n\nHISTORIAL DE CONVERSACIÓN (contexto adicional):\n{conversation_text}"
         else:
             # Obtener contenido pero limitar usando conteo real de tokens
             all_content = self.memory.get_all_documents(limit=100)  # Aumentar límite para obtener más contenido
             
-            # Verificar que hay contenido
-            if not all_content or len(all_content) == 0:
-                print("❌ No hay documentos en la memoria")
-                return "# Apuntes\n\n⚠️ No hay documentos procesados. Por favor, sube documentos primero."
-            
-            # Filtrar documentos vacíos o muy cortos
-            all_content = [doc for doc in all_content if doc and doc.strip() and len(doc.strip()) > 10]
-            
-            if not all_content or len(all_content) == 0:
-                print("❌ Todos los documentos están vacíos o son muy cortos")
-                return "# Apuntes\n\n⚠️ Los documentos procesados no contienen suficiente contenido. Por favor, sube documentos con más texto."
-            
-            print(f"📄 Encontrados {len(all_content)} documentos con contenido válido")
-            print(f"📄 Primer documento (primeros 200 chars): {all_content[0][:200]}...")
-            
-            # Calcular tokens usando tiktoken para asegurar que no excedemos el límite
-            try:
-                encoding = tiktoken.encoding_for_model("gpt-4")
-            except:
-                encoding = tiktoken.get_encoding("cl100k_base")
-            
-            # Aumentar límite de tokens ya que estamos usando gpt-4-turbo o gpt-4o que tienen más contexto
-            MAX_CONTENT_TOKENS = 8000  # Aumentado para modelos con más contexto
-            combined_content = ""
-            combined_tokens = 0
-            
-            # Calcular tokens del prompt base (sin contenido)
-            prompt_base_tokens = len(encoding.encode(prompt_template.replace("{content}", "")))
-            print(f"📊 Tokens del prompt base: {prompt_base_tokens}")
-            print(f"📊 Límite de tokens para contenido: {MAX_CONTENT_TOKENS}")
-            
-            for i, doc in enumerate(all_content):
-                doc_text = f"\n\n---\n\n{doc}" if combined_content else doc
-                doc_tokens = len(encoding.encode(doc_text))
+            # Si hay historial de conversación pero no hay documentos, usar solo el historial
+            if conversation_text and (not all_content or len(all_content) == 0):
+                print("📝 Usando solo historial de conversación (no hay documentos)")
+                combined_content = conversation_text
+            elif not all_content or len(all_content) == 0:
+                # Si no hay historial ni documentos
+                if not conversation_text:
+                    print("❌ No hay documentos en la memoria ni historial de conversación")
+                    return "# Resumen\n\n⚠️ No hay contenido disponible. Por favor, sube documentos o inicia una conversación primero."
+                else:
+                    combined_content = conversation_text
+            else:
+                # Filtrar documentos vacíos o muy cortos
+                all_content = [doc for doc in all_content if doc and doc.strip() and len(doc.strip()) > 10]
                 
-                # Verificar si añadir este documento excedería el límite
-                if combined_tokens + doc_tokens + prompt_base_tokens > MAX_CONTENT_TOKENS:
-                    print(f"📊 Límite alcanzado después de {i} documentos ({combined_tokens} tokens)")
-                    # Añadir nota de que hay más contenido
-                    combined_content += f"\n\n---\n\n[Nota: Hay más contenido disponible. Se han incluido {i} documentos de {len(all_content)} disponibles. Para ver todo, puedes hacer preguntas específicas sobre temas concretos.]"
-                    break
-                combined_content += doc_text
-                combined_tokens += doc_tokens
-                print(f"📄 Documento {i+1} añadido ({doc_tokens} tokens, total: {combined_tokens})")
-            
-            print(f"📊 Contenido final: {combined_tokens} tokens, {len(combined_content)} caracteres")
+                if not all_content or len(all_content) == 0:
+                    # Si no hay documentos válidos pero hay historial, usar solo historial
+                    if conversation_text:
+                        print("📝 Usando solo historial de conversación (documentos vacíos)")
+                        combined_content = conversation_text
+                    else:
+                        print("❌ Todos los documentos están vacíos o son muy cortos")
+                        return "# Resumen\n\n⚠️ Los documentos procesados no contienen suficiente contenido. Por favor, sube documentos con más texto."
+                else:
+                    print(f"📄 Encontrados {len(all_content)} documentos con contenido válido")
+                    print(f"📄 Primer documento (primeros 200 chars): {all_content[0][:200]}...")
+                    
+                    # Calcular tokens usando tiktoken para asegurar que no excedemos el límite
+                    try:
+                        encoding = tiktoken.encoding_for_model("gpt-4")
+                    except:
+                        encoding = tiktoken.get_encoding("cl100k_base")
+                    
+                    # Aumentar límite de tokens ya que estamos usando gpt-4-turbo o gpt-4o que tienen más contexto
+                    MAX_CONTENT_TOKENS = 8000  # Aumentado para modelos con más contexto
+                    combined_content = ""
+                    combined_tokens = 0
+                    
+                    # Calcular tokens del prompt base (sin contenido)
+                    prompt_base_tokens = len(encoding.encode(prompt_template.replace("{content}", "")))
+                    print(f"📊 Tokens del prompt base: {prompt_base_tokens}")
+                    print(f"📊 Límite de tokens para contenido: {MAX_CONTENT_TOKENS}")
+                    
+                    # Añadir historial primero si está disponible (tiene prioridad)
+                    if conversation_text:
+                        hist_tokens = len(encoding.encode(conversation_text))
+                        if hist_tokens + prompt_base_tokens <= MAX_CONTENT_TOKENS:
+                            combined_content = conversation_text
+                            combined_tokens = hist_tokens
+                            print(f"📝 Historial añadido ({hist_tokens} tokens)")
+                    
+                    for i, doc in enumerate(all_content):
+                        doc_text = f"\n\n---\n\n{doc}" if combined_content else doc
+                        doc_tokens = len(encoding.encode(doc_text))
+                        
+                        # Verificar si añadir este documento excedería el límite
+                        if combined_tokens + doc_tokens + prompt_base_tokens > MAX_CONTENT_TOKENS:
+                            print(f"📊 Límite alcanzado después de {i} documentos ({combined_tokens} tokens)")
+                            # Añadir nota de que hay más contenido
+                            combined_content += f"\n\n---\n\n[Nota: Hay más contenido disponible. Se han incluido {i} documentos de {len(all_content)} disponibles. Para ver todo, puedes hacer preguntas específicas sobre temas concretos.]"
+                            break
+                        combined_content += doc_text
+                        combined_tokens += doc_tokens
+                        print(f"📄 Documento {i+1} añadido ({doc_tokens} tokens, total: {combined_tokens})")
+                    
+                    print(f"📊 Contenido final: {combined_tokens} tokens, {len(combined_content)} caracteres")
         
+        # Si no hay contenido ni temas, retornar error
         if not combined_content or not combined_content.strip():
-            return "# Apuntes\n\n⚠️ No hay contenido disponible. Por favor, sube documentos primero."
+            return "# Resumen\n\n⚠️ No hay contenido disponible. Por favor, sube documentos, inicia una conversación, o especifica un tema."
         
         # Verificar que el contenido no esté vacío después de limpiar
-        if len(combined_content.strip()) < 50:
-            return "# Apuntes\n\n⚠️ El contenido disponible es demasiado corto o está vacío. Por favor, sube documentos con más contenido."
+        # Si tiene "TEMA:" al inicio, es contenido generado desde cero, así que permitirlo aunque sea corto
+        if len(combined_content.strip()) < 50 and not combined_content.strip().startswith("TEMA:"):
+            return "# Resumen\n\n⚠️ El contenido disponible es demasiado corto o está vacío. Por favor, sube documentos con más contenido o inicia una conversación."
         
         # Añadir validación: mostrar una muestra del contenido para debugging
         print(f"✅ Generando apuntes con {len(combined_content)} caracteres de contenido")
@@ -732,16 +525,49 @@ RECUERDA:
         print(f"📄 Últimos 200 caracteres: {combined_content[-200:]}...")
         
         # Validar que el contenido tiene información real (no solo espacios o caracteres especiales)
-        content_words = combined_content.split()
-        if len(content_words) < 10:
-            print(f"❌ Contenido tiene muy pocas palabras: {len(content_words)}")
-            return "# Apuntes\n\n⚠️ El contenido disponible tiene muy pocas palabras. Por favor, sube documentos con más texto."
+        # Si tiene "TEMA:" al inicio, es contenido generado desde cero, así que permitirlo
+        if not combined_content.strip().startswith("TEMA:"):
+            content_words = combined_content.split()
+            if len(content_words) < 10:
+                print(f"❌ Contenido tiene muy pocas palabras: {len(content_words)}")
+                return "# Resumen\n\n⚠️ El contenido disponible tiene muy pocas palabras. Por favor, sube documentos con más texto."
         
-        print(f"✅ Contenido válido: {len(content_words)} palabras")
+        # Validar palabras solo si no es contenido generado desde cero
+        if not combined_content.strip().startswith("TEMA:"):
+            content_words = combined_content.split()
+            print(f"✅ Contenido válido: {len(content_words)} palabras")
+        else:
+            print(f"✅ Generando contenido educativo desde cero para el tema especificado")
+        
+        # Preparar nota de nivel si está disponible
+        level_note = ""
+        if user_level is not None:
+            if user_level <= 3:
+                level_note = "\n\n**NIVEL DEL ESTUDIANTE**: Principiante (nivel {}/10). Adapta el contenido para que sea claro y accesible, usando lenguaje simple y explicaciones detalladas.".format(user_level)
+            elif user_level <= 6:
+                level_note = "\n\n**NIVEL DEL ESTUDIANTE**: Intermedio (nivel {}/10). Puedes usar terminología técnica pero siempre con explicaciones claras.".format(user_level)
+            else:
+                level_note = "\n\n**NIVEL DEL ESTUDIANTE**: Avanzado (nivel {}/10). Puedes usar terminología técnica avanzada y profundizar en los conceptos.".format(user_level)
+        
+        # Preparar nombre del tema
+        topic_name = ""
+        if final_topics and len(final_topics) > 0:
+            topic_name = final_topics[0] if isinstance(final_topics, list) else str(final_topics)
+        elif topic:
+            topic_name = topic
+        elif combined_content.strip().startswith("TEMA:"):
+            # Extraer el tema del contenido generado
+            import re
+            topic_match = re.search(r'TEMA:\s*(.+)', combined_content)
+            if topic_match:
+                topic_name = topic_match.group(1).split('\n')[0].strip()
+        
+        if not topic_name:
+            topic_name = "Estudio"
         
         # Usar replace directo en lugar de format para evitar problemas con llaves en el contenido
         # Esto es más seguro cuando el contenido puede contener llaves también
-        prompt = prompt_template.replace("{content}", combined_content)
+        prompt = prompt_template.replace("{content}", combined_content).replace("{level_note}", level_note).replace("{topic_name}", topic_name)
 
         try:
             print("🔄 Invocando LLM para generar apuntes...")

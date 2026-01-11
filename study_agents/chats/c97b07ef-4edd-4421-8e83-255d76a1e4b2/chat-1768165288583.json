@@ -1,0 +1,34 @@
+{
+  "chat_id": "chat-1768165288583",
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "title": "Italiano",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Principiante",
+      "type": "message",
+      "timestamp": "2026-01-11T21:02:02.945Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Perfecto, nivel **Principiante** (0/10) seleccionado. ¡Empecemos a trabajar con **Italiano**! ¿En qué te gustaría enfocarnos primero?",
+      "type": "message",
+      "timestamp": "2026-01-11T21:02:02.945Z"
+    },
+    {
+      "role": "user",
+      "content": "probemos de hacer flashcards",
+      "type": "message",
+      "timestamp": "2026-01-11T21:19:56.700Z"
+    }
+  ],
+  "created_at": "2026-01-11T22:01:29.687678",
+  "updated_at": "2026-01-11T22:20:14.521732",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#3b82f6",
+    "icon": "flag_italiano",
+    "topic": "Italiano"
+  }
+}

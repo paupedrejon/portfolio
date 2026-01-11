@@ -5,7 +5,7 @@ const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, chatId, color, icon } = body;
+    const { userId, chatId, color, icon, topic } = body;
 
     if (!userId) {
       return NextResponse.json(
@@ -40,6 +40,11 @@ export async function POST(request: NextRequest) {
     
     if (icon && icon.trim()) {
       requestBody.icon = icon.trim();
+    }
+    
+    // Manejar el tema: si es null o undefined, enviar null para eliminar el tema
+    if (topic !== undefined) {
+      requestBody.topic = topic;
     }
 
     console.log('[Next.js] Enviando a FastAPI:', JSON.stringify(requestBody));

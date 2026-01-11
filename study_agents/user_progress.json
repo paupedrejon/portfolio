@@ -1,0 +1,159 @@
+{
+  "8109d3ff-dd73-4632-8bb9-c25793dcb5de": {
+    "japones de": {
+      "level": 1,
+      "experience": 50,
+      "exercises_completed": 0,
+      "tests_completed": 1,
+      "last_updated": "2026-01-04T00:07:11.631950"
+    },
+    "Japonés": {
+      "level": 1,
+      "experience": 42,
+      "exercises_completed": 0,
+      "tests_completed": 1,
+      "last_updated": "2026-01-04T00:08:09.135581"
+    }
+  },
+  "c97b07ef-4edd-4421-8e83-255d76a1e4b2": {
+    "Japonés": {
+      "level": 1,
+      "experience": 14,
+      "exercises_completed": 0,
+      "tests_completed": 1,
+      "last_updated": "2026-01-04T11:17:18.898224"
+    },
+    "sql": {
+      "level": 1,
+      "experience": 3,
+      "exercises_completed": 0,
+      "tests_completed": 0,
+      "last_updated": "2026-01-04T11:18:15.874647"
+    },
+    "SQL": {
+      "level": 1,
+      "experience": 93,
+      "exercises_completed": 0,
+      "tests_completed": 2,
+      "last_updated": "2026-01-04T11:50:39.941661"
+    },
+    "3 preguntas": {
+      "level": 1,
+      "experience": 50,
+      "exercises_completed": 0,
+      "tests_completed": 1,
+      "last_updated": "2026-01-04T11:55:16.664333"
+    },
+    "General": {
+      "level": 2,
+      "experience": 200,
+      "exercises_completed": 0,
+      "tests_completed": 4,
+      "last_updated": "2026-01-04T12:15:23.537690"
+    },
+    "1 pregunta": {
+      "level": 1,
+      "experience": 50,
+      "exercises_completed": 0,
+      "tests_completed": 1,
+      "last_updated": "2026-01-04T12:08:42.958540"
+    },
+    "chats": {
+      "chat-1767526732477": {
+        "level": 10,
+        "experience": 300,
+        "exercises_completed": 0,
+        "tests_completed": 6,
+        "topic": "General",
+        "last_updated": "2026-01-04T12:48:05.047329"
+      },
+      "chat-1767527460548": {
+        "level": 4,
+        "experience": 130,
+        "exercises_completed": 0,
+        "tests_completed": 3,
+        "topic": "General",
+        "last_updated": "2026-01-04T13:33:17.896594"
+      },
+      "chat-1768088193870": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Japonés",
+        "last_updated": "2026-01-11T01:58:06.116724"
+      },
+      "chat-1768129962581": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Python",
+        "last_updated": "2026-01-11T12:12:45.515191"
+      },
+      "chat-1768132902606": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "C++",
+        "last_updated": "2026-01-11T13:01:46.067033"
+      },
+      "chat-1768150922039": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Coreano",
+        "last_updated": "2026-01-11T18:02:03.810016"
+      },
+      "chat-1768151443225": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Alemán",
+        "last_updated": "2026-01-11T18:10:45.394850"
+      },
+      "chat-1768151744710": {
+        "level": 7,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Catalán",
+        "last_updated": "2026-01-11T18:15:49.775245"
+      },
+      "chat-1768152434349": {
+        "level": 7,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Inglés",
+        "last_updated": "2026-01-11T18:27:17.251100"
+      },
+      "chat-1768155068254": {
+        "level": 7,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Ruso",
+        "last_updated": "2026-01-11T19:11:56.420980"
+      },
+      "chat-1768165288583": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Italiano",
+        "last_updated": "2026-01-11T22:02:02.887689"
+      }
+    },
+    "Python": {
+      "level": 0,
+      "experience": 20,
+      "exercises_completed": 5,
+      "tests_completed": 0,
+      "last_updated": "2026-01-11T12:22:09.287731"
+    }
+  }
+}

@@ -5,7 +5,7 @@ const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { apiKey, difficulty = 'medium', numQuestions = 5, topics, constraints, model, conversation_history } = body;
+    const { apiKey, difficulty = 'medium', numQuestions = 5, topics, constraints, model, conversation_history, userId, chatId } = body;
 
     if (!apiKey) {
       return NextResponse.json(
@@ -36,6 +36,8 @@ export async function POST(request: NextRequest) {
         constraints: constraints || null,
         model: model || null, // null = modo automático
         conversation_history: conversation_history || null,
+        user_id: userId || null,
+        chat_id: chatId || null,  // Pasar chat_id para obtener el nivel
       }),
     });
 

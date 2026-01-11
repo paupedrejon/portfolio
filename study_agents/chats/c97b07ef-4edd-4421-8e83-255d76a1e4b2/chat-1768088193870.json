@@ -1,0 +1,107 @@
+{
+  "chat_id": "chat-1768088193870",
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "title": "Japonés",
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "¡Excelente elección! Vamos a darle caña a **Japonés**. Para poder ayudarte mejor, dime:\n\n¿Qué nivel tienes (Principiante, Intermedio, Avanzado)?\n\nEn cuanto me digas, empezamos.",
+      "type": "level_selection",
+      "timestamp": "2026-01-10T23:36:35.706Z",
+      "topic": "Japonés"
+    },
+    {
+      "role": "user",
+      "content": "Intermedio",
+      "type": "message",
+      "timestamp": "2026-01-10T23:36:41.314Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Perfecto, nivel **Intermedio** (4/10) seleccionado. ¡Empecemos a trabajar con **Japonés**! ¿En qué te gustaría enfocarnos primero?",
+      "type": "message",
+      "timestamp": "2026-01-10T23:36:41.314Z"
+    },
+    {
+      "role": "user",
+      "content": "Avanzado",
+      "type": "message",
+      "timestamp": "2026-01-10T23:42:11.658Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Perfecto, nivel **Avanzado** (7/10) seleccionado. ¡Empecemos a trabajar con **Japonés**! ¿En qué te gustaría enfocarnos primero?",
+      "type": "message",
+      "timestamp": "2026-01-10T23:42:11.658Z"
+    },
+    {
+      "role": "user",
+      "content": "Principiante",
+      "type": "message",
+      "timestamp": "2026-01-10T23:42:42.143Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Perfecto, nivel **Principiante** (0/10) seleccionado. ¡Empecemos a trabajar con **Japonés**! ¿En qué te gustaría enfocarnos primero?",
+      "type": "message",
+      "timestamp": "2026-01-10T23:42:42.143Z"
+    },
+    {
+      "role": "user",
+      "content": "Avanzado",
+      "type": "message",
+      "timestamp": "2026-01-10T23:42:45.581Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Perfecto, nivel **Avanzado** (7/10) seleccionado. ¡Empecemos a trabajar con **Japonés**! ¿En qué te gustaría enfocarnos primero?",
+      "type": "message",
+      "timestamp": "2026-01-10T23:42:45.581Z"
+    },
+    {
+      "role": "user",
+      "content": "Principiante",
+      "type": "message",
+      "timestamp": "2026-01-10T23:48:16.576Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Perfecto, nivel **Principiante** (0/10) seleccionado. ¡Empecemos a trabajar con **Japonés**! ¿En qué te gustaría enfocarnos primero?",
+      "type": "message",
+      "timestamp": "2026-01-10T23:48:16.576Z"
+    },
+    {
+      "role": "user",
+      "content": "hola",
+      "type": "message",
+      "timestamp": "2026-01-10T23:53:30.857Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## ¡Hola! 👋\n\n¡Bienvenido! Estoy aquí para ayudarte con cualquier duda que tengas sobre conceptos educativos. Puedes preguntarme sobre temas específicos o conceptos que quieras entender mejor.\n\n---\n\n### ¿Cómo puedo ayudarte hoy?\n- **¿Tienes preguntas sobre un tema específico?**\n- **¿Te gustaría que te explique un concepto en particular?**\n- **¿Necesitas ayuda con ejercicios o tests?**\n\nNo dudes en preguntar lo que necesites. Estoy aquí para ayudarte a aprender de manera clara y efectiva. 😊",
+      "type": "notes",
+      "timestamp": "2026-01-10T23:53:51.380Z"
+    },
+    {
+      "role": "user",
+      "content": "konnichiwa siempre se dice o no?",
+      "type": "message",
+      "timestamp": "2026-01-11T00:22:19.673Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## ¿Se dice \"konnichiwa\" siempre?\n\n\"Konnichiwa\" (こんにちは) es un saludo en japonés que se traduce como **\"hola\"** o **\"buenas tardes\"**. Sin embargo, no se usa en todas las situaciones. Vamos a desglosar cuándo y cómo se utiliza.\n\n---\n\n### Situaciones en las que se usa \"konnichiwa\"\n\n- **Saludo diurno**: \n  - Se utiliza principalmente durante el día, especialmente entre las 11 a.m. y las 5 p.m.\n  \n- **Contexto formal**:\n  - Es apropiado en situaciones formales o al saludar a personas que no conoces bien.\n\n- **Interacción informal**:\n  - También se puede usar entre amigos, aunque existen otras formas más informales como \"yā\" (やあ).\n\n---\n\n### Cuándo no se dice \"konnichiwa\"\n\n- **Por la mañana**: \n  - En las mañanas, es más común usar \"ohayō gozaimasu\" (おはようございます), que significa \"buenos días\".\n\n- **Por la noche**:\n  - Por la noche, se suele usar \"konbanwa\" (こんばんは), que significa \"buenas noches\".\n\n---\n\n### Resumen en Tabla\n\n| **Saludo**         | **Hora del Día**  | **Contexto**              |\n|---------------------|-------------------|---------------------------|\n| \"Ohayō gozaimasu\"   | Mañana            | Formal o informal         |\n| \"Konnichiwa\"        | Tarde             | Formal o informal         |\n| \"Konbanwa\"          | Noche             | Formal o informal         |\n\n---\n\n### Esquema Conceptual\n\nPara ayudarte a visualizar el uso de \"konnichiwa\", aquí tienes un esquema:\n\n```diagram-json\n{\n  \"title\": \"Uso de Konnichiwa\",\n  \"nodes\": [\n    {\"id\": \"A\", \"label\": \"Uso de Konnichiwa\", \"color\": \"#6366f1\"},\n    {\"id\": \"B\", \"label\": \"Situaciones de Uso\", \"color\": \"#10b981\", \"description\": \"Se utiliza principalmente durante el día.\", \"letter\": \"SU\"},\n    {\"id\": \"C\", \"label\": \"Saludo Diurno\", \"color\": \"#06b6d4\", \"description\": \"Uso entre 11 a.m. y 5 p.m.\", \"letter\": \"SD\"},\n    {\"id\": \"D\", \"label\": \"Contexto Formal\", \"color\": \"#10b981\", \"description\": \"Adecuado para saludos formales.\", \"letter\": \"CF\"},\n    {\"id\": \"E\", \"label\": \"Alternativas a Konnichiwa\", \"color\": \"#f59e0b\", \"description\": \"Usar 'Ohayō' en la mañana y 'Konbanwa' en la noche.\", \"letter\": \"A\"}\n  ],\n  \"edges\": [\n    {\"from\": \"A\", \"to\": \"B\"},\n    {\"from\": \"A\", \"to\": \"E\"},\n    {\"from\": \"B\", \"to\": \"C\"},\n    {\"from\": \"B\", \"to\": \"D\"}\n  ]\n}\n```\n\n---\n\n### Conclusión\n\n\"Konnichiwa\" es un saludo versátil en japonés, pero su uso está limitado a ciertas horas del día y contextos. Recuerda utilizar \"ohayō gozaimasu\" por la mañana y \"konbanwa\" por la noche. Si tienes más preguntas sobre saludos en japonés o cualquier otro tema, ¡estaré encantado de ayudarte! 😊",
+      "type": "notes",
+      "timestamp": "2026-01-11T00:22:35.137Z"
+    }
+  ],
+  "created_at": "2026-01-11T00:36:35.697300",
+  "updated_at": "2026-01-11T01:41:42.422680",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#06b6d4",
+    "icon": "flag_japonés",
+    "topic": "Japonés"
+  }
+}

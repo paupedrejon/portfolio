@@ -30,11 +30,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="overflow-x-hidden w-full">
         <Providers>
-          <Header />
-          
-          <main className="pt-0 w-full">
-            {children}
-          </main>
+        <Header />
+        
+        <main className="pt-0 w-full">
+          {children}
+        </main>
 
         {/* Footer */}
         <footer className="footer">
@@ -72,7 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </footer>
 
-          <Analytics />
+        <Analytics />
         </Providers>
       </body>
     </html>

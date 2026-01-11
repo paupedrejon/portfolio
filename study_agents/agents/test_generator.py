@@ -104,8 +104,8 @@ class TestGeneratorAgent:
                         if num_str and den_str:
                             num = float(num_str)
                             den = float(den_str)
-                            if den != 0:
-                                return num / den
+                        if den != 0:
+                            return num / den
                 except:
                     pass
             
@@ -115,7 +115,7 @@ class TestGeneratorAgent:
                 cleaned = re.sub(r'[^\d\.\-\+eE]', '', expr)
                 if cleaned:
                     result = float(cleaned)
-                    return result
+                return result
             except:
                 pass
             
@@ -165,7 +165,7 @@ class TestGeneratorAgent:
         
         return False
     
-    def generate_test(self, difficulty: str = "medium", num_questions: int = 10, topics: Optional[List[str]] = None, constraints: Optional[str] = None, model: Optional[str] = None, conversation_history: Optional[List[Dict[str, str]]] = None) -> Dict:
+    def generate_test(self, difficulty: str = "medium", num_questions: int = 10, topics: Optional[List[str]] = None, constraints: Optional[str] = None, model: Optional[str] = None, conversation_history: Optional[List[Dict[str, str]]] = None, user_level: Optional[int] = None) -> Dict:
         """
         Genera un test personalizado
         
@@ -176,6 +176,7 @@ class TestGeneratorAgent:
             constraints: Restricciones o condiciones específicas para las preguntas (opcional)
             model: Modelo preferido (opcional, si no se especifica usa modo automático)
             conversation_history: Historial de conversación del chat (opcional)
+            user_level: Nivel del usuario en el tema (1-10, opcional)
             
         Returns:
             Test generado con preguntas y respuestas correctas
@@ -315,50 +316,143 @@ class TestGeneratorAgent:
                     print(f"    {i+1}. {role_emoji} {msg.get('role')}: {content_preview}...")
                 
                 # Extraer temas SOLO de los mensajes MÁS recientes (último intercambio)
+                # PERO filtrar palabras de solicitud y buscar el tema real en mensajes anteriores
                 very_recent = recent_messages
+                
+                # Palabras de solicitud que deben ser ignoradas
+                request_words = {
+                    "hazme", "haz", "hacer", "genera", "generar", "crea", "crear", "quiero", "quieres",
+                    "test", "ejercicio", "ejercicios", "apuntes", "notas", "preguntas", "cuestionario",
+                    "un", "una", "de", "sobre", "acerca", "con", "que", "me", "te", "le", "nos", "les",
+                    "fácil", "facil", "difícil", "dificil", "medio", "medium", "easy", "hard"
+                }
+                
                 topic_extraction = []
+                
+                # PRIMERO: Buscar en mensajes del asistente (que suelen contener el contenido real)
                 for msg in very_recent:
-                    content = msg.get("content", "")
-                    # Buscar solicitudes de apuntes o temas mencionados
-                    if msg.get("role") == "user":
-                        # Extraer temas mencionados en solicitudes
-                        if "apuntes" in content.lower() or "notas" in content.lower():
-                            # Extraer palabras después de "apuntes de" o "sobre"
+                    if msg.get("role") == "assistant":
+                        content = msg.get("content", "").lower()
+                        # Buscar temas técnicos en el contenido del asistente
+                        technical_keywords = {
+                            "sql": ["sql", "select", "from", "where", "insert", "update", "delete", "database", "base de datos"],
+                            "python": ["python", "def", "import", "class", "print", "lista", "diccionario"],
+                            "javascript": ["javascript", "js", "function", "const", "let", "var", "react", "node"],
+                            "react": ["react", "component", "jsx", "hook", "useState", "useEffect"],
+                            "japonés": ["japonés", "japones", "hiragana", "katakana", "kanji", "nihongo"],
+                            "api": ["api", "apis", "endpoint", "rest", "json", "http", "request"],
+                        }
+                        
+                        for topic_name, keywords in technical_keywords.items():
+                            if any(keyword in content for keyword in keywords):
+                                topic_extraction.append(topic_name)
+                                print(f"  - ✅ Tema técnico detectado en respuesta del asistente: {topic_name}")
+                                break
+                
+                # SEGUNDO: Si no se encontró en el asistente, buscar en mensajes del usuario
+                # pero filtrando palabras de solicitud
+                if not topic_extraction:
+                    for msg in very_recent:
+                        if msg.get("role") == "user":
+                            content = msg.get("content", "")
+                            content_lower = content.lower()
+                            
+                            # Buscar patrones como "ejercicio de X", "test de X", "apuntes de X"
                             patterns = [
-                                r"apuntes\s+(?:de|sobre|acerca\s+de)\s+([^\.\?\!]+)",
-                                r"notas\s+(?:de|sobre|acerca\s+de)\s+([^\.\?\!]+)",
-                                r"(?:sobre|acerca\s+de)\s+([^\.\?\!]+)",
+                                r"(?:ejercicio|test|apuntes|notas)\s+(?:de|sobre|acerca\s+de)\s+([^\.\?\!]+)",
+                                r"(?:hazme|haz|genera|crea)\s+(?:un|una)?\s*(?:ejercicio|test|apuntes)?\s*(?:de|sobre|acerca\s+de)?\s*([^\.\?\!]+)",
                             ]
+                            
                             for pattern in patterns:
                                 match = re.search(pattern, content, re.IGNORECASE)
                                 if match:
-                                    topic_extraction.append(match.group(1).strip())
-                        else:
-                            # Añadir primeras palabras clave del mensaje
-                            words = content.split()[:10]
-                            topic_extraction.extend(words)
+                                    extracted = match.group(1).strip()
+                                    # Filtrar palabras de solicitud
+                                    words = extracted.split()
+                                    filtered_words = [w for w in words if w.lower() not in request_words and len(w) > 2]
+                                    if filtered_words:
+                                        topic_extraction.extend(filtered_words)
+                                        print(f"  - ✅ Tema extraído de solicitud del usuario: {' '.join(filtered_words[:3])}")
+                                        break
+                            
+                            # Si no se encontró con patrones, buscar palabras técnicas
+                            technical_keywords = {
+                                "sql": ["sql", "select", "from", "where", "insert", "update", "delete"],
+                                "python": ["python", "def", "import", "class"],
+                                "javascript": ["javascript", "js", "function", "react"],
+                                "japonés": ["japonés", "japones", "hiragana", "katakana"],
+                                "api": ["api", "apis", "endpoint", "rest"],
+                            }
+                            
+                            for topic_name, keywords in technical_keywords.items():
+                                if any(keyword in content_lower for keyword in keywords):
+                                    topic_extraction.append(topic_name)
+                                    print(f"  - ✅ Tema técnico detectado en solicitud del usuario: {topic_name}")
+                                    break
                 
-                # Combinar temas extraídos
-                if topic_extraction:
-                    recent_topic_keywords = " ".join(topic_extraction[:20])  # Limitar a 20 palabras clave
-                    print(f"  - Palabras clave extraídas de los últimos mensajes: {recent_topic_keywords[:200]}")
+                # TERCERO: Si aún no se encontró, buscar en mensajes anteriores (no solo el último intercambio)
+                # para encontrar el tema que se estaba discutiendo
+                if not topic_extraction and len(relevant_messages) > len(recent_messages):
+                    print(f"  - 🔍 No se encontró tema en último intercambio, buscando en mensajes anteriores...")
+                    # Buscar en los últimos 5 mensajes (más contexto)
+                    extended_messages = relevant_messages[-5:]
+                    for msg in extended_messages:
+                        if msg.get("role") == "assistant":
+                            content = msg.get("content", "").lower()
+                            # Buscar temas técnicos
+                            technical_keywords = {
+                                "sql": ["sql", "select", "from", "where", "insert", "update", "delete", "database"],
+                                "python": ["python", "def", "import", "class"],
+                                "javascript": ["javascript", "js", "function", "react"],
+                                "japonés": ["japonés", "japones", "hiragana", "katakana"],
+                                "api": ["api", "apis", "endpoint", "rest"],
+                            }
+                            
+                            for topic_name, keywords in technical_keywords.items():
+                                if any(keyword in content for keyword in keywords):
+                                    topic_extraction.append(topic_name)
+                                    print(f"  - ✅ Tema técnico detectado en mensaje anterior del asistente: {topic_name}")
+                                    break
+                        
+                        if topic_extraction:
+                            break
                 
-                # Detectar el tema principal de los últimos mensajes
+                # Combinar temas extraídos (eliminar duplicados y mantener orden)
+                unique_topics = []
+                seen = set()
+                for topic in topic_extraction:
+                    topic_lower = topic.lower()
+                    if topic_lower not in seen:
+                        seen.add(topic_lower)
+                        unique_topics.append(topic)
+                
+                if unique_topics:
+                    recent_topic_keywords = " ".join(unique_topics[:5])  # Limitar a 5 temas únicos
+                    print(f"  - Temas extraídos (sin duplicados): {recent_topic_keywords}")
+                else:
+                    recent_topic_keywords = ""
+                    print(f"  - ⚠️ No se encontraron temas técnicos en los mensajes")
+                
+                # Detectar el tema principal de los temas extraídos
                 main_topic = ""
-                if recent_topic_keywords:
-                    # Buscar palabras clave comunes de temas
-                    topic_keywords_lower = recent_topic_keywords.lower()
-                    if "japonés" in topic_keywords_lower or "japones" in topic_keywords_lower:
-                        main_topic = "Japonés"
-                    elif "react" in topic_keywords_lower:
-                        main_topic = "React"
-                    elif "api" in topic_keywords_lower or "apis" in topic_keywords_lower:
-                        main_topic = "APIs"
-                    elif "sql" in topic_keywords_lower:
+                if unique_topics:
+                    # Priorizar temas técnicos conocidos
+                    topic_lower = recent_topic_keywords.lower()
+                    if "sql" in topic_lower:
                         main_topic = "SQL"
+                    elif "japonés" in topic_lower or "japones" in topic_lower:
+                        main_topic = "Japonés"
+                    elif "react" in topic_lower:
+                        main_topic = "React"
+                    elif "api" in topic_lower or "apis" in topic_lower:
+                        main_topic = "APIs"
+                    elif "python" in topic_lower:
+                        main_topic = "Python"
+                    elif "javascript" in topic_lower:
+                        main_topic = "JavaScript"
                     else:
-                        # Tomar las primeras palabras clave como tema principal
-                        main_topic = recent_topic_keywords.split()[:3][0] if recent_topic_keywords.split() else ""
+                        # Tomar el primer tema extraído
+                        main_topic = unique_topics[0].capitalize() if unique_topics else ""
                 
                 if main_topic:
                     print(f"  - 🎯 TEMA PRINCIPAL DETECTADO: {main_topic}")
@@ -434,17 +528,296 @@ class TestGeneratorAgent:
         
         # Si no hay ningún contexto disponible, retornar error
         if not context.strip() or (not conversation_text and not relevant_content and not topics):
-            return {
+                return {
                 "error": "No hay contenido disponible para generar el test. Por favor, sube documentos, ten una conversación en el chat, o especifica un tema para el test.",
-                "test_id": test_id
-            }
+                    "test_id": test_id
+                }
         
-        # Definir niveles de dificultad
-        difficulty_instructions = {
-            "easy": "Preguntas básicas que evalúan comprensión fundamental. Respuestas directas del contenido. Ideal para principiantes.",
-            "medium": "Preguntas que requieren comprensión y aplicación de conceptos. Pueden combinar varios conceptos. Nivel intermedio.",
-            "hard": "Preguntas complejas que requieren análisis, síntesis y aplicación avanzada de conceptos. Nivel avanzado."
-        }
+        # Crear instrucciones específicas según el nivel del usuario (0-10)
+        level_adjustment_note = ""
+        difficulty_instructions = None  # Se inicializará según el caso
+        
+        if user_level is not None:
+            # Usar el nivel directamente (0-10) en lugar de mapear a easy/medium/hard
+            if user_level == 0:
+                level_adjustment_note = f"""
+📊 NIVEL DEL USUARIO: {user_level}/10 (Principiante Total - Identificación Básica)
+El usuario está en nivel {user_level}, está empezando desde cero.
+
+INSTRUCCIONES ESPECÍFICAS PARA PREGUNTAS DE NIVEL {user_level}:
+🚨 CRÍTICO: El usuario está en nivel 0, lo que significa que NO SABE NADA del tema. Las preguntas deben ser EXTREMADAMENTE BÁSICAS.
+
+TIPO DE PREGUNTAS PERMITIDAS PARA NIVEL 0:
+- SOLO preguntas de identificación básica: "¿Cuál de estos es un [concepto básico]?"
+- Ejemplo para meses: "¿Cuál de estos es un Mes?" con opciones: "Enero, Champiñón, Lunes, Koala"
+- Las opciones incorrectas DEBEN ser OBVIAMENTE diferentes y no relacionadas (días de la semana, animales, objetos, colores, etc.)
+- El usuario solo necesita reconocer el concepto básico, NO necesita conocimiento específico del tema
+
+PROHIBIDO ABSOLUTAMENTE PARA NIVEL 0:
+❌ NO preguntar sobre orden, posición, o números (ej: "¿Cuál es el séptimo mes?")
+❌ NO preguntar sobre características específicas (ej: "¿Qué mes no tiene día 30?")
+❌ NO preguntar sobre condiciones o años (ej: "En el año 1992, ¿Febrero tiene día 29?")
+❌ NO preguntar sobre hemisferios, estaciones, o conceptos avanzados
+❌ NO incluir cálculos, fechas, números, o relaciones complejas
+❌ NO preguntar sobre detalles, excepciones, o casos especiales
+
+EJEMPLOS CORRECTOS PARA NIVEL 0:
+✅ "¿Cuál de estos es un Mes?" → Opciones: "Enero, Champiñón, Lunes, Koala"
+✅ "¿Cuál de estos es un Color?" → Opciones: "Rojo, Piano, Martes, Perro"
+✅ "¿Cuál de estos es un Animal?" → Opciones: "Perro, Enero, Azul, Lunes"
+
+Las preguntas deben ser tan simples que alguien que NO SABE NADA del tema pueda responder correctamente solo reconociendo el concepto básico.
+"""
+                difficulty_instructions = f"Preguntas de NIVEL {user_level}/10: Identificación básica. El usuario debe reconocer conceptos fundamentales entre opciones claramente diferentes."
+            elif user_level == 1:
+                level_adjustment_note = f"""
+📊 NIVEL DEL USUARIO: {user_level}/10 (Principiante - Identificación con Distractores Similares)
+El usuario está en nivel {user_level}, apenas conoce lo básico.
+
+INSTRUCCIONES ESPECÍFICAS PARA PREGUNTAS DE NIVEL {user_level}:
+- SOLO preguntas de identificación básica con distractores del mismo dominio
+- Ejemplo: "¿Cuál de estos es un Mes?" → Opciones: "Enero, Febrero, Lunes, Martes" (meses vs días de la semana)
+- Las opciones incorrectas deben ser del mismo dominio pero incorrectas (ej: si pregunta sobre meses, opciones incorrectas pueden ser otros meses o días de la semana)
+- Enfocarse en distinguir conceptos básicos similares dentro del mismo dominio
+- NO incluir números, orden, posición, características, o relaciones
+- NO incluir conocimiento sobre estaciones, hemisferios, o conceptos avanzados
+
+PROHIBIDO PARA NIVEL 1:
+❌ NO preguntar sobre orden, posición, números, o relaciones
+❌ NO preguntar sobre características específicas
+❌ NO preguntar sobre estaciones, hemisferios, o conceptos avanzados
+❌ NO incluir cálculos, fechas, o relaciones complejas
+
+EJEMPLOS CORRECTOS PARA NIVEL 1:
+✅ "¿Cuál de estos es un Mes?" → Opciones: "Enero, Febrero, Lunes, Martes"
+✅ "¿Cuál de estos es un Color?" → Opciones: "Rojo, Azul, Piano, Guitarra"
+"""
+                difficulty_instructions = f"Preguntas de NIVEL {user_level}/10: Identificación básica con distractores del mismo dominio."
+            elif user_level == 2:
+                level_adjustment_note = f"""
+📊 NIVEL DEL USUARIO: {user_level}/10 (Principiante - Conocimiento Básico Simple)
+El usuario está en nivel {user_level}, con conocimiento muy básico.
+
+INSTRUCCIONES ESPECÍFICAS PARA PREGUNTAS DE NIVEL {user_level}:
+- Preguntas sobre conocimiento básico directo y simple
+- Ejemplo: "¿Cuál es el primer mes del año?" o "¿Cuántos días tiene la semana?" (números muy básicos: 1, 2, 3, 7, 12)
+- Respuestas directas y simples del contenido fundamental
+- Pueden incluir números básicos (1, 2, 3, 7, 12) pero SOLO para contar o identificar el primero/último
+- NO incluir relaciones complejas, condiciones, o conceptos avanzados
+
+PROHIBIDO ABSOLUTAMENTE PARA NIVEL 2:
+❌ NO preguntar sobre estaciones, hemisferios, o conceptos geográficos avanzados
+❌ NO preguntar sobre características específicas (ej: "¿Qué mes no tiene día 30?")
+❌ NO preguntar sobre condiciones o años (ej: "En el año 1992, ¿Febrero tiene día 29?")
+❌ NO preguntar sobre relaciones entre conceptos (ej: "¿En qué estación está Mayo?")
+❌ NO incluir cálculos complejos o fechas específicas
+❌ NO preguntar sobre detalles, excepciones, o casos especiales
+
+EJEMPLOS CORRECTOS PARA NIVEL 2:
+✅ "¿Cuál es el primer mes del año?" → Opciones: "Enero, Febrero, Marzo, Abril"
+✅ "¿Cuántos meses tiene un año?" → Opciones: "10, 11, 12, 13"
+✅ "¿Cuál es el último mes del año?" → Opciones: "Octubre, Noviembre, Diciembre, Enero"
+
+EJEMPLOS INCORRECTOS (DEMASIADO COMPLEJOS):
+❌ "¿En qué estación está Mayo en el hemisferio norte?" (requiere conocimiento de estaciones y hemisferios)
+❌ "¿Qué mes no tiene día 30?" (requiere conocimiento de características específicas)
+❌ "¿Cuántos días tiene Febrero en un año bisiesto?" (requiere conocimiento de años bisiestos)
+"""
+                difficulty_instructions = f"Preguntas de NIVEL {user_level}/10: Conocimiento básico simple. Solo números básicos (1-12) para contar o identificar primero/último. PROHIBIDO: estaciones, hemisferios, características específicas, o relaciones complejas."
+            elif user_level == 3:
+                level_adjustment_note = f"""
+📊 NIVEL DEL USUARIO: {user_level}/10 (Principiante-Intermedio - Conocimiento con Números)
+El usuario está en nivel {user_level}, con conocimiento básico.
+
+INSTRUCCIONES ESPECÍFICAS PARA PREGUNTAS DE NIVEL {user_level}:
+- Preguntas que requieren conocimiento de orden, posición o números básicos
+- Ejemplo: "¿Cuál es el séptimo mes del año?" o "¿En qué posición está [concepto]?" (contar en secuencia)
+- Requieren contar o conocer el orden básico de una secuencia simple
+- Las opciones deben incluir números o posiciones
+- Aplicación directa de conocimiento básico con números
+- Pueden incluir números hasta 12 o 31 (días del mes)
+
+PROHIBIDO PARA NIVEL 3:
+❌ NO preguntar sobre estaciones, hemisferios, o conceptos geográficos avanzados
+❌ NO preguntar sobre características específicas complejas (ej: "¿Qué mes no tiene día 30?")
+❌ NO preguntar sobre condiciones o años (ej: "En el año 1992, ¿Febrero tiene día 29?")
+❌ NO preguntar sobre relaciones entre conceptos diferentes (ej: "¿En qué estación está Mayo?")
+
+EJEMPLOS CORRECTOS PARA NIVEL 3:
+✅ "¿Cuál es el séptimo mes del año?" → Opciones: "Julio, Junio, Agosto, Septiembre"
+✅ "¿En qué posición está Mayo en el año?" → Opciones: "Quinta, Sexta, Séptima, Octava"
+"""
+                difficulty_instructions = f"Preguntas de NIVEL {user_level}/10: Conocimiento con números, orden o posición básica. Contar en secuencias simples. PROHIBIDO: estaciones, hemisferios, características complejas."
+            elif user_level == 4:
+                level_adjustment_note = f"""
+📊 NIVEL DEL USUARIO: {user_level}/10 (Intermedio Básico - Aplicación Simple)
+El usuario está en nivel {user_level}, con conocimiento intermedio básico.
+
+INSTRUCCIONES ESPECÍFICAS PARA PREGUNTAS DE NIVEL {user_level}:
+- Preguntas que requieren aplicación simple de conocimiento básico
+- Combinar dos conceptos básicos relacionados
+- Ejemplo: "¿Qué mes tiene 31 días?" o "¿Cuál mes NO tiene 31 días?" (características básicas y simples)
+- Requieren conocer características básicas y aplicarlas
+- Pueden incluir características simples y directas (número de días, nombre, etc.)
+
+PROHIBIDO PARA NIVEL 4:
+❌ NO preguntar sobre estaciones, hemisferios, o conceptos geográficos avanzados
+❌ NO preguntar sobre condiciones o años (ej: "En el año 1992, ¿Febrero tiene día 29?")
+❌ NO preguntar sobre relaciones complejas entre conceptos diferentes
+
+EJEMPLOS CORRECTOS PARA NIVEL 4:
+✅ "¿Qué mes tiene 31 días?" → Opciones: "Enero, Febrero, Abril, Junio"
+✅ "¿Cuál mes NO tiene 31 días?" → Opciones: "Enero, Febrero, Marzo, Mayo"
+"""
+                difficulty_instructions = f"Preguntas de NIVEL {user_level}/10: Aplicación simple de conocimiento. Combinar conceptos básicos con características simples. PROHIBIDO: estaciones, hemisferios, condiciones complejas."
+            elif user_level == 5:
+                level_adjustment_note = f"""
+📊 NIVEL DEL USUARIO: {user_level}/10 (Intermedio - Aplicación con Excepciones)
+El usuario está en nivel {user_level}, con conocimiento intermedio.
+
+INSTRUCCIONES ESPECÍFICAS PARA PREGUNTAS DE NIVEL {user_level}:
+- Preguntas sobre excepciones o casos especiales básicos
+- Ejemplo: "¿Qué mes NO tiene día 30?" o "¿Cuál es la excepción a [regla básica]?"
+- Requieren conocer reglas generales y sus excepciones básicas
+- Aplicación de conocimiento con casos especiales simples
+
+PERMITIDO PARA NIVEL 5:
+✅ Preguntar sobre características específicas y excepciones básicas
+✅ Preguntar sobre casos especiales simples (ej: "¿Qué mes no tiene día 30?")
+
+PROHIBIDO PARA NIVEL 5:
+❌ NO preguntar sobre estaciones, hemisferios, o conceptos geográficos avanzados (aún no)
+❌ NO preguntar sobre condiciones o años (ej: "En el año 1992, ¿Febrero tiene día 29?")
+
+EJEMPLOS CORRECTOS PARA NIVEL 5:
+✅ "¿Qué mes no tiene día 30?" → Opciones: "Enero, Febrero, Marzo, Abril"
+✅ "¿Cuál mes tiene menos días?" → Opciones: "Enero, Febrero, Marzo, Abril"
+"""
+                difficulty_instructions = f"Preguntas de NIVEL {user_level}/10: Aplicación con excepciones básicas. Conocer reglas y casos especiales simples. PROHIBIDO: estaciones, hemisferios, condiciones con años."
+            elif user_level == 6:
+                level_adjustment_note = f"""
+📊 NIVEL DEL USUARIO: {user_level}/10 (Intermedio-Avanzado - Conocimiento de Detalles)
+El usuario está en nivel {user_level}, con conocimiento intermedio-avanzado.
+
+INSTRUCCIONES ESPECÍFICAS PARA PREGUNTAS DE NIVEL {user_level}:
+- Preguntas sobre detalles específicos y características particulares
+- Ejemplo: "¿Qué mes no tiene día 30?" o "¿Cuál mes tiene [característica única]?"
+- Requieren conocimiento de detalles y particularidades
+- Aplicación de conocimiento sobre características específicas
+- Pueden incluir comparaciones o diferencias sutiles
+- Pueden incluir conocimiento básico sobre estaciones o conceptos relacionados (pero no hemisferios aún)
+
+PERMITIDO PARA NIVEL 6:
+✅ Preguntar sobre características específicas y detalles
+✅ Preguntar sobre conocimiento básico de estaciones (pero sin hemisferios)
+
+PROHIBIDO PARA NIVEL 6:
+❌ NO preguntar sobre hemisferios o conceptos geográficos avanzados
+❌ NO preguntar sobre condiciones o años (ej: "En el año 1992, ¿Febrero tiene día 29?")
+
+EJEMPLOS CORRECTOS PARA NIVEL 6:
+✅ "¿Qué mes no tiene día 30?" → Opciones: "Enero, Febrero, Marzo, Abril"
+✅ "¿En qué estación está Mayo?" (sin mencionar hemisferio) → Opciones: "Primavera, Verano, Otoño, Invierno"
+"""
+                difficulty_instructions = f"Preguntas de NIVEL {user_level}/10: Conocimiento de detalles específicos. Características particulares. Puede incluir estaciones básicas. PROHIBIDO: hemisferios, condiciones con años."
+            elif user_level == 7:
+                level_adjustment_note = f"""
+📊 NIVEL DEL USUARIO: {user_level}/10 (Avanzado Básico - Aplicación Contextual)
+El usuario está en nivel {user_level}, con conocimiento avanzado básico.
+
+INSTRUCCIONES ESPECÍFICAS PARA PREGUNTAS DE NIVEL {user_level}:
+- Preguntas que requieren aplicar conocimiento en un contexto específico
+- Ejemplo: "¿En qué estación está Mayo en el hemisferio norte?" o "Dado [contexto], ¿cuál es [respuesta]?"
+- Requieren análisis de contexto y aplicación de reglas
+- Combinar múltiples conceptos en un escenario (estaciones + hemisferios)
+- Pueden incluir conocimiento de hemisferios y estaciones
+
+PERMITIDO PARA NIVEL 7:
+✅ Preguntar sobre estaciones y hemisferios
+✅ Preguntar sobre relaciones entre conceptos diferentes
+✅ Aplicar conocimiento en contextos específicos
+
+EJEMPLOS CORRECTOS PARA NIVEL 7:
+✅ "¿En qué estación está Mayo en el hemisferio norte?" → Opciones: "Primavera, Verano, Otoño, Invierno"
+✅ "¿En qué estación está Diciembre en el hemisferio sur?" → Opciones: "Primavera, Verano, Otoño, Invierno"
+"""
+                difficulty_instructions = f"Preguntas de NIVEL {user_level}/10: Aplicación contextual. Puede incluir estaciones, hemisferios, y relaciones entre conceptos."
+            elif user_level == 8:
+                level_adjustment_note = f"""
+📊 NIVEL DEL USUARIO: {user_level}/10 (Avanzado - Aplicación con Condiciones)
+El usuario está en nivel {user_level}.
+
+INSTRUCCIONES ESPECÍFICAS PARA PREGUNTAS DE NIVEL {user_level}:
+- Preguntas que requieren aplicar conocimiento con condiciones específicas
+- Ejemplo: "En el año [año específico], ¿[concepto] tiene [característica]? Sí/No" o "Si [condición], entonces ¿[pregunta]?"
+- Requieren análisis de condiciones y aplicación de reglas complejas
+- Pueden incluir cálculos o verificaciones basadas en condiciones
+- Aplicación de conocimiento avanzado con variables o condiciones
+"""
+                difficulty_instructions = f"Preguntas de NIVEL {user_level}/10: Aplicación con condiciones. Análisis de situaciones con variables específicas."
+            elif user_level == 9:
+                level_adjustment_note = f"""
+📊 NIVEL DEL USUARIO: {user_level}/10 (Experto - Conocimiento Profundo)
+El usuario está en nivel {user_level}.
+
+INSTRUCCIONES ESPECÍFICAS PARA PREGUNTAS DE NIVEL {user_level}:
+- Preguntas que requieren conocimiento profundo y especializado
+- Ejemplo: "¿Cuál es la relación entre [concepto avanzado] y [otro concepto avanzado]?" o "¿Cómo afecta [factor complejo] a [concepto]?"
+- Requieren comprensión de relaciones complejas y matices
+- Pueden incluir casos edge, optimizaciones, o implementaciones avanzadas
+- Pensamiento crítico y análisis de escenarios complejos
+"""
+                difficulty_instructions = f"Preguntas de NIVEL {user_level}/10: Conocimiento profundo. Relaciones complejas y casos avanzados."
+            else:  # user_level == 10
+                level_adjustment_note = f"""
+📊 NIVEL DEL USUARIO: {user_level}/10 (Experto Total - Dominio Completo)
+El usuario está en nivel {user_level}, domina el tema completamente.
+
+INSTRUCCIONES ESPECÍFICAS PARA PREGUNTAS DE NIVEL {user_level}:
+- Preguntas que requieren dominio experto y conocimiento especializado avanzado
+- Ejemplo: "En [contexto avanzado específico], ¿cuándo/cómo/dónde [pregunta compleja]?" o "¿Cuál es la implicación de [concepto avanzado] en [situación compleja]?"
+- Requieren conocimiento de detalles muy específicos, casos edge, y excepciones avanzadas
+- Pueden incluir preguntas sobre optimizaciones, arquitectura avanzada, o casos de uso especializados
+- Pensamiento crítico, análisis profundo, y síntesis de múltiples conceptos avanzados
+- Preguntas sobre matices, implicaciones, y conocimientos profundos del tema
+- Pueden requerir conocimiento de contexto geográfico, histórico, o técnico avanzado
+"""
+                difficulty_instructions = f"Preguntas de NIVEL {user_level}/10: Dominio experto. Conocimiento especializado avanzado, casos edge, y análisis profundo."
+            
+            # Usar el nivel directamente en lugar de mapear a easy/medium/hard
+            level_adjustment_note += f"""
+
+🚨🚨🚨 REGLA CRÍTICA - NO NEGOCIABLE 🚨🚨🚨:
+Las preguntas DEBEN reflejar EXACTAMENTE el nivel {user_level}/10.
+
+- Si el usuario está en nivel 0-2: SOLO preguntas de identificación básica. PROHIBIDO: estaciones, hemisferios, características específicas, relaciones complejas.
+- Si el usuario está en nivel 3-4: Puedes incluir números básicos y orden simple. PROHIBIDO: estaciones, hemisferios, condiciones complejas.
+- Si el usuario está en nivel 5-6: Puedes incluir características específicas y estaciones básicas. PROHIBIDO: hemisferios, condiciones con años.
+- Si el usuario está en nivel 7+: Puedes incluir estaciones, hemisferios, y relaciones complejas.
+
+NO uses preguntas de nivel más alto que {user_level}/10. Si tienes dudas, usa una pregunta más simple.
+Revisa cada pregunta antes de incluirla: ¿Es apropiada para nivel {user_level}/10? Si no, simplifícala o cámbiala."""
+        
+        # Preparar variables para el template (evaluar expresiones antes de pasarlas al template)
+        user_level_display = str(user_level) if user_level is not None else "No especificado"
+        
+        if user_level is None:
+            # Si no hay nivel del usuario, usar dificultad estándar
+            level_adjustment_note = "\n\n📊 No se detectó nivel del usuario. Se usará la dificultad estándar."
+            difficulty_instructions_dict = {
+                "easy": "Preguntas básicas que evalúan comprensión fundamental.",
+                "medium": "Preguntas que requieren comprensión y aplicación de conceptos.",
+                "hard": "Preguntas complejas que requieren análisis avanzado."
+            }
+            difficulty_instructions = difficulty_instructions_dict.get(difficulty, "Preguntas de nivel intermedio.")
+        
+        # Preparar difficulty_instructions_display
+        if isinstance(difficulty_instructions, str):
+            difficulty_instructions_display = difficulty_instructions
+        elif isinstance(difficulty_instructions, dict):
+            difficulty_instructions_display = f"- Instrucciones de dificultad: {difficulty_instructions.get(difficulty, difficulty_instructions.get('medium', 'Nivel intermedio'))}"
+        else:
+            difficulty_instructions_display = f"- Instrucciones de dificultad: {str(difficulty_instructions)}"
         
         # Construir instrucciones específicas según si hay tema o no
         has_documents = bool(relevant_content)
@@ -562,8 +935,10 @@ CONTENIDO:
 
 REQUISITOS:
 - Número de preguntas: {num_questions}
-- Dificultad: {difficulty}
-- Instrucciones de dificultad: {difficulty_instructions}
+- Nivel del usuario: {user_level_display}/10
+- Dificultad base solicitada: {difficulty}
+{difficulty_instructions_display}
+{level_adjustment_note}
 
 FORMATO DE RESPUESTA (JSON válido):
 {{
@@ -627,7 +1002,9 @@ IMPORTANTE:
                 "constraints_instruction": constraints_instruction,
                 "num_questions": num_questions,
                 "difficulty": difficulty,
-                "difficulty_instructions": difficulty_instructions.get(difficulty, difficulty_instructions["medium"])
+                "user_level_display": user_level_display,
+                "difficulty_instructions_display": difficulty_instructions_display,
+                "level_adjustment_note": level_adjustment_note if level_adjustment_note else ""
             })
             
             # Parsear respuesta JSON

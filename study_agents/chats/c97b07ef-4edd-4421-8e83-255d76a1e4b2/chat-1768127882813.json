@@ -1,0 +1,23 @@
+{
+  "chat_id": "chat-1768127882813",
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "title": "HTML5 y CSS3",
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "¡Excelente elección! Vamos a darle caña a **HTML5 y CSS3**. Para poder ayudarte mejor, dime:\n\n¿Qué nivel tienes (Principiante, Intermedio, Avanzado)?\n\nEn cuanto me digas, empezamos.",
+      "type": "level_selection",
+      "timestamp": "2026-01-11T10:38:03.408Z",
+      "topic": "HTML5 y CSS3"
+    }
+  ],
+  "created_at": "2026-01-11T11:38:03.402775",
+  "updated_at": "2026-01-11T11:38:05.088292",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#10b981",
+    "icon": "icon_html",
+    "topic": "HTML5 y CSS3"
+  }
+}

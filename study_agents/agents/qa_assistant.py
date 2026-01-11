@@ -65,7 +65,7 @@ class QAAssistantAgent:
             else:
                 print("⚠️ Q&A Assistant Agent inicializado sin API key (se requerirá para usar)")
     
-    def answer_question(self, question: str, user_id: str = "default", model: Optional[str] = None) -> tuple[str, dict]:
+    def answer_question(self, question: str, user_id: str = "default", model: Optional[str] = None, chat_id: Optional[str] = None, topic: Optional[str] = None) -> tuple[str, dict]:
         """
         Responde una pregunta del estudiante usando el temario y el historial
         
@@ -73,6 +73,8 @@ class QAAssistantAgent:
             question: Pregunta del estudiante
             user_id: ID del usuario (para historial)
             model: Modelo preferido (opcional, si no se especifica usa modo automático)
+            chat_id: ID de la conversación (opcional, para obtener el nivel)
+            topic: Tema del chat (opcional, para contextualizar las respuestas)
             
         Returns:
             Respuesta contextualizada
@@ -161,6 +163,10 @@ class QAAssistantAgent:
             history_str = "\n".join(history_messages)
         
         # Crear prompt manualmente usando replace para evitar problemas con llaves en el contenido
+        topic_context = ""
+        if topic:
+            topic_context = f"\n\nTEMA DE LA CONVERSACIÓN: Estamos trabajando específicamente sobre **{topic}**. Enfócate en este tema y proporciona información relevante sobre {topic}. Si la pregunta del estudiante está relacionada con este tema, asegúrate de contextualizarla dentro de {topic}."
+        
         prompt_template = """Eres un asistente educativo experto que ayuda a estudiantes a entender conceptos.
 
 Tu objetivo es:
@@ -168,7 +174,7 @@ Tu objetivo es:
 - Usar el contenido del temario proporcionado cuando esté disponible
 - Si no hay información en el temario, puedes usar tu conocimiento general
 - Mantener un tono amigable y paciente
-- Explicar conceptos de manera sencilla y VISUAL
+- Explicar conceptos de manera sencilla y VISUAL__TOPIC_CONTEXT_PLACEHOLDER__
 
 FORMATO DE RESPUESTA (Markdown ULTRA VISUAL):
 - Usa títulos y subtítulos (##, ###)
@@ -255,7 +261,8 @@ PREGUNTA DEL ESTUDIANTE: __QUESTION_PLACEHOLDER__
 Responde de manera clara, completa y VISUAL usando Markdown. Si el contexto del temario es relevante, úsalo. Si la pregunta requiere visualización o pide un esquema, crea esquemas conceptuales usando JSON estructurado (bloques ```diagram-json) - NO uses Mermaid de ningún tipo."""
 
         # Reemplazar placeholders de forma segura (sin usar f-strings que interpretan llaves)
-        full_prompt = prompt_template.replace("__CONTEXT_PLACEHOLDER__", context)
+        full_prompt = prompt_template.replace("__TOPIC_CONTEXT_PLACEHOLDER__", topic_context)
+        full_prompt = full_prompt.replace("__CONTEXT_PLACEHOLDER__", context)
         full_prompt = full_prompt.replace("__HISTORY_PLACEHOLDER__", history_str or "No hay historial previo de conversación.")
         full_prompt = full_prompt.replace("__QUESTION_PLACEHOLDER__", question)
 

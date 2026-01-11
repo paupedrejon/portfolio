@@ -20,6 +20,8 @@ from agents.explanation_agent import ExplanationAgent
 from agents.qa_assistant import QAAssistantAgent
 from agents.test_generator import TestGeneratorAgent
 from agents.feedback_agent import FeedbackAgent
+from agents.exercise_generator import ExerciseGeneratorAgent
+from agents.exercise_corrector import ExerciseCorrectorAgent
 from memory.memory_manager import MemoryManager
 
 # Cargar variables de entorno desde el archivo .env
@@ -55,6 +57,8 @@ class StudyAgentsSystem:
         self.qa_assistant = QAAssistantAgent(memory=self.memory, api_key=self.api_key, mode=mode)
         self.test_generator = TestGeneratorAgent(memory=self.memory, api_key=self.api_key, mode=mode)
         self.feedback_agent = FeedbackAgent(memory=self.memory, api_key=self.api_key, mode=mode)
+        self.exercise_generator = ExerciseGeneratorAgent(memory=self.memory, api_key=self.api_key, mode=mode)
+        self.exercise_corrector = ExerciseCorrectorAgent(memory=self.memory, api_key=self.api_key, mode=mode)
         
         print("✅ Sistema Study Agents inicializado correctamente")
         print(f"📚 Memoria: {self.memory.get_memory_type()}")
@@ -98,24 +102,39 @@ class StudyAgentsSystem:
         print("✅ Explicaciones generadas")
         return explanations
     
-    def generate_notes(self, topics: Optional[list[str]] = None, model: Optional[str] = None) -> str:
+    def generate_notes(self, topics: Optional[list[str]] = None, model: Optional[str] = None, user_id: Optional[str] = None, conversation_history: Optional[list[dict]] = None, topic: Optional[str] = None) -> str:
         """
-        Genera apuntes completos en formato Markdown
+        Genera resumen completo de la conversación en formato Markdown
         
         Args:
             topics: Lista de temas específicos (opcional)
             model: Modelo preferido (opcional, si no se especifica usa modo automático)
+            user_id: ID del usuario para obtener su nivel (opcional)
+            conversation_history: Historial de conversación para generar resumen actualizado (opcional)
             
         Returns:
-            Apuntes en formato Markdown
+            Resumen en formato Markdown
         """
+        # Obtener nivel del usuario si hay user_id y topics
+        user_level = None
+        if user_id and topics and len(topics) > 0:
+            try:
+                from progress_tracker import ProgressTracker
+                tracker = ProgressTracker()
+                main_topic = topics[0] if isinstance(topics, list) else str(topics)
+                topic_data = tracker.get_topic_level(user_id, main_topic)
+                user_level = topic_data.get("level", 1)
+                print(f"📊 Nivel del usuario en '{main_topic}': {user_level}/10")
+            except Exception as e:
+                print(f"⚠️ No se pudo obtener el nivel del usuario: {e}")
+        
         model_str = model if model else "automático (optimizando costes)"
-        print(f"\n📝 Generando apuntes con modelo {model_str}...")
-        notes = self.explanation_agent.generate_notes(topics=topics, model=model)
-        print("✅ Apuntes generados")
+        print(f"\n📝 Generando resumen con modelo {model_str}...")
+        notes = self.explanation_agent.generate_notes(topics=topics, model=model, user_level=user_level, conversation_history=conversation_history, topic=topic)
+        print("✅ Resumen generado")
         return notes
     
-    def ask_question(self, question: str, user_id: str = "default", model: Optional[str] = None) -> tuple[str, dict]:
+    def ask_question(self, question: str, user_id: str = "default", model: Optional[str] = None, chat_id: Optional[str] = None, topic: Optional[str] = None) -> tuple[str, dict]:
         """
         Responde una pregunta del estudiante
         
@@ -123,17 +142,19 @@ class StudyAgentsSystem:
             question: Pregunta del estudiante
             user_id: ID del usuario (para historial)
             model: Modelo preferido (opcional, si no se especifica usa modo automático)
+            chat_id: ID de la conversación (para obtener el nivel)
+            topic: Tema del chat (para contextualizar las respuestas)
             
         Returns:
             Tupla con (respuesta contextualizada, información de tokens)
         """
         model_str = model if model else "automático (optimizando costes)"
-        print(f"\n❓ Pregunta: {question} (modelo: {model_str})")
-        answer, usage_info = self.qa_assistant.answer_question(question, user_id, model=model)
+        print(f"\n❓ Pregunta: {question} (modelo: {model_str}, tema: {topic or 'General'})")
+        answer, usage_info = self.qa_assistant.answer_question(question, user_id, model=model, chat_id=chat_id, topic=topic)
         print(f"💡 Respuesta generada")
         return answer, usage_info
     
-    def generate_test(self, difficulty: str = "medium", num_questions: int = 10, topics: Optional[list[str]] = None, constraints: Optional[str] = None, model: Optional[str] = None, conversation_history: Optional[list[dict]] = None) -> tuple[dict, dict]:
+    def generate_test(self, difficulty: str = "medium", num_questions: int = 10, topics: Optional[list[str]] = None, constraints: Optional[str] = None, model: Optional[str] = None, conversation_history: Optional[list[dict]] = None, user_id: Optional[str] = None, chat_id: Optional[str] = None, user_level: Optional[int] = None) -> tuple[dict, dict]:
         """
         Genera un test personalizado
         
@@ -144,13 +165,28 @@ class StudyAgentsSystem:
             constraints: Restricciones o condiciones específicas para las preguntas (opcional)
             model: Modelo preferido (opcional, si no se especifica usa modo automático)
             conversation_history: Historial de conversación del chat (opcional)
+            user_id: ID del usuario para obtener su nivel (opcional)
+            chat_id: ID de la conversación para obtener el nivel (opcional)
+            user_level: Nivel del usuario (0-10) si ya se obtuvo (opcional)
             
         Returns:
             Tupla con (test generado, información de tokens)
         """
+        # Obtener nivel del usuario desde la conversación si hay chat_id y no se proporcionó user_level
+        if user_level is None and user_id and chat_id:
+            try:
+                from progress_tracker import ProgressTracker
+                tracker = ProgressTracker()
+                chat_data = tracker.get_chat_level(user_id, chat_id)
+                user_level = chat_data.get("level", 0)
+                print(f"📊 Nivel del usuario en conversación '{chat_id}': {user_level}/10")
+            except Exception as e:
+                print(f"⚠️ No se pudo obtener el nivel del usuario: {e}")
+                user_level = 0
+        
         model_str = model if model else "automático (optimizando costes)"
-        print(f"\n📝 Generando test ({difficulty}, {num_questions} preguntas) con modelo {model_str}...")
-        test = self.test_generator.generate_test(difficulty, num_questions, topics, constraints=constraints, model=model, conversation_history=conversation_history)
+        print(f"\n📝 Generando test ({difficulty}, {num_questions} preguntas, nivel usuario: {user_level if user_level is not None else 'N/A'}/10) con modelo {model_str}...")
+        test = self.test_generator.generate_test(difficulty, num_questions, topics, constraints=constraints, model=model, conversation_history=conversation_history, user_level=user_level)
         print("✅ Test generado")
         
         # Extraer información de tokens del test
@@ -181,6 +217,112 @@ class StudyAgentsSystem:
         feedback = self.feedback_agent.grade_test(test_id, answers, test_data=test)
         print("✅ Feedback generado")
         return feedback
+    
+    def generate_exercise(
+        self,
+        difficulty: str = "medium",
+        topics: Optional[list[str]] = None,
+        exercise_type: Optional[str] = None,
+        constraints: Optional[str] = None,
+        model: Optional[str] = None,
+        conversation_history: Optional[list[dict]] = None,
+        user_id: Optional[str] = None,
+        user_level: Optional[int] = None
+    ) -> tuple[dict, dict]:
+        """
+        Genera un ejercicio complejo
+        
+        Args:
+            difficulty: Nivel de dificultad (easy, medium, hard)
+            topics: Temas específicos (opcional)
+            exercise_type: Tipo de ejercicio (opcional)
+            constraints: Restricciones o condiciones específicas para el ejercicio (opcional)
+            model: Modelo preferido (opcional, si no se especifica usa modo automático)
+            conversation_history: Historial de conversación reciente (opcional)
+            user_id: ID del usuario para obtener su nivel (opcional)
+            user_level: Nivel del usuario (opcional, si no se proporciona se obtiene automáticamente)
+            
+        Returns:
+            Tupla con (ejercicio generado, información de tokens)
+        """
+        # Obtener nivel del usuario si hay user_id y topics
+        if user_level is None and user_id and topics and len(topics) > 0:
+            try:
+                from progress_tracker import ProgressTracker
+                tracker = ProgressTracker()
+                main_topic = topics[0] if isinstance(topics, list) else str(topics)
+                topic_data = tracker.get_topic_level(user_id, main_topic)
+                user_level = topic_data.get("level", 0)
+                print(f"📊 Nivel del usuario en '{main_topic}': {user_level}/10")
+            except Exception as e:
+                print(f"⚠️ No se pudo obtener el nivel del usuario: {e}")
+        
+        model_str = model if model else "automático (optimizando costes)"
+        print(f"\n📝 Generando ejercicio ({difficulty}) con modelo {model_str}...")
+        result = self.exercise_generator.generate_exercise(
+            difficulty=difficulty,
+            topics=topics,
+            exercise_type=exercise_type,
+            constraints=constraints,
+            model=model,
+            conversation_history=conversation_history,
+            user_level=user_level
+        )
+        print("✅ Ejercicio generado")
+        
+        # El agente devuelve {"exercise": exercise_data, "exercise_id": ..., "usage_info": ...}
+        # Extraer el ejercicio y la información de tokens
+        if "error" in result:
+            raise Exception(result["error"])
+        
+        exercise_data = result.get("exercise", {})
+        usage_info = result.get("usage_info", {"inputTokens": 0, "outputTokens": 0})
+        
+        # Asegurar que el ejercicio tenga todos los campos necesarios
+        if not exercise_data:
+            raise Exception("No se pudo generar el ejercicio")
+        
+        return exercise_data, usage_info
+    
+    def correct_exercise(
+        self,
+        exercise: dict,
+        student_answer: str,
+        model: Optional[str] = None
+    ) -> tuple[dict, dict]:
+        """
+        Corrige un ejercicio y proporciona feedback
+        
+        Args:
+            exercise: Ejercicio con enunciado y respuesta esperada
+            student_answer: Respuesta del estudiante
+            model: Modelo preferido (opcional, si no se especifica usa modo automático)
+            
+        Returns:
+            Tupla con (corrección con nota y feedback, información de tokens)
+        """
+        model_str = model if model else "automático (optimizando costes)"
+        print(f"\n✏️ Corrigiendo ejercicio con modelo {model_str}...")
+        result = self.exercise_corrector.correct_exercise(
+            exercise=exercise,
+            student_answer=student_answer,
+            model=model
+        )
+        print("✅ Corrección completada")
+        
+        # El agente devuelve {"correction": correction_data, "exercise_id": ..., "points": ..., "usage_info": ...}
+        # Extraer la corrección y la información de tokens
+        if "error" in result:
+            raise Exception(result["error"])
+        
+        correction_data = result.get("correction", {})
+        usage_info = result.get("usage_info", {"inputTokens": 0, "outputTokens": 0})
+        
+        # Asegurar que la corrección tenga todos los campos necesarios
+        if not correction_data:
+            raise Exception("No se pudo corregir el ejercicio")
+        
+        return correction_data, usage_info
 
 
 def main():

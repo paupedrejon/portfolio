@@ -1,0 +1,71 @@
+{
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "language": "Japonés",
+  "words": [
+    {
+      "word": "こんにちは",
+      "translation": "Hola",
+      "source": "flashcards",
+      "example": "こんにちは！元気ですか？",
+      "romanization": "Konnichiwa",
+      "learned_at": "2026-01-11T01:47:38.090485"
+    },
+    {
+      "word": "さようなら",
+      "translation": "Adiós",
+      "source": "flashcards",
+      "example": "さようなら！また会いましょう。",
+      "romanization": "Sayōnara",
+      "learned_at": "2026-01-11T01:47:49.005754"
+    },
+    {
+      "word": "ありがとう",
+      "translation": "Gracias",
+      "source": "flashcards",
+      "example": "ありがとう！助かりました。",
+      "romanization": "Arigatou",
+      "learned_at": "2026-01-11T01:51:17.580377"
+    },
+    {
+      "word": "はい",
+      "translation": "Sí",
+      "source": "flashcards",
+      "example": "はい、知っています。",
+      "romanization": "Hai",
+      "learned_at": "2026-01-11T01:56:18.858881"
+    },
+    {
+      "word": "いいえ",
+      "translation": "No",
+      "source": "flashcards",
+      "example": "いいえ、違います。",
+      "romanization": "Iie",
+      "learned_at": "2026-01-11T01:56:23.011182"
+    },
+    {
+      "word": "こんばんは",
+      "translation": "Buenas noches",
+      "source": "flashcards",
+      "example": "こんばんは、良い夢を。",
+      "romanization": "Konbanwa",
+      "learned_at": "2026-01-11T01:56:41.258442"
+    },
+    {
+      "word": "おはようございます",
+      "translation": "Buenos días",
+      "source": "flashcards",
+      "example": "おはようございます！今日はいい天気ですね。",
+      "romanization": "Ohayou gozaimasu",
+      "learned_at": "2026-01-11T01:56:46.563039"
+    },
+    {
+      "word": "どうぞ",
+      "translation": "Por favor",
+      "source": "flashcards",
+      "example": "どうぞ、お入りください。",
+      "romanization": "Douzo",
+      "learned_at": "2026-01-11T01:58:06.089833"
+    }
+  ],
+  "updated_at": "2026-01-11T01:58:06.089840"
+}

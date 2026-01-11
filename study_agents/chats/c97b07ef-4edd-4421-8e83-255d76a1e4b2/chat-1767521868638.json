@@ -1,0 +1,189 @@
+{
+  "chat_id": "chat-1767521868638",
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "title": "SQL",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Quiero aprender SQL",
+      "type": "message",
+      "timestamp": "2026-01-04T10:17:55.382Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## Aprendiendo SQL: Introducción y Conceptos Clave\n\n¡Genial que quieras aprender SQL! SQL (Structured Query Language) es un lenguaje de programación utilizado para gestionar bases de datos. Te ayudará a crear, modificar, consultar y administrar datos de manera efectiva.\n\n---\n\n### Conceptos Básicos de SQL\n\n1. **Base de Datos**: Un sistema organizado para almacenar, gestionar y recuperar datos.\n2. **Tabla**: Conjunto de datos organizados en filas y columnas. Cada tabla tiene un nombre único.\n3. **Registro**: Cada fila en una tabla representa un registro o un conjunto de datos relacionados.\n4. **Campo**: Cada columna en una tabla representa un campo o atributo de los datos.\n\n---\n\n### Comandos SQL Comunes\n\n- **SELECT**: Recuperar datos de una o más tablas.\n- **INSERT**: Agregar nuevos registros a una tabla.\n- **UPDATE**: Modificar registros existentes.\n- **DELETE**: Eliminar registros de una tabla.\n- **CREATE TABLE**: Crear una nueva tabla en la base de datos.\n- **ALTER TABLE**: Modificar la estructura de una tabla existente.\n- **DROP TABLE**: Eliminar una tabla de la base de datos.\n\n---\n\n### Estructura de una Consulta SQL\n\nAquí te muestro la estructura básica de una consulta SQL:\n\n```sql\nSELECT columna1, columna2\nFROM nombre_tabla\nWHERE condición;\n```\n\n- **SELECT**: Especifica las columnas que deseas recuperar.\n- **FROM**: Indica de qué tabla provienen los datos.\n- **WHERE**: Filtra los resultados según una condición específica.\n\n---\n\n### Ejemplo Práctico\n\nImagina que tienes una tabla llamada `Estudiantes` con las siguientes columnas: `ID`, `Nombre`, `Edad`, `Ciudad`.\n\nAquí algunos ejemplos de comandos SQL:\n\n- **Seleccionar todos los estudiantes**:\n\n```sql\nSELECT * FROM Estudiantes;\n```\n\n- **Agregar un nuevo estudiante**:\n\n```sql\nINSERT INTO Estudiantes (Nombre, Edad, Ciudad) VALUES ('Juan', 20, 'Madrid');\n```\n\n- **Actualizar la edad de un estudiante**:\n\n```sql\nUPDATE Estudiantes SET Edad = 21 WHERE Nombre = 'Juan';\n```\n\n- **Eliminar un estudiante**:\n\n```sql\nDELETE FROM Estudiantes WHERE Nombre = 'Juan';\n```\n\n---\n\n### Esquema Conceptual\n\nPara ayudarte a visualizar los conceptos clave de SQL, aquí tienes un esquema que muestra las categorías y comandos principales:\n\n```diagram-json\n{\n  \"title\": \"Conceptos Clave de SQL\",\n  \"nodes\": [\n    {\"id\": \"A\", \"label\": \"SQL (Structured Query Language)\", \"color\": \"#6366f1\"},\n    {\"id\": \"B\", \"label\": \"Base de Datos\", \"color\": \"#10b981\", \"description\": \"Sistema organizado para almacenar y gestionar datos.\"},\n    {\"id\": \"C\", \"label\": \"Tablas\", \"color\": \"#10b981\", \"description\": \"Conjunto de datos organizados en filas y columnas.\"},\n    {\"id\": \"D\", \"label\": \"Comandos Comunes\", \"color\": \"#10b981\", \"description\": \"Instrucciones básicas para manipular datos.\"},\n    {\"id\": \"E\", \"label\": \"SELECT\", \"color\": \"#06b6d4\", \"description\": \"Recuperar datos de una o más tablas.\"},\n    {\"id\": \"F\", \"label\": \"INSERT\", \"color\": \"#06b6d4\", \"description\": \"Agregar nuevos registros a una tabla.\"},\n    {\"id\": \"G\", \"label\": \"UPDATE\", \"color\": \"#06b6d4\", \"description\": \"Modificar registros existentes.\"},\n    {\"id\": \"H\", \"label\": \"DELETE\", \"color\": \"#06b6d4\", \"description\": \"Eliminar registros de una tabla.\"}\n  ],\n  \"edges\": [\n    {\"from\": \"A\", \"to\": \"B\"},\n    {\"from\": \"A\", \"to\": \"C\"},\n    {\"from\": \"A\", \"to\": \"D\"},\n    {\"from\": \"D\", \"to\": \"E\"},\n    {\"from\": \"D\", \"to\": \"F\"},\n    {\"from\": \"D\", \"to\": \"G\"},\n    {\"from\": \"D\", \"to\": \"H\"}\n  ]\n}\n```\n\n---\n\n### Consejos para Aprender SQL\n\n1. **Practica Regularmente**: Utiliza plataformas en línea para practicar consultas SQL.\n2. **Crea Proyectos**: Intenta construir pequeñas bases de datos para aplicar lo aprendido.\n3. **Lee Documentación**: Familiarízate con la documentación de SQL y tutoriales.\n4. **Únete a Comunidades**: Participa en foros y grupos de estudio para resolver dudas y compartir conocimiento.\n\n---\n\n¡Espero que esta información te sea útil para comenzar tu aprendizaje en SQL! Si tienes más preguntas o necesitas ayuda con algo específico, no dudes en preguntar. 😊",
+      "type": "notes",
+      "timestamp": "2026-01-04T10:18:14.937Z"
+    },
+    {
+      "role": "assistant",
+      "content": "🎉 ¡Felicitaciones! Has subido al nivel 1 en sql! Sigue así!",
+      "type": "success",
+      "timestamp": "2026-01-04T10:18:15.902Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Ejercicio generado",
+      "type": "exercise",
+      "timestamp": "2026-01-04T10:18:57.476Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":8.5,\"score_percentage\":85,\"is_correct\":false,\"feedback\":\"Tu respuesta muestra un buen entendimiento de cómo crear tablas y establecer relaciones en SQL. Sin embargo, hay un pequeño error en los valores que has elegido para las inscripciones, que no coinciden con los IDs esperados de las tablas 'Estudiantes' y 'Cursos'. Asegúrate de que los IDs usados en las inserciones realmente existan en las tablas referenciadas para mantener la integridad de la base de datos.\",\"strengths\":[\"Correcta creación de la tabla con claves primarias y foráneas\",\"Buena estructura y formato en la escritura del comando SQL\"],\"weaknesses\":[\"Elección incorrecta de IDs en los comandos INSERT\",\"Falta de verificación de la existencia de los IDs en las tablas originales\"],\"suggestions\":[\"Verificar que los IDs usados en las inserciones existan en las tablas 'Estudiantes' y 'Cursos'\",\"Consultar las tablas originales para asegurarse de que los datos de inserción son correctos\"],\"detailed_analysis\":\"La estructura de la tabla 'Inscripciones' que creaste es correcta, incluyendo las claves foráneas que aseguran la integridad referencial. Sin embargo, los valores usados en los comandos INSERT no parecen estar alineados con los IDs que se esperarían según el enunciado, lo que podría causar errores de integridad referencial si esos IDs no existen en las tablas 'Estudiantes' y 'Cursos'.\",\"correct_answer_explanation\":\"La respuesta esperada especifica claramente que se deben usar IDs que ya existan en las tablas 'Estudiantes' y 'Cursos' para evitar problemas de integridad. Además, establece una relación clara y correcta entre las tablas mediante claves foráneas.\"}",
+      "type": "exercise_result",
+      "timestamp": "2026-01-04T10:20:09.998Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T10:40:25.750Z"
+    },
+    {
+      "role": "assistant",
+      "content": "🎉 **¡Felicitaciones!** Has subido al **nivel 1** en **SQL**!\n\n✨ Ganaste **46 puntos de experiencia**.\n\n\n💪 ¡Sigue así y continúa mejorando!",
+      "type": "success",
+      "timestamp": "2026-01-04T10:40:26.424Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":93.33333333333333,\"correctCount\":14,\"totalQuestions\":15,\"failedQuestions\":[{\"question\":\"¿Qué comando eliminaría todos los registros de la tabla 'Estudiantes'?\",\"explanation\":\"El comando 'DELETE FROM Estudiantes;' eliminaría todos los registros de la tabla 'Estudiantes', mientras que 'DROP' eliminaría la tabla misma.\",\"correctAnswer\":\"A\",\"userAnswer\":\"B\",\"options\":[\"A) DELETE FROM Estudiantes;\",\"B) DROP Estudiantes;\",\"C) REMOVE ALL FROM Estudiantes;\",\"D) TRUNCATE Estudiantes;\"],\"type\":\"multiple_choice\"}],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T10:40:26.424Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T10:50:39.176Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":94.11764705882352,\"correctCount\":16,\"totalQuestions\":17,\"failedQuestions\":[{\"question\":\"¿Qué comando se utilizaría para modificar la edad de un estudiante llamado 'Juan' en la tabla 'Estudiantes'?\",\"explanation\":\"El comando correcto es 'UPDATE Estudiantes SET Edad = 21 WHERE Nombre = 'Juan';', que es la forma adecuada de modificar un registro existente. Las otras opciones no son comandos SQL válidos.\",\"correctAnswer\":\"A\",\"userAnswer\":\"C\",\"options\":[\"A. UPDATE Estudiantes SET Edad = 21 WHERE Nombre = 'Juan';\",\"B. MODIFY Estudiantes SET Edad = 21 WHERE Nombre = 'Juan';\",\"C. CHANGE Estudiantes SET Edad = 21 WHERE Nombre = 'Juan';\",\"D. ALTER Estudiantes SET Edad = 21 WHERE Nombre = 'Juan';\"],\"type\":\"multiple_choice\"}],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T10:50:39.947Z"
+    },
+    {
+      "role": "user",
+      "content": "generame un test de 3 preguntas",
+      "type": "message",
+      "timestamp": "2026-01-04T10:54:49.257Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T10:55:16.138Z"
+    },
+    {
+      "role": "assistant",
+      "content": " **¡Felicidades!** Has subido al **nivel 1** en **3 preguntas**!\n\n✨ Ganaste **50 puntos de experiencia**.\n\n\n💪 ¡Sigue así y continúa mejorando!",
+      "type": "success",
+      "timestamp": "2026-01-04T10:55:16.671Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":100,\"correctCount\":3,\"totalQuestions\":3,\"failedQuestions\":[],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T10:55:16.671Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T10:56:36.854Z"
+    },
+    {
+      "role": "assistant",
+      "content": " **¡Felicidades!** Has subido al **nivel 1** en **General**!\n\n✨ Ganaste **50 puntos de experiencia**.\n\n\n💪 ¡Sigue así y continúa mejorando!",
+      "type": "success",
+      "timestamp": "2026-01-04T10:56:37.000Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":100,\"correctCount\":12,\"totalQuestions\":12,\"failedQuestions\":[],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T10:56:37.000Z"
+    },
+    {
+      "role": "user",
+      "content": "hazme un test de 1 pregunta",
+      "type": "message",
+      "timestamp": "2026-01-04T11:08:32.187Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T11:08:42.402Z"
+    },
+    {
+      "role": "assistant",
+      "content": " **¡Felicidades!** Has subido al **nivel 1** en **1 pregunta**!\n\n✨ Ganaste **50 puntos de experiencia**.\n\n\n💪 ¡Sigue así y continúa mejorando!",
+      "type": "success",
+      "timestamp": "2026-01-04T11:08:42.966Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":100,\"correctCount\":2,\"totalQuestions\":2,\"failedQuestions\":[],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T11:08:42.967Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T11:09:56.804Z"
+    },
+    {
+      "role": "assistant",
+      "content": " **¡Felicidades!** Has subido al **nivel 2** en **General**!\n\n✨ Ganaste **50 puntos de experiencia**.\n\n\n💪 ¡Sigue así y continúa mejorando!",
+      "type": "success",
+      "timestamp": "2026-01-04T11:09:56.946Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":100,\"correctCount\":13,\"totalQuestions\":13,\"failedQuestions\":[],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T11:09:56.946Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T11:14:53.674Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":100,\"correctCount\":5,\"totalQuestions\":5,\"failedQuestions\":[],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T11:14:54.156Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Test generado con 5 preguntas",
+      "type": "test",
+      "timestamp": "2026-01-04T11:15:11.523Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T11:15:23.403Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":100,\"correctCount\":5,\"totalQuestions\":5,\"failedQuestions\":[],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T11:15:23.543Z"
+    }
+  ],
+  "created_at": "2026-01-04T11:17:48.658845",
+  "updated_at": "2026-01-04T12:15:24.663823",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#f97316",
+    "icon": "chat"
+  }
+}

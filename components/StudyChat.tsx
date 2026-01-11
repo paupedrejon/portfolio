@@ -1,12 +1,72 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+// Tipos para Web Speech API
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message: string;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+  isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+declare var SpeechRecognition: {
+  prototype: SpeechRecognition;
+  new (): SpeechRecognition;
+};
+
+declare var webkitSpeechRecognition: {
+  prototype: SpeechRecognition;
+  new (): SpeechRecognition;
+};
+
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { spaceGrotesk, outfit, jetbrainsMono } from "../app/fonts";
 import APIKeyConfig from "./APIKeyConfig";
 import ChatSidebar from "./ChatSidebar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import CodeMirror from "@uiw/react-codemirror";
+import { python } from "@codemirror/lang-python";
+import { javascript } from "@codemirror/lang-javascript";
+import { cpp } from "@codemirror/lang-cpp";
+import { java } from "@codemirror/lang-java";
+import { sql } from "@codemirror/lang-sql";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { EditorView } from "@codemirror/view";
 import DiagramRenderer from "./DiagramRenderer";
 import ConceptualSchemaRenderer from "./ConceptualSchemaRenderer";
 import SectionBasedSchemaRenderer from "./SectionBasedSchemaRenderer";
@@ -18,6 +78,7 @@ import {
   FileIcon,
   NotesIcon,
   TestIcon,
+  ExerciseIcon,
   SendIcon,
   CheckIcon,
   XIcon,
@@ -32,16 +93,191 @@ import {
   StarIcon,
   TargetIcon,
   ZapIcon,
+  MessageIcon,
+  GlobeIcon,
+  FlagUKIcon,
+  FlagFRIcon,
+  FlagDEIcon,
+  FlagITIcon,
+  FlagPTIcon,
+  FlagCNIcon,
+  FlagJPIcon,
+  FlagKRIcon,
+  FlagCAIcon,
+  FlagRUIcon,
 } from "./Icons";
+// react-icons imports
+import {
+  SiPython,
+  SiJavascript,
+  SiReact,
+  SiGit,
+  SiHtml5,
+  SiCss3,
+  SiTypescript,
+  SiSwift,
+  SiCplusplus,
+} from "react-icons/si";
+import {
+  FaAtom,
+  FaBook,
+  FaHistory,
+  FaFlask,
+  FaDna,
+  FaChartLine,
+  FaFileContract,
+  FaShieldAlt,
+  FaUserTie,
+  FaComments,
+  FaHandshake,
+  FaPills,
+  FaPaintBrush,
+  FaPhotoVideo,
+  FaCube,
+  FaHome,
+  FaTshirt,
+  FaGraduationCap,
+  FaLandmark,
+  FaBalanceScale,
+  FaScroll,
+  FaBookOpen,
+  FaPenFancy,
+  FaGlobe,
+  FaUsers,
+  FaUser,
+  FaHeartbeat,
+  FaStethoscope,
+  FaMicroscope,
+  FaHospital,
+  FaPalette,
+  FaVolumeUp,
+  FaStop,
+  FaMicrophone,
+  FaCamera,
+  FaMusic,
+  FaBuilding,
+} from "react-icons/fa";
+import {
+  MdPsychology,
+  MdScience,
+  MdGavel,
+  MdSecurity,
+  MdWork,
+  MdEmojiPeople,
+  MdHealthAndSafety,
+  MdLocalHospital,
+  MdDesignServices,
+  MdDraw,
+  MdMovie,
+  MdTrendingUp,
+  MdShoppingCart,
+  MdLightbulb,
+  MdStore,
+  MdAccountBalance,
+  MdCalculate,
+  MdFunctions,
+  MdBiotech,
+  MdSchool,
+  MdMenuBook,
+  MdAutoAwesome,
+  MdCloud,
+  MdLock,
+  MdSpeed,
+  MdWifi,
+  MdPublic,
+  MdGroups,
+  MdPerson,
+  MdRestaurant,
+  MdFitnessCenter,
+  MdLocalLibrary,
+  MdBrush,
+  MdPalette,
+  MdPhotoCamera,
+  MdHome,
+  MdMusicNote,
+  MdArchitecture,
+} from "react-icons/md";
+import { 
+  TbBrain, 
+  TbMathFunction,
+  TbAtom,
+  TbCalculator,
+  TbChartBar,
+  TbFlask,
+  TbDna,
+  TbScale,
+  TbFileText,
+  TbShield,
+  TbBriefcase,
+  TbChartLine,
+  TbShoppingBag,
+  TbBulb,
+  TbUserStar,
+  TbTrendingUp,
+  TbBuildingStore,
+  TbHistory,
+  TbPaint,
+  TbBook,
+  TbWorld,
+  TbUsers,
+  TbUser,
+  TbHeartbeat,
+  TbHeart,
+  TbPill,
+  TbMicroscope,
+  TbHospital,
+  TbPencil,
+  TbPhoto,
+  TbBox,
+  TbHome,
+  TbMusic,
+  TbShirt,
+  TbBuilding,
+} from "react-icons/tb";
+import {
+  HiCodeBracket,
+  HiCpuChip, 
+  HiUserGroup, 
+  HiHeart, 
+  HiPaintBrush,
+  HiCircleStack,
+  HiCalculator,
+  HiAcademicCap,
+  HiBriefcase,
+  HiClock,
+  HiCamera,
+  HiMusicalNote,
+  HiPresentationChartBar,
+  HiBuildingOffice2,
+  HiScale,
+  HiArrowTrendingUp,
+  HiDocumentText,
+  HiSparkles,
+  HiLightBulb,
+  HiKey,
+  HiBolt,
+  HiGlobeAlt,
+  HiChartBar,
+  HiCube,
+  HiHome,
+  HiLockClosed,
+  HiCloud,
+  HiWifi,
+  HiUser,
+  HiUserCircle,
+  HiCheck,
+  HiXMark,
+} from "react-icons/hi2";
 import { calculateCost, formatCost, estimateTokens, CostEstimate, MODEL_PRICING } from "./costCalculator";
 
 interface Message {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
-  type?: "message" | "notes" | "test" | "feedback" | "success";
+  type?: "message" | "notes" | "test" | "feedback" | "success" | "exercise" | "exercise_result" | "warning" | "level_selection";
   timestamp: Date;
   costEstimate?: CostEstimate;
+  topic?: string; // Tema del mensaje si es selección de nivel
 }
 
 interface TestQuestion {
@@ -57,6 +293,31 @@ interface Test {
   id: string;
   questions: TestQuestion[];
   difficulty: string;
+  topics?: string[];
+  user_level?: number;  // Nivel del usuario (0-10) cuando se generó el test
+}
+
+interface Exercise {
+  exercise_id: string;
+  statement: string;
+  expected_answer: string;
+  hints: string[];
+  points: number;
+  difficulty: string;
+  topics: string[];
+  solution_steps: string[];
+}
+
+interface ExerciseCorrection {
+  score: number;
+  score_percentage: number;
+  is_correct: boolean;
+  feedback: string;
+  strengths: string[];
+  weaknesses: string[];
+  suggestions: string[];
+  detailed_analysis: string;
+  correct_answer_explanation: string;
 }
 
 export default function StudyChat() {
@@ -65,10 +326,16 @@ export default function StudyChat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingTest, setIsGeneratingTest] = useState(false);
+  const [isGeneratingExercise, setIsGeneratingExercise] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState<string>("Procesando...");
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [currentTest, setCurrentTest] = useState<Test | null>(null);
   const [testAnswers, setTestAnswers] = useState<Record<string, string>>({});
+  const [currentExercise, setCurrentExercise] = useState<Exercise | null>(null);
+  const [exerciseAnswer, setExerciseAnswer] = useState<string>("");
+  const [exerciseAnswerImage, setExerciseAnswerImage] = useState<string | null>(null);
+  const [exerciseCorrection, setExerciseCorrection] = useState<ExerciseCorrection | null>(null);
+  const exerciseImageInputRef = useRef<HTMLInputElement>(null);
   const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
   const [apiKeys, setApiKeys] = useState<{ openai: string } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -80,6 +347,248 @@ export default function StudyChat() {
   const [newChatColor, setNewChatColor] = useState<string>("#6366f1");
   const [newChatIcon, setNewChatIcon] = useState<string>("chat");
   const userId = session?.user?.id || "";
+  const [currentChatLevel, setCurrentChatLevel] = useState<{ topic: string; level: number } | null>(null);
+  const [messageLevels, setMessageLevels] = useState<Record<string, { topic: string; level: number }>>({});
+  const [learnedWordsCount, setLearnedWordsCount] = useState<number>(0);
+  const [showLearnedWordsModal, setShowLearnedWordsModal] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [learnedWordsList, setLearnedWordsList] = useState<Array<{
+    word: string;
+    translation: string;
+    example?: string;
+    romanization?: string;
+    source?: string;
+  }>>([]);
+
+  // Función helper para guardar una palabra aprendida
+  const saveLearnedWord = async (
+    word: string,
+    translation: string,
+    language: string,
+    source: string,
+    example?: string,
+    romanization?: string
+  ) => {
+    if (!userId || !language || !isLanguageTopic(language) || !word.trim() || !translation.trim()) return;
+    
+    try {
+      const response = await fetch("/api/study-agents/add-learned-word", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          language,
+          word: word.trim(),
+          translation: translation.trim(),
+          source,
+          example,
+          romanization,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Recargar el conteo desde el backend para asegurar sincronización
+        if (language) {
+          loadLearnedWordsCount(language);
+        }
+        
+        // Si hay actualización de nivel, actualizar el nivel del chat
+        if (data.level_update && currentChatLevel && currentChatLevel.topic === language) {
+          const levelData = data.level_update;
+          const newLevel = (levelData as any)?.new_level || (levelData as any)?.level;
+          if (newLevel !== undefined) {
+            const oldLevel = currentChatLevel.level;
+            setCurrentChatLevel({
+              topic: language,
+              level: newLevel,
+            });
+            
+            // Mostrar mensaje si subió de nivel
+            if (newLevel > oldLevel) {
+              console.log(`📊 Nivel actualizado: ${oldLevel} → ${newLevel}`);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error saving learned word:", error);
+    }
+  };
+  
+  // Función para detectar el tema de un mensaje
+  const detectTopicFromMessage = (content: string): string | null => {
+    const contentLower = content.toLowerCase();
+    if (contentLower.includes("sql") || contentLower.includes("select") || contentLower.includes("from") || contentLower.includes("where")) {
+      return "SQL";
+    } else if (contentLower.includes("python") || contentLower.includes("def ") || contentLower.includes("import ")) {
+      return "Python";
+    } else if (contentLower.includes("javascript") || contentLower.includes("js") || contentLower.includes("function")) {
+      return "JavaScript";
+    } else if (contentLower.includes("react") || contentLower.includes("component") || contentLower.includes("jsx")) {
+      return "React";
+    } else if (contentLower.includes("japonés") || contentLower.includes("japones") || contentLower.includes("hiragana") || contentLower.includes("katakana") || contentLower.includes("kanji") || contentLower.includes("nihongo")) {
+      return "Japonés";
+    } else if (contentLower.includes("api") || contentLower.includes("apis") || contentLower.includes("endpoint") || contentLower.includes("rest")) {
+      return "APIs";
+    }
+    return null;
+  };
+  
+  // Función para calcular nivel basado en palabras aprendidas
+  const calculateLevelFromWords = (wordCount: number): number => {
+    if (wordCount < 25) return 0;
+    if (wordCount < 50) return 1;
+    if (wordCount < 75) return 2;
+    if (wordCount < 100) return 3;
+    if (wordCount < 150) return 4;
+    if (wordCount < 200) return 5;
+    if (wordCount < 300) return 6;
+    if (wordCount < 500) return 7;
+    if (wordCount < 700) return 8;
+    if (wordCount < 900) return 9;
+    return 10;
+  };
+
+  // Función para cargar el conteo de palabras aprendidas
+  const loadLearnedWordsCount = async (language: string) => {
+    if (!userId || !language || !isLanguageTopic(language)) return;
+    
+    try {
+      const response = await fetch("/api/study-agents/get-learned-words-count", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, language }),
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        const count = data.count || 0;
+        setLearnedWordsCount(count);
+        
+        // Si es un idioma, actualizar el nivel basado en palabras aprendidas
+        if (currentChatLevel && currentChatLevel.topic === language) {
+          const calculatedLevel = calculateLevelFromWords(count);
+          if (calculatedLevel !== currentChatLevel.level) {
+            setCurrentChatLevel({
+              topic: language,
+              level: calculatedLevel,
+            });
+            
+            // Actualizar el nivel en el backend
+            const chatIdToUse = currentChatId || currentChatIdRef.current;
+            if (chatIdToUse) {
+              fetch("/api/study-agents/set-chat-level", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  userId,
+                  chatId: chatIdToUse,
+                  level: calculatedLevel,
+                  topic: language,
+                }),
+              }).catch(err => console.error("Error updating level:", err));
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error loading learned words count:", error);
+    }
+  };
+
+  // Función para cargar las palabras aprendidas
+  const loadLearnedWords = async (language: string) => {
+    if (!userId || !language || !isLanguageTopic(language)) return;
+    
+    try {
+      const response = await fetch("/api/study-agents/get-learned-words", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, language }),
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setLearnedWordsList(data.words || []);
+      }
+    } catch (error) {
+      console.error("Error loading learned words:", error);
+    }
+  };
+  
+  // Función para cargar el nivel de una conversación
+  const loadChatLevel = async (chatId: string) => {
+    if (!userId || !chatId) return;
+    
+    try {
+      const response = await fetch("/api/study-agents/get-chat-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, chatId }),
+      });
+      
+      const data = await response.json();
+      if (data.success && data.progress) {
+        const topic = data.progress.topic || currentChatLevel?.topic || "General";
+        const level = data.progress.level || 0;
+        setCurrentChatLevel({
+          topic,
+          level,
+        });
+        console.log(`📊 [Frontend] Nivel de conversación cargado: ${topic} - Nivel ${level}`);
+        
+        // Cargar conteo de palabras aprendidas si es un idioma
+        if (isLanguageTopic(topic)) {
+          loadLearnedWordsCount(topic);
+        }
+        
+        return level;
+      } else {
+        // Si no hay progreso, mantener el tema actual si existe, o usar "General"
+        const existingTopic = currentChatLevel?.topic || "General";
+        setCurrentChatLevel({ topic: existingTopic, level: 0 });
+        console.log(`📊 [Frontend] No hay progreso, usando tema: ${existingTopic}`);
+        return 0;
+      }
+    } catch (error) {
+      console.error("Error loading chat level:", error);
+      return 0;
+    }
+  };
+  
+  // Función para cargar el nivel de un mensaje específico
+  const loadMessageLevel = async (messageId: string, content: string) => {
+    if (!userId) return;
+    
+    const topic = detectTopicFromMessage(content);
+    if (!topic) return;
+    
+    try {
+      const response = await fetch("/api/study-agents/get-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, topic }),
+      });
+      
+      const data = await response.json();
+      if (data.success && data.progress && data.progress[topic]) {
+        const level = data.progress[topic].level || 0;
+        setMessageLevels(prev => ({
+          ...prev,
+          [messageId]: { topic, level }
+        }));
+      } else {
+        setMessageLevels(prev => ({
+          ...prev,
+          [messageId]: { topic, level: 0 }
+        }));
+      }
+    } catch (error) {
+      console.error("Error loading message level:", error);
+    }
+  };
 
   // Colores disponibles para los chats
   const chatColors = [
@@ -105,6 +614,340 @@ export default function StudyChat() {
     { name: "Objetivo", value: "target" },
     { name: "Estrella", value: "star" },
   ];
+
+  // Mapa de iconos por nombre de sección
+  const getSectionIcon = (sectionName: string) => {
+    switch (sectionName) {
+      case "Idiomas":
+        return <HiGlobeAlt size={24} color="white" />;
+      case "Programación":
+        return <HiCodeBracket size={24} color="white" />;
+      case "Ciencias y Matemáticas":
+        return <FaAtom size={24} color="white" />;
+      case "Oposiciones y Leyes":
+        return <HiScale size={24} color="white" />;
+      case "Negocios y Finanzas":
+        return <HiArrowTrendingUp size={24} color="white" />;
+      case "Humanidades e Historia":
+        return <FaHistory size={24} color="white" />;
+      case "Tecnología y Datos":
+        return <HiCpuChip size={24} color="white" />;
+      case "Habilidades Blandas":
+        return <HiUserGroup size={24} color="white" />;
+      case "Salud y Ciencias":
+        return <HiHeart size={24} color="white" />;
+      case "Diseño y Creatividad":
+        return <HiPaintBrush size={24} color="white" />;
+      default:
+        return <FaBook size={24} color="white" />;
+    }
+  };
+
+  // Función helper para detectar si es un idioma
+  const isLanguageTopic = (topic: string): boolean => {
+    const topicLower = topic.toLowerCase();
+    return topicLower.includes("inglés") || topicLower.includes("english") ||
+      topicLower.includes("francés") || topicLower.includes("francais") ||
+      topicLower.includes("alemán") || topicLower.includes("deutsch") ||
+      topicLower.includes("italiano") || topicLower.includes("portugués") ||
+      topicLower.includes("chino") || topicLower.includes("mandarín") || topicLower.includes("simplificado") ||
+      topicLower.includes("japonés") || topicLower.includes("japones") ||
+      topicLower.includes("coreano") || topicLower.includes("catalán") ||
+      topicLower.includes("catalan") || topicLower.includes("ruso");
+  };
+
+  // Función helper para detectar si es un lenguaje de programación
+  const isProgrammingLanguage = (topic: string): boolean => {
+    const topicLower = topic.toLowerCase();
+    return topicLower.includes("python") ||
+      topicLower.includes("javascript") || topicLower.includes("js") ||
+      topicLower.includes("java") ||
+      topicLower.includes("sql") ||
+      topicLower.includes("typescript") ||
+      topicLower.includes("c++") || topicLower.includes("cpp") ||
+      topicLower.includes("react") ||
+      topicLower.includes("html") || topicLower.includes("css") ||
+      topicLower.includes("swift");
+  };
+
+  // Estado para mostrar herramientas
+  const [showLanguageTool, setShowLanguageTool] = useState(false);
+  const [showCodeTool, setShowCodeTool] = useState(false);
+
+  // Función para obtener el identificador del icono basado en el tema (para guardarlo en metadata)
+  const getTopicIconIdentifier = (topic: string): string => {
+    const topicLower = topic.toLowerCase();
+    // Mapear temas a identificadores de iconos únicos
+    if (isLanguageTopic(topic)) return `flag_${topicLower.replace(/\s+/g, "_")}`;
+    if (topicLower.includes("python")) return "icon_python";
+    if (topicLower.includes("javascript") || topicLower.includes("js")) return "icon_javascript";
+    if (topicLower.includes("sql")) return "icon_sql";
+    if (topicLower.includes("java")) return "icon_java";
+    if (topicLower.includes("html") || topicLower.includes("css")) return "icon_html";
+    if (topicLower.includes("react")) return "icon_react";
+    if (topicLower.includes("c++") || topicLower.includes("cpp")) return "icon_cpp";
+    if (topicLower.includes("git")) return "icon_git";
+    if (topicLower.includes("typescript") || topicLower.includes("ts")) return "icon_typescript";
+    if (topicLower.includes("swift")) return "icon_swift";
+    if (topicLower.includes("cálculo") || topicLower.includes("calculo")) return "icon_calculo";
+    if (topicLower.includes("álgebra") || topicLower.includes("algebra")) return "icon_algebra";
+    if (topicLower.includes("estadística") || topicLower.includes("estadistica")) return "icon_estadistica";
+    if (topicLower.includes("física") || topicLower.includes("fisica")) return "icon_fisica";
+    if (topicLower.includes("química") || topicLower.includes("quimica")) return "icon_quimica";
+    if (topicLower.includes("biología") || topicLower.includes("biologia")) return "icon_biologia";
+    if (topicLower.includes("matemáticas") || topicLower.includes("matematicas") || topicLower.includes("matematica")) return "icon_matematicas";
+    if (topicLower.includes("lógica") || topicLower.includes("logica")) return "icon_logica";
+    if (topicLower.includes("geometría") || topicLower.includes("geometria")) return "icon_geometria";
+    if (topicLower.includes("termodinámica") || topicLower.includes("termodinamica")) return "icon_termodinamica";
+    if (topicLower.includes("constitución") || topicLower.includes("constitucion")) return "icon_constitucion";
+    if (topicLower.includes("derecho administrativo")) return "icon_derecho_administrativo";
+    if (topicLower.includes("derecho civil")) return "icon_derecho_civil";
+    if (topicLower.includes("derecho tributario")) return "icon_derecho_tributario";
+    if (topicLower.includes("derecho")) return "icon_derecho";
+    if (topicLower.includes("estatuto")) return "icon_estatuto";
+    if (topicLower.includes("código") || topicLower.includes("codigo")) return "icon_codigo";
+    if (topicLower.includes("ley") && topicLower.includes("contratos")) return "icon_ley";
+    if (topicLower.includes("protección") || topicLower.includes("proteccion")) return "icon_proteccion";
+    if (topicLower.includes("oposiciones") || (topicLower.includes("administrativo") && !topicLower.includes("derecho"))) return "icon_oposiciones";
+    if (topicLower.includes("fuerzas") || (topicLower.includes("cuerpos") && topicLower.includes("seguridad"))) return "icon_fuerzas";
+    if (topicLower.includes("excel")) return "icon_excel";
+    if (topicLower.includes("contabilidad")) return "icon_contabilidad";
+    if (topicLower.includes("finanzas")) return "icon_finanzas";
+    if (topicLower.includes("gestión") || topicLower.includes("gestion") || topicLower.includes("proyectos")) return "icon_gestion";
+    if (topicLower.includes("marketing")) return "icon_marketing";
+    if (topicLower.includes("comercio") || topicLower.includes("ecommerce") || topicLower.includes("electrónico")) return "icon_comercio";
+    if (topicLower.includes("emprendimiento")) return "icon_emprendimiento";
+    if (topicLower.includes("liderazgo")) return "icon_liderazgo";
+    if (topicLower.includes("economía") || topicLower.includes("economia")) return "icon_economia";
+    if (topicLower.includes("ventas")) return "icon_ventas";
+    if (topicLower.includes("historia")) return "icon_historia";
+    if (topicLower.includes("arte")) return "icon_arte";
+    if (topicLower.includes("filosofía") || topicLower.includes("filosofia")) return "icon_filosofia";
+    if (topicLower.includes("guerra") || topicLower.includes("mundial")) return "icon_guerra";
+    if (topicLower.includes("moda") && topicLower.includes("historia")) return "icon_historia_moda";
+    if (topicLower.includes("literatura")) return "icon_literatura";
+    if (topicLower.includes("geografía") || topicLower.includes("geografia")) return "icon_geografia";
+    if (topicLower.includes("mitología") || topicLower.includes("mitologia")) return "icon_mitologia";
+    if (topicLower.includes("sociología") || topicLower.includes("sociologia")) return "icon_sociologia";
+    if (topicLower.includes("antropología") || topicLower.includes("antropologia")) return "icon_antropologia";
+    if (topicLower.includes("escritura") || topicLower.includes("creativa")) return "icon_escritura";
+    if (topicLower.includes("inteligencia") || topicLower.includes("artificial") || topicLower.includes("ia") || topicLower.includes("ai")) return "icon_ia";
+    if (topicLower.includes("prompt") || topicLower.includes("engineering")) return "icon_prompt";
+    if (topicLower.includes("ciberseguridad")) return "icon_ciberseguridad";
+    if (topicLower.includes("análisis") || topicLower.includes("analisis") || topicLower.includes("datos")) return "icon_datos";
+    if (topicLower.includes("power bi") || topicLower.includes("powerbi")) return "icon_powerbi";
+    if (topicLower.includes("blockchain")) return "icon_blockchain";
+    if (topicLower.includes("cloud") || topicLower.includes("computing")) return "icon_cloud";
+    if (topicLower.includes("automatización") || topicLower.includes("automatizacion")) return "icon_automatizacion";
+    if (topicLower.includes("iot") || topicLower.includes("internet")) return "icon_iot";
+    if (topicLower.includes("video") || topicLower.includes("edición") || topicLower.includes("edicion")) return "icon_video";
+    if (topicLower.includes("hablar") || topicLower.includes("público") || topicLower.includes("publico")) return "icon_hablar";
+    if (topicLower.includes("tiempo") || topicLower.includes("gestión")) return "icon_tiempo";
+    if (topicLower.includes("emocional") || topicLower.includes("inteligencia")) return "icon_emocional";
+    if (topicLower.includes("conflictos") || topicLower.includes("resolución")) return "icon_conflictos";
+    if (topicLower.includes("crítico") || topicLower.includes("critico") || topicLower.includes("pensamiento")) return "icon_critico";
+    if (topicLower.includes("estudio") || topicLower.includes("técnicas") || topicLower.includes("tecnicas")) return "icon_estudio";
+    if (topicLower.includes("comunicación") || topicLower.includes("comunicacion") || topicLower.includes("asertiva")) return "icon_comunicacion";
+    if (topicLower.includes("entrevistas") || topicLower.includes("trabajo")) return "icon_entrevistas";
+    if (topicLower.includes("equipo")) return "icon_equipo";
+    if (topicLower.includes("estrés") || topicLower.includes("estres") || topicLower.includes("gestión")) return "icon_estres";
+    if (topicLower.includes("anatomía") || topicLower.includes("anatomia")) return "icon_anatomia";
+    if (topicLower.includes("nutrición") || topicLower.includes("nutricion")) return "icon_nutricion";
+    if (topicLower.includes("fisiología") || topicLower.includes("fisiologia")) return "icon_fisiologia";
+    if (topicLower.includes("auxilios") || topicLower.includes("primeros")) return "icon_auxilios";
+    if (topicLower.includes("psicología") || topicLower.includes("psicologia")) return "icon_psicologia";
+    if (topicLower.includes("neurociencia") || topicLower.includes("neuro")) return "icon_neurociencia";
+    if (topicLower.includes("farmacología") || topicLower.includes("farmacologia")) return "icon_farmacologia";
+    if (topicLower.includes("genética") || topicLower.includes("genetica")) return "icon_genetica";
+    if (topicLower.includes("microbiología") || topicLower.includes("microbiologia")) return "icon_microbiologia";
+    if (topicLower.includes("salud pública") || topicLower.includes("salud publica")) return "icon_salud_publica";
+    if (topicLower.includes("ux") || topicLower.includes("ui") || topicLower.includes("diseño")) return "icon_diseño";
+    if (topicLower.includes("photoshop")) return "icon_photoshop";
+    if (topicLower.includes("gráfico") || topicLower.includes("grafico")) return "icon_grafico";
+    if (topicLower.includes("ilustración") || topicLower.includes("ilustracion")) return "icon_ilustracion";
+    if (topicLower.includes("fotografía") || topicLower.includes("fotografia")) return "icon_fotografia";
+    if (topicLower.includes("3d") || topicLower.includes("modelado")) return "icon_3d";
+    if (topicLower.includes("interiores")) return "icon_interiores";
+    if (topicLower.includes("música") || topicLower.includes("musica")) return "icon_musica";
+    if (topicLower.includes("moda")) return "icon_moda";
+    if (topicLower.includes("arquitectura")) return "icon_arquitectura";
+    return "book"; // Default para temas no mapeados
+  };
+
+  // Mapa de iconos por tema individual
+  const getTopicIcon = (topic: string) => {
+    const topicLower = topic.toLowerCase();
+    const isLanguage = isLanguageTopic(topic);
+    const iconSize = isLanguage ? 48 : 40; // Tamaño más grande para banderas (llenar todo el contenedor)
+    // Idiomas - Banderas específicas
+    if (topicLower.includes("inglés") || topicLower.includes("english")) return <FlagUKIcon size={iconSize} />;
+    if (topicLower.includes("francés") || topicLower.includes("francais")) return <FlagFRIcon size={iconSize} />;
+    if (topicLower.includes("alemán") || topicLower.includes("deutsch")) return <FlagDEIcon size={iconSize} />;
+    if (topicLower.includes("italiano")) return <FlagITIcon size={iconSize} />;
+    if (topicLower.includes("portugués")) return <FlagPTIcon size={iconSize} />;
+    if (topicLower.includes("chino") || topicLower.includes("mandarín") || topicLower.includes("simplificado")) return <FlagCNIcon size={iconSize} />;
+    if (topicLower.includes("japonés") || topicLower.includes("japones")) return <FlagJPIcon size={iconSize} />;
+    if (topicLower.includes("coreano")) return <FlagKRIcon size={iconSize} />;
+    if (topicLower.includes("catalán") || topicLower.includes("catalan")) return <FlagCAIcon size={iconSize} />;
+    if (topicLower.includes("ruso")) return <FlagRUIcon size={iconSize} />;
+    // Programación - Iconos específicos de react-icons
+    if (topicLower.includes("python")) return <SiPython size={iconSize} color="currentColor" />;
+    if (topicLower.includes("javascript") || topicLower.includes("js")) return <SiJavascript size={iconSize} color="currentColor" />;
+    if (topicLower.includes("sql") || topicLower === "sql") return <HiCircleStack size={iconSize} />;
+    if (topicLower.includes("java")) return <HiCodeBracket size={iconSize} />;
+    if (topicLower.includes("html") || topicLower.includes("css")) return <SiHtml5 size={iconSize} color="currentColor" />;
+    if (topicLower.includes("react")) return <SiReact size={iconSize} color="currentColor" />;
+    if (topicLower.includes("c++") || topicLower.includes("cpp")) return <SiCplusplus size={iconSize} color="currentColor" />;
+    if (topicLower.includes("git")) return <SiGit size={iconSize} color="currentColor" />;
+    if (topicLower.includes("typescript") || topicLower.includes("ts")) return <SiTypescript size={iconSize} color="currentColor" />;
+    if (topicLower.includes("swift")) return <SiSwift size={iconSize} color="currentColor" />;
+    // Ciencias y Matemáticas
+    if (topicLower.includes("cálculo") || topicLower.includes("calculo")) return <TbCalculator size={iconSize} />;
+    if (topicLower.includes("álgebra") || topicLower.includes("algebra")) return <TbMathFunction size={iconSize} />;
+    if (topicLower.includes("estadística") || topicLower.includes("estadistica")) return <TbChartBar size={iconSize} />;
+    if (topicLower.includes("física") || topicLower.includes("fisica")) return <TbAtom size={iconSize} />;
+    if (topicLower.includes("química") || topicLower.includes("quimica")) return <TbFlask size={iconSize} />;
+    if (topicLower.includes("biología") || topicLower.includes("biologia")) return <TbDna size={iconSize} />;
+    if (topicLower.includes("matemáticas") || topicLower.includes("matematicas") || topicLower.includes("matematica")) return <HiCalculator size={iconSize} />;
+    if (topicLower.includes("lógica") || topicLower.includes("logica")) return <TbBrain size={iconSize} />;
+    if (topicLower.includes("geometría") || topicLower.includes("geometria")) return <MdFunctions size={iconSize} />;
+    if (topicLower.includes("termodinámica") || topicLower.includes("termodinamica")) return <FaAtom size={iconSize} />;
+    // Oposiciones y Leyes - Orden específico para evitar conflictos
+    if (topicLower.includes("constitución") || topicLower.includes("constitucion")) return <FaBalanceScale size={iconSize} />;
+    if (topicLower.includes("derecho administrativo")) return <FaLandmark size={iconSize} />;
+    if (topicLower.includes("derecho civil")) return <FaBookOpen size={iconSize} />;
+    if (topicLower.includes("derecho tributario")) return <MdAccountBalance size={iconSize} />;
+    if (topicLower.includes("derecho")) return <MdGavel size={iconSize} />; // Fallback para otros tipos de derecho
+    if (topicLower.includes("estatuto")) return <FaScroll size={iconSize} />;
+    if (topicLower.includes("código") || topicLower.includes("codigo")) return <TbFileText size={iconSize} />;
+    if (topicLower.includes("ley") && topicLower.includes("contratos")) return <FaFileContract size={iconSize} />;
+    if (topicLower.includes("protección") || topicLower.includes("proteccion")) return <TbShield size={iconSize} />;
+    if (topicLower.includes("oposiciones") || (topicLower.includes("administrativo") && !topicLower.includes("derecho"))) return <MdWork size={iconSize} />;
+    if (topicLower.includes("fuerzas") || (topicLower.includes("cuerpos") && topicLower.includes("seguridad"))) return <HiLockClosed size={iconSize} />;
+    // Negocios y Finanzas
+    if (topicLower.includes("excel")) return <MdCalculate size={iconSize} />;
+    if (topicLower.includes("contabilidad")) return <MdAccountBalance size={iconSize} />;
+    if (topicLower.includes("finanzas")) return <TbChartLine size={iconSize} />;
+    if (topicLower.includes("gestión") || topicLower.includes("gestion") || topicLower.includes("proyectos")) return <TbBriefcase size={iconSize} />;
+    if (topicLower.includes("marketing")) return <TbTrendingUp size={iconSize} />;
+    if (topicLower.includes("comercio") || topicLower.includes("ecommerce") || topicLower.includes("electrónico")) return <TbShoppingBag size={iconSize} />;
+    if (topicLower.includes("emprendimiento")) return <TbBulb size={iconSize} />;
+    if (topicLower.includes("liderazgo")) return <TbUserStar size={iconSize} />;
+    if (topicLower.includes("economía") || topicLower.includes("economia")) return <HiArrowTrendingUp size={iconSize} />;
+    if (topicLower.includes("ventas")) return <TbBuildingStore size={iconSize} />;
+    // Humanidades e Historia
+    if (topicLower.includes("moda") && topicLower.includes("historia")) return <TbShirt size={iconSize} />; // Historia de la Moda
+    if (topicLower.includes("historia")) return <TbHistory size={iconSize} />;
+    if (topicLower.includes("arte")) return <TbPaint size={iconSize} />;
+    if (topicLower.includes("filosofía") || topicLower.includes("filosofia")) return <HiSparkles size={iconSize} />;
+    if (topicLower.includes("guerra") || topicLower.includes("mundial")) return <HiDocumentText size={iconSize} />;
+    if (topicLower.includes("literatura")) return <TbBook size={iconSize} />;
+    if (topicLower.includes("geografía") || topicLower.includes("geografia")) return <TbWorld size={iconSize} />;
+    if (topicLower.includes("mitología") || topicLower.includes("mitologia")) return <FaHistory size={iconSize} />;
+    if (topicLower.includes("sociología") || topicLower.includes("sociologia")) return <TbUsers size={iconSize} />;
+    if (topicLower.includes("antropología") || topicLower.includes("antropologia")) return <TbUser size={iconSize} />;
+    if (topicLower.includes("escritura") || topicLower.includes("creativa")) return <FaPenFancy size={iconSize} />;
+    // Tecnología y Datos
+    if (topicLower.includes("inteligencia") || topicLower.includes("artificial") || topicLower.includes("ia") || topicLower.includes("ai")) return <MdAutoAwesome size={iconSize} />;
+    if (topicLower.includes("prompt") || topicLower.includes("engineering")) return <HiCpuChip size={iconSize} />;
+    if (topicLower.includes("ciberseguridad")) return <HiKey size={iconSize} />;
+    if (topicLower.includes("análisis") || topicLower.includes("analisis") || topicLower.includes("datos")) return <HiChartBar size={iconSize} />;
+    if (topicLower.includes("power bi") || topicLower.includes("powerbi")) return <HiCircleStack size={iconSize} />;
+    if (topicLower.includes("blockchain")) return <HiCube size={iconSize} />;
+    if (topicLower.includes("cloud") || topicLower.includes("computing")) return <HiCloud size={iconSize} />;
+    if (topicLower.includes("automatización") || topicLower.includes("automatizacion")) return <MdSpeed size={iconSize} />;
+    if (topicLower.includes("iot") || topicLower.includes("internet")) return <HiWifi size={iconSize} />;
+    if (topicLower.includes("video") || topicLower.includes("edición") || topicLower.includes("edicion")) return <MdMovie size={iconSize} />;
+    // Habilidades Blandas
+    if (topicLower.includes("hablar") || topicLower.includes("público") || topicLower.includes("publico")) return <HiPresentationChartBar size={iconSize} />;
+    if (topicLower.includes("tiempo") || topicLower.includes("gestión")) return <HiClock size={iconSize} />;
+    if (topicLower.includes("emocional") || topicLower.includes("inteligencia")) return <MdPsychology size={iconSize} />;
+    if (topicLower.includes("conflictos") || topicLower.includes("resolución")) return <FaHandshake size={iconSize} />;
+    if (topicLower.includes("crítico") || topicLower.includes("critico") || topicLower.includes("pensamiento")) return <HiLightBulb size={iconSize} />;
+    if (topicLower.includes("estudio") || topicLower.includes("técnicas") || topicLower.includes("tecnicas")) return <MdLocalLibrary size={iconSize} />;
+    if (topicLower.includes("comunicación") || topicLower.includes("comunicacion") || topicLower.includes("asertiva")) return <FaComments size={iconSize} />;
+    if (topicLower.includes("entrevistas") || topicLower.includes("trabajo")) return <HiBriefcase size={iconSize} />;
+    if (topicLower.includes("equipo")) return <MdGroups size={iconSize} />;
+    if (topicLower.includes("estrés") || topicLower.includes("estres") || topicLower.includes("gestión")) return <TbHeartbeat size={iconSize} />;
+    // Salud y Ciencias
+    if (topicLower.includes("anatomía") || topicLower.includes("anatomia")) return <TbHeart size={iconSize} />;
+    if (topicLower.includes("nutrición") || topicLower.includes("nutricion")) return <MdRestaurant size={iconSize} />;
+    if (topicLower.includes("fisiología") || topicLower.includes("fisiologia")) return <FaStethoscope size={iconSize} />;
+    if (topicLower.includes("auxilios") || topicLower.includes("primeros")) return <TbHospital size={iconSize} />;
+    if (topicLower.includes("psicología") || topicLower.includes("psicologia")) return <MdPsychology size={iconSize} />;
+    if (topicLower.includes("neurociencia") || topicLower.includes("neuro")) return <TbBrain size={iconSize} />;
+    if (topicLower.includes("farmacología") || topicLower.includes("farmacologia")) return <TbPill size={iconSize} />;
+    if (topicLower.includes("genética") || topicLower.includes("genetica")) return <TbDna size={iconSize} />;
+    if (topicLower.includes("microbiología") || topicLower.includes("microbiologia")) return <TbMicroscope size={iconSize} />;
+    if (topicLower.includes("salud pública") || topicLower.includes("salud publica")) return <MdPublic size={iconSize} />;
+    // Diseño y Creatividad
+    if (topicLower.includes("ux") || topicLower.includes("ui") || topicLower.includes("diseño")) return <MdDesignServices size={iconSize} />;
+    if (topicLower.includes("photoshop")) return <MdPalette size={iconSize} />;
+    if (topicLower.includes("gráfico") || topicLower.includes("grafico")) return <HiPaintBrush size={iconSize} />;
+    if (topicLower.includes("ilustración") || topicLower.includes("ilustracion")) return <TbPencil size={iconSize} />;
+    if (topicLower.includes("fotografía") || topicLower.includes("fotografia")) return <TbPhoto size={iconSize} />;
+    if (topicLower.includes("3d") || topicLower.includes("modelado")) return <TbBox size={iconSize} />;
+    if (topicLower.includes("interiores")) return <TbHome size={iconSize} />;
+    if (topicLower.includes("música") || topicLower.includes("musica")) return <TbMusic size={iconSize} />;
+    if (topicLower.includes("moda")) return <TbShirt size={iconSize} />;
+    if (topicLower.includes("arquitectura")) return <TbBuilding size={iconSize} />;
+    // Default
+    return <FaBook size={iconSize} />;
+  };
+
+  // Sugerencias organizadas por secciones (usando useMemo para evitar recrear en cada render)
+  const topicSuggestions = useMemo(() => [
+    {
+      name: "Idiomas",
+      color: "#3b82f6",
+      topics: ["Inglés", "Francés", "Alemán", "Italiano", "Portugués", "Chino Simplificado", "Japonés", "Coreano", "Catalán", "Ruso"],
+    },
+    {
+      name: "Programación",
+      color: "#10b981",
+      topics: ["Python", "JavaScript", "SQL", "Java", "HTML5 y CSS3", "React", "C++", "Git", "TypeScript", "Swift"],
+    },
+    {
+      name: "Ciencias y Matemáticas",
+      color: "#f59e0b",
+      topics: ["Cálculo", "Álgebra Lineal", "Estadística", "Física Mecánica", "Química Orgánica", "Biología Celular", "Matemáticas Financieras", "Lógica Matemática", "Geometría", "Termodinámica"],
+    },
+    {
+      name: "Oposiciones y Leyes",
+      color: "#6366f1",
+      topics: ["Constitución Española", "Derecho Administrativo", "Estatuto de los Trabajadores", "Código Penal", "Ley de Contratos del Sector Público", "Derecho Civil", "Derecho Tributario", "Protección de Datos", "Oposiciones a Administrativo", "Fuerzas y Cuerpos de Seguridad"],
+    },
+    {
+      name: "Negocios y Finanzas",
+      color: "#06b6d4",
+      topics: ["Excel", "Contabilidad", "Finanzas Personales", "Gestión de Proyectos", "Marketing Digital", "Comercio Electrónico", "Emprendimiento", "Liderazgo", "Economía", "Ventas"],
+    },
+    {
+      name: "Humanidades e Historia",
+      color: "#f97316",
+      topics: ["Historia de España", "Historia del Arte", "Filosofía", "Segunda Guerra Mundial", "Literatura Universal", "Geografía Política", "Mitología", "Sociología", "Antropología", "Escritura Creativa"],
+    },
+    {
+      name: "Tecnología y Datos",
+      color: "#ec4899",
+      topics: ["Inteligencia Artificial", "Prompt Engineering", "Ciberseguridad", "Análisis de Datos", "Power BI", "Blockchain", "Cloud Computing", "Automatización", "Internet de las Cosas", "Edición de Video"],
+    },
+    {
+      name: "Habilidades Blandas",
+      color: "#14b8a6",
+      topics: ["Hablar en Público", "Gestión del Tiempo", "Inteligencia Emocional", "Resolución de Conflictos", "Pensamiento Crítico", "Técnicas de Estudio", "Comunicación Asertiva", "Entrevistas de Trabajo", "Trabajo en Equipo", "Gestión del Estrés"],
+    },
+    {
+      name: "Salud y Ciencias",
+      color: "#ef4444",
+      topics: ["Anatomía Humana", "Nutrición", "Fisiología", "Primeros Auxilios", "Psicología", "Neurociencia", "Farmacología", "Genética", "Microbiología", "Salud Pública"],
+    },
+    {
+      name: "Diseño y Creatividad",
+      color: "#d946ef",
+      topics: ["Diseño UX UI", "Photoshop", "Diseño Gráfico", "Ilustración Digital", "Fotografía", "Modelado 3D", "Diseño de Interiores", "Música", "Historia de la Moda", "Arquitectura"],
+    },
+  ], []);
 
   // Función para renderizar el icono según el tipo
   const renderIcon = (iconType: string = "chat", color: string = "#6366f1", isSelected: boolean = false) => {
@@ -420,7 +1263,7 @@ export default function StudyChat() {
   const addMessage = (message: Omit<Message, "id" | "timestamp">) => {
     const newMessage: Message = {
       ...message,
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
     };
     setMessages((prev) => {
@@ -460,7 +1303,26 @@ export default function StudyChat() {
         };
       });
     }
+    
+    // Cargar nivel del tema para mensajes del asistente
+    if (message.role === "assistant" && message.content) {
+      // Usar setTimeout para asegurar que el mensaje ya esté en el estado
+      setTimeout(() => {
+        loadMessageLevel(newMessage.id, message.content);
+      }, 100);
+    }
   };
+  
+  // Cargar niveles de mensajes existentes cuando cambian los mensajes
+  useEffect(() => {
+    if (!userId) return;
+    
+    messages.forEach((msg) => {
+      if (msg.role === "assistant" && msg.content && !messageLevels[msg.id]) {
+        loadMessageLevel(msg.id, msg.content);
+      }
+    });
+  }, [messages.length, userId]); // Solo cuando cambia la cantidad de mensajes
 
   // Función para guardar chat (con debounce)
   const saveChatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -581,6 +1443,7 @@ export default function StudyChat() {
         content: msg.content,
         type: msg.type || "message",
         timestamp: msg.timestamp.toISOString(),
+        topic: msg.topic || undefined, // Preservar el tema si existe (para mensajes de selección de nivel)
       }));
 
       const response = await fetch("/api/study-agents/save-chat", {
@@ -648,6 +1511,7 @@ export default function StudyChat() {
           content: msg.content,
           type: msg.type || "message",
           timestamp: new Date(msg.timestamp),
+          topic: msg.topic || undefined, // Preservar el tema si existe (para mensajes de selección de nivel)
         }));
 
         setMessages(loadedMessages);
@@ -662,6 +1526,21 @@ export default function StudyChat() {
           if (data.chat.metadata.selectedModel) {
             setSelectedModel(data.chat.metadata.selectedModel);
           }
+          // Si hay un tema en metadata, establecerlo
+          if (data.chat.metadata.topic) {
+            // El nivel se cargará desde el backend
+            console.log(`[loadChat] Tema encontrado en metadata: ${data.chat.metadata.topic}`);
+            setCurrentChatLevel({ topic: data.chat.metadata.topic, level: 0 }); // Nivel temporal, se actualizará con loadChatLevel
+          } else {
+            console.log("[loadChat] No hay tema en metadata");
+          }
+        } else {
+          console.log("[loadChat] No hay metadata en el chat");
+        }
+
+        // Cargar nivel de la conversación (esto actualizará el tema si es diferente)
+        if (userId && chatId) {
+          await loadChatLevel(chatId);
         }
       }
     } catch (error) {
@@ -675,8 +1554,12 @@ export default function StudyChat() {
     setNewChatColor("#6366f1");
   };
   
-  const handleCreateNewChat = async () => {
-    if (!newChatName.trim()) {
+  const handleCreateNewChat = async (predefinedName?: string, predefinedColor?: string, predefinedIcon?: string) => {
+    const chatName = predefinedName || newChatName.trim();
+    const chatColor = predefinedColor || newChatColor;
+    const chatIcon = predefinedIcon || newChatIcon;
+    
+    if (!chatName) {
       alert("Por favor, introduce un nombre para el chat");
       return;
     }
@@ -695,13 +1578,14 @@ export default function StudyChat() {
         body: JSON.stringify({
           userId,
           chatId: newChatId,
-          title: newChatName.trim(),
+          title: chatName,
           messages: [],
           metadata: {
             uploadedFiles: [],
             selectedModel,
-            color: newChatColor,
-            icon: newChatIcon,
+            color: chatColor,
+            icon: chatIcon,
+            topic: predefinedName || null, // Guardar el tema si viene de una sugerencia
           },
         }),
       });
@@ -726,6 +1610,40 @@ export default function StudyChat() {
         setNewChatColor("#6366f1");
         setNewChatIcon("chat");
         
+        // Si se seleccionó un tema sugerido (predefinedName existe), agregar mensaje inicial con botones de nivel
+        if (predefinedName) {
+          console.log(`[handleCreateNewChat] Tema sugerido detectado: ${predefinedName}`);
+          setCurrentChatLevel({ topic: predefinedName, level: 0 }); // Establecer nivel 0 por defecto
+          
+          // Establecer el nivel en el backend también para que quede guardado con el tema
+          if (userId && newChatId) {
+            fetch("/api/study-agents/set-chat-level", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId,
+                chatId: newChatId,
+                level: 0,
+                topic: predefinedName,
+              }),
+            }).then(res => res.json()).then(data => {
+              console.log(`[handleCreateNewChat] Nivel establecido en backend:`, data);
+            }).catch(err => console.error("Error estableciendo nivel inicial:", err));
+          }
+          
+          // Agregar mensaje inicial del asistente con botones de nivel
+          addMessage({
+            role: "assistant",
+            content: `¡Excelente elección! Vamos a darle caña a **${predefinedName}**. Para poder ayudarte mejor, dime:
+
+¿Qué nivel tienes (Principiante, Intermedio, Avanzado)?
+
+En cuanto me digas, empezamos.`,
+            type: "level_selection", // Nuevo tipo de mensaje para selección de nivel
+            topic: predefinedName, // Guardar el tema para los botones
+          });
+        }
+        
         // Refrescar sidebar
         if (typeof window !== "undefined" && (window as any).refreshChatSidebar) {
           (window as any).refreshChatSidebar();
@@ -734,6 +1652,95 @@ export default function StudyChat() {
     } catch (error) {
       console.error("Error creating new chat:", error);
       alert("Error al crear el chat. Por favor, intenta de nuevo.");
+    }
+  };
+
+  // Inicializar reconocimiento de voz
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        
+        // Detectar idioma del chat para usar el reconocimiento de voz apropiado
+        let recognitionLang = "es-ES"; // Español por defecto
+        if (currentChatLevel?.topic) {
+          const topicLower = currentChatLevel.topic.toLowerCase();
+          const langMap: Record<string, string> = {
+            "inglés": "en-US",
+            "english": "en-US",
+            "francés": "fr-FR",
+            "francais": "fr-FR",
+            "alemán": "de-DE",
+            "deutsch": "de-DE",
+            "italiano": "it-IT",
+            "portugués": "pt-PT",
+            "chino": "zh-CN",
+            "chino simplificado": "zh-CN",
+            "japonés": "ja-JP",
+            "japones": "ja-JP",
+            "coreano": "ko-KR",
+            "catalán": "ca-ES",
+            "catalan": "ca-ES",
+            "ruso": "ru-RU",
+          };
+          recognitionLang = langMap[topicLower] || "es-ES";
+        }
+        recognition.lang = recognitionLang;
+        
+        recognition.onstart = () => {
+          setIsListening(true);
+        };
+        
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+          const transcript = Array.from(event.results)
+            .map(result => result[0].transcript)
+            .join("");
+          setInput(prev => prev + (prev ? " " : "") + transcript);
+          setIsListening(false);
+        };
+        
+        recognition.onerror = (event: any) => {
+          console.error("Error en reconocimiento de voz:", event.error);
+          setIsListening(false);
+          if (event.error === "not-allowed") {
+            alert("Por favor, permite el acceso al micrófono en la configuración del navegador.");
+          }
+        };
+        
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+        
+        recognitionRef.current = recognition;
+      }
+    }
+    
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [currentChatLevel?.topic]); // Re-inicializar cuando cambie el idioma del chat
+
+  const handleVoiceInput = () => {
+    if (!recognitionRef.current) {
+      alert("El reconocimiento de voz no está disponible en tu navegador. Por favor, usa Chrome o Edge.");
+      return;
+    }
+    
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+      } catch (error) {
+        console.error("Error al iniciar reconocimiento de voz:", error);
+        setIsListening(false);
+      }
     }
   };
 
@@ -769,12 +1776,150 @@ export default function StudyChat() {
       // Detectar comandos especiales
       const lowerInput = userMessage.toLowerCase();
       
+      // Detectar si el usuario quiere cambiar el nivel manualmente
+      const levelChangePatterns = [
+        /(?:cambiar|poner|establecer|pon|fijar|ajustar|modificar)\s+(?:el\s+)?nivel\s+(?:a\s+)?(\d+)/i,
+        /nivel\s+(?:a\s+)?(\d+)/i,
+        /(?:ponme|ponme en|establece|establece en)\s+(?:el\s+)?nivel\s+(\d+)/i,
+      ];
+      
+      let requestedLevel: number | null = null;
+      for (const pattern of levelChangePatterns) {
+        const match = userMessage.match(pattern);
+        if (match && match[1]) {
+          requestedLevel = parseInt(match[1], 10);
+          if (requestedLevel >= 0 && requestedLevel <= 10) {
+            break;
+          } else {
+            requestedLevel = null;
+          }
+        }
+      }
+      
+      if (requestedLevel !== null && currentChatId) {
+        // Cambiar el nivel manualmente
+        try {
+          const response = await fetch("/api/study-agents/set-chat-level", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId,
+              chatId: currentChatId,
+              level: requestedLevel,
+            }),
+          });
+          
+          const data = await response.json();
+          if (data.success) {
+            const topic = data.result?.topic || currentChatLevel?.topic || "General";
+            setCurrentChatLevel({ topic, level: requestedLevel });
+            addMessage({
+              role: "assistant",
+              content: `✅ Nivel actualizado a **${requestedLevel}/10** para **${topic}**.`,
+              type: "message",
+            });
+            setIsLoading(false);
+            return;
+          } else {
+            throw new Error(data.error || "Error al actualizar el nivel");
+          }
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Error inesperado";
+          addMessage({
+            role: "assistant",
+            content: `Error al cambiar el nivel: ${errorMessage}`,
+            type: "message",
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
+      
       // Detectar si el usuario está pidiendo un test
       const testKeywords = ["test", "examen", "evaluación", "prueba", "cuestionario", "genera un test", "hazme un test", "crea un test", "quiero un test"];
       const isTestRequest = testKeywords.some(keyword => lowerInput.includes(keyword));
+      
+      // Detectar si el usuario está pidiendo un ejercicio
+      const exerciseKeywords = ["ejercicio", "ejercicios", "genera un ejercicio", "hazme un ejercicio", "crea un ejercicio", "quiero un ejercicio", "hazme ejercicio", "crea ejercicio"];
+      const isExerciseRequest = exerciseKeywords.some(keyword => lowerInput.includes(keyword));
 
       if (lowerInput.includes("genera apuntes") || lowerInput.includes("crea apuntes")) {
         await generateNotes();
+      } else if (isExerciseRequest || lowerInput.includes("genera ejercicio") || lowerInput.includes("crea ejercicio") || lowerInput.includes("hazme ejercicio")) {
+        // Procesar solicitud de ejercicio
+        const difficulty = lowerInput.includes("fácil") || lowerInput.includes("facil") ? "easy" : 
+                          lowerInput.includes("difícil") || lowerInput.includes("dificil") ? "hard" : "medium";
+        
+        // Extraer tema/tópico del mensaje
+        let topic: string | null = null;
+        const topicPatterns = [
+          /ejercicio\s+(?:de|sobre|acerca de)\s+(.+?)(?:\s+con|\s*$)/i,
+          /hazme\s+(?:un\s+)?ejercicio\s+(?:de|sobre|acerca de)\s+(.+?)(?:\s+con|\s*$)/i,
+          /crea\s+(?:un\s+)?ejercicio\s+(?:de|sobre|acerca de)\s+(.+?)(?:\s+con|\s*$)/i,
+          /genera\s+(?:un\s+)?ejercicio\s+(?:de|sobre|acerca de)\s+(.+?)(?:\s+con|\s*$)/i,
+        ];
+        
+        for (const pattern of topicPatterns) {
+          const match = userMessage.match(pattern);
+          if (match && match[1]) {
+            topic = match[1].trim();
+            // Limpiar el tema de palabras comunes y condiciones
+            topic = topic.replace(/^(de|sobre|acerca de|del|de la|de los|de las)\s+/i, '').trim();
+            // Remover condiciones si están incluidas
+            topic = topic.replace(/\s+con\s+.+$/i, '').trim();
+            if (topic && topic.length > 2) {
+              break;
+            }
+          }
+        }
+        
+        // Si no se encontró con patrones, buscar después de "ejercicio de"
+        if (!topic) {
+          const ejercicioDeMatch = userMessage.match(/ejercicio\s+(?:de|sobre)\s+(.+?)(?:\s+con|\s*$)/i);
+          if (ejercicioDeMatch) {
+            topic = ejercicioDeMatch[1].trim();
+            topic = topic.replace(/\s+con\s+.+$/i, '').trim();
+          }
+        }
+        
+        // Extraer condiciones/restricciones del mensaje
+        let constraints: string | null = null;
+        const constraintPatterns = [
+          /(?:con|usando|usar|que use|que utilice|que incluya|que contenga)\s+(?:solo|únicamente|exclusivamente|solamente)?\s*(.+?)(?:\s*$)/i,
+          /(?:condiciones?|restricciones?|requisitos?|reglas?):\s*(.+?)(?:\s*$)/i,
+        ];
+        
+        for (const pattern of constraintPatterns) {
+          const match = userMessage.match(pattern);
+          if (match && match[1]) {
+            constraints = match[1].trim();
+            // Limpiar el tema del constraint si está incluido
+            if (topic && constraints.includes(topic)) {
+              constraints = constraints.replace(new RegExp(topic, 'i'), '').trim();
+            }
+            // Limpiar palabras comunes
+            constraints = constraints.replace(/^(con|usando|usar|que use|que utilice|que incluya|que contenga|solo|únicamente|exclusivamente|solamente)\s+/i, '').trim();
+            if (constraints && constraints.length > 3) {
+              break;
+            }
+          }
+        }
+        
+        // Si no se encontró con patrones, buscar después de "con"
+        if (!constraints) {
+          const conMatch = userMessage.match(/con\s+(.+?)$/i);
+          if (conMatch && conMatch[1]) {
+            constraints = conMatch[1].trim();
+            // Remover el tema si está incluido
+            if (topic && constraints.includes(topic)) {
+              constraints = constraints.replace(new RegExp(topic, 'i'), '').trim();
+            }
+          }
+        }
+        
+        setIsGeneratingExercise(true);
+        await generateExercise(difficulty, topic, constraints);
+        setIsGeneratingExercise(false);
       } else if (isTestRequest || lowerInput.includes("genera test") || lowerInput.includes("crea test")) {
         const difficulty = lowerInput.includes("fácil") || lowerInput.includes("facil") ? "easy" : 
                           lowerInput.includes("difícil") || lowerInput.includes("dificil") ? "hard" : "medium";
@@ -881,6 +2026,18 @@ export default function StudyChat() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutos de timeout
       
+      // Preparar historial de conversación (últimos mensajes relevantes)
+      const conversationHistory = messages
+        .filter(msg => msg.type === "message")
+        .slice(-20) // Últimos 20 mensajes
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content,
+        }));
+      
+      // Obtener el tema del chat actual
+      const topic = currentChatLevel?.topic || null;
+      
       // Llamar a la API con la key del usuario y el modelo seleccionado
       const response = await fetch("/api/study-agents/generate-notes", {
         method: "POST",
@@ -889,6 +2046,9 @@ export default function StudyChat() {
           apiKey: apiKeys.openai,
           uploadedFiles: uploadedFiles,
           model: selectedModel === "auto" ? null : selectedModel,
+          userId: userId,
+          conversationHistory: conversationHistory,
+          topic: topic,
         }),
         signal: controller.signal,
       });
@@ -948,13 +2108,20 @@ export default function StudyChat() {
       return;
     }
 
-    // Usar el número de preguntas proporcionado o generar uno aleatorio entre 5 y 20
+    // Cargar el nivel del usuario ANTES de generar el test
+    let currentLevel = 0;
+    if (currentChatId && userId) {
+      currentLevel = await loadChatLevel(currentChatId) ?? 0;
+      console.log(`📊 [Frontend] Nivel cargado para generar test: ${currentLevel}/10`);
+    }
+
+    // Usar el número de preguntas proporcionado o generar uno aleatorio entre 5 y 10
     const finalNumQuestions = numQuestions && numQuestions >= 5 && numQuestions <= 20 
       ? numQuestions 
-      : Math.floor(Math.random() * 16) + 5; // 5-20 preguntas
+      : (Math.random() < 0.5 ? 5 : 10); // 5 o 10 preguntas aleatoriamente
     
     const topicText = topic ? ` sobre ${topic}` : "";
-    setLoadingMessage(`Generando test de nivel ${difficulty}${topicText}...`);
+    setLoadingMessage(`Generando test de nivel ${currentLevel}/10${topicText}...`);
     setIsGeneratingTest(true);
     // No añadir mensaje de texto, solo mostrar la animación de carga
 
@@ -991,14 +2158,30 @@ export default function StudyChat() {
           uploadedFiles: uploadedFiles,
           model: selectedModel === "auto" ? null : selectedModel,
           conversation_history: conversationHistory.length > 0 ? conversationHistory : null,
+          userId: userId,
+          chatId: currentChatId || currentChatIdRef.current,  // Pasar chat_id para obtener el nivel
         }),
       });
 
       const data = await response.json();
 
       if (data.success && data.test && data.test.questions && Array.isArray(data.test.questions)) {
-        setCurrentTest(data.test);
+        // Obtener el nivel del usuario actual para incluirlo en el test
+        const currentLevel = currentChatLevel?.level ?? 0;
+        
+        // Asegurar que el test tenga topics y el nivel del usuario
+        const testWithTopics = {
+          ...data.test,
+          topics: topic ? [topic] : data.test.topics || [],
+          user_level: currentLevel,  // Incluir el nivel del usuario cuando se generó el test
+        };
+        setCurrentTest(testWithTopics);
         setTestAnswers({});
+        
+        // Cargar nivel de la conversación si hay un chatId
+        if (currentChatId && userId) {
+          loadChatLevel(currentChatId);
+        }
 
         // Calcular costo estimado
         let costEstimate: CostEstimate | undefined;
@@ -1082,6 +2265,249 @@ export default function StudyChat() {
     }
   };
 
+  const generateExercise = async (difficulty: string = "medium", topic?: string | null, constraints?: string | null) => {
+    if (!apiKeys?.openai) {
+      setShowAPIKeyConfig(true);
+      return;
+    }
+
+    // Usar el tema de la conversación actual si no se proporciona uno
+    const exerciseTopic = topic || (currentChatLevel?.topic) || null;
+    
+    console.log("[generateExercise] Topic parameter:", topic);
+    console.log("[generateExercise] currentChatLevel:", currentChatLevel);
+    console.log("[generateExercise] Final exerciseTopic:", exerciseTopic);
+    
+    // Detectar si es un tema de programación
+    const isProgramming = exerciseTopic && isProgrammingLanguage(exerciseTopic);
+    console.log("[generateExercise] Is programming:", isProgramming);
+    
+    // Construir constraints para ejercicios de programación
+    let exerciseConstraints = constraints;
+    if (isProgramming && !constraints) {
+      exerciseConstraints = `IMPORTANTE: Este ejercicio DEBE ser de programación práctica.
+- El ejercicio debe requerir escribir código ejecutable en ${exerciseTopic}
+- La respuesta esperada debe incluir el código completo y la salida esperada del programa
+- El formato debe ser: código que el estudiante debe escribir, y la salida esperada que debe producir
+- Ejemplo de formato para la respuesta esperada: "Salida esperada:\n[output del programa]"
+- El ejercicio debe ser práctico y ejecutable, no teórico`;
+    }
+
+    setLoadingMessage(`Generando ejercicio de nivel ${difficulty}...`);
+    setIsGeneratingExercise(true);
+
+    try {
+      // Preparar historial de conversación (últimos mensajes relevantes)
+      const conversationHistory = messages
+        .filter(msg => msg.type === "message" || msg.type === "notes")
+        .slice(-5)
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content.substring(0, 2000) // Limitar longitud
+        }));
+
+      // Asegurar que siempre se envíe un tema si está disponible
+      const topicsToSend = exerciseTopic 
+        ? [exerciseTopic] 
+        : (currentChatLevel?.topic ? [currentChatLevel.topic] : null);
+      
+      console.log("[generateExercise] Enviando topics al backend:", topicsToSend);
+      
+      const response = await fetch("/api/study-agents/generate-exercise", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apiKey: apiKeys.openai,
+          difficulty,
+          topics: topicsToSend,
+          exercise_type: null,
+          constraints: exerciseConstraints || null,
+          model: selectedModel === "auto" ? null : selectedModel,
+          conversationHistory: conversationHistory.length > 0 ? conversationHistory : null,
+          userId: userId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.exercise) {
+        console.log("Ejercicio recibido:", JSON.stringify(data.exercise, null, 2));
+        // Asegurar que el ejercicio tenga la estructura correcta
+        // Si el ejercicio no tiene topics pero se pasó un tema, agregarlo
+        const exerciseTopics = data.exercise.topics || [];
+        const finalTopics = exerciseTopics.length > 0 
+          ? exerciseTopics 
+          : (exerciseTopic ? [exerciseTopic] : []);
+        
+        const exerciseData = {
+          ...data.exercise,
+          statement: data.exercise.statement || data.exercise.statement_text || "",
+          hints: data.exercise.hints || [],
+          points: data.exercise.points || 10,
+          difficulty: data.exercise.difficulty || difficulty,
+          topics: finalTopics, // Asegurar que siempre tenga el tema
+          solution_steps: data.exercise.solution_steps || [],
+          expected_answer: data.exercise.expected_answer || "",
+          exercise_id: data.exercise.exercise_id || data.exerciseId || "",
+        };
+        
+        console.log("Ejercicio procesado con topics:", finalTopics);
+        console.log("Ejercicio procesado:", JSON.stringify(exerciseData, null, 2));
+        setCurrentExercise(exerciseData);
+        setExerciseAnswer("");
+        setExerciseAnswerImage(null);
+        setExerciseCorrection(null);
+
+        // Calcular costo estimado
+        let costEstimate: CostEstimate | undefined;
+        if (data.inputTokens && data.outputTokens) {
+          costEstimate = calculateCost(
+            data.inputTokens,
+            data.outputTokens,
+            selectedModel
+          );
+        } else {
+          const estimatedInput = estimateTokens(JSON.stringify(data.exercise));
+          const estimatedOutput = estimateTokens(JSON.stringify(data.exercise));
+          costEstimate = calculateCost(estimatedInput, estimatedOutput, selectedModel);
+        }
+
+        addMessage({
+          role: "assistant",
+          content: `Ejercicio generado`,
+          type: "exercise",
+          costEstimate,
+        });
+      } else {
+        throw new Error(data.error || 'No se pudo generar el ejercicio');
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error generando ejercicio";
+      addMessage({
+        role: "assistant",
+        content: `Error: ${message}`,
+        type: "message",
+      });
+    } finally {
+      setIsGeneratingExercise(false);
+      setIsLoading(false);
+    }
+  };
+
+  const correctExercise = async () => {
+    if (!currentExercise || (!exerciseAnswer.trim() && !exerciseAnswerImage) || !apiKeys?.openai) return;
+
+    setIsLoading(true);
+    setLoadingMessage("Corrigiendo ejercicio...");
+
+    try {
+      const response = await fetch("/api/study-agents/correct-exercise", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apiKey: apiKeys.openai,
+          exercise: currentExercise,
+          studentAnswer: exerciseAnswer,
+          studentAnswerImage: exerciseAnswerImage,
+          model: selectedModel === "auto" ? null : selectedModel,
+          userId: userId, // Agregar userId para actualizar progreso
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.correction) {
+        setExerciseCorrection(data.correction);
+
+
+        // Verificar si subió de nivel
+        if (data.progress_update) {
+          const topic = data.progress_update.topic;
+          const newLevel = data.progress_update.new_level;
+          
+          // Actualizar el indicador de nivel de la conversación
+          if (data.progress_update.chat_id) {
+            setCurrentChatLevel({ topic, level: newLevel });
+          }
+          
+          // Actualizar niveles de todos los mensajes relacionados con este tema
+          setMessageLevels(prev => {
+            const updated = { ...prev };
+            Object.keys(updated).forEach(msgId => {
+              if (updated[msgId].topic === topic) {
+                updated[msgId] = { topic, level: newLevel };
+              }
+            });
+            return updated;
+          });
+          
+          const levelUp = data.progress_update.level_up || false;
+          const levelDown = data.progress_update.level_down || false;
+          const keyConcepts = data.progress_update.key_concepts || [];
+          
+          if (levelUp) {
+            const expGained = data.progress_update.experience_gained || 0;
+            const levelsChanged = data.progress_update.levels_changed || 1;
+            const oldLevel = data.progress_update.old_level || 0;
+            
+            // Construir mensaje con conceptos clave a repasar
+            let conceptsText = "";
+            if (keyConcepts && keyConcepts.length > 0) {
+              conceptsText = `\n\n📚 **Conceptos clave a repasar en este nivel:**\n${keyConcepts.map((c: string) => `• ${c}`).join("\n")}`;
+            }
+            
+            // Mensaje diferente si subió 2 niveles
+            const levelUpText = levelsChanged === 2 
+              ? ` **¡Felicidades!** Has subido **2 niveles** (${oldLevel} → ${newLevel}) en **${topic}**! 🎉🎉`
+              : ` **¡Felicidades!** Has subido al **nivel ${newLevel}** en **${topic}**!`;
+            
+            // Mostrar mensaje de felicitaciones con repaso de conceptos
+            addMessage({
+              role: "assistant",
+              content: `${levelUpText}\n\n✨ Ganaste **${expGained} puntos de experiencia**.\n${conceptsText}\n\n💪 ¡Sigue así y continúa mejorando!`,
+              type: "success",
+            });
+          } else if (levelDown) {
+            // Mostrar mensaje de advertencia si bajó de nivel
+            addMessage({
+              role: "assistant",
+              content: `⚠️ Has bajado al **nivel ${newLevel}** en **${topic}** debido a un resultado bajo.\n\n💡 Te recomiendo repasar los conceptos fundamentales antes de continuar. ¡No te desanimes, puedes recuperar tu nivel!`,
+              type: "warning",
+            });
+          }
+        }
+
+        // Calcular costo estimado
+        let costEstimate: CostEstimate | undefined;
+        if (data.inputTokens && data.outputTokens) {
+          costEstimate = calculateCost(
+            data.inputTokens,
+            data.outputTokens,
+            selectedModel
+          );
+        }
+
+        addMessage({
+          role: "assistant",
+          content: JSON.stringify(data.correction),
+          type: "exercise_result",
+          costEstimate,
+        });
+      } else {
+        throw new Error(data.error || 'No se pudo corregir el ejercicio');
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error corrigiendo ejercicio";
+      addMessage({
+        role: "assistant",
+        content: `Error: ${message}`,
+        type: "message",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const askQuestion = async (question: string) => {
     if (!apiKeys?.openai) {
       setShowAPIKeyConfig(true);
@@ -1091,6 +2517,9 @@ export default function StudyChat() {
     setLoadingMessage("Pensando y generando respuesta...");
 
     try {
+      // Obtener el tema del chat actual
+      const chatTopic = currentChatLevel?.topic || null;
+      
       // Llamar a la API con la key del usuario y el modelo seleccionado
       const response = await fetch("/api/study-agents/ask", {
         method: "POST",
@@ -1100,6 +2529,9 @@ export default function StudyChat() {
           question,
           uploadedFiles: uploadedFiles,
           model: selectedModel === "auto" ? null : selectedModel,
+          userId: userId,
+          chatId: currentChatId || currentChatIdRef.current,
+          topic: chatTopic,
         }),
       });
 
@@ -1133,6 +2565,63 @@ export default function StudyChat() {
           type: hasMarkdown ? "notes" : "message",
           costEstimate,
         });
+        
+        // Detectar comprensión del tema basado en la pregunta y respuesta
+        if (userId && question) {
+          // Extraer tema de la pregunta (palabras clave comunes)
+          const topicKeywords = [
+            "sql", "python", "javascript", "react", "java", "c++", "html", "css",
+            "base de datos", "database", "api", "programación", "algoritmo",
+            "matemáticas", "física", "química", "biología", "historia",
+            "japonés", "inglés", "español", "francés"
+          ];
+          
+          const lowerQuestion = question.toLowerCase();
+          const detectedTopic = topicKeywords.find(keyword => lowerQuestion.includes(keyword));
+          
+          if (detectedTopic) {
+            // Calcular comprensión basado en si la respuesta es detallada y útil
+            // Si la respuesta tiene más de 200 caracteres y contiene información útil, asumimos comprensión
+            const understandingScore = data.answer && data.answer.length > 200 ? 0.3 : 0.1;
+            
+            // Actualizar progreso de comprensión (solo si hay comprensión significativa)
+            if (understandingScore >= 0.2) {
+              try {
+                const understandingResponse = await fetch("/api/study-agents/update-chat-understanding", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    userId,
+                    topic: detectedTopic,
+                    understandingScore: understandingScore,
+                  }),
+                });
+                
+                const understandingData = await understandingResponse.json();
+                if (understandingData.success && understandingData.progress_update) {
+                  const topic = understandingData.progress_update.topic;
+                  const newLevel = understandingData.progress_update.new_level;
+                  
+                  // Actualizar el indicador de nivel de la conversación
+                  if (understandingData.progress_update.chat_id) {
+                    setCurrentChatLevel({ topic, level: newLevel });
+                  }
+                  
+                  // Mostrar mensaje si subió de nivel
+                  if (understandingData.progress_update.level_up) {
+                    addMessage({
+                      role: "assistant",
+                      content: `🎉 ¡Felicitaciones! Has subido al nivel ${newLevel} en ${topic}! Sigue así!`,
+                      type: "success",
+                    });
+                  }
+                }
+              } catch (error) {
+                console.error("Error updating chat understanding:", error);
+              }
+            }
+          }
+        }
       } else {
         // Fallback a simulación
         setTimeout(() => {
@@ -1190,15 +2679,149 @@ export default function StudyChat() {
         return;
       }
 
+      const correctAnswers: Array<{ question: string; answer: string }> = [];
       const correctCount = Object.entries(testAnswers).filter(
         ([id, answer]) => {
           const question = currentTest.questions.find((q) => q.id === id);
-          return question && question.correct_answer.toLowerCase().trim() === answer.toLowerCase().trim();
+          const isCorrect = question && question.correct_answer.toLowerCase().trim() === answer.toLowerCase().trim();
+          if (isCorrect && question) {
+            correctAnswers.push({
+              question: question.question,
+              answer: question.correct_answer,
+            });
+          }
+          return isCorrect;
         }
       ).length;
 
       const totalQuestions = currentTest.questions.length;
       const score = (correctCount / totalQuestions) * 100;
+      
+      // Actualizar progreso del test
+      if (userId) {
+        // Intentar obtener el tema del test, o usar "General" como fallback
+        let mainTopic = "General";
+        if (currentTest.topics && currentTest.topics.length > 0) {
+          mainTopic = currentTest.topics[0];
+        } else {
+          // Si no hay topics, intentar extraer tema de la conversación reciente
+          const recentMessages = messages.slice(-5);
+          for (const msg of recentMessages) {
+            if (msg.role === "assistant" && msg.content) {
+              const contentLower = msg.content.toLowerCase();
+              if (contentLower.includes("sql")) {
+                mainTopic = "SQL";
+                break;
+              } else if (contentLower.includes("python")) {
+                mainTopic = "Python";
+                break;
+              } else if (contentLower.includes("javascript")) {
+                mainTopic = "JavaScript";
+                break;
+              } else if (contentLower.includes("react")) {
+                mainTopic = "React";
+                break;
+              } else if (contentLower.includes("japonés") || contentLower.includes("japones") || contentLower.includes("hiragana") || contentLower.includes("katakana") || contentLower.includes("kanji") || contentLower.includes("nihongo")) {
+                mainTopic = "Japonés";
+                break;
+              } else if (contentLower.includes("api") || contentLower.includes("apis")) {
+                mainTopic = "APIs";
+                break;
+              }
+            }
+          }
+        }
+        
+        try {
+          const chatIdToUse = currentChatId || currentChatIdRef.current;
+          console.log(`📊 [Frontend] Actualizando progreso del test: tema=${mainTopic}, score=${score}%, userId=${userId}, chatId=${chatIdToUse}`);
+          console.log(`📊 [Frontend] Score calculado: ${score}% (${correctCount}/${totalQuestions})`);
+          const progressResponse = await fetch("/api/study-agents/update-test-progress", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId,
+              topic: mainTopic,
+              scorePercentage: score,
+              chatId: chatIdToUse,  // Pasar chat_id en lugar de solo topic
+            }),
+          });
+          
+          console.log(`📊 [Frontend] Respuesta HTTP: status=${progressResponse.status}, ok=${progressResponse.ok}`);
+          
+          if (!progressResponse.ok) {
+            const errorText = await progressResponse.text();
+            console.error(`📊 [Frontend] Error en respuesta: ${errorText}`);
+            throw new Error(`Error ${progressResponse.status}: ${errorText}`);
+          }
+          
+          const progressData = await progressResponse.json();
+          console.log("📊 [Frontend] Respuesta de actualización de progreso:", progressData);
+          console.log("📊 [Frontend] level_up:", progressData.progress_update?.level_up);
+          console.log("📊 [Frontend] levels_changed:", progressData.progress_update?.levels_changed);
+          console.log("📊 [Frontend] old_level:", progressData.progress_update?.old_level);
+          console.log("📊 [Frontend] new_level:", progressData.progress_update?.new_level);
+          
+          if (progressData.success && progressData.progress_update) {
+            const topic = progressData.progress_update.topic;
+            const newLevel = progressData.progress_update.new_level;
+            const oldLevel = progressData.progress_update.old_level || 0;
+            const totalExp = progressData.progress_update.total_experience || 0;
+            const levelUp = progressData.progress_update.level_up || false;
+            const levelDown = progressData.progress_update.level_down || false;
+            const keyConcepts = progressData.progress_update.key_concepts || [];
+            
+            console.log(`📊 Progreso actualizado: ${topic} - Nivel ${oldLevel} → ${newLevel} (${totalExp} XP total)`);
+            
+            // Actualizar el indicador de nivel de la conversación
+            setCurrentChatLevel({ topic, level: newLevel });
+            
+            // Actualizar niveles de todos los mensajes relacionados con este tema
+            setMessageLevels(prev => {
+              const updated = { ...prev };
+              Object.keys(updated).forEach(msgId => {
+                if (updated[msgId].topic === topic) {
+                  updated[msgId] = { topic, level: newLevel };
+                }
+              });
+              return updated;
+            });
+            
+            // Mostrar mensaje de felicitaciones si subió de nivel
+            if (levelUp) {
+              const expGained = progressData.progress_update.experience_gained || 0;
+              const levelsChanged = progressData.progress_update.levels_changed || 1;
+              
+              // Construir mensaje con conceptos clave a repasar
+              let conceptsText = "";
+              if (keyConcepts && keyConcepts.length > 0) {
+                conceptsText = `\n\n📚 **Conceptos clave a repasar en este nivel:**\n${keyConcepts.map((c: string, i: number) => `• ${c}`).join("\n")}`;
+              }
+              
+              // Mensaje diferente si subió 2 niveles
+              const levelUpText = levelsChanged === 2 
+                ? ` **¡Felicidades!** Has subido **2 niveles** (${oldLevel} → ${newLevel}) en **${topic}**! 🎉🎉`
+                : ` **¡Felicidades!** Has subido al **nivel ${newLevel}** en **${topic}**!`;
+              
+              // Mostrar mensaje de felicitaciones con repaso de conceptos
+              addMessage({
+                role: "assistant",
+                content: `${levelUpText}\n\n✨ Ganaste **${expGained} puntos de experiencia**.\n${conceptsText}\n\n💪 ¡Sigue así y continúa mejorando!`,
+                type: "success",
+              });
+            } else if (levelDown) {
+              // Mostrar mensaje de advertencia si bajó de nivel
+              addMessage({
+                role: "assistant",
+                content: `⚠️ Has bajado al **nivel ${newLevel}** en **${topic}** debido a un resultado bajo.\n\n💡 Te recomiendo repasar los conceptos fundamentales antes de continuar. ¡No te desanimes, puedes recuperar tu nivel!`,
+                type: "warning",
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error updating test progress:", error);
+        }
+      }
       
       // Identificar preguntas falladas y extraer conceptos
       const failedQuestions = currentTest.questions.filter((q) => {
@@ -1244,6 +2867,7 @@ export default function StudyChat() {
         type: "feedback",
         costEstimate,
       });
+
     } catch (error: unknown) {
       // Fallback con cálculo local
       if (!currentTest || !currentTest.questions || currentTest.questions.length === 0) {
@@ -1346,14 +2970,22 @@ export default function StudyChat() {
         <div
           style={{
             position: "fixed",
-            inset: 0,
+            top: 0,
+            left: sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0",
+            right: 0,
+            bottom: 0,
             background: "rgba(0, 0, 0, 0.8)",
             backdropFilter: "blur(8px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 1000,
-            padding: "1rem",
+            padding: "3rem",
+            paddingLeft: "6rem",
+            paddingRight: "3rem",
+            transition: "left 0.3s ease",
+            overflow: "auto",
+            boxSizing: "border-box",
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -1364,228 +2996,379 @@ export default function StudyChat() {
         >
           <div
             style={{
-              background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.95)" : "rgba(255, 255, 255, 0.95)",
-              border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
-              borderRadius: "24px",
-              padding: "2rem",
-              maxWidth: "500px",
-              width: "100%",
+              background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.98)" : "rgba(255, 255, 255, 0.98)",
+              border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.3)" : "rgba(148, 163, 184, 0.4)"}`,
+              borderRadius: "28px",
+              padding: "3rem",
+              paddingLeft: "3.5rem",
+              width: "calc(100% - 4rem)",
+              maxWidth: "1400px",
+              boxSizing: "border-box",
+              maxHeight: "calc(100vh - 6rem)",
+              display: "flex",
+              flexDirection: "column",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
+              overflow: "hidden",
+              margin: "0",
+              marginLeft: "4rem",
+              marginRight: "auto",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2
-              className={spaceGrotesk.className}
-              style={{
-                fontSize: "1.5rem",
-                fontWeight: 700,
-                color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
-                marginBottom: "1.5rem",
-              }}
-            >
-              Nuevo Chat
-            </h2>
-            <p
-              className={outfit.className}
-              style={{
-                fontSize: "0.875rem",
-                color: colorTheme === "dark" ? "rgba(226, 232, 240, 0.7)" : "rgba(26, 36, 52, 0.7)",
-                marginBottom: "0.75rem",
-              }}
-            >
-              Introduce un nombre para el nuevo chat:
-            </p>
-            <input
-              type="text"
-              value={newChatName}
-              onChange={(e) => setNewChatName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleCreateNewChat();
-                } else if (e.key === "Escape") {
-                  setShowNewChatModal(false);
-                  setNewChatName("");
-                  setNewChatColor("#6366f1");
-                  setNewChatIcon("chat");
-                }
-              }}
-              autoFocus
-              placeholder="Nombre del chat..."
-              style={{
-                width: "100%",
-                padding: "0.75rem 1rem",
-                background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "rgba(255, 255, 255, 0.9)",
-                border: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.3)"}`,
-                borderRadius: "10px",
-                color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
-                fontSize: "1rem",
-                outline: "none",
-                marginBottom: "1.5rem",
-              }}
-            />
-            <p
-              className={outfit.className}
-              style={{
-                fontSize: "0.875rem",
-                color: colorTheme === "dark" ? "rgba(226, 232, 240, 0.7)" : "rgba(26, 36, 52, 0.7)",
-                marginBottom: "0.75rem",
-              }}
-            >
-              Selecciona un color:
-            </p>
-            <div
-              style={{
-                display: "flex",
-                gap: "0.75rem",
-                flexWrap: "wrap",
-                marginBottom: "1.5rem",
-              }}
-            >
-              {chatColors.map((color) => (
-                <button
-                  key={color.value}
-                  onClick={() => setNewChatColor(color.value)}
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "10px",
-                    background: color.value,
-                    border: newChatColor === color.value 
-                      ? `3px solid ${colorTheme === "dark" ? "#fff" : "#000"}` 
-                      : `2px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.3)" : "rgba(148, 163, 184, 0.4)"}`,
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    boxShadow: newChatColor === color.value
-                      ? `0 0 0 3px ${colorTheme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)"}`
-                      : "none",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (newChatColor !== color.value) {
-                      e.currentTarget.style.transform = "scale(1.1)";
-                      e.currentTarget.style.boxShadow = `0 4px 12px ${color.value}40`;
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.boxShadow = newChatColor === color.value
-                      ? `0 0 0 3px ${colorTheme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)"}`
-                      : "none";
-                  }}
-                  title={color.name}
-                />
-              ))}
-            </div>
-            <p
-              className={outfit.className}
-              style={{
-                fontSize: "0.875rem",
-                color: colorTheme === "dark" ? "rgba(226, 232, 240, 0.7)" : "rgba(26, 36, 52, 0.7)",
-                marginBottom: "0.75rem",
-              }}
-            >
-              Selecciona un icono:
-            </p>
-            <div
-              style={{
-                display: "flex",
-                gap: "0.75rem",
-                flexWrap: "wrap",
-                marginBottom: "1.5rem",
-              }}
-            >
-              {chatIcons.map((icon) => (
-                <button
-                  key={icon.value}
-                  onClick={() => setNewChatIcon(icon.value)}
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    borderRadius: "10px",
-                    background: newChatIcon === icon.value
-                      ? newChatColor
-                      : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.1)"),
-                    border: newChatIcon === icon.value 
-                      ? `3px solid ${colorTheme === "dark" ? "#fff" : "#000"}` 
-                      : `2px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.5)"}`,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "all 0.2s ease",
-                    boxShadow: newChatIcon === icon.value
-                      ? `0 0 0 3px ${colorTheme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)"}`
-                      : "none",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (newChatIcon !== icon.value) {
-                      e.currentTarget.style.transform = "scale(1.1)";
-                      e.currentTarget.style.background = newChatColor || (colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.2)");
-                      // Actualizar el color del SVG en hover
-                      const svg = e.currentTarget.querySelector('svg');
-                      if (svg) {
-                        svg.style.stroke = newChatColor ? "white" : "#6366f1";
-                      }
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.background = newChatIcon === icon.value
-                      ? newChatColor
-                      : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.1)");
-                    e.currentTarget.style.boxShadow = newChatIcon === icon.value
-                      ? `0 0 0 3px ${colorTheme === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)"}`
-                      : "none";
-                    // Restaurar el color del SVG
-                    const svg = e.currentTarget.querySelector('svg');
-                    if (svg) {
-                      svg.style.stroke = newChatIcon === icon.value
-                        ? (newChatColor ? "white" : "#6366f1")
-                        : (colorTheme === "dark" ? "rgba(226, 232, 240, 0.9)" : "rgba(26, 36, 52, 0.9)");
-                    }
-                  }}
-                  title={icon.name}
-                >
-                  {renderIcon(icon.value, newChatIcon === icon.value ? (newChatColor || "#6366f1") : (colorTheme === "dark" ? "rgba(226, 232, 240, 0.9)" : "rgba(26, 36, 52, 0.9)"), newChatIcon === icon.value)}
-                </button>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
+            {/* Header */}
+            <div style={{ marginBottom: "2.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "2rem", borderBottom: `2px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.2)"}` }}>
+              <h2
+                className={spaceGrotesk.className}
+                style={{
+                  fontSize: "2.25rem",
+                  fontWeight: 700,
+                  letterSpacing: "-0.02em",
+                  color: colorTheme === "dark" ? "#f1f5f9" : "#0f172a",
+                  margin: 0,
+                  lineHeight: 1.2,
+                }}
+              >
+                Nuevo Chat
+              </h2>
               <button
                 onClick={() => {
                   setShowNewChatModal(false);
                   setNewChatName("");
+                  setNewChatColor("#6366f1");
+                  setNewChatIcon("chat");
                 }}
                 style={{
-                  padding: "0.75rem 1.5rem",
                   background: "transparent",
-                  border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
-                  borderRadius: "10px",
-                  color: colorTheme === "dark" ? "rgba(226, 232, 240, 0.7)" : "rgba(26, 36, 52, 0.7)",
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleCreateNewChat}
-                style={{
-                  padding: "0.75rem 1.5rem",
-                  background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
                   border: "none",
-                  borderRadius: "10px",
-                  color: "white",
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
                   cursor: "pointer",
+                  padding: "0.5rem",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: colorTheme === "dark" ? "rgba(226, 232, 240, 0.7)" : "rgba(26, 36, 52, 0.7)",
                   transition: "all 0.2s ease",
-                  boxShadow: "0 4px 12px rgba(99, 102, 241, 0.3)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
                 }}
               >
-                Crear
+                <XIcon size={24} />
               </button>
+            </div>
+
+            {/* Input manual (opcional) */}
+            <div style={{ marginBottom: "2.5rem", paddingBottom: "2rem", borderBottom: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.12)" : "rgba(148, 163, 184, 0.18)"}` }}>
+              <p
+                className={outfit.className}
+                style={{
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                  color: colorTheme === "dark" ? "rgba(226, 232, 240, 0.9)" : "rgba(15, 23, 42, 0.9)",
+                  marginBottom: "1rem",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                O escribe un nombre personalizado:
+              </p>
+              <input
+                type="text"
+                value={newChatName}
+                onChange={(e) => setNewChatName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newChatName.trim()) {
+                    handleCreateNewChat();
+                  } else if (e.key === "Escape") {
+                    setShowNewChatModal(false);
+                    setNewChatName("");
+                    setNewChatColor("#6366f1");
+                    setNewChatIcon("chat");
+                  }
+                }}
+                placeholder="Nombre del chat..."
+                className={outfit.className}
+                style={{
+                  width: "100%",
+                  padding: "1rem 1.25rem",
+                  background: colorTheme === "dark" ? "rgba(30, 41, 59, 0.6)" : "rgba(248, 250, 252, 0.8)",
+                  border: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.25)"}`,
+                  borderRadius: "14px",
+                  color: colorTheme === "dark" ? "#f1f5f9" : "#0f172a",
+                  fontSize: "1rem",
+                  fontWeight: 500,
+                  outline: "none",
+                  transition: "all 0.2s ease",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(99, 102, 241, 0.6)" : "rgba(99, 102, 241, 0.5)";
+                  e.currentTarget.style.boxShadow = `0 0 0 4px ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)"}`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.25)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              />
+              {newChatName.trim() && (
+                <div style={{ marginTop: "1rem", display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
+                  <button
+                    onClick={() => handleCreateNewChat()}
+                    style={{
+                      padding: "0.75rem 1.5rem",
+                      background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                      border: "none",
+                      borderRadius: "16px",
+                      color: "white",
+                      fontSize: "0.875rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      boxShadow: "0 4px 12px rgba(99, 102, 241, 0.3)",
+                    }}
+                  >
+                    Crear chat personalizado
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Sugerencias organizadas por secciones */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                overflowX: "hidden",
+                paddingRight: "1rem",
+                paddingLeft: "0",
+                marginRight: "0",
+                marginLeft: "0",
+                marginBottom: "1rem",
+                maxHeight: "calc(100vh - 420px)",
+                scrollbarWidth: "thin",
+                scrollbarColor: `${colorTheme === "dark" ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.5)"} ${colorTheme === "dark" ? "rgba(30, 41, 59, 0.3)" : "rgba(241, 245, 249, 0.5)"}`,
+              }}
+              className="topic-suggestions-scroll"
+            >
+              <style dangerouslySetInnerHTML={{__html: `
+                .topic-suggestions-scroll::-webkit-scrollbar {
+                  width: 12px;
+                }
+                .topic-suggestions-scroll::-webkit-scrollbar-track {
+                  background: ${colorTheme === "dark" ? "rgba(30, 41, 59, 0.2)" : "rgba(241, 245, 249, 0.4)"};
+                  border-radius: 12px;
+                  margin: 8px 0;
+                }
+                .topic-suggestions-scroll::-webkit-scrollbar-thumb {
+                  background: ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.5)"};
+                  border-radius: 12px;
+                  border: 3px solid ${colorTheme === "dark" ? "rgba(30, 41, 59, 0.2)" : "rgba(241, 245, 249, 0.4)"};
+                  transition: background 0.2s ease;
+                }
+                .topic-suggestions-scroll::-webkit-scrollbar-thumb:hover {
+                  background: ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.6)" : "rgba(148, 163, 184, 0.7)"};
+                }
+              `}} />
+              <p
+                className={outfit.className}
+                style={{
+                  fontSize: "1.15rem",
+                  fontWeight: 700,
+                  letterSpacing: "-0.01em",
+                  color: colorTheme === "dark" ? "#f1f5f9" : "#0f172a",
+                  marginBottom: "2rem",
+                }}
+              >
+                O selecciona una sugerencia:
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "3rem", paddingBottom: "2rem", paddingRight: "0", paddingLeft: "0", width: "100%", boxSizing: "border-box" }}>
+                {topicSuggestions.map((section) => (
+                    <div key={section.name} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                      {/* Header de sección */}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "1.25rem",
+                          padding: "1rem 1.25rem",
+                          borderBottom: `2px solid ${section.color}30`,
+                          background: colorTheme === "dark" 
+                            ? `linear-gradient(90deg, ${section.color}12 0%, transparent 100%)`
+                            : `linear-gradient(90deg, ${section.color}08 0%, transparent 100%)`,
+                          borderRadius: "16px",
+                          marginBottom: "0.5rem",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "52px",
+                            height: "52px",
+                            borderRadius: "14px",
+                            background: section.color,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            boxShadow: `0 6px 16px ${section.color}60`,
+                          }}
+                        >
+                          {getSectionIcon(section.name)}
+                        </div>
+                        <h3
+                          className={spaceGrotesk.className}
+                          style={{
+                            fontSize: "1.35rem",
+                            fontWeight: 700,
+                            letterSpacing: "-0.015em",
+                            color: colorTheme === "dark" ? "#f1f5f9" : "#0f172a",
+                            margin: 0,
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {section.name}
+                        </h3>
+                      </div>
+                      {/* Grid de temas */}
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                          gap: "1.25rem",
+                          width: "100%",
+                          boxSizing: "border-box",
+                        }}
+                      >
+                        {section.topics.map((topic) => {
+                          const topicColor = section.color;
+                          const topicIcon = getTopicIcon(topic);
+                          const isLanguage = isLanguageTopic(topic);
+                          return (
+                            <button
+                              key={topic}
+                              onClick={() => {
+                                setNewChatColor(topicColor);
+                                const topicIconIdentifier = getTopicIconIdentifier(topic);
+                                setNewChatIcon(topicIconIdentifier);
+                                handleCreateNewChat(topic, topicColor, topicIconIdentifier);
+                              }}
+                              className={outfit.className}
+                              style={{
+                                padding: "1.5rem 1.25rem",
+                                background: colorTheme === "dark" 
+                                  ? `linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.3))`
+                                  : `linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.8))`,
+                                border: `2px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.2)"}`,
+                                borderRadius: "16px",
+                                color: colorTheme === "dark" ? "#f1f5f9" : "#0f172a",
+                                fontSize: "0.95rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "1rem",
+                                position: "relative",
+                                overflow: "hidden",
+                                boxSizing: "border-box",
+                                width: "100%",
+                                boxShadow: colorTheme === "dark" 
+                                  ? "0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1)"
+                                  : "0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = `linear-gradient(135deg, ${topicColor}20, ${topicColor}10)`;
+                                e.currentTarget.style.borderColor = topicColor;
+                                e.currentTarget.style.transform = "translateY(-5px) scale(1.02)";
+                                e.currentTarget.style.boxShadow = `0 12px 32px ${topicColor}50, 0 0 0 1px ${topicColor}30`;
+                                e.currentTarget.style.color = topicColor;
+                                const iconContainer = e.currentTarget.querySelector('.topic-icon-container') as HTMLElement;
+                                const iconDiv = iconContainer?.querySelector('div') as HTMLElement;
+                                if (iconContainer) {
+                                  if (isLanguage) {
+                                    iconContainer.style.transform = "scale(1.1)";
+                                    iconContainer.style.boxShadow = `0 6px 20px rgba(0, 0, 0, 0.2)`;
+                                  } else {
+                                    iconContainer.style.background = topicColor;
+                                    iconContainer.style.borderColor = topicColor;
+                                    iconContainer.style.transform = "scale(1.2) rotate(8deg)";
+                                    iconContainer.style.boxShadow = `0 6px 16px ${topicColor}90`;
+                                  }
+                                }
+                                if (iconDiv && !isLanguage) {
+                                  iconDiv.style.color = "white";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = colorTheme === "dark" 
+                                  ? `linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.3))`
+                                  : `linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.8))`;
+                                e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.2)";
+                                e.currentTarget.style.transform = "translateY(0) scale(1)";
+                                e.currentTarget.style.boxShadow = colorTheme === "dark" 
+                                  ? "0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1)"
+                                  : "0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)";
+                                e.currentTarget.style.color = colorTheme === "dark" ? "#f1f5f9" : "#0f172a";
+                                const iconContainer = e.currentTarget.querySelector('.topic-icon-container') as HTMLElement;
+                                const iconDiv = iconContainer?.querySelector('div') as HTMLElement;
+                                if (iconContainer) {
+                                  if (isLanguage) {
+                                    iconContainer.style.transform = "scale(1)";
+                                    iconContainer.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)";
+                                  } else {
+                                    iconContainer.style.background = topicColor + "20";
+                                    iconContainer.style.borderColor = topicColor + "40";
+                                    iconContainer.style.transform = "scale(1) rotate(0deg)";
+                                    iconContainer.style.boxShadow = "none";
+                                  }
+                                }
+                                if (iconDiv && !isLanguage) {
+                                  iconDiv.style.color = topicColor;
+                                }
+                              }}
+                            >
+                              <div
+                                className="topic-icon-container"
+                                style={{
+                                  width: "48px",
+                                  height: "48px",
+                                  minWidth: "48px",
+                                  borderRadius: isLanguage ? "12px" : "14px",
+                                  background: isLanguage ? "transparent" : (topicColor + "20"),
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexShrink: 0,
+                                  border: isLanguage ? "none" : `2px solid ${topicColor}40`,
+                                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                                  padding: isLanguage ? "0" : "4px",
+                                  overflow: isLanguage ? "hidden" : "visible",
+                                  position: "relative",
+                                  boxShadow: isLanguage ? "0 2px 8px rgba(0, 0, 0, 0.1)" : "none",
+                                }}
+                              >
+                                <div style={{ 
+                                  color: topicColor, 
+                                  transition: "color 0.3s ease",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  width: isLanguage ? "48px" : "40px",
+                                  height: isLanguage ? "48px" : "40px",
+                                  position: "relative",
+                                  lineHeight: 0,
+                                }}>
+                                  {topicIcon}
+                                </div>
+                              </div>
+                              <span style={{ flex: 1, textAlign: "left", lineHeight: 1.6, fontWeight: 600, letterSpacing: "-0.01em" }}>{topic}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -1778,77 +3561,65 @@ export default function StudyChat() {
         </span>
         <button
           onClick={() => setColorTheme("dark")}
+          title="Tema oscuro"
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "0.5rem",
-            padding: "0.625rem 1.25rem",
-            background: colorTheme === "dark" 
-              ? "linear-gradient(135deg, #6366f1, #06b6d4)"
-              : "rgba(99, 102, 241, 0.1)",
-            border: `2px solid ${colorTheme === "dark" ? "#6366f1" : "rgba(99, 102, 241, 0.2)"}`,
-            borderRadius: "10px",
-            color: colorTheme === "dark" ? "white" : "#1a1a24",
-            cursor: "pointer",
+            justifyContent: "center",
+            width: "48px",
+            height: "48px",
+            background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+            borderRadius: "24px",
             fontSize: "0.875rem",
             fontWeight: 600,
-            transition: "all 0.3s ease",
-            boxShadow: colorTheme === "dark"
-              ? "0 4px 12px rgba(99, 102, 241, 0.3)"
-              : "none",
+            color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+            border: "none",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            if (colorTheme !== "dark") {
-              e.currentTarget.style.background = "rgba(99, 102, 241, 0.15)";
-              e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.4)";
-            }
+            e.currentTarget.style.background = colorTheme === "dark" 
+              ? "rgba(99, 102, 241, 0.15)" 
+              : "rgba(99, 102, 241, 0.12)";
           }}
           onMouseLeave={(e) => {
-            if (colorTheme !== "dark") {
-              e.currentTarget.style.background = "rgba(99, 102, 241, 0.1)";
-              e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.2)";
-            }
+            e.currentTarget.style.background = colorTheme === "dark" 
+              ? "rgba(99, 102, 241, 0.1)" 
+              : "rgba(99, 102, 241, 0.08)";
           }}
         >
           <MoonIcon size={18} />
-          <span>Oscuro</span>
         </button>
         <button
           onClick={() => setColorTheme("light")}
+          title="Tema claro"
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "0.5rem",
-            padding: "0.625rem 1.25rem",
-            background: colorTheme === "light"
-              ? "linear-gradient(135deg, #6366f1, #06b6d4)"
-              : "rgba(99, 102, 241, 0.1)",
-            border: `2px solid ${colorTheme === "light" ? "#6366f1" : "rgba(99, 102, 241, 0.2)"}`,
-            borderRadius: "10px",
-            color: colorTheme === "light" ? "white" : (colorTheme === "dark" ? "white" : "#1a1a24"),
-            cursor: "pointer",
+            justifyContent: "center",
+            width: "48px",
+            height: "48px",
+            background: colorTheme === "light" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+            borderRadius: "24px",
             fontSize: "0.875rem",
             fontWeight: 600,
-            transition: "all 0.3s ease",
-            boxShadow: colorTheme === "light"
-              ? "0 4px 12px rgba(99, 102, 241, 0.3)"
-              : "none",
+            color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+            border: "none",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            if (colorTheme !== "light") {
-              e.currentTarget.style.background = "rgba(99, 102, 241, 0.15)";
-              e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.4)";
-            }
+            e.currentTarget.style.background = colorTheme === "light" 
+              ? "rgba(99, 102, 241, 0.15)" 
+              : "rgba(99, 102, 241, 0.12)";
           }}
           onMouseLeave={(e) => {
-            if (colorTheme !== "light") {
-              e.currentTarget.style.background = "rgba(99, 102, 241, 0.1)";
-              e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.2)";
-            }
+            e.currentTarget.style.background = colorTheme === "light" 
+              ? "rgba(99, 102, 241, 0.1)" 
+              : "rgba(99, 102, 241, 0.08)";
           }}
         >
           <SunIcon size={18} />
-          <span>Claro</span>
         </button>
       </div>
       {/* Chat Container */}
@@ -2124,8 +3895,8 @@ export default function StudyChat() {
             >
               <div
                 style={{
-                  maxWidth: message.type === "notes" || message.type === "test" ? "100%" : "85%",
-                  width: message.type === "notes" || message.type === "test" ? "100%" : undefined,
+                  maxWidth: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" ? "100%" : "85%",
+                  width: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" ? "100%" : undefined,
                   padding: "1.25rem 1.5rem",
                   borderRadius: "12px",
                   background:
@@ -2144,6 +3915,7 @@ export default function StudyChat() {
                     ? "0 2px 8px rgba(0, 0, 0, 0.2)"
                     : "0 2px 8px rgba(0, 0, 0, 0.08)",
                   color: message.role === "user" ? "white" : (colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"),
+                  position: "relative",
                 }}
               >
                 {message.type === "notes" ? (
@@ -2151,6 +3923,7 @@ export default function StudyChat() {
                     <NotesViewer 
                       content={message.content} 
                       colorTheme={colorTheme}
+                      language={currentChatLevel?.topic || null}
                     />
                     {message.costEstimate && (
                       <div style={{
@@ -2244,11 +4017,326 @@ export default function StudyChat() {
                       </div>
                     )}
                   </>
+                ) : message.type === "exercise" && currentExercise ? (
+                  <>
+                    <ExerciseComponent
+                      exercise={currentExercise}
+                      answer={exerciseAnswer}
+                      answerImage={exerciseAnswerImage}
+                      onAnswerChange={setExerciseAnswer}
+                      onAnswerImageChange={setExerciseAnswerImage}
+                      onImageRemove={() => setExerciseAnswerImage(null)}
+                      imageInputRef={exerciseImageInputRef}
+                      onSubmit={correctExercise}
+                      colorTheme={colorTheme}
+                    />
+                    {message.costEstimate && (
+                      <div style={{
+                        marginTop: "1.5rem",
+                        padding: "0.75rem 1rem",
+                        background: colorTheme === "dark" 
+                          ? "rgba(99, 102, 241, 0.1)" 
+                          : "rgba(99, 102, 241, 0.08)",
+                        border: `1px solid ${colorTheme === "dark" 
+                          ? "rgba(99, 102, 241, 0.3)" 
+                          : "rgba(99, 102, 241, 0.4)"}`,
+                        borderRadius: "8px",
+                        fontSize: "0.875rem",
+                        color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}>
+                        <ZapIcon size={16} color="#6366f1" />
+                        <span>
+                          <strong>Costo estimado:</strong> {formatCost(message.costEstimate.totalCost)} 
+                          {" "}({message.costEstimate.inputTokens.toLocaleString()} tokens entrada, {message.costEstimate.outputTokens.toLocaleString()} tokens salida)
+                        </span>
+                      </div>
+                    )}
+                  </>
+                ) : message.type === "exercise_result" && exerciseCorrection ? (
+                  <>
+                    <ExerciseResultComponent
+                      correction={exerciseCorrection}
+                      exercise={currentExercise}
+                      colorTheme={colorTheme}
+                    />
+                    {message.costEstimate && (
+                      <div style={{
+                        marginTop: "1.5rem",
+                        padding: "0.75rem 1rem",
+                        background: colorTheme === "dark" 
+                          ? "rgba(99, 102, 241, 0.1)" 
+                          : "rgba(99, 102, 241, 0.08)",
+                        border: `1px solid ${colorTheme === "dark" 
+                          ? "rgba(99, 102, 241, 0.3)" 
+                          : "rgba(99, 102, 241, 0.4)"}`,
+                        borderRadius: "8px",
+                        fontSize: "0.875rem",
+                        color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}>
+                        <ZapIcon size={16} color="#6366f1" />
+                        <span>
+                          <strong>Costo estimado:</strong> {formatCost(message.costEstimate.totalCost)} 
+                          {" "}({message.costEstimate.inputTokens.toLocaleString()} tokens entrada, {message.costEstimate.outputTokens.toLocaleString()} tokens salida)
+                        </span>
+                      </div>
+                    )}
+                  </>
                 ) : message.type === "success" ? (
                   <SuccessMessage 
                     data={message.content}
                     colorTheme={colorTheme}
                   />
+                ) : message.type === "warning" ? (
+                  <div
+                    style={{
+                      background: colorTheme === "dark" 
+                        ? "linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1))"
+                        : "linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(220, 38, 38, 0.08))",
+                      borderRadius: "20px",
+                      padding: "2.5rem",
+                      border: `2px solid ${colorTheme === "dark" ? "rgba(239, 68, 68, 0.4)" : "rgba(239, 68, 68, 0.5)"}`,
+                      boxShadow: colorTheme === "dark"
+                        ? "0 8px 32px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+                        : "0 8px 32px rgba(239, 68, 68, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                      width: "100%",
+                    }}
+                  >
+                    {/* Header con icono de advertencia */}
+                    <div style={{ 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "center",
+                      gap: "1rem", 
+                      marginBottom: "2rem" 
+                    }}>
+                      <div style={{
+                        width: "64px",
+                        height: "64px",
+                        borderRadius: "50%",
+                        background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        boxShadow: "0 4px 16px rgba(239, 68, 68, 0.4)",
+                      }}>
+                        <AlertIcon size={32} color="white" />
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <h2 style={{
+                          margin: 0,
+                          fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
+                          fontWeight: 700,
+                          color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                          marginBottom: "0.5rem",
+                          letterSpacing: "-0.02em",
+                          lineHeight: 1.2,
+                        }}>
+                          Atención
+                        </h2>
+                      </div>
+                    </div>
+
+                    {/* Contenido del mensaje */}
+                    <div
+                      style={{
+                        lineHeight: 1.8,
+                        color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                        fontSize: "1.1rem",
+                      }}
+                      className="message-content"
+                    >
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          h1: ({ ...props }) => <h1 {...props} style={{ textDecoration: "none", borderBottom: "none", fontSize: "1.5rem", marginTop: "1rem", marginBottom: "0.5rem" }} />,
+                          h2: ({ ...props }) => <h2 {...props} style={{ textDecoration: "none", borderBottom: "none", fontSize: "1.3rem", marginTop: "1rem", marginBottom: "0.5rem" }} />,
+                          h3: ({ ...props }) => <h3 {...props} style={{ textDecoration: "none", borderBottom: "none", fontSize: "1.2rem", marginTop: "1rem", marginBottom: "0.5rem" }} />,
+                          strong: ({ ...props }) => <strong {...props} style={{ 
+                            textDecoration: "none !important", 
+                            borderBottom: "none !important",
+                            fontWeight: 700,
+                            color: "#ef4444",
+                          }} />,
+                          p: ({ ...props }) => <p {...props} style={{ margin: "1rem 0", textDecoration: "none", fontSize: "1.1rem" }} />,
+                          li: ({ ...props }) => <li {...props} style={{ textDecoration: "none", marginBottom: "0.5rem", fontSize: "1.05rem" }} />,
+                          ul: ({ ...props }) => <ul {...props} style={{ margin: "1rem 0", paddingLeft: "1.5rem" }} />,
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                ) : message.type === "level_selection" ? (
+                  <div
+                    style={{
+                      lineHeight: 1.6,
+                      color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                      width: "100%",
+                    }}
+                    className="message-content"
+                  >
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        h1: ({ ...props }) => <h1 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
+                        h2: ({ ...props }) => <h2 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
+                        h3: ({ ...props }) => <h3 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
+                        strong: ({ ...props }) => <strong {...props} style={{ 
+                          textDecoration: "none !important", 
+                          borderBottom: "none !important",
+                          fontWeight: 700,
+                        }} />,
+                        p: ({ ...props }) => <p {...props} style={{ margin: "0.5rem 0", textDecoration: "none" }} />,
+                      }}
+                    >
+                      {message.content.split('\n\n')[0]}
+                    </ReactMarkdown>
+                    <div style={{
+                      marginTop: "1.75rem",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "1.25rem",
+                    }}>
+                      <p style={{
+                        margin: "0",
+                        fontSize: "1.05rem",
+                        fontWeight: 600,
+                        color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                        letterSpacing: "-0.01em",
+                      }}>
+                        {message.content.split('\n\n').slice(1).join('\n\n').split('\n')[0]}
+                      </p>
+                      <div style={{
+                        display: "flex",
+                        gap: "1rem",
+                        flexWrap: "wrap",
+                      }}>
+                        {[
+                          { label: "Principiante", level: 0, icon: HiAcademicCap, color: "#10b981" },
+                          { label: "Intermedio", level: 4, icon: HiArrowTrendingUp, color: "#f59e0b" },
+                          { label: "Avanzado", level: 7, icon: HiLightBulb, color: "#6366f1" },
+                        ].map(({ label, level, icon: IconComponent, color }) => {
+                          const isSelected = currentChatLevel?.level === level && currentChatLevel?.topic === message.topic;
+                          return (
+                            <button
+                              key={level}
+                              onClick={async () => {
+                                if (!currentChatId || !message.topic) return;
+                                
+                                try {
+                                  // Establecer el nivel en el chat
+                                  const response = await fetch("/api/study-agents/set-chat-level", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                      userId,
+                                      chatId: currentChatId,
+                                      level,
+                                      topic: message.topic,
+                                    }),
+                                  });
+                                  
+                                  const data = await response.json();
+                                  if (data.success) {
+                                    // Actualizar el nivel del chat
+                                    setCurrentChatLevel({ topic: message.topic, level });
+                                    
+                                    // Agregar mensaje confirmando el nivel seleccionado
+                                    addMessage({
+                                      role: "user",
+                                      content: label,
+                                      type: "message",
+                                    });
+                                    
+                                    // Agregar mensaje del asistente confirmando y empezando
+                                    addMessage({
+                                      role: "assistant",
+                                      content: `Perfecto, nivel **${label}** (${level}/10) seleccionado. ¡Empecemos a trabajar con **${message.topic}**! ¿En qué te gustaría enfocarnos primero?`,
+                                      type: "message",
+                                    });
+                                  } else {
+                                    throw new Error(data.error || "Error al establecer el nivel");
+                                  }
+                                } catch (error) {
+                                  const errorMessage = error instanceof Error ? error.message : "Error inesperado";
+                                  addMessage({
+                                    role: "assistant",
+                                    content: `Error al establecer el nivel: ${errorMessage}`,
+                                    type: "message",
+                                  });
+                                }
+                              }}
+                              style={{
+                                padding: "1rem 1.75rem",
+                                borderRadius: "12px",
+                                border: isSelected 
+                                  ? `2px solid ${color}`
+                                  : `2px solid ${colorTheme === "dark" 
+                                      ? "rgba(148, 163, 184, 0.3)" 
+                                      : "rgba(148, 163, 184, 0.4)"}`,
+                                background: isSelected
+                                  ? colorTheme === "dark"
+                                    ? `${color}20`
+                                    : `${color}15`
+                                  : colorTheme === "dark"
+                                    ? "rgba(148, 163, 184, 0.08)"
+                                    : "rgba(148, 163, 184, 0.05)",
+                                color: isSelected 
+                                  ? color 
+                                  : (colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"),
+                                fontSize: "1rem",
+                                fontWeight: isSelected ? 700 : 600,
+                                cursor: "pointer",
+                                transition: "all 0.2s ease",
+                                fontFamily: outfit.style.fontFamily,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.625rem",
+                                boxShadow: isSelected 
+                                  ? `0 4px 16px ${color}30`
+                                  : "none",
+                                transform: isSelected ? "translateY(-2px)" : "translateY(0)",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isSelected) {
+                                  e.currentTarget.style.background = colorTheme === "dark"
+                                    ? `${color}25`
+                                    : `${color}20`;
+                                  e.currentTarget.style.border = `2px solid ${color}`;
+                                  e.currentTarget.style.color = color;
+                                  e.currentTarget.style.transform = "translateY(-2px)";
+                                  e.currentTarget.style.boxShadow = `0 4px 16px ${color}30`;
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isSelected) {
+                                  e.currentTarget.style.background = colorTheme === "dark"
+                                    ? "rgba(148, 163, 184, 0.08)"
+                                    : "rgba(148, 163, 184, 0.05)";
+                                  e.currentTarget.style.border = `2px solid ${colorTheme === "dark" 
+                                    ? "rgba(148, 163, 184, 0.3)" 
+                                    : "rgba(148, 163, 184, 0.4)"}`;
+                                  e.currentTarget.style.color = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
+                                  e.currentTarget.style.transform = "translateY(0)";
+                                  e.currentTarget.style.boxShadow = "none";
+                                }
+                              }}
+                            >
+                              <IconComponent size={20} style={{ color: isSelected ? color : "currentColor", flexShrink: 0 }} />
+                              <span>{label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <>
                     {message.role === "assistant" ? (
@@ -2399,8 +4487,218 @@ export default function StudyChat() {
             </div>
           )}
 
+          {/* Herramienta de flashcards para idiomas - al final de los mensajes */}
+          {showLanguageTool && currentChatLevel && isLanguageTopic(currentChatLevel.topic) && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <LanguageFlashcards
+                language={currentChatLevel.topic}
+                level={currentChatLevel.level}
+                colorTheme={colorTheme}
+                apiKey={apiKeys?.openai}
+                userId={userId}
+                setLearnedWordsCount={setLearnedWordsCount}
+                currentChatLevel={currentChatLevel}
+                setCurrentChatLevel={setCurrentChatLevel}
+              />
+            </div>
+          )}
+
+          {/* Herramienta de intérprete para lenguajes de programación - al final de los mensajes */}
+          {showCodeTool && currentChatLevel && isProgrammingLanguage(currentChatLevel.topic) && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <CodeInterpreter
+                language={currentChatLevel.topic}
+                colorTheme={colorTheme}
+              />
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
+
+        {/* Modal de palabras aprendidas */}
+        {showLearnedWordsModal && currentChatLevel && isLanguageTopic(currentChatLevel.topic) && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "rgba(0, 0, 0, 0.8)",
+              backdropFilter: "blur(8px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 2000,
+              padding: "2rem",
+            }}
+            onClick={() => setShowLearnedWordsModal(false)}
+          >
+            <div
+              style={{
+                background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.98)" : "rgba(255, 255, 255, 0.98)",
+                borderRadius: "20px",
+                padding: "2.5rem",
+                maxWidth: "900px",
+                width: "100%",
+                maxHeight: "90vh",
+                overflow: "auto",
+                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
+                border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.3)" : "rgba(148, 163, 184, 0.4)"}`,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "2rem",
+              }}>
+                <h2 style={{
+                  margin: 0,
+                  fontSize: "1.75rem",
+                  fontWeight: 700,
+                  color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                }}>
+                  Palabras aprendidas - {currentChatLevel.topic} ({learnedWordsList.length})
+                </h2>
+                <button
+                  onClick={() => setShowLearnedWordsModal(false)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    fontSize: "1.5rem",
+                    color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                    cursor: "pointer",
+                    padding: "0.5rem",
+                    borderRadius: "8px",
+                    transition: "background 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = colorTheme === "dark" 
+                      ? "rgba(148, 163, 184, 0.1)" 
+                      : "rgba(148, 163, 184, 0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {learnedWordsList.length === 0 ? (
+                <div style={{
+                  textAlign: "center",
+                  padding: "3rem",
+                  color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                }}>
+                  <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📚</div>
+                  <div style={{ fontSize: "1.125rem" }}>
+                    Aún no has aprendido ninguna palabra.
+                    <br />
+                    ¡Sigue practicando!
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                  gap: "1.25rem",
+                }}>
+                  {learnedWordsList.map((word, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        background: colorTheme === "dark" 
+                          ? "rgba(16, 185, 129, 0.1)" 
+                          : "rgba(16, 185, 129, 0.08)",
+                        border: `2px solid ${colorTheme === "dark" 
+                          ? "rgba(16, 185, 129, 0.3)" 
+                          : "rgba(16, 185, 129, 0.4)"}`,
+                        borderRadius: "16px",
+                        padding: "1.5rem",
+                        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-4px)";
+                        e.currentTarget.style.boxShadow = colorTheme === "dark"
+                          ? "0 8px 16px rgba(16, 185, 129, 0.2)"
+                          : "0 8px 16px rgba(16, 185, 129, 0.15)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
+                      }}
+                    >
+                      <div style={{
+                        fontSize: "1.5rem",
+                        fontWeight: 700,
+                        color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                        marginBottom: "0.5rem",
+                        textAlign: "center",
+                      }}>
+                        {word.word}
+                      </div>
+                      
+                      {word.romanization && (
+                        <div style={{
+                          fontSize: "0.875rem",
+                          color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                          fontStyle: "italic",
+                          marginBottom: "0.75rem",
+                          textAlign: "center",
+                          opacity: 0.8,
+                        }}>
+                          {word.romanization}
+                        </div>
+                      )}
+
+                      <div style={{
+                        fontSize: "1.125rem",
+                        fontWeight: 600,
+                        color: "#10b981",
+                        marginBottom: "0.5rem",
+                        textAlign: "center",
+                      }}>
+                        {word.translation}
+                      </div>
+
+                      {word.example && (
+                        <div style={{
+                          fontSize: "0.875rem",
+                          color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                          fontStyle: "italic",
+                          marginTop: "0.75rem",
+                          paddingTop: "0.75rem",
+                          borderTop: `1px solid ${colorTheme === "dark" 
+                            ? "rgba(148, 163, 184, 0.2)" 
+                            : "rgba(148, 163, 184, 0.3)"}`,
+                          textAlign: "center",
+                        }}>
+                          {word.example}
+                        </div>
+                      )}
+                      
+                      {word.source && (
+                        <div style={{
+                          fontSize: "0.75rem",
+                          color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                          marginTop: "0.5rem",
+                          textAlign: "center",
+                          opacity: 0.7,
+                        }}>
+                          Fuente: {word.source}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Botón flotante para ir al final - arriba del input */}
         {showScrollToBottom && (
@@ -2599,8 +4897,191 @@ export default function StudyChat() {
                   : "#1a1a24"
               }}>{isGeneratingTest ? "Generando test..." : "Test"}</span>
             </button>
+            <button
+              onClick={() => {
+                setInput("");
+                generateExercise("medium", null, null);
+              }}
+              disabled={isLoading || isGeneratingExercise || isGeneratingTest}
+              title="Generar ejercicio"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.5rem",
+                height: "48px",
+                padding: "0 1rem",
+                background: (isLoading || isGeneratingExercise || isGeneratingTest)
+                  ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.2)")
+                  : (colorTheme === "light" ? "#ffffff" : "#ffffff"),
+                border: `1px solid rgba(148, 163, 184, 0.2)`,
+                borderRadius: "24px",
+                cursor: (isLoading || isGeneratingExercise || isGeneratingTest) ? "not-allowed" : "pointer",
+                transition: "all 0.2s ease",
+                opacity: (isLoading || isGeneratingExercise || isGeneratingTest) ? 0.6 : 1,
+                boxShadow: !(isLoading || isGeneratingExercise || isGeneratingTest)
+                  ? "0 1px 3px rgba(0, 0, 0, 0.1)"
+                  : "none",
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading && !isGeneratingExercise && !isGeneratingTest) {
+                  e.currentTarget.style.background = "#f8f9fa";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isLoading && !isGeneratingExercise && !isGeneratingTest) {
+                  e.currentTarget.style.background = "#ffffff";
+                }
+              }}
+            >
+              <ExerciseIcon 
+                size={20} 
+                color={
+                  (isLoading || isGeneratingExercise || isGeneratingTest)
+                    ? "rgba(26, 36, 52, 0.4)"
+                    : "#1a1a24"
+                } 
+              />
+              <span style={{
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                color: (isLoading || isGeneratingExercise || isGeneratingTest)
+                  ? "rgba(26, 36, 52, 0.4)"
+                  : "#1a1a24"
+              }}>{isGeneratingExercise ? "Generando ejercicio..." : "Ejercicio"}</span>
+            </button>
+            
+            {/* Botón de herramienta de idioma (flashcards) */}
+            {currentChatLevel && isLanguageTopic(currentChatLevel.topic) && (
+              <button
+                onClick={() => setShowLanguageTool(!showLanguageTool)}
+                title="Flashcards de vocabulario"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                  height: "48px",
+                  padding: "0 1rem",
+                  background: showLanguageTool
+                    ? "#6366f1"
+                    : (colorTheme === "light" ? "#ffffff" : "#ffffff"),
+                  border: `1px solid ${showLanguageTool ? "#6366f1" : "rgba(148, 163, 184, 0.2)"}`,
+                  borderRadius: "24px",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: showLanguageTool ? "0 2px 8px rgba(99, 102, 241, 0.3)" : "0 1px 3px rgba(0, 0, 0, 0.1)",
+                  flexShrink: 0,
+                }}
+              >
+                <BookIcon size={20} color={showLanguageTool ? "white" : "#1a1a24"} />
+                <span style={{
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  color: showLanguageTool ? "white" : "#1a1a24",
+                }}>Flashcards</span>
+              </button>
+            )}
+
+            {/* Botón de herramienta de programación (intérprete) */}
+            {currentChatLevel && isProgrammingLanguage(currentChatLevel.topic) && (
+              <button
+                onClick={() => setShowCodeTool(!showCodeTool)}
+                title="Intérprete de código"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                  height: "48px",
+                  padding: "0 1rem",
+                  background: showCodeTool
+                    ? "#6366f1"
+                    : (colorTheme === "light" ? "#ffffff" : "#ffffff"),
+                  border: `1px solid ${showCodeTool ? "#6366f1" : "rgba(148, 163, 184, 0.2)"}`,
+                  borderRadius: "24px",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: showCodeTool ? "0 2px 8px rgba(99, 102, 241, 0.3)" : "0 1px 3px rgba(0, 0, 0, 0.1)",
+                  flexShrink: 0,
+                }}
+              >
+                <HiCodeBracket size={20} color={showCodeTool ? "white" : "#1a1a24"} />
+                <span style={{
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  color: showCodeTool ? "white" : "#1a1a24",
+                }}>Intérprete</span>
+              </button>
+            )}
+
+            {/* Indicador de nivel de la conversación actual */}
+            {currentChatLevel && (
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                marginLeft: "auto",
+                flexShrink: 0,
+              }}>
+                {/* Contador de palabras aprendidas (solo para idiomas) - a la izquierda del nivel */}
+                {isLanguageTopic(currentChatLevel.topic) && (
+                  <button
+                    onClick={async () => {
+                      await loadLearnedWords(currentChatLevel.topic);
+                      setShowLearnedWordsModal(true);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: "48px",
+                      padding: "0 1rem",
+                      background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+                      borderRadius: "24px",
+                      fontSize: "0.875rem",
+                      fontWeight: 600,
+                      color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                      border: "none",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = colorTheme === "dark" 
+                        ? "rgba(99, 102, 241, 0.15)" 
+                        : "rgba(99, 102, 241, 0.12)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = colorTheme === "dark" 
+                        ? "rgba(99, 102, 241, 0.1)" 
+                        : "rgba(99, 102, 241, 0.08)";
+                    }}
+                  >
+                    <MdMenuBook size={18} style={{ marginRight: "0.5rem" }} />
+                    <span>{learnedWordsCount} palabras</span>
+                  </button>
+                )}
+                
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "48px",
+                  padding: "0 1rem",
+                  background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+                  borderRadius: "24px",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                }}>
+                  <span>Nivel {currentChatLevel.level}/10</span>
+                </div>
+              </div>
+            )}
+            
             {uploadedFiles.length > 0 && (
-              <div style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginLeft: "auto" }}>
+              <div style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginLeft: currentChatLevel ? "0.75rem" : "auto" }}>
                 {uploadedFiles.length} archivo(s) subido(s)
               </div>
             )}
@@ -2710,10 +5191,70 @@ export default function StudyChat() {
               }}
               className="custom-textarea"
             />
+            {/* Botón de Micrófono */}
+            <button
+              onClick={handleVoiceInput}
+              disabled={isLoading || isGeneratingTest || isGeneratingExercise}
+              title={isListening ? "Detener grabación" : "Hablar (mantén presionado)"}
+              style={{
+                width: "48px",
+                height: "48px",
+                minWidth: "48px",
+                padding: 0,
+                background: isListening
+                  ? (colorTheme === "light" ? "#ef4444" : "#dc2626")
+                  : (colorTheme === "light" ? "#ffffff" : "rgba(99, 102, 241, 0.2)"),
+                border: colorTheme === "light" && !isListening
+                  ? `1px solid rgba(148, 163, 184, 0.2)`
+                  : "none",
+                borderRadius: "50%",
+                cursor: (isLoading || isGeneratingTest) ? "not-allowed" : "pointer",
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: (isLoading || isGeneratingTest) ? 0.6 : 1,
+                boxShadow: colorTheme === "light" && !isListening
+                  ? "0 1px 3px rgba(0, 0, 0, 0.1)"
+                  : isListening
+                  ? "0 0 0 4px rgba(239, 68, 68, 0.2)"
+                  : "none",
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading && !isGeneratingTest && !isListening) {
+                  if (colorTheme === "light") {
+                    e.currentTarget.style.background = "#f8f9fa";
+                  } else {
+                    e.currentTarget.style.background = "rgba(99, 102, 241, 0.3)";
+                  }
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isLoading && !isGeneratingTest && !isListening) {
+                  if (colorTheme === "light") {
+                    e.currentTarget.style.background = "#ffffff";
+                  } else {
+                    e.currentTarget.style.background = "rgba(99, 102, 241, 0.2)";
+                  }
+                }
+              }}
+            >
+              <FaMicrophone 
+                size={20} 
+                color={
+                  isListening
+                    ? "white"
+                    : (isLoading || isGeneratingTest)
+                    ? (colorTheme === "light" ? "rgba(26, 36, 52, 0.4)" : "rgba(255, 255, 255, 0.5)")
+                    : (colorTheme === "light" ? "#1a1a24" : "white")
+                } 
+              />
+            </button>
             {/* Botón Enviar */}
             <button
               onClick={handleSend}
-              disabled={isLoading || isGeneratingTest || !input.trim()}
+                disabled={isLoading || isGeneratingTest || isGeneratingExercise || !input.trim()}
               title="Enviar mensaje"
               style={{
                 width: "48px",
@@ -3130,16 +5671,22 @@ export default function StudyChat() {
 
 // Función eliminada: cleanMermaidCode - ya no se usa Mermaid
 
-// Componente mejorado para renderizar apuntes con markdown completo - ULTRA VISUAL
+// Componente rediseñado para renderizar apuntes con estilo similar a flashcards
 function NotesViewer({ 
   content, 
-  colorTheme
+  colorTheme,
+  language
 }: { 
   content: string;
   colorTheme: "dark" | "light";
+  language?: string | null;
 }) {
   const notesContainerRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  
+  const textColor = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
+  const bgColor = colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff";
+  const borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
   
   // ELIMINADO: Todo el código de Mermaid - ahora usamos DiagramRenderer con JSON
   // Ya no se necesita useEffect para Mermaid porque usamos diagramas JSON
@@ -3495,29 +6042,93 @@ function NotesViewer({
     }
   };
   
-  const themeColors = colorTheme === "dark" ? {
-    bg: "linear-gradient(135deg, rgba(10, 10, 15, 0.95), rgba(18, 18, 26, 0.95))",
-    text: "#f8fafc",
-    accent: "#6366f1",
-    accentLight: "#06b6d4",
-    cardBg: "rgba(26, 26, 36, 0.6)",
-    border: "rgba(99, 102, 241, 0.2)",
-  } : {
-    bg: "linear-gradient(135deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.98))",
-    text: "#1a1a24",
-    accent: "#6366f1",
-    accentLight: "#06b6d4",
-    cardBg: "rgba(255, 255, 255, 0.9)",
-    border: "rgba(99, 102, 241, 0.3)",
-  };
-  
   return (
-    <>
-      <style jsx global>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
+    <div style={{
+      padding: "2rem",
+      background: bgColor,
+      borderRadius: "12px",
+      border: `1px solid ${borderColor}`,
+      boxShadow: colorTheme === "dark" ? "0 2px 8px rgba(0, 0, 0, 0.2)" : "0 2px 8px rgba(0, 0, 0, 0.08)",
+    }}>
+      {/* Header similar a flashcards */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "1.5rem",
+        paddingBottom: "1rem",
+        borderBottom: `1px solid ${borderColor}`,
+      }}>
+        <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600, color: textColor }}>
+          Resumen de Estudio
+        </h3>
+        <button
+          onClick={handleDownloadPDF}
+          disabled={isGeneratingPDF}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            padding: "0.5rem 1rem",
+            background: isGeneratingPDF
+              ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.05)")
+              : "#6366f1",
+            color: isGeneratingPDF
+              ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.5)" : "rgba(148, 163, 184, 0.7)")
+              : "white",
+            border: `1px solid ${isGeneratingPDF ? borderColor : "#6366f1"}`,
+            borderRadius: "16px",
+            fontWeight: 600,
+            fontSize: "0.875rem",
+            cursor: isGeneratingPDF ? "not-allowed" : "pointer",
+            transition: "all 0.2s ease",
+            opacity: isGeneratingPDF ? 0.5 : 1,
+          }}
+          onMouseEnter={(e) => {
+            if (!isGeneratingPDF) {
+              e.currentTarget.style.background = "#4f46e5";
+              e.currentTarget.style.transform = "scale(1.05)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isGeneratingPDF) {
+              e.currentTarget.style.background = "#6366f1";
+              e.currentTarget.style.transform = "scale(1)";
+            }
+          }}
+        >
+          {isGeneratingPDF ? (
+            <>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                style={{ animation: "spin 1s linear infinite" }}
+              >
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.3" />
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+              </svg>
+              Generando...
+            </>
+          ) : (
+            <>
+              <DownloadIcon size={16} />
+              PDF
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Contenido del resumen */}
+      <div style={{ position: "relative", width: "100%" }}>
+        <style jsx global>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
         .notes-viewer :global(h1) {
           font-size: clamp(2rem, 5vw, 3rem);
           font-weight: 700;
@@ -3780,29 +6391,71 @@ function NotesViewer({
         }
         /* Estilo eliminado: .mermaid-diagram-container - ya no se usa Mermaid */
       `}</style>
-      <div style={{ position: "relative", width: "100%" }}>
         <div
           ref={notesContainerRef}
           style={{
-            background: themeColors.bg,
-            padding: "2.5rem",
-            position: 'relative',
-            borderRadius: "20px",
-            border: `1px solid ${themeColors.border}`,
-            boxShadow: colorTheme === "dark" 
-              ? "0 20px 60px rgba(0, 0, 0, 0.4)"
-              : "0 20px 60px rgba(0, 0, 0, 0.1)",
+            padding: "2rem",
+            background: bgColor,
+            borderRadius: "12px",
+            border: `1px solid ${borderColor}`,
+            boxShadow: colorTheme === "dark" ? "0 2px 8px rgba(0, 0, 0, 0.2)" : "0 2px 8px rgba(0, 0, 0, 0.08)",
             maxWidth: "100%",
             width: "100%",
-            margin: "0 auto",
           }}
         >
+          {/* Header similar a flashcards */}
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1.5rem",
+            paddingBottom: "1rem",
+            borderBottom: `1px solid ${borderColor}`,
+          }}>
+            <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600, color: textColor }}>
+              Resumen de Estudio
+            </h3>
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isGeneratingPDF}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                padding: "0.5rem 1rem",
+                background: "#6366f1",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "8px",
+                cursor: isGeneratingPDF ? "not-allowed" : "pointer",
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                transition: "all 0.2s ease",
+                opacity: isGeneratingPDF ? 0.6 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (!isGeneratingPDF) {
+                  e.currentTarget.style.background = "#4f46e5";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isGeneratingPDF) {
+                  e.currentTarget.style.background = "#6366f1";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }
+              }}
+            >
+              <DownloadIcon size={16} color="#ffffff" />
+              {isGeneratingPDF ? "Generando..." : "PDF"}
+            </button>
+          </div>
           <div
             style={{
               maxWidth: "100%",
-              lineHeight: 2,
-              color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-              fontSize: "1.05rem",
+              lineHeight: 1.8,
+              color: textColor,
+              fontSize: "0.95rem",
             }}
             className="notes-viewer"
           >
@@ -3870,7 +6523,54 @@ function NotesViewer({
             }
             return <p {...props} />;
           },
-        code: ({ className, children, ...props }: { className?: string; children?: React.ReactNode }) => {
+          strong: ({ ...props }: { children?: React.ReactNode }) => {
+            const text = String(props.children || "");
+            // Si es un idioma y el texto en negrita parece una palabra/frase del idioma, añadir botón de audio
+            if (isLanguage && language && text.length > 0 && text.length < 50) {
+              // No añadir en palabras comunes como "Definición:", "Ejemplo:", etc.
+              const commonWords = ["definición", "ejemplo", "importante", "concepto", "regla", "nota"];
+              const isCommonWord = commonWords.some(word => text.toLowerCase().includes(word));
+              
+              if (!isCommonWord && !text.includes(":") && !text.match(/^\d+$/)) {
+                return (
+                  <strong {...props} style={{ 
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.375rem",
+                    fontWeight: 700,
+                  }}>
+                    {props.children}
+                    <AudioButton text={text} language={language} colorTheme={colorTheme} size={16} />
+                  </strong>
+                );
+              }
+            }
+            return <strong {...props} style={{ fontWeight: 700 }} />;
+          },
+          td: ({ ...props }: { children?: React.ReactNode }) => {
+            // Añadir botones de audio en las celdas de tablas de vocabulario
+            if (isLanguage && language) {
+              const cellText = String(props.children || "").trim();
+              // Detectar si es la primera columna (vocabulario) en una tabla
+              // Las tablas de vocabulario suelen tener formato: | Vocabulario | Traducción | ...
+              if (cellText.length > 0 && cellText.length < 100 && !cellText.match(/^[|:\- ]+$/)) {
+                // No añadir en encabezados de tabla o separadores
+                if (!cellText.includes("Vocabulario") && !cellText.includes("Traducción") && 
+                    !cellText.includes("Contexto") && !cellText.includes("---")) {
+                  return (
+                    <td {...props}>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "0.375rem" }}>
+                        {props.children}
+                        <AudioButton text={cellText} language={language} colorTheme={colorTheme} size={14} />
+                      </div>
+                    </td>
+                  );
+                }
+              }
+            }
+            return <td {...props} />;
+          },
+          code: ({ className, children, ...props }: { className?: string; children?: React.ReactNode }) => {
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : '';
             const codeString = String(children).replace(/\n$/, '');
@@ -4043,79 +6743,10 @@ function NotesViewer({
               >
                 {content}
               </ReactMarkdown>
-            </div>
           </div>
         </div>
-      
-      {/* Botón de descarga PDF */}
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "center", 
-        marginTop: "2.5rem",
-        paddingTop: "2rem",
-        borderTop: "2px solid rgba(99, 102, 241, 0.2)",
-      }}>
-        <button
-          onClick={handleDownloadPDF}
-          disabled={isGeneratingPDF}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.75rem",
-            padding: "1rem 2rem",
-            background: isGeneratingPDF
-              ? "rgba(99, 102, 241, 0.5)"
-              : "linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)",
-            border: "none",
-            borderRadius: "12px",
-            color: "white",
-            fontSize: "1.1rem",
-            fontWeight: 700,
-            cursor: isGeneratingPDF ? "not-allowed" : "pointer",
-            transition: "all 0.3s ease",
-            boxShadow: isGeneratingPDF
-              ? "none"
-              : "0 8px 24px rgba(99, 102, 241, 0.4)",
-            transform: isGeneratingPDF ? "scale(0.98)" : "scale(1)",
-          }}
-          onMouseEnter={(e) => {
-            if (!isGeneratingPDF) {
-              e.currentTarget.style.transform = "translateY(-2px) scale(1.02)";
-              e.currentTarget.style.boxShadow = "0 12px 32px rgba(99, 102, 241, 0.5)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!isGeneratingPDF) {
-              e.currentTarget.style.transform = "translateY(0) scale(1)";
-              e.currentTarget.style.boxShadow = "0 8px 24px rgba(99, 102, 241, 0.4)";
-            }
-          }}
-        >
-          {isGeneratingPDF ? (
-            <>
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                style={{ animation: "spin 1s linear infinite" }}
-              >
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.3" />
-                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-              </svg>
-              Generando PDF...
-            </>
-          ) : (
-            <>
-              <DownloadIcon size={20} />
-              Descargar Apuntes en PDF
-            </>
-          )}
-        </button>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -4209,7 +6840,7 @@ function TestComponent({
               Test de Evaluación
             </h3>
             <span style={{ fontSize: "0.875rem", color: secondaryTextColor }}>
-              · Nivel: {test.difficulty}
+              · Nivel: {test.user_level !== undefined ? `${test.user_level}/10` : test.difficulty}
             </span>
           </div>
           
@@ -4949,11 +7580,136 @@ function SuccessMessage({
   data: unknown;
   colorTheme?: "dark" | "light";
 }) {
+  // Detectar si es un mensaje de felicitaciones por subir de nivel
+  let isLevelUpMessage = false;
+  let messageContent = "";
+  
+  if (typeof data === 'string') {
+    messageContent = data;
+    // Detectar si contiene indicadores de mensaje de felicitaciones (variaciones de "felicidades")
+    isLevelUpMessage = data.includes("Felicitaciones") || 
+                      data.includes("Felicidades") || 
+                      data.includes("felicidades") ||
+                      data.includes("subido al nivel") || 
+                      data.includes("subido") ||
+                      data.includes("🎉") ||
+                      data.includes("niveles") ||
+                      data.includes("puntos de experiencia");
+  }
+  
+  // Si es un mensaje de felicitaciones, renderizarlo de forma especial
+  if (isLevelUpMessage) {
+    // Renderizar mensaje de felicitaciones inline
+    const bgColor = colorTheme === "dark" 
+      ? "linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.1))"
+      : "linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(245, 158, 11, 0.08))";
+    const borderColor = colorTheme === "dark" 
+      ? "rgba(251, 191, 36, 0.4)"
+      : "rgba(251, 191, 36, 0.5)";
+    const textColor = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
+
+    return (
+      <div
+        style={{
+          background: bgColor,
+          borderRadius: "20px",
+          padding: "2.5rem",
+          border: `2px solid ${borderColor}`,
+          boxShadow: colorTheme === "dark"
+            ? "0 8px 32px rgba(251, 191, 36, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+            : "0 8px 32px rgba(251, 191, 36, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+          width: "100%",
+        }}
+      >
+        {/* Header con icono de celebración */}
+        <div style={{ 
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: "center",
+          gap: "1rem", 
+          marginBottom: "2rem" 
+        }}>
+          <div style={{
+            width: "64px",
+            height: "64px",
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            boxShadow: "0 4px 16px rgba(251, 191, 36, 0.4)",
+          }}>
+            <StarIcon size={32} color="white" />
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <h2 style={{
+              margin: 0,
+              fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
+              fontWeight: 700,
+              color: textColor,
+              marginBottom: "0.5rem",
+              letterSpacing: "-0.02em",
+              lineHeight: 1.2,
+              background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}>
+              ¡Felicitaciones!
+            </h2>
+          </div>
+        </div>
+
+        {/* Contenido del mensaje */}
+        <div
+          style={{
+            lineHeight: 1.8,
+            color: textColor,
+            fontSize: "1.1rem",
+          }}
+          className="message-content"
+        >
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              h1: ({ ...props }) => <h1 {...props} style={{ textDecoration: "none", borderBottom: "none", fontSize: "1.5rem", marginTop: "1rem", marginBottom: "0.5rem" }} />,
+              h2: ({ ...props }) => <h2 {...props} style={{ textDecoration: "none", borderBottom: "none", fontSize: "1.3rem", marginTop: "1rem", marginBottom: "0.5rem" }} />,
+              h3: ({ ...props }) => <h3 {...props} style={{ textDecoration: "none", borderBottom: "none", fontSize: "1.2rem", marginTop: "1rem", marginBottom: "0.5rem" }} />,
+              strong: ({ ...props }) => <strong {...props} style={{ 
+                textDecoration: "none !important", 
+                borderBottom: "none !important",
+                fontWeight: 700,
+                color: "#fbbf24",
+              }} />,
+              p: ({ ...props }) => <p {...props} style={{ margin: "1rem 0", textDecoration: "none", fontSize: "1.1rem" }} />,
+              li: ({ ...props }) => <li {...props} style={{ textDecoration: "none", marginBottom: "0.5rem", fontSize: "1.05rem" }} />,
+              ul: ({ ...props }) => <ul {...props} style={{ margin: "1rem 0", paddingLeft: "1.5rem" }} />,
+            }}
+          >
+            {messageContent}
+          </ReactMarkdown>
+        </div>
+      </div>
+    );
+  }
+  
+  // Si no, procesar como mensaje de éxito normal (archivos procesados)
+  // Solo intentar parsear como JSON si parece ser JSON válido
   let successData: unknown;
   
   try {
     if (typeof data === 'string') {
-      successData = JSON.parse(data);
+      // Solo intentar parsear si parece ser JSON (empieza con { o [)
+      const trimmed = data.trim();
+      if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || 
+          (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+        successData = JSON.parse(data);
+      } else {
+        // Si no es JSON, tratarlo como string simple
+        console.warn("SuccessMessage: data is string but not JSON, treating as plain text");
+        return null;
+      }
     } else if (typeof data === 'object' && data !== null) {
       successData = data;
     } else {
@@ -4961,6 +7717,7 @@ function SuccessMessage({
     }
   } catch (error) {
     console.error("Error parsing success data", error);
+    // Si falla el parsing, no renderizar nada en lugar de crashear
     return null;
   }
 
@@ -5582,6 +8339,2157 @@ function FeedbackComponent({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Componente para mostrar el ejercicio
+function ExerciseComponent({ 
+  exercise, 
+  answer, 
+  answerImage,
+  onAnswerChange, 
+  onAnswerImageChange,
+  onImageRemove,
+  imageInputRef,
+  onSubmit, 
+  colorTheme 
+}: { 
+  exercise: Exercise; 
+  answer: string; 
+  answerImage: string | null;
+  onAnswerChange: (answer: string) => void; 
+  onAnswerImageChange: (image: string | null) => void;
+  onImageRemove: () => void;
+  imageInputRef: React.RefObject<HTMLInputElement | null>;
+  onSubmit: () => void; 
+  colorTheme: "light" | "dark" 
+}) {
+  const bgColor = colorTheme === "dark" 
+    ? "rgba(26, 26, 36, 0.95)"
+    : "#ffffff";
+  const textColor = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
+  const secondaryTextColor = colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563";
+  const borderColor = colorTheme === "dark" 
+    ? "rgba(148, 163, 184, 0.2)" 
+    : "rgba(148, 163, 184, 0.3)";
+  
+  // Función helper para detectar si es un lenguaje de programación
+  const isProgrammingLanguage = (topic: string): boolean => {
+    const topicLower = topic.toLowerCase();
+    return topicLower.includes("python") ||
+      topicLower.includes("javascript") || topicLower.includes("js") ||
+      topicLower.includes("java") ||
+      topicLower.includes("sql") ||
+      topicLower.includes("typescript") ||
+      topicLower.includes("c++") || topicLower.includes("cpp") ||
+      topicLower.includes("react") ||
+      topicLower.includes("html") || topicLower.includes("css") ||
+      topicLower.includes("swift") ||
+      topicLower.includes("programación") || topicLower.includes("programming");
+  };
+  
+  // Detectar si es un ejercicio de programación
+  const topics = exercise.topics || [];
+  const topicsStr = topics.join(" ").toLowerCase();
+  console.log("[ExerciseComponent] Topics:", topics, "Topics string:", topicsStr);
+  
+  const isProgramming = isProgrammingLanguage(topicsStr) || 
+    topics.some(t => isProgrammingLanguage(t.toLowerCase()));
+  
+  console.log("[ExerciseComponent] Is programming:", isProgramming);
+  
+  const programmingLanguage = topics.find(t => {
+    const tLower = t.toLowerCase();
+    if (tLower.includes("python")) return "Python";
+    if (tLower.includes("javascript") || tLower.includes("js")) return "JavaScript";
+    if (tLower.includes("java")) return "Java";
+    if (tLower.includes("sql")) return "SQL";
+    return null;
+  }) || (isProgramming ? "Python" : null);
+  
+  console.log("[ExerciseComponent] Programming language:", programmingLanguage);
+
+  return (
+    <div
+      style={{
+        background: bgColor,
+        borderRadius: "12px",
+        padding: "1.5rem",
+        border: `1px solid ${borderColor}`,
+        boxShadow: colorTheme === "dark"
+          ? "0 2px 8px rgba(0, 0, 0, 0.2)"
+          : "0 2px 8px rgba(0, 0, 0, 0.08)",
+      }}
+    >
+      <div style={{ marginBottom: "1.5rem" }}>
+        <h3 style={{
+          margin: "0 0 1rem 0",
+          fontSize: "1.25rem",
+          fontWeight: 600,
+          color: textColor,
+        }}>
+          Ejercicio
+        </h3>
+        <div style={{
+          padding: "1.5rem",
+          background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+          borderRadius: "12px",
+          marginBottom: "1rem",
+          border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.15)"}`,
+        }}>
+          <div style={{
+            color: textColor,
+            lineHeight: 1.8,
+            whiteSpace: "pre-wrap",
+            fontSize: "1rem",
+          }}>
+            {(() => {
+              // Procesar el enunciado para destacar palabras clave
+              const statement = exercise.statement || "Cargando enunciado...";
+              
+              // Palabras clave comunes a destacar
+              const keywords = [
+                // SQL
+                'SELECT', 'FROM', 'WHERE', 'UPDATE', 'DELETE', 'INSERT', 'CREATE', 'ALTER', 'DROP',
+                'JOIN', 'INNER JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'FULL JOIN',
+                'GROUP BY', 'ORDER BY', 'HAVING', 'DISTINCT', 'UNION', 'AS',
+                'AND', 'OR', 'NOT', 'IN', 'LIKE', 'BETWEEN', 'IS NULL', 'IS NOT NULL',
+                'COUNT', 'SUM', 'AVG', 'MAX', 'MIN',
+                // Programación general
+                'function', 'variable', 'array', 'object', 'class', 'method', 'return',
+                'if', 'else', 'for', 'while', 'switch', 'case', 'break', 'continue',
+                'const', 'let', 'var', 'import', 'export', 'async', 'await',
+                // Conceptos importantes
+                'query', 'database', 'table', 'column', 'row', 'primary key', 'foreign key',
+                'index', 'constraint', 'transaction', 'commit', 'rollback',
+                'API', 'endpoint', 'request', 'response', 'JSON', 'XML',
+                'algorithm', 'data structure', 'time complexity', 'space complexity',
+                // Instrucciones
+                'escribe', 'crea', 'implementa', 'diseña', 'calcula', 'determina', 'explica',
+                'debe', 'debe ser', 'debe tener', 'requiere', 'necesita',
+                'importante', 'nota', 'recuerda', 'considera', 'ten en cuenta',
+              ];
+              
+              // Crear expresión regular para encontrar palabras clave (case insensitive)
+              const keywordPattern = new RegExp(
+                `\\b(${keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`,
+                'gi'
+              );
+              
+              // Dividir el texto en partes y destacar palabras clave
+              const parts: (string | React.ReactElement)[] = [];
+              let lastIndex = 0;
+              let match;
+              
+              while ((match = keywordPattern.exec(statement)) !== null) {
+                // Agregar texto antes de la palabra clave
+                if (match.index > lastIndex) {
+                  parts.push(statement.substring(lastIndex, match.index));
+                }
+                
+                // Agregar palabra clave destacada en negrita
+                parts.push(
+                  <strong key={match.index} style={{
+                    color: textColor,
+                    fontWeight: 700,
+                  }}>
+                    {match[0]}
+                  </strong>
+                );
+                
+                lastIndex = match.index + match[0].length;
+              }
+              
+              // Agregar texto restante
+              if (lastIndex < statement.length) {
+                parts.push(statement.substring(lastIndex));
+              }
+              
+              // Si no se encontraron palabras clave, devolver el texto original
+              if (parts.length === 0) {
+                return statement;
+              }
+              
+              return <>{parts}</>;
+            })()}
+          </div>
+        </div>
+        {exercise.hints && exercise.hints.length > 0 && (
+          <div style={{
+            marginTop: "1rem",
+            padding: "0.75rem 1rem",
+            background: colorTheme === "dark" ? "rgba(245, 158, 11, 0.1)" : "rgba(245, 158, 11, 0.08)",
+            borderRadius: "8px",
+            border: `1px solid ${colorTheme === "dark" ? "rgba(245, 158, 11, 0.3)" : "rgba(245, 158, 11, 0.4)"}`,
+          }}>
+            <div style={{
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              color: secondaryTextColor,
+              marginBottom: "0.5rem",
+            }}>
+              Pistas:
+            </div>
+            <ul style={{
+              margin: 0,
+              paddingLeft: "1.25rem",
+              color: textColor,
+            }}>
+              {exercise.hints.map((hint, index) => (
+                <li key={index} style={{ marginBottom: "0.25rem" }}>
+                  {hint}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+      
+      {/* Mostrar intérprete de código si es un ejercicio de programación */}
+      {isProgramming && programmingLanguage && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <CodeInterpreter
+            language={programmingLanguage}
+            colorTheme={colorTheme}
+            initialCode={answer}
+            onCodeChange={(code) => onAnswerChange(code)}
+          />
+        </div>
+      )}
+      
+      <div style={{ marginBottom: "1rem" }}>
+        <label style={{
+          display: "block",
+          fontSize: "0.875rem",
+          fontWeight: 600,
+          color: textColor,
+          marginBottom: "0.5rem",
+        }}>
+          Tu respuesta:
+        </label>
+        <textarea
+          value={answer}
+          onChange={(e) => onAnswerChange(e.target.value)}
+          placeholder="Escribe tu respuesta aquí..."
+          style={{
+            width: "100%",
+            minHeight: "120px",
+            padding: "0.75rem",
+            background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#f8f9fa",
+            border: `1px solid ${borderColor}`,
+            borderRadius: "8px",
+            color: textColor,
+            fontSize: "0.95rem",
+            fontFamily: "inherit",
+            resize: "vertical",
+            boxSizing: "border-box",
+            marginBottom: "0.75rem",
+          }}
+        />
+        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  onAnswerImageChange(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.5rem",
+              height: "48px",
+              padding: "0 1rem",
+              background: "#ffffff",
+              border: "1px solid rgba(148, 163, 184, 0.2)",
+              borderRadius: "24px",
+              color: "#1a1a24",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#f8f9fa";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#ffffff";
+            }}
+          >
+            <UploadIcon size={20} color="#1a1a24" />
+            <span>{answerImage ? "Cambiar imagen" : "Subir imagen"}</span>
+          </button>
+          {answerImage && (
+            <>
+              <div style={{
+                position: "relative",
+                maxWidth: "200px",
+                maxHeight: "200px",
+                borderRadius: "8px",
+                overflow: "hidden",
+                border: `1px solid ${borderColor}`,
+              }}>
+                <img 
+                  src={answerImage} 
+                  alt="Respuesta" 
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                  }}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={onImageRemove}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                  height: "48px",
+                  padding: "0 1rem",
+                  background: "#ffffff",
+                  border: "1px solid rgba(148, 163, 184, 0.2)",
+                  borderRadius: "24px",
+                  color: "#1a1a24",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#f8f9fa";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#ffffff";
+                }}
+              >
+                <XIcon size={20} color="#1a1a24" />
+                <span>Eliminar imagen</span>
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+      <button
+        onClick={onSubmit}
+        disabled={!answer.trim() && !answerImage}
+        style={{
+          width: "100%",
+          padding: "0.75rem 1.5rem",
+          background: answer.trim()
+            ? (colorTheme === "dark" ? "#6366f1" : "#6366f1")
+            : (colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(148, 163, 184, 0.2)"),
+          border: "none",
+          borderRadius: "8px",
+          color: "white",
+          fontSize: "0.95rem",
+          fontWeight: 600,
+          cursor: answer.trim() ? "pointer" : "not-allowed",
+          transition: "all 0.2s ease",
+        }}
+        onMouseEnter={(e) => {
+          if (answer.trim()) {
+            e.currentTarget.style.background = colorTheme === "dark" ? "#5855eb" : "#5855eb";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (answer.trim()) {
+            e.currentTarget.style.background = colorTheme === "dark" ? "#6366f1" : "#6366f1";
+          }
+        }}
+      >
+        Corregir Ejercicio
+      </button>
+    </div>
+  );
+}
+
+// Componente para mostrar el resultado de la corrección
+function ExerciseResultComponent({ 
+  correction, 
+  exercise, 
+  colorTheme 
+}: { 
+  correction: ExerciseCorrection; 
+  exercise: Exercise | null; 
+  colorTheme: "light" | "dark" 
+}) {
+  const bgColor = colorTheme === "dark" 
+    ? "rgba(26, 26, 36, 0.95)"
+    : "#ffffff";
+  const textColor = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
+  const secondaryTextColor = colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563";
+  const borderColor = colorTheme === "dark" 
+    ? "rgba(148, 163, 184, 0.2)" 
+    : "rgba(148, 163, 184, 0.3)";
+
+  const scoreColor = correction.score_percentage >= 80 
+    ? "#10b981" 
+    : correction.score_percentage >= 60 
+    ? "#f59e0b" 
+    : "#ef4444";
+
+  return (
+    <div
+      style={{
+        background: bgColor,
+        borderRadius: "12px",
+        padding: "1.5rem",
+        border: `1px solid ${borderColor}`,
+        boxShadow: colorTheme === "dark"
+          ? "0 2px 8px rgba(0, 0, 0, 0.2)"
+          : "0 2px 8px rgba(0, 0, 0, 0.08)",
+      }}
+    >
+      <div style={{ marginBottom: "1.5rem", textAlign: "center" }}>
+        <div style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "1rem",
+          padding: "1rem 2rem",
+          background: colorTheme === "dark" 
+            ? `rgba(${scoreColor === "#10b981" ? "16, 185, 129" : scoreColor === "#f59e0b" ? "245, 158, 11" : "239, 68, 68"}, 0.15)` 
+            : `rgba(${scoreColor === "#10b981" ? "16, 185, 129" : scoreColor === "#f59e0b" ? "245, 158, 11" : "239, 68, 68"}, 0.1)`,
+          borderRadius: "12px",
+          border: `2px solid ${scoreColor}40`,
+        }}>
+          <div>
+            <div style={{ fontSize: "0.875rem", color: secondaryTextColor, marginBottom: "0.25rem" }}>
+              Puntuación
+            </div>
+            <div style={{
+              fontSize: "2rem",
+              fontWeight: 700,
+              color: scoreColor,
+            }}>
+              {correction.score.toFixed(1)} / {exercise?.points || 10}
+            </div>
+            <div style={{
+              fontSize: "1.25rem",
+              fontWeight: 600,
+              color: scoreColor,
+              marginTop: "0.25rem",
+            }}>
+              {correction.score_percentage.toFixed(1)}%
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ marginBottom: "1.5rem" }}>
+        <h3 style={{
+          margin: "0 0 1rem 0",
+          fontSize: "1.125rem",
+          fontWeight: 600,
+          color: textColor,
+        }}>
+          Feedback General
+        </h3>
+        <div style={{
+          padding: "1rem",
+          background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+          borderRadius: "8px",
+          border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"}`,
+        }}>
+          <p style={{
+            margin: 0,
+            color: textColor,
+            lineHeight: 1.6,
+            whiteSpace: "pre-wrap",
+          }}>
+            {correction.feedback}
+          </p>
+        </div>
+      </div>
+
+      {correction.strengths && correction.strengths.length > 0 && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <h4 style={{
+            margin: "0 0 0.75rem 0",
+            fontSize: "1rem",
+            fontWeight: 600,
+            color: "#10b981",
+          }}>
+            Fortalezas:
+          </h4>
+          <ul style={{
+            margin: 0,
+            paddingLeft: "1.25rem",
+            color: textColor,
+          }}>
+            {correction.strengths.map((strength, index) => (
+              <li key={index} style={{ marginBottom: "0.5rem" }}>
+                {strength}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {correction.weaknesses && correction.weaknesses.length > 0 && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <h4 style={{
+            margin: "0 0 0.75rem 0",
+            fontSize: "1rem",
+            fontWeight: 600,
+            color: "#ef4444",
+          }}>
+            Debilidades:
+          </h4>
+          <ul style={{
+            margin: 0,
+            paddingLeft: "1.25rem",
+            color: textColor,
+          }}>
+            {correction.weaknesses.map((weakness, index) => (
+              <li key={index} style={{ marginBottom: "0.5rem" }}>
+                {weakness}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {correction.suggestions && correction.suggestions.length > 0 && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <h4 style={{
+            margin: "0 0 0.75rem 0",
+            fontSize: "1rem",
+            fontWeight: 600,
+            color: "#6366f1",
+          }}>
+            Sugerencias:
+          </h4>
+          <ul style={{
+            margin: 0,
+            paddingLeft: "1.25rem",
+            color: textColor,
+          }}>
+            {correction.suggestions.map((suggestion, index) => (
+              <li key={index} style={{ marginBottom: "0.5rem" }}>
+                {suggestion}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {correction.detailed_analysis && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <h4 style={{
+            margin: "0 0 0.75rem 0",
+            fontSize: "1rem",
+            fontWeight: 600,
+            color: textColor,
+          }}>
+            Análisis Detallado:
+          </h4>
+          <div style={{
+            padding: "1rem",
+            background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.5)" : "rgba(248, 250, 252, 0.8)",
+            borderRadius: "8px",
+            border: `1px solid ${borderColor}`,
+          }}>
+            <p style={{
+              margin: 0,
+              color: textColor,
+              lineHeight: 1.6,
+              whiteSpace: "pre-wrap",
+            }}>
+              {correction.detailed_analysis}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {correction.correct_answer_explanation && (
+        <div>
+          <h4 style={{
+            margin: "0 0 0.75rem 0",
+            fontSize: "1rem",
+            fontWeight: 600,
+            color: "#10b981",
+          }}>
+            Respuesta Correcta:
+          </h4>
+          <div style={{
+            padding: "1rem",
+            background: colorTheme === "dark" ? "rgba(16, 185, 129, 0.1)" : "rgba(16, 185, 129, 0.08)",
+            borderRadius: "8px",
+            border: `1px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.4)"}`,
+          }}>
+            <p style={{
+              margin: 0,
+              color: textColor,
+              lineHeight: 1.6,
+              whiteSpace: "pre-wrap",
+            }}>
+              {correction.correct_answer_explanation}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Hook para Text-to-Speech
+function useTextToSpeech() {
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+
+  const speak = (text: string, language: string, onEnd?: () => void) => {
+    // Detener cualquier pronunciación anterior
+    if (currentUtterance) {
+      window.speechSynthesis.cancel();
+    }
+
+    // Mapear idiomas a códigos de voz
+    const languageCodeMap: Record<string, string> = {
+      "inglés": "en-US",
+      "english": "en-US",
+      "francés": "fr-FR",
+      "francais": "fr-FR",
+      "alemán": "de-DE",
+      "deutsch": "de-DE",
+      "italiano": "it-IT",
+      "portugués": "pt-PT",
+      "chino": "zh-CN",
+      "chino simplificado": "zh-CN",
+      "japonés": "ja-JP",
+      "japones": "ja-JP",
+      "coreano": "ko-KR",
+      "catalán": "ca-ES",
+      "catalan": "ca-ES",
+      "ruso": "ru-RU",
+    };
+
+    const langKey = language.toLowerCase();
+    const langCode = languageCodeMap[langKey] || "es-ES"; // Fallback a español
+
+    if (!("speechSynthesis" in window)) {
+      console.warn("Text-to-Speech no está disponible en este navegador");
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = langCode;
+    utterance.rate = 0.9; // Velocidad ligeramente más lenta para mejor comprensión
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    // Intentar encontrar una voz nativa para el idioma
+    const voices = window.speechSynthesis.getVoices();
+    const nativeVoice = voices.find(voice => 
+      voice.lang.startsWith(langCode.split("-")[0]) && 
+      (voice.lang === langCode || voice.lang.includes(langCode.split("-")[1]))
+    );
+    
+    if (nativeVoice) {
+      utterance.voice = nativeVoice;
+    }
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setCurrentUtterance(utterance);
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setCurrentUtterance(null);
+      if (onEnd) onEnd();
+    };
+
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setCurrentUtterance(null);
+    };
+
+    // Cargar voces si no están disponibles
+    if (voices.length === 0) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        const updatedVoices = window.speechSynthesis.getVoices();
+        const updatedNativeVoice = updatedVoices.find(voice => 
+          voice.lang.startsWith(langCode.split("-")[0]) && 
+          (voice.lang === langCode || voice.lang.includes(langCode.split("-")[1]))
+        );
+        if (updatedNativeVoice) {
+          utterance.voice = updatedNativeVoice;
+        }
+        window.speechSynthesis.speak(utterance);
+      };
+    } else {
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const stop = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    setCurrentUtterance(null);
+  };
+
+  return { speak, stop, isSpeaking };
+}
+
+// Componente de botón de audio
+function AudioButton({ 
+  text, 
+  language, 
+  colorTheme = "dark",
+  size = 20
+}: { 
+  text: string; 
+  language: string;
+  colorTheme?: "dark" | "light";
+  size?: number;
+}) {
+  const { speak, stop, isSpeaking } = useTextToSpeech();
+
+  const handleClick = () => {
+    if (isSpeaking) {
+      stop();
+    } else {
+      speak(text, language);
+    }
+  };
+
+  const iconColor = colorTheme === "dark" ? "var(--text-secondary)" : "#64748b";
+
+  return (
+    <button
+      onClick={handleClick}
+      title={isSpeaking ? "Detener pronunciación" : "Pronunciar"}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "0.5rem",
+        background: colorTheme === "dark" 
+          ? "rgba(99, 102, 241, 0.15)" 
+          : "rgba(99, 102, 241, 0.12)",
+        border: "none",
+        borderRadius: "50%",
+        cursor: "pointer",
+        color: colorTheme === "dark" ? "#818cf8" : "#6366f1",
+        transition: "all 0.2s ease",
+        opacity: isSpeaking ? 1 : 0.9,
+        width: `${size + 16}px`,
+        height: `${size + 16}px`,
+        boxShadow: colorTheme === "dark" 
+          ? "0 2px 4px rgba(0, 0, 0, 0.2)" 
+          : "0 2px 4px rgba(0, 0, 0, 0.1)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = colorTheme === "dark" 
+          ? "rgba(99, 102, 241, 0.25)" 
+          : "rgba(99, 102, 241, 0.2)";
+        e.currentTarget.style.opacity = "1";
+        e.currentTarget.style.transform = "scale(1.1)";
+        e.currentTarget.style.boxShadow = colorTheme === "dark" 
+          ? "0 4px 8px rgba(0, 0, 0, 0.3)" 
+          : "0 4px 8px rgba(0, 0, 0, 0.15)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = colorTheme === "dark" 
+          ? "rgba(99, 102, 241, 0.15)" 
+          : "rgba(99, 102, 241, 0.12)";
+        e.currentTarget.style.opacity = isSpeaking ? "1" : "0.9";
+        e.currentTarget.style.transform = "scale(1)";
+        e.currentTarget.style.boxShadow = colorTheme === "dark" 
+          ? "0 2px 4px rgba(0, 0, 0, 0.2)" 
+          : "0 2px 4px rgba(0, 0, 0, 0.1)";
+      }}
+    >
+      {isSpeaking ? (
+        <FaStop size={size} />
+      ) : (
+        <FaVolumeUp size={size} />
+      )}
+    </button>
+  );
+}
+
+// Componente de flashcards para idiomas
+function LanguageFlashcards({
+  language,
+  level,
+  colorTheme = "dark",
+  apiKey,
+  userId,
+  setLearnedWordsCount,
+  currentChatLevel,
+  setCurrentChatLevel,
+}: {
+  language: string;
+  level: number;
+  colorTheme?: "dark" | "light";
+  apiKey?: string;
+  userId?: string;
+  setLearnedWordsCount?: (count: number | ((prev: number) => number)) => void;
+  currentChatLevel?: { topic: string; level: number } | null;
+  setCurrentChatLevel?: (level: { topic: string; level: number }) => void;
+}) {
+  const [words, setWords] = useState<Array<{ 
+    word: string; 
+    translation: string; 
+    example?: string;
+    romanization?: string;
+    options?: string[];
+  }>>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [failedWords, setFailedWords] = useState<Array<{ 
+    word: string; 
+    translation: string; 
+    example?: string;
+    romanization?: string;
+    options?: string[];
+  }>>([]);
+  const [learnedWords, setLearnedWords] = useState<Array<{ 
+    word: string; 
+    translation: string; 
+    example?: string;
+    romanization?: string;
+    options?: string[];
+  }>>([]);
+  const [showLearnedWords, setShowLearnedWords] = useState(false);
+  const [isShowingFailedWords, setIsShowingFailedWords] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [stats, setStats] = useState({ correct: 0, total: 0 });
+  const [learnedWordsList, setLearnedWordsList] = useState<Array<{ 
+    word: string; 
+    translation: string; 
+    example?: string;
+    romanization?: string;
+  }>>([]);
+
+  const textColor = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
+  const bgColor = colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff";
+  const borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
+
+  // Cargar palabras aprendidas al montar el componente
+  useEffect(() => {
+    const loadLearnedWords = async () => {
+      if (!userId || !language) return;
+      
+      try {
+        const response = await fetch("/api/study-agents/get-learned-words", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, language }),
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          setLearnedWordsList(data.words || []);
+        }
+      } catch (error) {
+        console.error("Error loading learned words for flashcards:", error);
+      }
+    };
+
+    loadLearnedWords();
+  }, [userId, language]);
+
+  // Cargar palabras iniciales
+  useEffect(() => {
+    if (apiKey) {
+      loadWords(10);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language, level]);
+
+  const loadWords = async (count: number = 10) => {
+    if (!apiKey) return;
+    
+    setIsLoading(true);
+    try {
+      // Determinar el nombre del idioma en su idioma nativo
+      const languageNames: Record<string, string> = {
+        "inglés": "English",
+        "english": "English",
+        "francés": "Français",
+        "francais": "Français",
+        "alemán": "Deutsch",
+        "deutsch": "Deutsch",
+        "italiano": "Italiano",
+        "portugués": "Português",
+        "chino": "中文",
+        "chino simplificado": "中文",
+        "japonés": "日本語",
+        "japones": "日本語",
+        "coreano": "한국어",
+        "catalán": "Català",
+        "catalan": "Català",
+        "ruso": "Русский",
+      };
+
+      const langKey = language.toLowerCase();
+      const nativeName = languageNames[langKey] || language;
+
+      // Detectar si el idioma necesita romanización
+      const needsRomanization = langKey.includes("japonés") || langKey.includes("japones") ||
+                                langKey.includes("chino") || langKey.includes("coreano") ||
+                                langKey.includes("ruso") || langKey.includes("árabe");
+
+      const response = await fetch("/api/study-agents/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apiKey,
+          question: `Genera ${count} palabras o frases comunes en ${nativeName} (${language}) para nivel ${level}/10. 
+IMPORTANTE: 
+- Usa caracteres nativos del idioma (hiragana/katakana/kanji para japonés, hanzi para chino, hangul para coreano, etc.)
+${needsRomanization ? `- Incluye la romanización (pronunciación en letras latinas) en el campo "romanization"` : ""}
+- Para nivel 0-3: palabras básicas y comunes
+- Para nivel 4-6: palabras intermedias
+- Para nivel 7-10: palabras avanzadas y frases complejas
+- El campo "example" debe ser SOLO en el idioma objetivo, sin traducción
+- Genera 4 opciones de respuesta: 1 correcta (la traducción) y 3 incorrectas pero que tengan sentido (palabras relacionadas, sinónimos cercanos, o palabras del mismo tema)
+- Las opciones incorrectas deben ser plausibles pero claramente diferentes
+
+Responde SOLO con un JSON array válido en este formato exacto (sin texto adicional):
+[{"word": "palabra_o_frase_en_idioma_objetivo", "translation": "traducción_al_español", "example": "ejemplo_solo_en_idioma_objetivo_sin_traducción"${needsRomanization ? ', "romanization": "pronunciacion_en_letras_latinas"' : ""}, "options": ["traducción_correcta", "opción_incorrecta_1_relacionada", "opción_incorrecta_2_relacionada", "opción_incorrecta_3_relacionada"]}]`,
+          userId: "flashcards",
+          chatId: "flashcards",
+          topic: language,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        try {
+          // Extraer JSON de la respuesta
+          const jsonMatch = data.answer.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            const newWords = JSON.parse(jsonMatch[0]);
+            
+            // Filtrar palabras que ya están en la lista de palabras aprendidas
+            const learnedWordsSet = new Set(learnedWordsList.map(w => w.word.toLowerCase().trim()));
+            const filteredWords = newWords.filter((word: any) => {
+              const wordLower = word.word?.toLowerCase().trim() || "";
+              return !learnedWordsSet.has(wordLower);
+            });
+            
+            if (filteredWords.length === 0) {
+              console.log("Todas las palabras generadas ya están aprendidas. Generando más...");
+              // Si todas las palabras ya están aprendidas, intentar generar más
+              // Pero evitar recursión infinita limitando el número de intentos
+              if (count < 50) {
+                // Pequeño delay para evitar demasiadas peticiones
+                await new Promise(resolve => setTimeout(resolve, 500));
+                await loadWords(count + 10);
+                return;
+              } else {
+                console.warn("No se pudieron generar palabras nuevas después de varios intentos. Puede que ya hayas aprendido muchas palabras de este nivel.");
+              }
+            }
+            
+            // Mezclar las opciones aleatoriamente para cada palabra
+            const wordsWithShuffledOptions = filteredWords.map((word: any) => {
+              if (word.options && word.options.length > 0) {
+                // Mezclar las opciones aleatoriamente
+                const shuffled = [...word.options].sort(() => Math.random() - 0.5);
+                return { ...word, options: shuffled };
+              }
+              return word;
+            });
+            setWords(prev => [...prev, ...wordsWithShuffledOptions]);
+          }
+        } catch (e) {
+          console.error("Error parsing words:", e);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading words:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Calcular la palabra actual de forma consistente
+  const currentWord = useMemo(() => {
+    const displayWords = isShowingFailedWords ? failedWords : words;
+    if (displayWords.length === 0) return null;
+    const safeIndex = Math.min(currentIndex, displayWords.length - 1);
+    return displayWords[safeIndex] || null;
+  }, [isShowingFailedWords, failedWords, words, currentIndex]);
+
+  const handleCheck = (selectedTranslation: string) => {
+    if (!currentWord) return;
+    
+    // Obtener la palabra actual del array correcto usando el índice actual
+    const displayWords = isShowingFailedWords ? failedWords : words;
+    if (displayWords.length === 0) return;
+    const safeIndex = Math.min(currentIndex, displayWords.length - 1);
+    const actualCurrentWord = displayWords[safeIndex];
+    
+    if (!actualCurrentWord || actualCurrentWord.word !== currentWord.word) {
+      // Si la palabra no coincide, no procesar (evitar desincronización)
+      return;
+    }
+    
+    const isAnswerCorrect = selectedTranslation === actualCurrentWord.translation;
+
+    setIsCorrect(isAnswerCorrect);
+    setShowAnswer(true);
+    setStats(prev => ({ 
+      correct: prev.correct + (isAnswerCorrect ? 1 : 0), 
+      total: prev.total + 1 
+    }));
+
+    if (isAnswerCorrect) {
+      // Agregar a palabras aprendidas si no está ya
+      if (!learnedWords.find(w => w.word === actualCurrentWord.word)) {
+        setLearnedWords(prev => [...prev, actualCurrentWord]);
+        
+        // Actualizar también la lista local de palabras aprendidas para filtrar futuras palabras
+        setLearnedWordsList(prev => {
+          const wordLower = actualCurrentWord.word.toLowerCase().trim();
+          if (!prev.find(w => w.word.toLowerCase().trim() === wordLower)) {
+            return [...prev, {
+              word: actualCurrentWord.word,
+              translation: actualCurrentWord.translation,
+              example: actualCurrentWord.example,
+              romanization: actualCurrentWord.romanization,
+            }];
+          }
+          return prev;
+        });
+        
+        // Guardar en el backend
+        if (userId && language) {
+          fetch("/api/study-agents/add-learned-word", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId,
+              language,
+              word: actualCurrentWord.word,
+              translation: actualCurrentWord.translation,
+              source: "flashcards",
+              example: actualCurrentWord.example,
+              romanization: actualCurrentWord.romanization,
+            }),
+          })
+          .then(async (res) => {
+            const data = await res.json();
+            if (data.success) {
+              // Recargar el conteo desde el backend para asegurar sincronización
+              fetch("/api/study-agents/get-learned-words-count", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, language }),
+              })
+              .then(async (countRes) => {
+                const countData = await countRes.json();
+                if (countData.success && setLearnedWordsCount) {
+                  setLearnedWordsCount(countData.count || 0);
+                }
+              })
+              .catch(err => console.error("Error loading words count:", err));
+              
+              // Si hay actualización de nivel, actualizar el nivel del chat
+              if (data.level_update && currentChatLevel && setCurrentChatLevel && currentChatLevel.topic === language) {
+                const levelData = data.level_update;
+                const newLevel = (levelData as any)?.new_level || (levelData as any)?.level;
+                if (newLevel !== undefined) {
+                  const oldLevel = currentChatLevel.level;
+                  setCurrentChatLevel({
+                    topic: language,
+                    level: newLevel,
+                  });
+                  
+                  // Mostrar mensaje si subió de nivel
+                  if (newLevel > oldLevel) {
+                    console.log(`📊 Nivel actualizado: ${oldLevel} → ${newLevel}`);
+                  }
+                }
+              }
+            }
+          })
+          .catch(err => console.error("Error saving learned word:", err));
+        }
+      }
+      // Remover de palabras fallidas si estaba ahí
+      setFailedWords(prev => {
+        const filtered = prev.filter(w => w.word !== actualCurrentWord.word);
+        // Si estamos mostrando palabras fallidas y acabamos de eliminar la palabra actual, ajustar el índice
+        if (isShowingFailedWords) {
+          if (filtered.length === 0) {
+            // Si no quedan palabras fallidas, volver a palabras normales
+            setIsShowingFailedWords(false);
+            setCurrentIndex(0);
+          } else if (safeIndex >= filtered.length) {
+            // Ajustar el índice si está fuera de rango
+            setCurrentIndex(Math.min(safeIndex, filtered.length - 1));
+          }
+        }
+        return filtered;
+      });
+    } else {
+      // Agregar a palabras fallidas si no está ya
+      if (!failedWords.find(w => w.word === actualCurrentWord.word)) {
+        setFailedWords(prev => [...prev, actualCurrentWord]);
+      }
+    }
+  };
+
+  const handleRepeatFailedWords = () => {
+    if (failedWords.length === 0) return;
+    // Mezclar las palabras fallidas para practicarlas de nuevo
+    const shuffled = [...failedWords].sort(() => Math.random() - 0.5);
+    setFailedWords(shuffled);
+    setIsShowingFailedWords(true);
+    setCurrentIndex(0);
+    setSelectedOption(null);
+    setShowAnswer(false);
+    setIsCorrect(null);
+  };
+
+  const handleNext = () => {
+    if (isShowingFailedWords) {
+      // Si estamos mostrando palabras fallidas, avanzar índice
+      if (currentIndex >= failedWords.length - 1) {
+        // Si terminamos todas las fallidas, volver a palabras normales
+        setIsShowingFailedWords(false);
+        setCurrentIndex(0);
+      } else {
+        setCurrentIndex(prev => prev + 1);
+      }
+    } else {
+      // Avanzar en palabras normales
+      setCurrentIndex(prev => (prev + 1) % words.length);
+    }
+    
+    setSelectedOption(null);
+    setShowAnswer(false);
+    setIsCorrect(null);
+
+    // Cargar más palabras si nos quedamos sin
+    if (!isShowingFailedWords && currentIndex >= words.length - 3 && !isLoading) {
+      loadWords(10);
+    }
+  };
+
+
+  if (!currentWord) {
+    return (
+      <div style={{
+        padding: "2rem",
+        background: bgColor,
+        borderRadius: "12px",
+        border: `1px solid ${borderColor}`,
+        textAlign: "center",
+        color: textColor,
+      }}>
+        {isLoading ? "Cargando palabras..." : "No hay palabras disponibles"}
+      </div>
+    );
+  }
+
+  // Debug: verificar que el componente se renderiza
+  console.log("[LanguageFlashcards] Renderizando con palabra:", currentWord.word, "idioma:", language);
+
+  return (
+    <div style={{
+      padding: "2rem",
+      background: bgColor,
+      borderRadius: "12px",
+      border: `1px solid ${borderColor}`,
+      boxShadow: colorTheme === "dark" ? "0 2px 8px rgba(0, 0, 0, 0.2)" : "0 2px 8px rgba(0, 0, 0, 0.08)",
+    }}>
+      {/* Header con estadísticas */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "1.5rem",
+        paddingBottom: "1rem",
+        borderBottom: `1px solid ${borderColor}`,
+      }}>
+        <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600, color: textColor }}>
+          Flashcards - {language}
+        </h3>
+        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+          <button
+            onClick={() => setShowLearnedWords(true)}
+            disabled={learnedWords.length === 0}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              padding: "0.5rem 1rem",
+              background: learnedWords.length === 0 
+                ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.05)")
+                : "#10b981",
+              color: learnedWords.length === 0 
+                ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.5)" : "rgba(148, 163, 184, 0.7)")
+                : "white",
+              border: `1px solid ${learnedWords.length === 0 ? borderColor : "#10b981"}`,
+              borderRadius: "16px",
+              fontWeight: 600,
+              fontSize: "0.875rem",
+              cursor: learnedWords.length === 0 ? "not-allowed" : "pointer",
+              transition: "all 0.2s ease",
+              opacity: learnedWords.length === 0 ? 0.5 : 1,
+            }}
+            onMouseEnter={(e) => {
+              if (learnedWords.length > 0) {
+                e.currentTarget.style.background = "#059669";
+                e.currentTarget.style.transform = "scale(1.05)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (learnedWords.length > 0) {
+                e.currentTarget.style.background = "#10b981";
+                e.currentTarget.style.transform = "scale(1)";
+              }
+            }}
+          >
+            <HiCheck size={16} />
+            <span>{learnedWords.length}</span>
+          </button>
+          
+          <button
+            onClick={handleRepeatFailedWords}
+            disabled={failedWords.length === 0}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              padding: "0.5rem 1rem",
+              background: failedWords.length === 0 
+                ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.05)")
+                : "#ef4444",
+              color: failedWords.length === 0 
+                ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.5)" : "rgba(148, 163, 184, 0.7)")
+                : "white",
+              border: `1px solid ${failedWords.length === 0 ? borderColor : "#ef4444"}`,
+              borderRadius: "16px",
+              fontWeight: 600,
+              fontSize: "0.875rem",
+              cursor: failedWords.length === 0 ? "not-allowed" : "pointer",
+              transition: "all 0.2s ease",
+              opacity: failedWords.length === 0 ? 0.5 : 1,
+            }}
+            onMouseEnter={(e) => {
+              if (failedWords.length > 0) {
+                e.currentTarget.style.background = "#dc2626";
+                e.currentTarget.style.transform = "scale(1.05)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (failedWords.length > 0) {
+                e.currentTarget.style.background = "#ef4444";
+                e.currentTarget.style.transform = "scale(1)";
+              }
+            }}
+          >
+            <HiXMark size={16} />
+            <span>{failedWords.length}</span>
+          </button>
+          
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            fontSize: "0.875rem",
+            color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+            padding: "0.5rem 0.75rem",
+          }}>
+            <HiChartBar size={16} />
+            <span>{stats.total}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Card de palabra */}
+      <div style={{
+        background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+        borderRadius: "16px",
+        padding: "2rem",
+        marginBottom: "1.5rem",
+        border: `2px solid ${isCorrect === true ? "#10b981" : isCorrect === false ? "#ef4444" : "transparent"}`,
+        transition: "all 0.3s ease",
+        minHeight: "200px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        position: "relative",
+      }}>
+        {/* Botón de audio en esquina superior derecha */}
+        {language && (
+          <div style={{
+            position: "absolute",
+            top: "1rem",
+            right: "1rem",
+          }}>
+            <AudioButton text={currentWord.word} language={language} colorTheme={colorTheme} size={20} />
+          </div>
+        )}
+        
+        <div style={{
+          fontSize: "2rem",
+          fontWeight: 700,
+          color: textColor,
+          textAlign: "center",
+          marginBottom: "0.5rem",
+        }}>
+          {currentWord.word}
+        </div>
+        
+        {currentWord.romanization && (
+          <div style={{
+            fontSize: "1rem",
+            color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+            fontStyle: "italic",
+            marginBottom: "1rem",
+            textAlign: "center",
+            opacity: 0.8,
+          }}>
+            {currentWord.romanization}
+          </div>
+        )}
+        
+        {currentWord.example && !showAnswer && (
+          <div style={{
+            fontSize: "0.875rem",
+            color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+            fontStyle: "italic",
+            marginBottom: "1rem",
+            textAlign: "center",
+          }}>
+            {currentWord.example}
+          </div>
+        )}
+
+        {showAnswer && (
+          <div style={{
+            marginTop: "1rem",
+            padding: "1rem",
+            background: colorTheme === "dark" ? "rgba(16, 185, 129, 0.15)" : "rgba(16, 185, 129, 0.1)",
+            borderRadius: "8px",
+            border: `1px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.4)"}`,
+          }}>
+            <div style={{ fontSize: "1.25rem", fontWeight: 600, color: "#10b981" }}>
+              {currentWord.translation}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Opciones múltiples */}
+      {!showAnswer && currentWord.options && currentWord.options.length > 0 && (
+        <div style={{ marginBottom: "1rem" }}>
+          <div style={{
+            fontSize: "0.875rem",
+            fontWeight: 600,
+            color: textColor,
+            marginBottom: "0.75rem",
+          }}>
+            Selecciona la traducción correcta:
+          </div>
+          <div style={{
+            display: "flex",
+            flexDirection: "row",
+            gap: "0.75rem",
+            flexWrap: "wrap",
+          }}>
+            {currentWord.options.map((option, index) => {
+              const isSelected = selectedOption === option;
+              const isCorrectOption = option === currentWord.translation;
+              
+              return (
+                <button
+                  key={index}
+                  onClick={() => {
+                    if (!showAnswer) {
+                      setSelectedOption(option);
+                      // Verificar automáticamente al seleccionar
+                      setTimeout(() => {
+                        handleCheck(option);
+                      }, 100);
+                    }
+                  }}
+                  disabled={showAnswer}
+                  style={{
+                    flex: "1 1 calc(25% - 0.75rem)",
+                    minWidth: "150px",
+                    padding: "1rem 1.25rem",
+                    background: showAnswer
+                      ? (isCorrectOption 
+                          ? (colorTheme === "dark" ? "rgba(16, 185, 129, 0.2)" : "rgba(16, 185, 129, 0.15)")
+                          : (isSelected && !isCorrectOption
+                              ? (colorTheme === "dark" ? "rgba(239, 68, 68, 0.2)" : "rgba(239, 68, 68, 0.15)")
+                              : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.08)" : "rgba(148, 163, 184, 0.05)")))
+                      : (isSelected
+                          ? (colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.15)")
+                          : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.08)" : "rgba(148, 163, 184, 0.05)")),
+                    border: showAnswer
+                      ? (isCorrectOption
+                          ? `2px solid #10b981`
+                          : (isSelected && !isCorrectOption
+                              ? `2px solid #ef4444`
+                              : `1px solid ${borderColor}`))
+                      : (isSelected
+                          ? `2px solid #6366f1`
+                          : `1px solid ${borderColor}`),
+                    borderRadius: "16px",
+                    color: textColor,
+                    fontSize: "1rem",
+                    fontWeight: isSelected ? 600 : 500,
+                    cursor: showAnswer ? "default" : "pointer",
+                    textAlign: "center",
+                    transition: "all 0.2s ease",
+                    fontFamily: outfit.style.fontFamily,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!showAnswer && !isSelected) {
+                      e.currentTarget.style.background = colorTheme === "dark"
+                        ? "rgba(99, 102, 241, 0.15)"
+                        : "rgba(99, 102, 241, 0.1)";
+                      e.currentTarget.style.border = `2px solid #6366f1`;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!showAnswer && !isSelected) {
+                      e.currentTarget.style.background = colorTheme === "dark"
+                        ? "rgba(148, 163, 184, 0.08)"
+                        : "rgba(148, 163, 184, 0.05)";
+                      e.currentTarget.style.border = `1px solid ${borderColor}`;
+                    }
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>
+                    <div style={{
+                      width: "24px",
+                      height: "24px",
+                      borderRadius: "50%",
+                      background: showAnswer
+                        ? (isCorrectOption ? "#10b981" : (isSelected && !isCorrectOption ? "#ef4444" : "transparent"))
+                        : (isSelected ? "#6366f1" : "transparent"),
+                      border: showAnswer
+                        ? (isCorrectOption ? "2px solid #10b981" : (isSelected && !isCorrectOption ? "2px solid #ef4444" : `2px solid ${borderColor}`))
+                        : (isSelected ? "2px solid #6366f1" : `2px solid ${borderColor}`),
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}>
+                      {showAnswer && isCorrectOption && (
+                        <span style={{ color: "white", fontSize: "0.75rem", fontWeight: 700 }}>✓</span>
+                      )}
+                      {showAnswer && isSelected && !isCorrectOption && (
+                        <span style={{ color: "white", fontSize: "0.75rem", fontWeight: 700 }}>✗</span>
+                      )}
+                      {!showAnswer && isSelected && (
+                        <div style={{
+                          width: "12px",
+                          height: "12px",
+                          borderRadius: "50%",
+                          background: "white",
+                        }} />
+                      )}
+                    </div>
+                    <span>{option}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {showAnswer && (
+        <button
+          onClick={handleNext}
+          style={{
+            width: "100%",
+            padding: "0.875rem 1.5rem",
+            background: "#6366f1",
+            color: "white",
+            border: "none",
+            borderRadius: "16px",
+            fontWeight: 600,
+            cursor: "pointer",
+            fontSize: "1rem",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#4f46e5";
+            e.currentTarget.style.transform = "scale(1.02)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#6366f1";
+            e.currentTarget.style.transform = "scale(1)";
+          }}
+        >
+          Siguiente palabra
+        </button>
+      )}
+
+      {/* Modal de palabras aprendidas */}
+      {showLearnedWords && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.8)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2000,
+            padding: "2rem",
+          }}
+          onClick={() => setShowLearnedWords(false)}
+        >
+          <div
+            style={{
+              background: bgColor,
+              borderRadius: "20px",
+              padding: "2.5rem",
+              maxWidth: "900px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflow: "auto",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
+              border: `1px solid ${borderColor}`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "2rem",
+            }}>
+              <h2 style={{
+                margin: 0,
+                fontSize: "1.75rem",
+                fontWeight: 700,
+                color: textColor,
+              }}>
+                Palabras aprendidas ({learnedWords.length})
+              </h2>
+              <button
+                onClick={() => setShowLearnedWords(false)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  fontSize: "1.5rem",
+                  color: textColor,
+                  cursor: "pointer",
+                  padding: "0.5rem",
+                  borderRadius: "8px",
+                  transition: "background 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = colorTheme === "dark" 
+                    ? "rgba(148, 163, 184, 0.1)" 
+                    : "rgba(148, 163, 184, 0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {learnedWords.length === 0 ? (
+              <div style={{
+                textAlign: "center",
+                padding: "3rem",
+                color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+              }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📚</div>
+                <div style={{ fontSize: "1.125rem" }}>
+                  Aún no has aprendido ninguna palabra.
+                  <br />
+                  ¡Sigue practicando!
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: "1.25rem",
+              }}>
+                {learnedWords.map((word, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      background: colorTheme === "dark" 
+                        ? "rgba(16, 185, 129, 0.1)" 
+                        : "rgba(16, 185, 129, 0.08)",
+                      border: `2px solid ${colorTheme === "dark" 
+                        ? "rgba(16, 185, 129, 0.3)" 
+                        : "rgba(16, 185, 129, 0.4)"}`,
+                      borderRadius: "16px",
+                      padding: "1.5rem",
+                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-4px)";
+                      e.currentTarget.style.boxShadow = colorTheme === "dark"
+                        ? "0 8px 16px rgba(16, 185, 129, 0.2)"
+                        : "0 8px 16px rgba(16, 185, 129, 0.15)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                  >
+                    <div style={{
+                      fontSize: "1.5rem",
+                      fontWeight: 700,
+                      color: textColor,
+                      marginBottom: "0.5rem",
+                      textAlign: "center",
+                    }}>
+                      {word.word}
+                    </div>
+                    
+                    {word.romanization && (
+                      <div style={{
+                        fontSize: "0.875rem",
+                        color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                        fontStyle: "italic",
+                        marginBottom: "0.75rem",
+                        textAlign: "center",
+                        opacity: 0.8,
+                      }}>
+                        {word.romanization}
+                      </div>
+                    )}
+
+                    <div style={{
+                      fontSize: "1.125rem",
+                      fontWeight: 600,
+                      color: "#10b981",
+                      marginBottom: "0.5rem",
+                      textAlign: "center",
+                    }}>
+                      {word.translation}
+                    </div>
+
+                    {word.example && (
+                      <div style={{
+                        fontSize: "0.875rem",
+                        color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                        fontStyle: "italic",
+                        marginTop: "0.75rem",
+                        paddingTop: "0.75rem",
+                        borderTop: `1px solid ${colorTheme === "dark" 
+                          ? "rgba(148, 163, 184, 0.2)" 
+                          : "rgba(148, 163, 184, 0.3)"}`,
+                        textAlign: "center",
+                      }}>
+                        {word.example}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Componente de intérprete de código para lenguajes de programación
+function CodeInterpreter({
+  language,
+  colorTheme = "dark",
+  initialCode = "",
+  onCodeChange,
+}: {
+  language: string;
+  colorTheme?: "dark" | "light";
+  initialCode?: string;
+  onCodeChange?: (code: string) => void;
+}) {
+  const [code, setCode] = useState(initialCode || "");
+  const [inputs, setInputs] = useState(""); // Inputs para programas que usan input()
+  const [output, setOutput] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
+  const [error, setError] = useState("");
+  
+  // Sincronizar código inicial cuando cambia initialCode
+  useEffect(() => {
+    if (initialCode !== undefined && initialCode !== code) {
+      setCode(initialCode);
+    }
+  }, [initialCode]);
+  
+  // Notificar cambios de código (usar useRef para evitar bucles)
+  const prevCodeRef = useRef(code);
+  useEffect(() => {
+    if (onCodeChange && code !== prevCodeRef.current) {
+      prevCodeRef.current = code;
+      onCodeChange(code);
+    }
+  }, [code, onCodeChange]);
+
+  const textColor = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
+  const bgColor = colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff";
+  const borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
+  const codeBgColor = colorTheme === "dark" ? "#1e1e1e" : "#f8f9fa";
+
+  // Templates de código según el lenguaje
+  const codeTemplates: Record<string, string> = {
+    python: `# Escribe tu código Python aquí
+# Para usar input(), escribe los valores en el campo "Inputs" (uno por línea)
+
+nombre = input("Ingrese su nombre: ")
+edad = input("Ingrese su edad: ")
+print(f"¡Hola, {nombre}! Tienes {edad} años.")`,
+    javascript: `// Escribe tu código JavaScript aquí
+console.log("¡Hola, mundo!");
+
+// Ejemplo:
+function saludar(nombre) {
+    return \`¡Hola, \${nombre}!\`;
+}
+
+const resultado = saludar("Estudiante");
+console.log(resultado);`,
+    java: `// Escribe tu código Java aquí
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Ingrese su nombre: ");
+        String nombre = scanner.nextLine();
+        System.out.println("¡Hola, " + nombre + "!");
+    }
+}`,
+    sql: `-- Escribe tu consulta SQL aquí
+-- Ejemplo:
+CREATE TABLE usuarios (
+    id INTEGER PRIMARY KEY,
+    nombre TEXT,
+    email TEXT
+);
+
+INSERT INTO usuarios (nombre, email) VALUES 
+('Juan', 'juan@example.com'),
+('María', 'maria@example.com');
+
+SELECT * FROM usuarios;`,
+    cpp: `// Escribe tu código C++ aquí
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    string nombre;
+    cout << "Ingrese su nombre: ";
+    getline(cin, nombre);
+    cout << "¡Hola, " << nombre << "!" << endl;
+    return 0;
+}`,
+    html: `<!DOCTYPE html>
+<html>
+<head>
+    <title>Mi Página</title>
+</head>
+<body>
+    <h1>¡Hola, mundo!</h1>
+    <p>Esta es una página HTML de ejemplo.</p>
+</body>
+</html>`,
+    react: `import React, { useState } from 'react';
+
+function App() {
+    const [nombre, setNombre] = useState('');
+    
+    return (
+        <div>
+            <input 
+                value={nombre} 
+                onChange={(e) => setNombre(e.target.value)} 
+                placeholder="Ingrese su nombre"
+            />
+            <p>¡Hola, {nombre || 'mundo'}!</p>
+        </div>
+    );
+}
+
+export default App;`,
+  };
+
+  useEffect(() => {
+    const langLower = language.toLowerCase();
+    if (langLower.includes("python")) {
+      setCode(codeTemplates.python);
+    } else if (langLower.includes("javascript") || langLower.includes("js")) {
+      setCode(codeTemplates.javascript);
+    } else if (langLower.includes("java")) {
+      setCode(codeTemplates.java);
+    } else if (langLower.includes("sql")) {
+      setCode(codeTemplates.sql);
+    } else if (langLower.includes("c++") || langLower.includes("cpp") || langLower.includes("cplusplus")) {
+      setCode(codeTemplates.cpp);
+    } else if (langLower.includes("html")) {
+      setCode(codeTemplates.html);
+    } else if (langLower.includes("react")) {
+      setCode(codeTemplates.react);
+    }
+  }, [language]);
+
+  const handleRun = async () => {
+    setIsRunning(true);
+    setOutput("");
+    setError("");
+
+    try {
+      const langLower = language.toLowerCase();
+      
+      // Determinar el nombre del lenguaje para la API
+      let languageName = language;
+      if (langLower.includes("javascript") || langLower.includes("js")) {
+        languageName = "javascript";
+      } else if (langLower.includes("python")) {
+        languageName = "python";
+      } else if (langLower.includes("java")) {
+        languageName = "java";
+      } else if (langLower.includes("sql")) {
+        languageName = "sql";
+      } else if (langLower.includes("c++") || langLower.includes("cpp") || langLower.includes("cplusplus")) {
+        languageName = "c++";
+      } else if (langLower.includes("html")) {
+        languageName = "html";
+      } else if (langLower.includes("react")) {
+        languageName = "react";
+      }
+      
+      // Para JavaScript, ejecutar directamente en el navegador (solo si no hay inputs)
+      if ((langLower.includes("javascript") || langLower.includes("js")) && !inputs) {
+        try {
+          const logs: string[] = [];
+          const originalLog = console.log;
+          console.log = (...args: any[]) => {
+            logs.push(args.map(arg => 
+              typeof arg === "object" ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(" "));
+            originalLog(...args);
+          };
+
+          // Ejecutar código en un contexto aislado
+          const func = new Function(code);
+          func();
+          
+          console.log = originalLog;
+          setOutput(logs.join("\n") || "Código ejecutado sin errores.");
+        } catch (e: any) {
+          setError(e.message || "Error al ejecutar el código");
+        }
+      } else {
+        // Para todos los lenguajes (incluyendo JavaScript con inputs), usar la API del servidor
+        try {
+          const response = await fetch("/api/study-agents/execute-code", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              code: code,
+              language: languageName,
+              inputs: inputs || undefined, // Enviar inputs solo si hay
+            }),
+          });
+
+          if (!response.ok) {
+            // Si la respuesta no es OK, intentar leer el error
+            let errorData;
+            try {
+              errorData = await response.json();
+            } catch {
+              const text = await response.text();
+              throw new Error(text || `Error del servidor (${response.status})`);
+            }
+            throw new Error(errorData.error || errorData.detail || `Error al ejecutar código (${response.status})`);
+          }
+
+          const data = await response.json();
+          
+          if (data.success) {
+            setOutput(data.output || "Código ejecutado sin errores.");
+            setError("");
+          } else {
+            setError(data.error || "Error al ejecutar el código");
+            setOutput(data.output || "");
+          }
+        } catch (e: any) {
+          const errorMessage = e.message || "Error al comunicarse con el servidor";
+          // Si es un error de conexión, dar un mensaje más útil
+          if (errorMessage.includes("fetch") || errorMessage.includes("Failed to fetch") || errorMessage.includes("Not Found")) {
+            setError("No se pudo conectar con el servidor de ejecución. Asegúrate de que el backend FastAPI esté corriendo en http://localhost:8000");
+          } else {
+            setError(errorMessage);
+          }
+        }
+      }
+    } catch (e: any) {
+      setError(e.message || "Error al ejecutar el código");
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleClear = () => {
+    setCode("");
+    setOutput("");
+    setError("");
+  };
+
+  const handleReset = () => {
+    const langLower = language.toLowerCase();
+    if (langLower.includes("python")) {
+      setCode(codeTemplates.python);
+    } else if (langLower.includes("javascript") || langLower.includes("js")) {
+      setCode(codeTemplates.javascript);
+    } else if (langLower.includes("java")) {
+      setCode(codeTemplates.java);
+    } else if (langLower.includes("sql")) {
+      setCode(codeTemplates.sql);
+    } else if (langLower.includes("c++") || langLower.includes("cpp") || langLower.includes("cplusplus")) {
+      setCode(codeTemplates.cpp);
+    } else if (langLower.includes("html")) {
+      setCode(codeTemplates.html);
+    } else if (langLower.includes("react")) {
+      setCode(codeTemplates.react);
+    }
+    setInputs("");
+    setOutput("");
+    setError("");
+  };
+
+  return (
+    <div style={{
+      padding: "1.5rem",
+      background: bgColor,
+      borderRadius: "12px",
+      border: `1px solid ${borderColor}`,
+      boxShadow: colorTheme === "dark" ? "0 2px 8px rgba(0, 0, 0, 0.2)" : "0 2px 8px rgba(0, 0, 0, 0.08)",
+    }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "1rem",
+      }}>
+        <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600, color: textColor }}>
+          Intérprete de {language}
+        </h3>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button
+            onClick={handleRun}
+            disabled={isRunning}
+            style={{
+              padding: "0.5rem 1rem",
+              background: "#10b981",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              fontWeight: 600,
+              cursor: isRunning ? "not-allowed" : "pointer",
+              opacity: isRunning ? 0.6 : 1,
+            }}
+          >
+            {isRunning ? "Ejecutando..." : "▶ Ejecutar"}
+          </button>
+          <button
+            onClick={handleClear}
+            style={{
+              padding: "0.5rem 1rem",
+              background: "transparent",
+              color: textColor,
+              border: `1px solid ${borderColor}`,
+              borderRadius: "6px",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Limpiar
+          </button>
+          <button
+            onClick={handleReset}
+            style={{
+              padding: "0.5rem 1rem",
+              background: "transparent",
+              color: textColor,
+              border: `1px solid ${borderColor}`,
+              borderRadius: "6px",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      {/* Editor de código con syntax highlighting */}
+      <div style={{ marginBottom: "1rem", border: `1px solid ${borderColor}`, borderRadius: "8px", overflow: "hidden" }}>
+        <CodeMirror
+          value={code}
+          onChange={(value) => setCode(value)}
+          height="300px"
+          theme={colorTheme === "dark" ? oneDark : EditorView.theme({
+            "&": {
+              backgroundColor: codeBgColor,
+              color: textColor,
+            },
+            ".cm-content": {
+              caretColor: textColor,
+            },
+            ".cm-editor": {
+              backgroundColor: codeBgColor,
+            },
+            ".cm-gutters": {
+              backgroundColor: colorTheme === "dark" ? "#1a1a1a" : "#f0f0f0",
+              color: colorTheme === "dark" ? "#858585" : "#6e7681",
+              border: "none",
+            },
+            ".cm-lineNumbers .cm-gutterElement": {
+              color: colorTheme === "dark" ? "#858585" : "#6e7681",
+            },
+            ".cm-activeLineGutter": {
+              backgroundColor: colorTheme === "dark" ? "#2a2a2a" : "#e8e8e8",
+            },
+            ".cm-activeLine": {
+              backgroundColor: colorTheme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.03)",
+            },
+            ".cm-selectionMatch": {
+              backgroundColor: colorTheme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+            },
+          })}
+          extensions={[
+            language.toLowerCase().includes("python") ? python() :
+            language.toLowerCase().includes("javascript") || language.toLowerCase().includes("js") ? javascript({ jsx: true }) :
+            language.toLowerCase().includes("java") ? java() :
+            language.toLowerCase().includes("sql") ? sql() :
+            language.toLowerCase().includes("c++") || language.toLowerCase().includes("cpp") || language.toLowerCase().includes("cplusplus") ? cpp() :
+            []
+          ]}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: true,
+            dropCursor: false,
+            allowMultipleSelections: false,
+            indentOnInput: true,
+            bracketMatching: true,
+            closeBrackets: true,
+            autocompletion: true,
+            highlightSelectionMatches: true,
+          }}
+          style={{
+            fontSize: "0.875rem",
+            fontFamily: jetbrainsMono.style.fontFamily,
+          }}
+        />
+      </div>
+
+      {/* Inputs para programas que usan input() */}
+      {(language.toLowerCase().includes("python") || 
+        language.toLowerCase().includes("java") || 
+        language.toLowerCase().includes("c++") || 
+        language.toLowerCase().includes("cpp")) && (
+        <div style={{ marginBottom: "1rem" }}>
+          <label style={{
+            display: "block",
+            fontSize: "0.875rem",
+            fontWeight: 600,
+            color: textColor,
+            marginBottom: "0.5rem",
+          }}>
+            Inputs (uno por línea, para programas que usan input() o Scanner):
+          </label>
+          <textarea
+            value={inputs}
+            onChange={(e) => setInputs(e.target.value)}
+            style={{
+              width: "100%",
+              minHeight: "80px",
+              padding: "0.75rem",
+              background: codeBgColor,
+              border: `1px solid ${borderColor}`,
+              borderRadius: "8px",
+              color: textColor,
+              fontFamily: jetbrainsMono.style.fontFamily,
+              fontSize: "0.875rem",
+              lineHeight: 1.6,
+              resize: "vertical",
+            }}
+            placeholder="Ejemplo para Python:&#10;Juan&#10;25"
+          />
+        </div>
+      )}
+
+      {/* Output */}
+      {(output || error) && (
+        <div style={{
+          padding: "1rem",
+          background: error 
+            ? (colorTheme === "dark" ? "rgba(239, 68, 68, 0.1)" : "rgba(239, 68, 68, 0.08)")
+            : (colorTheme === "dark" ? "rgba(16, 185, 129, 0.1)" : "rgba(16, 185, 129, 0.08)"),
+          borderRadius: "8px",
+          border: `1px solid ${error 
+            ? (colorTheme === "dark" ? "rgba(239, 68, 68, 0.3)" : "rgba(239, 68, 68, 0.4)")
+            : (colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.4)")}`,
+        }}>
+          <div style={{
+            fontSize: "0.875rem",
+            fontWeight: 600,
+            color: error ? "#ef4444" : "#10b981",
+            marginBottom: "0.5rem",
+          }}>
+            {error ? "Error:" : "Salida:"}
+          </div>
+          <pre style={{
+            margin: 0,
+            color: textColor,
+            fontFamily: jetbrainsMono.style.fontFamily,
+            fontSize: "0.875rem",
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+          }}>
+            {error || output}
+          </pre>
         </div>
       )}
     </div>

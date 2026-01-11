@@ -1,0 +1,99 @@
+{
+  "chat_id": "chat-1767527460548",
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "title": "meses_facil",
+  "messages": [
+    {
+      "role": "user",
+      "content": "quiero aprender sobre los meses del año",
+      "type": "message",
+      "timestamp": "2026-01-04T11:51:18.508Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## Meses del Año\n\nLos **meses del año** son una forma de organizar el tiempo en el calendario. Hay un total de **12 meses**, cada uno con su propio nombre y características. Aquí te presento una lista con los meses y algunos detalles interesantes sobre cada uno.\n\n### Lista de los Meses\n\n- **Enero**: \n  - Comienza el año nuevo.\n  - Asociado con el invierno en el hemisferio norte.\n\n- **Febrero**:\n  - Es el mes más corto (28 días, 29 en años bisiestos).\n  - Celebramos el Día de San Valentín.\n\n- **Marzo**:\n  - Comienza la primavera en el hemisferio norte.\n  - Día de San Patricio (17 de marzo).\n\n- **Abril**: \n  - Conocido por sus lluvias que traen flores.\n  - Día de los Inocentes (1 de abril).\n\n- **Mayo**:\n  - Mes de las flores.\n  - Celebramos el Día de la Madre en muchos países.\n\n- **Junio**:\n  - Comienza el verano en el hemisferio norte.\n  - Día del Padre en muchos lugares.\n\n- **Julio**:\n  - Generalmente el mes más caluroso en muchas regiones.\n  - Celebraciones del Día de la Independencia en EE.UU. (4 de julio).\n\n- **Agosto**:\n  - Último mes del verano en el hemisferio norte.\n  - Vacaciones para muchos estudiantes.\n\n- **Septiembre**:\n  - Comienza el otoño en el hemisferio norte.\n  - Regreso a clases para muchos estudiantes.\n\n- **Octubre**:\n  - Mes de Halloween (31 de octubre).\n  - Comienza a refrescar el clima en muchos lugares.\n\n- **Noviembre**:\n  - Mes de Acción de Gracias en EE.UU. (cuarto jueves de noviembre).\n  - Días más cortos y clima más fresco.\n\n- **Diciembre**:\n  - Mes de festividades como la Navidad (25 de diciembre).\n  - Termina el año.\n\n---\n\n### Esquema Conceptual de los Meses del Año\n\nA continuación, te presento un esquema que resume la información sobre los meses:\n\n```diagram-json\n{\n  \"title\": \"Meses del Año\",\n  \"nodes\": [\n    {\"id\": \"A\", \"label\": \"Meses del Año\", \"color\": \"#6366f1\"},\n    {\"id\": \"B\", \"label\": \"Enero\", \"color\": \"#10b981\", \"description\": \"Comienza el año nuevo, asociado con el invierno.\", \"letter\": \"E\"},\n    {\"id\": \"C\", \"label\": \"Febrero\", \"color\": \"#10b981\", \"description\": \"Mes más corto, Día de San Valentín.\", \"letter\": \"F\"},\n    {\"id\": \"D\", \"label\": \"Marzo\", \"color\": \"#10b981\", \"description\": \"Comienza la primavera, Día de San Patricio.\", \"letter\": \"M\"},\n    {\"id\": \"E\", \"label\": \"Abril\", \"color\": \"#10b981\", \"description\": \"Conocido por lluvias, Día de los Inocentes.\", \"letter\": \"A\"},\n    {\"id\": \"F\", \"label\": \"Mayo\", \"color\": \"#10b981\", \"description\": \"Mes de las flores, Día de la Madre.\", \"letter\": \"Y\"},\n    {\"id\": \"G\", \"label\": \"Junio\", \"color\": \"#10b981\", \"description\": \"Comienza el verano, Día del Padre.\", \"letter\": \"J\"},\n    {\"id\": \"H\", \"label\": \"Julio\", \"color\": \"#10b981\", \"description\": \"Mes caluroso, Día de la Independencia en EE.UU.\", \"letter\": \"L\"}\n  ],\n  \"edges\": [\n    {\"from\": \"A\", \"to\": \"B\"},\n    {\"from\": \"A\", \"to\": \"C\"},\n    {\"from\": \"A\", \"to\": \"D\"},\n    {\"from\": \"A\", \"to\": \"E\"},\n    {\"from\": \"A\", \"to\": \"F\"},\n    {\"from\": \"A\", \"to\": \"G\"},\n    {\"from\": \"A\", \"to\": \"H\"}\n  ]\n}\n```\n\n---\n\nEspero que esta información te sea útil para aprender sobre los meses del año. Si tienes alguna otra duda, ¡no dudes en preguntar!",
+      "type": "notes",
+      "timestamp": "2026-01-04T11:51:35.566Z"
+    },
+    {
+      "role": "user",
+      "content": "cuales son los meses del año?",
+      "type": "message",
+      "timestamp": "2026-01-04T12:02:15.243Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## Meses del Año\n\nLos **meses del año** son divisiones del calendario que nos ayudan a organizar el tiempo. Hay un total de **12 meses** en un año. A continuación, te presento una lista de los meses junto con algunos detalles interesantes sobre cada uno.\n\n---\n\n### Lista de Meses del Año\n\n| Mes       | Número | Días | Estación (en el hemisferio norte) |\n|-----------|--------|------|------------------------------------|\n| Enero     | 1      | 31   | Invierno                            |\n| Febrero   | 2      | 28/29| Invierno                            |\n| Marzo     | 3      | 31   | Primavera                           |\n| Abril     | 4      | 30   | Primavera                           |\n| Mayo      | 5      | 31   | Primavera                           |\n| Junio     | 6      | 30   | Verano                              |\n| Julio     | 7      | 31   | Verano                              |\n| Agosto    | 8      | 31   | Verano                              |\n| Septiembre| 9      | 30   | Otoño                               |\n| Octubre   | 10     | 31   | Otoño                               |\n| Noviembre | 11     | 30   | Otoño                               |\n| Diciembre | 12     | 31   | Invierno                            |\n\n---\n\n### Detalles Adicionales\n\n- **Febrero**: Tiene 28 días en años comunes y 29 días en años bisiestos.\n- **Estaciones**: Las estaciones varían según el hemisferio. En el hemisferio sur, las estaciones son opuestas.\n\n---\n\n### Esquema Conceptual de los Meses del Año\n\nA continuación, te presento un esquema conceptual que resume la información sobre los meses del año:\n\n```diagram-json\n{\n  \"title\": \"Meses del Año\",\n  \"nodes\": [\n    {\"id\": \"A\", \"label\": \"Meses del Año\", \"color\": \"#6366f1\"},\n    {\"id\": \"B\", \"label\": \"Total de Meses\", \"color\": \"#10b981\", \"description\": \"Hay 12 meses en un año.\", \"letter\": \"T\"},\n    {\"id\": \"C\", \"label\": \"División en Estaciones\", \"color\": \"#10b981\", \"description\": \"Los meses se agrupan en cuatro estaciones.\", \"letter\": \"D\"},\n    {\"id\": \"D\", \"label\": \"Ejemplo de Meses\", \"color\": \"#06b6d4\", \"description\": \"Enero, Marzo, Julio son ejemplos de meses.\", \"letter\": \"E\"},\n    {\"id\": \"E\", \"label\": \"Características de Febrero\", \"color\": \"#ec4899\", \"description\": \"Febrero tiene 28 días o 29 en años bisiestos.\", \"letter\": \"C\"},\n    {\"id\": \"F\", \"label\": \"Estaciones del Hemisferio Norte\", \"color\": \"#06b6d4\", \"description\": \"Invierno, Primavera, Verano, Otoño.\", \"letter\": \"H\"}\n  ],\n  \"edges\": [\n    {\"from\": \"A\", \"to\": \"B\"},\n    {\"from\": \"A\", \"to\": \"C\"},\n    {\"from\": \"A\", \"to\": \"D\"},\n    {\"from\": \"A\", \"to\": \"E\"},\n    {\"from\": \"C\", \"to\": \"F\"}\n  ]\n}\n```\n\n---\n\nEspero que esta información te haya ayudado a entender mejor los meses del año. Si tienes más preguntas o dudas, ¡no dudes en preguntar! 😊",
+      "type": "notes",
+      "timestamp": "2026-01-04T12:02:35.826Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T12:12:37.916Z"
+    },
+    {
+      "role": "assistant",
+      "content": " **¡Felicidades!** Has subido **2 niveles** (0 → 2) en **General**! 🎉🎉\n\n✨ Ganaste **50 puntos de experiencia**.\n\n\n📚 **Conceptos clave a repasar en este nivel:**\n• Conceptos básicos\n• Fundamentos esenciales\n• Principios fundamentales\n• Aplicación básica\n• Ejemplos prácticos\n• Casos de uso simples\n\n💪 ¡Sigue así y continúa mejorando!",
+      "type": "success",
+      "timestamp": "2026-01-04T12:12:38.987Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":100,\"correctCount\":5,\"totalQuestions\":5,\"failedQuestions\":[],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T12:12:38.987Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T12:15:39.155Z"
+    },
+    {
+      "role": "assistant",
+      "content": " **¡Felicidades!** Has subido al **nivel 3** en **General**!\n\n✨ Ganaste **40 puntos de experiencia**.\n\n\n📚 **Conceptos clave a repasar en este nivel:**\n• Principios fundamentales\n• Aplicación básica\n• Ejemplos prácticos\n• Casos de uso simples\n• Conceptos intermedios\n• Técnicas básicas\n• Mejores prácticas\n\n💪 ¡Sigue así y continúa mejorando!",
+      "type": "success",
+      "timestamp": "2026-01-04T12:15:39.374Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":80,\"correctCount\":8,\"totalQuestions\":10,\"failedQuestions\":[{\"question\":\"¿Qué estación corresponde a Septiembre en el hemisferio norte?\",\"explanation\":\"Septiembre es el mes que marca el inicio del Otoño en el hemisferio norte.\",\"correctAnswer\":\"C\",\"userAnswer\":\"B\",\"options\":[\"Verano\",\"Primavera\",\"Otoño\",\"Invierno\"],\"type\":\"multiple_choice\"},{\"question\":\"Los meses de verano son Junio, Julio y Agosto.\",\"explanation\":\"Junio, Julio y Agosto son los meses que componen la estación de Verano en el hemisferio norte.\",\"correctAnswer\":\"True\",\"userAnswer\":\"False\",\"options\":[],\"type\":\"true_false\"}],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T12:15:39.374Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Test generado con 10 preguntas",
+      "type": "test",
+      "timestamp": "2026-01-04T12:25:52.893Z"
+    },
+    {
+      "role": "user",
+      "content": "Test completado. Corrige mis respuestas.",
+      "type": "message",
+      "timestamp": "2026-01-04T12:33:17.768Z"
+    },
+    {
+      "role": "assistant",
+      "content": " **¡Felicidades!** Has subido al **nivel 4** en **General**!\n\n✨ Ganaste **40 puntos de experiencia**.\n\n\n📚 **Conceptos clave a repasar en este nivel:**\n• Casos de uso simples\n• Conceptos intermedios\n• Técnicas básicas\n• Mejores prácticas\n• Aplicación intermedia\n• Patrones comunes\n• Optimización básica\n\n💪 ¡Sigue así y continúa mejorando!",
+      "type": "success",
+      "timestamp": "2026-01-04T12:33:17.903Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"score\":80,\"correctCount\":8,\"totalQuestions\":10,\"failedQuestions\":[{\"question\":\"¿Cuál es el séptimo mes del año?\",\"explanation\":\"Julio es el séptimo mes del año.\",\"correctAnswer\":\"A\",\"userAnswer\":\"C\",\"options\":[\"Julio\",\"Agosto\",\"Junio\",\"Septiembre\"],\"type\":\"multiple_choice\"},{\"question\":\"¿Cuántos días tiene el mes de abril?\",\"explanation\":\"Abril tiene 30 días.\",\"correctAnswer\":\"A\",\"userAnswer\":\"B\",\"options\":[\"30 días\",\"31 días\",\"28 días\",\"29 días\"],\"type\":\"multiple_choice\"}],\"feedbackItems\":[],\"recommendations\":[]}",
+      "type": "feedback",
+      "timestamp": "2026-01-04T12:33:17.903Z"
+    }
+  ],
+  "created_at": "2026-01-04T12:51:00.570815",
+  "updated_at": "2026-01-04T13:33:19.042092",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#06b6d4",
+    "icon": "target"
+  }
+}
