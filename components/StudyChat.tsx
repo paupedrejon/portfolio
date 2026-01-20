@@ -1694,8 +1694,11 @@ export default function StudyChat() {
           currentChatIdRef.current = data.chat.chat_id;
         }
         // Refrescar sidebar si está disponible
-        if (typeof window !== "undefined" && (window as any).refreshChatSidebar) {
-          (window as any).refreshChatSidebar();
+        interface WindowWithRefresh extends Window {
+          refreshChatSidebar?: () => void;
+        }
+        if (typeof window !== "undefined" && (window as WindowWithRefresh).refreshChatSidebar) {
+          (window as WindowWithRefresh).refreshChatSidebar();
         }
       } else {
         console.error("❌ Chat save response indicates failure:", data);
