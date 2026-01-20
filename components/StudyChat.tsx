@@ -3686,6 +3686,7 @@ ${contentPreview}
                           }}
                         >
                         {section.topics.map((topic) => {
+                          // eslint-disable-next-line @typescript-eslint/no-unused-vars
                           const topicColor = section.color;
                           const topicIcon = getTopicIcon(topic);
                           const isLanguage = isLanguageTopic(topic);

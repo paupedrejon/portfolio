@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { StarIcon } from "./Icons";
 
 interface TopicProgress {
   level: number;
@@ -31,6 +30,7 @@ interface UserStats {
 }
 
 export default function ProfileView({ userId, onClose }: ProfileViewProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: session } = useSession();
   const [progress, setProgress] = useState<Record<string, TopicProgress>>({});
   const [loading, setLoading] = useState(true);
@@ -514,7 +514,7 @@ export default function ProfileView({ userId, onClose }: ProfileViewProps) {
                 }}>
                   {Object.entries(userStats.by_model)
                     .sort(([, a], [, b]) => (b.cost || 0) - (a.cost || 0))
-                    .map(([model, stats]: [string, any]) => (
+                    .map(([model, stats]: [string, { input_tokens?: number; output_tokens?: number; cost?: number; requests?: number }]) => (
                       <div
                         key={model}
                         style={{
@@ -615,7 +615,7 @@ export default function ProfileView({ userId, onClose }: ProfileViewProps) {
                 gap: "0.5rem",
                 paddingRight: "0.75rem",
               }}>
-                {topics.map(([topic, data], index) => {
+                {topics.map(([topic, data]) => {
                   const level = (data && typeof data === 'object' && 'level' in data) ? (data.level || 0) : 0;
                   const barWidth = (level / 10) * 100; // Porcentaje del nivel (0-10 = 0-100%)
                   
