@@ -1933,9 +1933,8 @@ export default function StudyChat() {
           setIsListening(false);
         };
         
-        recognition.onerror = (event: Event) => {
-          const errorEvent = event as SpeechRecognitionErrorEvent;
-          console.error("Error en reconocimiento de voz:", errorEvent.error);
+        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+          console.error("Error en reconocimiento de voz:", event.error);
           setIsListening(false);
           if (event.error === "not-allowed") {
             alert("Por favor, permite el acceso al micrófono en la configuración del navegador.");
