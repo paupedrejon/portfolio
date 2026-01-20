@@ -13264,7 +13264,7 @@ export default App;`,
       setCode(codeTemplates.react);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language, codeTemplates]);
+  }, [language]);
 
   const handleRun = async () => {
     setIsRunning(true);
@@ -13363,7 +13363,8 @@ export default App;`,
             setError(errorMessage);
           }
         }
-      } finally {
+      }
+    } finally {
       setIsRunning(false);
     }
   };
