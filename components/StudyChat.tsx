@@ -8,10 +8,10 @@ interface SpeechRecognition extends EventTarget {
   start(): void;
   stop(): void;
   abort(): void;
-  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
-  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
-  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onstart: ((this: SpeechRecognition, ev: Event) => void) | null;
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => void) | null;
 }
 
 interface SpeechRecognitionEvent extends Event {
@@ -42,15 +42,10 @@ interface SpeechRecognitionAlternative {
   confidence: number;
 }
 
-declare var SpeechRecognition: {
+declare const SpeechRecognition: {
   prototype: SpeechRecognition;
   new (): SpeechRecognition;
-};
-
-declare var webkitSpeechRecognition: {
-  prototype: SpeechRecognition;
-  new (): SpeechRecognition;
-};
+} | undefined;
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
@@ -67,8 +62,6 @@ import { java } from "@codemirror/lang-java";
 import { sql } from "@codemirror/lang-sql";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
-import DiagramRenderer from "./DiagramRenderer";
-import ConceptualSchemaRenderer from "./ConceptualSchemaRenderer";
 import SectionBasedSchemaRenderer from "./SectionBasedSchemaRenderer";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -88,13 +81,10 @@ import {
   DownloadIcon,
   UploadIcon,
   QuestionIcon,
-  KeyIcon,
   SparkleIcon,
   StarIcon,
   TargetIcon,
   ZapIcon,
-  MessageIcon,
-  GlobeIcon,
   FlagUKIcon,
   FlagFRIcon,
   FlagDEIcon,
@@ -113,7 +103,6 @@ import {
   SiReact,
   SiGit,
   SiHtml5,
-  SiCss3,
   SiTypescript,
   SiSwift,
   SiCplusplus,
@@ -122,19 +111,9 @@ import {
   FaAtom,
   FaBook,
   FaHistory,
-  FaFlask,
-  FaDna,
-  FaChartLine,
   FaFileContract,
-  FaShieldAlt,
-  FaUserTie,
   FaComments,
   FaHandshake,
-  FaPills,
-  FaPaintBrush,
-  FaPhotoVideo,
-  FaCube,
-  FaHome,
   FaLandmark,
   FaBalanceScale,
   FaScroll,
