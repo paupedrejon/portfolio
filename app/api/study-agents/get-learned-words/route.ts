@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       success: true,
       words: data.words,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error getting learned words:", error);
     return NextResponse.json(
       { error: error.message || "Error al obtener palabras aprendidas" },

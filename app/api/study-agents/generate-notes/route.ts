@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
           { status: 503 }
         );
       }
-    } catch (healthError: any) {
+    } catch (healthError: unknown) {
       return NextResponse.json(
         { 
           error: `No se pudo conectar al backend FastAPI en ${FASTAPI_URL}`,
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       success: true,
       notes: data.notes,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error generating notes:', error);
     return NextResponse.json(
       { error: error.message || 'Error al generar apuntes' },

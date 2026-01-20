@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       success: true,
       result: data.result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('📊 [Next.js API] Error setting chat level:', error);
     console.error('📊 [Next.js API] Error stack:', error.stack);
     

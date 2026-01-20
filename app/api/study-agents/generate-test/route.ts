@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       inputTokens: data.inputTokens || 0,
       outputTokens: data.outputTokens || 0,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error generating test:', error);
     return NextResponse.json(
       { error: error.message || 'Error al generar test' },

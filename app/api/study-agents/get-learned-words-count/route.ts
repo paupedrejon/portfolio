@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       success: true,
       count: data.count,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error getting learned words count:", error);
     return NextResponse.json(
       { error: error.message || "Error al obtener el contador de palabras aprendidas" },

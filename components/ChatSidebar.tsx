@@ -441,7 +441,17 @@ export default function ChatSidebar({
         const data = await response.json();
         if (data.success && data.chats) {
           // Asegurarse de que cada chat tenga metadata
-          const chatsWithMetadata = data.chats.map((chat: any) => {
+          interface ChatItem {
+            chat_id?: string;
+            title?: string;
+            metadata?: {
+              color?: string;
+              icon?: string;
+              [key: string]: unknown;
+            };
+            [key: string]: unknown;
+          }
+          const chatsWithMetadata = (data.chats as ChatItem[]).map((chat: ChatItem) => {
             const chatWithMeta = {
               ...chat,
               metadata: chat.metadata || {}
@@ -502,7 +512,10 @@ export default function ChatSidebar({
   // Exponer refreshChats al componente padre
   useEffect(() => {
     if (typeof window !== "undefined") {
-      (window as any).refreshChatSidebar = refreshChats;
+      interface WindowWithRefresh extends Window {
+        refreshChatSidebar?: () => void;
+      }
+      (window as WindowWithRefresh).refreshChatSidebar = refreshChats;
     }
   }, [userId]);
 
@@ -551,7 +564,10 @@ export default function ChatSidebar({
     setEditingChatId(chatId);
     setEditingTitle(currentTitle);
     // Guardar el título original para detectar si se renombra "General"
-    (window as any).editingChatOriginalTitle = currentTitle;
+    interface WindowWithEditing extends Window {
+      editingChatOriginalTitle?: string;
+    }
+    (window as WindowWithEditing).editingChatOriginalTitle = currentTitle;
   };
 
   const handleSaveTitle = async (chatId: string, oldTitle: string): Promise<void> => {
@@ -589,8 +605,11 @@ export default function ChatSidebar({
         
         // Si se renombró "General" a otro nombre, notificar al componente padre
         if (oldTitle === "General" && titleToSave !== "General") {
-          if (typeof window !== "undefined" && (window as any).onGeneralRenamed) {
-            (window as any).onGeneralRenamed();
+          interface WindowWithGeneralRenamed extends Window {
+            onGeneralRenamed?: () => void;
+          }
+          if (typeof window !== "undefined" && (window as WindowWithGeneralRenamed).onGeneralRenamed) {
+            (window as WindowWithGeneralRenamed).onGeneralRenamed();
           }
         }
       } else {
@@ -1087,7 +1106,10 @@ export default function ChatSidebar({
                           if (!isSavingRef.current && editingChatId === chat.chat_id) {
                             setTimeout(() => {
                               if (!isSavingRef.current && editingChatId === chat.chat_id) {
-                                const oldTitle = (window as any).editingChatOriginalTitle || chat.title;
+                                interface WindowWithEditing extends Window {
+                                  editingChatOriginalTitle?: string;
+                                }
+                                const oldTitle = (window as WindowWithEditing).editingChatOriginalTitle || chat.title;
                                 handleSaveTitle(chat.chat_id, oldTitle);
                               }
                             }, 150);

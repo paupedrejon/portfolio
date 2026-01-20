@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
         // Añadir timeout
         signal: AbortSignal.timeout(15000), // 15 segundos
       });
-    } catch (fetchError: any) {
+    } catch (fetchError: unknown) {
       // Si hay error de conexión (backend no disponible)
       if (fetchError.name === "AbortError" || fetchError.message?.includes("fetch")) {
         return NextResponse.json(
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in execute-code route:", error);
     
     // Manejar errores específicos
