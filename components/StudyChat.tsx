@@ -171,31 +171,17 @@ import {
   MdMovie,
   MdTrendingUp,
   MdShoppingCart,
-  MdLightbulb,
-  MdStore,
   MdAccountBalance,
   MdCalculate,
   MdFunctions,
-  MdBiotech,
-  MdSchool,
   MdMenuBook,
   MdAutoAwesome,
-  MdCloud,
-  MdLock,
   MdSpeed,
-  MdWifi,
   MdPublic,
   MdGroups,
-  MdPerson,
   MdRestaurant,
-  MdFitnessCenter,
   MdLocalLibrary,
-  MdBrush,
   MdPalette,
-  MdPhotoCamera,
-  MdHome,
-  MdMusicNote,
-  MdArchitecture,
 } from "react-icons/md";
 import { 
   TbBrain, 
@@ -205,7 +191,6 @@ import {
   TbChartBar,
   TbFlask,
   TbDna,
-  TbScale,
   TbFileText,
   TbShield,
   TbBriefcase,
@@ -245,17 +230,13 @@ import {
   HiAcademicCap,
   HiBriefcase,
   HiClock,
-  HiCamera,
-  HiMusicalNote,
   HiPresentationChartBar,
-  HiBuildingOffice2,
   HiScale,
   HiArrowTrendingUp,
   HiDocumentText,
   HiSparkles,
   HiLightBulb,
   HiKey,
-  HiBolt,
   HiGlobeAlt,
   HiChevronDown,
   HiChartBar,
@@ -784,7 +765,7 @@ export default function StudyChat() {
             (combinedText.includes("programming") || combinedText.includes("código") || combinedText.includes("code") || combinedText.includes("class ") || combinedText.includes("public ")),
     };
     
-    const detectedProgramming = Object.entries(programmingLanguages).find(([_, detected]) => detected === true)?.[0] || null;
+    const detectedProgramming = Object.entries(programmingLanguages).find(([, detected]) => detected === true)?.[0] || null;
     const hasProgramming = detectedProgramming !== null;
     
     // Detectar solicitudes explícitas de flashcards
