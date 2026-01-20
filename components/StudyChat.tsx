@@ -3215,7 +3215,7 @@ ${contentPreview}
               // Construir mensaje con conceptos clave a repasar
               let conceptsText = "";
               if (keyConcepts && keyConcepts.length > 0) {
-                conceptsText = `\n\n📚 **Conceptos clave a repasar en este nivel:**\n${keyConcepts.map((c: string, i: number) => `• ${c}`).join("\n")}`;
+                conceptsText = `\n\n📚 **Conceptos clave a repasar en este nivel:**\n${keyConcepts.map((c: string) => `• ${c}`).join("\n")}`;
               }
               
               // Mensaje diferente si subió 2 niveles
@@ -3288,7 +3288,7 @@ ${contentPreview}
         costEstimate,
       });
 
-    } catch (error: unknown) {
+    } catch {
       // Fallback con cálculo local
       if (!currentTest || !currentTest.questions || currentTest.questions.length === 0) {
         addMessage({
@@ -8317,7 +8317,6 @@ function NotesViewer({
       });
       
       const videoId = videoProps.id || "";
-      const videoUrl = videoProps.url || `https://www.youtube.com/watch?v=${videoId}`;
       const videoTitle = videoProps.title || "Video de YouTube";
       
       if (videoId) {
@@ -9391,19 +9390,28 @@ function NotesViewer({
                 console.log('Parsed diagram data:', diagramData);
                 
                 // Encontrar nodos hijos
-                const rootNodes = diagramData.nodes.filter((node: any) => {
-                  const hasIncoming = (diagramData.edges || []).some((edge: any) => edge.to === node.id);
+                interface DiagramNode {
+                  id: string;
+                  label: string;
+                  color?: string;
+                }
+                interface DiagramEdge {
+                  from: string;
+                  to: string;
+                }
+                const rootNodes = diagramData.nodes.filter((node: DiagramNode) => {
+                  const hasIncoming = (diagramData.edges || []).some((edge: DiagramEdge) => edge.to === node.id);
                   return !hasIncoming;
                 });
                 const rootNode = rootNodes[0] || diagramData.nodes[0];
                 console.log('Root node:', rootNode);
                 
-                let childNodes = diagramData.nodes.filter((node: any) => {
+                let childNodes = diagramData.nodes.filter((node: DiagramNode) => {
                   if (node.id === rootNode.id) return false;
                   if ((diagramData.edges || []).length === 0) {
                     return true;
                   }
-                  return (diagramData.edges || []).some((edge: any) => edge.from === rootNode.id && edge.to === node.id);
+                  return (diagramData.edges || []).some((edge: DiagramEdge) => edge.from === rootNode.id && edge.to === node.id);
                 });
                 
                 if (childNodes.length === 0 && diagramData.nodes.length > 1) {
@@ -11404,6 +11412,7 @@ function ExerciseComponent({
                 overflow: "hidden",
                 border: `1px solid ${borderColor}`,
               }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={answerImage} 
                   alt="Respuesta" 
@@ -11832,7 +11841,6 @@ function AudioButton({
     }
   };
 
-  const iconColor = colorTheme === "dark" ? "var(--text-secondary)" : "#64748b";
 
   return (
     <button
@@ -12150,7 +12158,14 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
             const learnedWordsSet = new Set(learnedWordsList.map(w => w.word.toLowerCase().trim()));
             const existingWordsSet = new Set(words.map(w => w.word?.toLowerCase().trim() || ""));
             
-            const filteredWords = newWords.filter((word: any) => {
+            interface WordItem {
+              word?: string;
+              translation?: string;
+              example?: string;
+              romanization?: string;
+              options?: string[];
+            }
+            const filteredWords = (newWords as WordItem[]).filter((word: WordItem) => {
               const wordLower = word.word?.toLowerCase().trim() || "";
               // Excluir si ya está aprendida O si ya está en la lista actual
               return !learnedWordsSet.has(wordLower) && !existingWordsSet.has(wordLower);
@@ -12175,7 +12190,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
               return text?.toLowerCase().trim().replace(/[.,;:!?()]/g, '') || "";
             };
             
-            const wordsWithShuffledOptions = filteredWords.map((word: any) => {
+            const wordsWithShuffledOptions = filteredWords.map((word: WordItem) => {
               if (word.options && word.options.length > 0) {
                 // Normalizar todas las opciones para comparación
                 const correctTranslation = word.translation || "";
@@ -12409,7 +12424,11 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
               // Si hay actualización de nivel, actualizar el nivel del chat
               if (data.level_update && currentChatLevel && setCurrentChatLevel && currentChatLevel.topic === language) {
                 const levelData = data.level_update;
-                const newLevel = (levelData as any)?.new_level || (levelData as any)?.level;
+                interface LevelUpdate {
+                  new_level?: number;
+                  level?: number;
+                }
+                const newLevel = (levelData as LevelUpdate)?.new_level || (levelData as LevelUpdate)?.level;
                 if (newLevel !== undefined) {
                   const oldLevel = currentChatLevel.level;
                   setCurrentChatLevel({
@@ -13224,6 +13243,7 @@ export default App;`,
     } else if (langLower.includes("react")) {
       setCode(codeTemplates.react);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
   const handleRun = async () => {
@@ -13257,7 +13277,7 @@ export default App;`,
         try {
           const logs: string[] = [];
           const originalLog = console.log;
-          console.log = (...args: any[]) => {
+          console.log = (...args: unknown[]) => {
             logs.push(args.map(arg => 
               typeof arg === "object" ? JSON.stringify(arg, null, 2) : String(arg)
             ).join(" "));
@@ -13270,8 +13290,9 @@ export default App;`,
           
           console.log = originalLog;
           setOutput(logs.join("\n") || "Código ejecutado sin errores.");
-        } catch (e: any) {
-          setError(e.message || "Error al ejecutar el código");
+        } catch (e: unknown) {
+          const errorMessage = e instanceof Error ? e.message : "Error al ejecutar el código";
+          setError(errorMessage);
         }
       } else {
         // Para todos los lenguajes (incluyendo JavaScript con inputs), usar la API del servidor
@@ -13309,8 +13330,8 @@ export default App;`,
             setError(data.error || "Error al ejecutar el código");
             setOutput(data.output || "");
           }
-        } catch (e: any) {
-          const errorMessage = e.message || "Error al comunicarse con el servidor";
+        } catch (e: unknown) {
+          const errorMessage = e instanceof Error ? e.message : "Error al comunicarse con el servidor";
           // Si es un error de conexión, dar un mensaje más útil
           if (errorMessage.includes("fetch") || errorMessage.includes("Failed to fetch") || errorMessage.includes("Not Found")) {
             setError("No se pudo conectar con el servidor de ejecución. Asegúrate de que el backend FastAPI esté corriendo en http://localhost:8000");
@@ -13318,10 +13339,7 @@ export default App;`,
             setError(errorMessage);
           }
         }
-      }
-    } catch (e: any) {
-      setError(e.message || "Error al ejecutar el código");
-    } finally {
+      } finally {
       setIsRunning(false);
     }
   };
