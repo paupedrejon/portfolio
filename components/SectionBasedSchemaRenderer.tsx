@@ -204,9 +204,11 @@ export default function SectionBasedSchemaRenderer({ data, colorTheme }: Section
     rightElement = rightElement.charAt(0).toUpperCase() + rightElement.slice(1);
 
     // Características para cajas superiores - usar el primer hijo o el label del nodo
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const leftCharacteristic = leftCharacteristicNode?.label?.toUpperCase() || 
       leftNode.characteristic || 
       (leftNode.description ? leftNode.description.split('.')[0].split(':')[0].trim().toUpperCase() : "CARACTERÍSTICA");
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const rightCharacteristic = rightCharacteristicNode?.label?.toUpperCase() || 
       rightNode.characteristic || 
       (rightNode.description ? rightNode.description.split('.')[0].split(':')[0].trim().toUpperCase() : "CARACTERÍSTICA");

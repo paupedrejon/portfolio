@@ -1,6 +1,3 @@
-import Link from "next/link";
-
-
 export interface Project {
 slug: string;
 title: string;
@@ -18,6 +15,7 @@ const { title, summary, tech, repo, demo, image } = project;
 return (
 <article className="group border border-white/10 rounded-2xl overflow-hidden hover:shadow-md transition-shadow bg-white/[0.02]">
 {image && (
+// eslint-disable-next-line @next/next/no-img-element
 <img src={image} alt="" className="w-full aspect-video object-cover" />
 )}
 <div className="p-4">

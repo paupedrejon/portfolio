@@ -10548,8 +10548,8 @@ function SuccessMessage({
             paddingLeft: "1.5rem",
             listStyle: "none",
           }}>
-            {fileNames.map((fileName: string, index: number) => (
-              <li key={index} style={{
+            {fileNames.map((fileName: string) => (
+              <li key={fileName} style={{
                 marginBottom: "0.5rem",
                 color: textColor,
                 fontSize: "0.95rem",

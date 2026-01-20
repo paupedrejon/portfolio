@@ -100,6 +100,7 @@ export default function SkillItem({
     borderColor: styles.border,
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const hoverStyles = `
     transition: all 0.3s ease;
   `;

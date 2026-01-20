@@ -58,6 +58,7 @@ export default function SectionPage({
   className = "",
   kicker,
   midText,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   midTextColor,
 }: SectionPageProps) {
   const useSplit = !!solidBg || !!imageCard;
