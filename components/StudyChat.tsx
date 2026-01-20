@@ -11274,8 +11274,8 @@ function ExerciseComponent({
               paddingLeft: "1.25rem",
               color: textColor,
             }}>
-              {exercise.hints.map((hint, index) => (
-                <li key={index} style={{ marginBottom: "0.25rem" }}>
+              {exercise.hints.map((hint) => (
+                <li key={hint} style={{ marginBottom: "0.25rem" }}>
                   {hint}
                 </li>
               ))}
