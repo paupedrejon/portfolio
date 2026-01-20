@@ -413,7 +413,11 @@ export default function StudyChat() {
         // Si hay actualización de nivel, actualizar el nivel del chat
         if (data.level_update && currentChatLevel && currentChatLevel.topic === language) {
           const levelData = data.level_update;
-          const newLevel = (levelData as any)?.new_level || (levelData as any)?.level;
+          interface LevelUpdate {
+            new_level?: number;
+            level?: number;
+          }
+          const newLevel = (levelData as LevelUpdate)?.new_level || (levelData as LevelUpdate)?.level;
           if (newLevel !== undefined) {
             const oldLevel = currentChatLevel.level;
             setCurrentChatLevel({
@@ -1203,7 +1207,12 @@ export default function StudyChat() {
       
       const data = await response.json();
       if (data.success && data.chats) {
-        const generalChat = data.chats.find((chat: any) => chat.title === "General");
+        interface ChatItem {
+          title?: string;
+          chat_id?: string;
+          [key: string]: unknown;
+        }
+        const generalChat = (data.chats as ChatItem[]).find((chat: ChatItem) => chat.title === "General");
         if (generalChat) {
           // Cargar el chat General existente
           await loadChat(generalChat.chat_id);
@@ -1582,7 +1591,12 @@ export default function StudyChat() {
         
         const listData = await listResponse.json();
         if (listData.success && listData.chats) {
-          const generalChat = listData.chats.find((chat: any) => chat.title === "General");
+          interface ChatItem {
+            title?: string;
+            chat_id?: string;
+            [key: string]: unknown;
+          }
+          const generalChat = (listData.chats as ChatItem[]).find((chat: ChatItem) => chat.title === "General");
           if (generalChat) {
             chatIdToUse = generalChat.chat_id;
             setCurrentChatId(generalChat.chat_id);
@@ -1709,7 +1723,14 @@ export default function StudyChat() {
       const data = await response.json();
       if (data.success && data.chat) {
         // Convertir mensajes del backend al formato del frontend
-        const loadedMessages: Message[] = data.chat.messages.map((msg: any) => ({
+        interface BackendMessage {
+          role: string;
+          content: string;
+          type?: string;
+          timestamp?: string;
+          topic?: string;
+        }
+        const loadedMessages: Message[] = (data.chat.messages as BackendMessage[]).map((msg: BackendMessage) => ({
           id: Date.now().toString() + Math.random(),
           role: msg.role,
           content: msg.content,
@@ -1912,8 +1933,9 @@ export default function StudyChat() {
           setIsListening(false);
         };
         
-        recognition.onerror = (event: any) => {
-          console.error("Error en reconocimiento de voz:", event.error);
+        recognition.onerror = (event: Event) => {
+          const errorEvent = event as SpeechRecognitionErrorEvent;
+          console.error("Error en reconocimiento de voz:", errorEvent.error);
           setIsListening(false);
           if (event.error === "not-allowed") {
             alert("Por favor, permite el acceso al micrófono en la configuración del navegador.");
@@ -3052,9 +3074,8 @@ ${contentPreview}
           });
         }, 1500);
       }
-    } catch (error: unknown) {
+    } catch {
       // Fallback a simulación
-      const message = error instanceof Error ? error.message : "Error desconocido";
       setTimeout(() => {
         addMessage({
           role: "assistant",
@@ -12151,13 +12172,6 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
           // Extraer JSON de la respuesta
           const jsonMatch = data.answer.match(/\[[\s\S]*\]/);
           if (jsonMatch) {
-            const newWords = JSON.parse(jsonMatch[0]);
-            
-            // Filtrar palabras que ya están en la lista de palabras aprendidas
-            // También filtrar palabras que ya están en el array actual de words
-            const learnedWordsSet = new Set(learnedWordsList.map(w => w.word.toLowerCase().trim()));
-            const existingWordsSet = new Set(words.map(w => w.word?.toLowerCase().trim() || ""));
-            
             interface WordItem {
               word?: string;
               translation?: string;
@@ -12165,7 +12179,21 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
               romanization?: string;
               options?: string[];
             }
-            const filteredWords = (newWords as WordItem[]).filter((word: WordItem) => {
+            interface WordItem {
+              word?: string;
+              translation?: string;
+              example?: string;
+              romanization?: string;
+              options?: string[];
+            }
+            const newWords: WordItem[] = JSON.parse(jsonMatch[0]);
+            
+            // Filtrar palabras que ya están en la lista de palabras aprendidas
+            // También filtrar palabras que ya están en el array actual de words
+            const learnedWordsSet = new Set(learnedWordsList.map(w => w.word.toLowerCase().trim()));
+            const existingWordsSet = new Set(words.map(w => w.word?.toLowerCase().trim() || ""));
+            
+            const filteredWords = newWords.filter((word: WordItem) => {
               const wordLower = word.word?.toLowerCase().trim() || "";
               // Excluir si ya está aprendida O si ya está en la lista actual
               return !learnedWordsSet.has(wordLower) && !existingWordsSet.has(wordLower);
@@ -13244,7 +13272,7 @@ export default App;`,
       setCode(codeTemplates.react);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language]);
+  }, [language, codeTemplates]);
 
   const handleRun = async () => {
     setIsRunning(true);
@@ -13311,9 +13339,13 @@ export default App;`,
 
           if (!response.ok) {
             // Si la respuesta no es OK, intentar leer el error
-            let errorData;
+            interface ErrorResponse {
+              error?: string;
+              detail?: string;
+            }
+            let errorData: ErrorResponse;
             try {
-              errorData = await response.json();
+              errorData = await response.json() as ErrorResponse;
             } catch {
               const text = await response.text();
               throw new Error(text || `Error del servidor (${response.status})`);
