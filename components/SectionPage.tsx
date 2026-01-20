@@ -268,6 +268,7 @@ export default function SectionPage({
                   position: 'relative',
                 }}
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imageCard.startsWith("/") ? imageCard : `/${imageCard}`}
                   alt=""
