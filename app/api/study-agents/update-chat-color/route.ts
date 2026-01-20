@@ -29,7 +29,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Construir el body solo con los campos que tienen valores
-    const requestBody: any = {
+    interface UpdateChatColorRequestBody {
+      user_id: string;
+      chat_id: string;
+      color?: string;
+    }
+    const requestBody: UpdateChatColorRequestBody = {
       user_id: userId,
       chat_id: chatId,
     };
