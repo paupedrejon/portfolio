@@ -1,0 +1,25 @@
+{
+  "chat_id": "chat-1768339719859",
+  "user_id": "543cc71e-bb8d-40c5-b98b-cbbcb71047fe",
+  "title": "Francés",
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "¡Excelente elección! Vamos a darle caña a **Francés**. Para poder ayudarte mejor, dime:\n\n¿Qué nivel tienes (Principiante, Intermedio, Avanzado)?\n\nEn cuanto me digas, empezamos.",
+      "type": "level_selection",
+      "timestamp": "2026-01-13T21:28:40.386Z",
+      "topic": "Francés"
+    }
+  ],
+  "created_at": "2026-01-13T22:28:40.382048",
+  "updated_at": "2026-01-13T22:28:44.087031",
+  "metadata": {
+    "uploadedFiles": [
+      "pri.pdf"
+    ],
+    "selectedModel": "auto",
+    "color": "#3b82f6",
+    "icon": "flag_francés",
+    "topic": "Francés"
+  }
+}

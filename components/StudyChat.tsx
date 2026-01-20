@@ -257,6 +257,7 @@ import {
   HiKey,
   HiBolt,
   HiGlobeAlt,
+  HiChevronDown,
   HiChartBar,
   HiCube,
   HiHome,
@@ -350,6 +351,20 @@ export default function StudyChat() {
   const [currentChatLevel, setCurrentChatLevel] = useState<{ topic: string; level: number } | null>(null);
   const [messageLevels, setMessageLevels] = useState<Record<string, { topic: string; level: number }>>({});
   const [learnedWordsCount, setLearnedWordsCount] = useState<number>(0);
+  const [showInitialForm, setShowInitialForm] = useState(false);
+  const [initialFormData, setInitialFormData] = useState<{
+    level: number | null;
+    learningGoal: string;
+    timeAvailable: string;
+  }>({
+    level: null,
+    learningGoal: "",
+    timeAvailable: "",
+  });
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const modelDropdownRef = useRef<HTMLDivElement>(null);
+  const [showLevelDropdown, setShowLevelDropdown] = useState(false);
+  const levelDropdownRef = useRef<HTMLDivElement>(null);
   const [showLearnedWordsModal, setShowLearnedWordsModal] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -360,6 +375,7 @@ export default function StudyChat() {
     romanization?: string;
     source?: string;
   }>>([]);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
   // Función helper para guardar una palabra aprendida
   const saveLearnedWord = async (
@@ -541,7 +557,22 @@ export default function StudyChat() {
         
         // Cargar conteo de palabras aprendidas si es un idioma
         if (isLanguageTopic(topic)) {
-          loadLearnedWordsCount(topic);
+          await loadLearnedWordsCount(topic);
+        } else {
+          // Si no es un idioma, limpiar el conteo
+          setLearnedWordsCount(0);
+        }
+        
+        // Actualizar herramientas disponibles basándose en el tema
+        if (isLanguageTopic(topic)) {
+          setShowLanguageTool(true);
+        } else if (isProgrammingLanguage(topic)) {
+          setShowCodeTool(true);
+        } else {
+          // Para otros temas, ocultar herramientas por defecto
+          // Se activarán si detectContextualTools las detecta
+          setShowLanguageTool(false);
+          setShowCodeTool(false);
         }
         
         return level;
@@ -589,6 +620,23 @@ export default function StudyChat() {
       console.error("Error loading message level:", error);
     }
   };
+
+  // Cerrar el desplegable al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (levelDropdownRef.current && !levelDropdownRef.current.contains(event.target as Node)) {
+        setShowLevelDropdown(false);
+      }
+    };
+
+    if (showLevelDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showLevelDropdown]);
 
   // Colores disponibles para los chats
   const chatColors = [
@@ -643,21 +691,52 @@ export default function StudyChat() {
     }
   };
 
-  // Función helper para detectar si es un idioma
-  const isLanguageTopic = (topic: string): boolean => {
+  // Función helper para detectar si es un idioma (mejorada para detectar cualquier idioma)
+  const isLanguageTopic = (topic: string | null | undefined): boolean => {
+    if (!topic) return false;
     const topicLower = topic.toLowerCase();
-    return topicLower.includes("inglés") || topicLower.includes("english") ||
-      topicLower.includes("francés") || topicLower.includes("francais") ||
-      topicLower.includes("alemán") || topicLower.includes("deutsch") ||
-      topicLower.includes("italiano") || topicLower.includes("portugués") ||
-      topicLower.includes("chino") || topicLower.includes("mandarín") || topicLower.includes("simplificado") ||
-      topicLower.includes("japonés") || topicLower.includes("japones") ||
-      topicLower.includes("coreano") || topicLower.includes("catalán") ||
-      topicLower.includes("catalan") || topicLower.includes("ruso");
+    
+    // Lista de idiomas conocidos (expandida)
+    const knownLanguages = [
+      "inglés", "english", "francés", "francais", "alemán", "deutsch", "german",
+      "italiano", "italian", "portugués", "portuguese", "chino", "mandarín", "simplificado", "chinese",
+      "japonés", "japones", "japanese", "coreano", "korean", "catalán", "catalan",
+      "ruso", "russian", "español", "spanish", "árabe", "arabic", "hindi",
+      "turco", "turkish", "polaco", "polish", "griego", "greek", "holandés", "dutch",
+      "sueco", "swedish", "noruego", "norwegian", "danés", "danish", "finlandés", "finnish",
+      "checo", "czech", "rumano", "romanian", "húngaro", "hungarian", "búlgaro", "bulgarian",
+      "croata", "croatian", "serbio", "serbian", "esloveno", "slovenian", "eslovaco", "slovak",
+      "ucraniano", "ukrainian", "bielorruso", "belarusian", "hebreo", "hebrew", "tailandés", "thai",
+      "vietnamita", "vietnamese", "indonesio", "indonesian", "malayo", "malay", "filipino", "tagalog"
+    ];
+    
+    // Verificar si contiene algún idioma conocido
+    if (knownLanguages.some(lang => topicLower.includes(lang))) {
+      return true;
+    }
+    
+    // Detectar patrones comunes de nombres de idiomas
+    // Palabras clave que sugieren que es un idioma
+    const languageKeywords = [
+      "idioma", "language", "lengua", "vocabulario", "vocabulary",
+      "gramática", "grammar", "aprender", "learn", "estudiar", "study"
+    ];
+    
+    // Si el tema contiene palabras clave de idioma, probablemente es un idioma
+    if (languageKeywords.some(keyword => topicLower.includes(keyword))) {
+      // Verificar que no sea programación
+      const programmingKeywords = ["python", "javascript", "java", "sql", "c++", "c#", "programación", "programming", "código", "code"];
+      if (!programmingKeywords.some(keyword => topicLower.includes(keyword))) {
+        return true;
+      }
+    }
+    
+    return false;
   };
 
   // Función helper para detectar si es un lenguaje de programación
-  const isProgrammingLanguage = (topic: string): boolean => {
+  const isProgrammingLanguage = (topic: string | null | undefined): boolean => {
+    if (!topic) return false;
     const topicLower = topic.toLowerCase();
     return topicLower.includes("python") ||
       topicLower.includes("javascript") || topicLower.includes("js") ||
@@ -670,9 +749,110 @@ export default function StudyChat() {
       topicLower.includes("swift");
   };
 
+  // Función para detectar contexto de herramientas basándose en mensajes recientes
+  const detectContextualTools = useMemo(() => {
+    if (!messages || messages.length === 0) return { hasSQL: false, hasProgramming: false, hasLanguage: false, detectedLanguage: null, detectedProgramming: null, explicitFlashcardRequest: false };
+    
+    // Analizar los últimos 10 mensajes para detectar contexto
+    const recentMessages = messages.slice(-10);
+    const combinedText = recentMessages.map(m => m.content).join(" ").toLowerCase();
+    
+    // Detectar SQL - SOLO si hay múltiples indicadores o mención explícita
+    // Requiere al menos 2 de estos indicadores para evitar falsos positivos
+    const sqlIndicators = [
+      combinedText.includes("sql") && (combinedText.includes("query") || combinedText.includes("database") || combinedText.includes("select")),
+      combinedText.includes("select") && combinedText.includes("from") && (combinedText.includes("where") || combinedText.includes("join")),
+      combinedText.includes("create table") || combinedText.includes("insert into") || combinedText.includes("update ") || combinedText.includes("delete from"),
+      combinedText.includes("sqlite") || combinedText.includes("mysql") || combinedText.includes("postgresql"),
+    ];
+    const hasSQL = sqlIndicators.some(indicator => indicator === true) || 
+                   (combinedText.includes("sql") && (combinedText.includes("programming") || combinedText.includes("código") || combinedText.includes("code")));
+    
+    // Detectar lenguajes de programación - SOLO si hay contexto claro de programación
+    // Requiere múltiples indicadores para evitar falsos positivos
+    const programmingLanguages = {
+      sql: hasSQL, // SQL ya está validado arriba
+      python: (combinedText.includes("python") || combinedText.includes("def ") || combinedText.includes("import ")) && 
+              (combinedText.includes("programming") || combinedText.includes("código") || combinedText.includes("code") || combinedText.includes("script")),
+      javascript: (combinedText.includes("javascript") || combinedText.includes("js ") || combinedText.includes("function ") || combinedText.includes("const ") || combinedText.includes("let ")) &&
+                  (combinedText.includes("programming") || combinedText.includes("código") || combinedText.includes("code") || combinedText.includes("script") || combinedText.includes("node")),
+      java: combinedText.includes("java") && !combinedText.includes("javascript") && 
+            (combinedText.includes("programming") || combinedText.includes("código") || combinedText.includes("code") || combinedText.includes("class ") || combinedText.includes("public ")),
+    };
+    
+    const detectedProgramming = Object.entries(programmingLanguages).find(([_, detected]) => detected === true)?.[0] || null;
+    const hasProgramming = detectedProgramming !== null;
+    
+    // Detectar solicitudes explícitas de flashcards
+    const flashcardKeywords = [
+      "flashcard", "flash card", "flashcards", "tarjeta", "tarjetas", 
+      "quiero flashcards", "muéstrame flashcards", "dame flashcards",
+      "genera flashcards", "haz flashcards", "crea flashcards",
+      "quiero tarjetas", "muéstrame tarjetas", "dame tarjetas"
+    ];
+    
+    const explicitFlashcardRequest = flashcardKeywords.some(keyword => combinedText.includes(keyword));
+    
+    // Detectar idiomas - SOLO si hay contexto claro de aprendizaje de idiomas
+    // Requiere múltiples indicadores para evitar falsos positivos
+    const languageKeywords = [
+      "inglés", "english", "francés", "francais", "alemán", "deutsch", "italiano", "italian",
+      "portugués", "portuguese", "chino", "chinese", "japonés", "japanese", "coreano", "korean",
+    ];
+    
+    const languageContextKeywords = [
+      "vocabulario", "vocabulary", "palabra", "word", "frase", "phrase", "traducción", "translation",
+      "aprender", "learn", "idioma", "language", "lengua", "estudiar", "study", "flashcard", "tarjeta"
+    ];
+    
+    // Solo activar si hay un idioma específico Y contexto de aprendizaje
+    const hasSpecificLanguage = languageKeywords.some(keyword => combinedText.includes(keyword));
+    const hasLanguageContext = languageContextKeywords.some(keyword => combinedText.includes(keyword));
+    const hasLanguage = (hasSpecificLanguage && hasLanguageContext) || explicitFlashcardRequest;
+    
+    // Intentar detectar el idioma específico mencionado
+    let detectedLanguage = null;
+    if (hasLanguage) {
+      const languageMap: Record<string, string> = {
+        "inglés": "Inglés", "english": "Inglés",
+        "francés": "Francés", "francais": "Francés",
+        "alemán": "Alemán", "deutsch": "Alemán", "german": "Alemán",
+        "italiano": "Italiano", "italian": "Italiano",
+        "portugués": "Portugués", "portuguese": "Portugués",
+        "chino": "Chino", "chinese": "Chino", "mandarín": "Chino",
+        "japonés": "Japonés", "japanese": "Japonés", "japones": "Japonés",
+        "coreano": "Coreano", "korean": "Coreano",
+        "ruso": "Ruso", "russian": "Ruso",
+      };
+      
+      for (const [key, value] of Object.entries(languageMap)) {
+        if (combinedText.includes(key)) {
+          detectedLanguage = value;
+          break;
+        }
+      }
+    }
+    
+    return { hasSQL, hasProgramming, hasLanguage, detectedLanguage, detectedProgramming, explicitFlashcardRequest };
+  }, [messages]);
+
   // Estado para mostrar herramientas
   const [showLanguageTool, setShowLanguageTool] = useState(false);
   const [showCodeTool, setShowCodeTool] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+
+  // Detectar tamaño de pantalla
+  useEffect(() => {
+    const checkWidth = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 640);
+      setIsTablet(width >= 640 && width < 1024);
+    };
+    checkWidth();
+    window.addEventListener("resize", checkWidth);
+    return () => window.removeEventListener("resize", checkWidth);
+  }, []);
 
   // Función para obtener el identificador del icono basado en el tema (para guardarlo en metadata)
   const getTopicIconIdentifier = (topic: string): string => {
@@ -1159,7 +1339,7 @@ export default function StudyChat() {
           } else {
             setShowAPIKeyConfig(true);
           }
-        } catch {
+    } catch {
           setShowAPIKeyConfig(true);
         }
       } else {
@@ -1196,6 +1376,26 @@ export default function StudyChat() {
       window.removeEventListener("apiKeysUpdated", handleApiKeysUpdate);
     };
   }, []);
+
+  // Cerrar dropdowns al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (modelDropdownRef.current && !modelDropdownRef.current.contains(target)) {
+        setShowModelDropdown(false);
+      }
+      if (levelDropdownRef.current && !levelDropdownRef.current.contains(target)) {
+        setShowLevelDropdown(false);
+      }
+    };
+
+    if (showModelDropdown || showLevelDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [showModelDropdown, showLevelDropdown]);
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -1499,9 +1699,13 @@ export default function StudyChat() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ userId, chatId }),
+        body: JSON.stringify({ userId, chatId         }),
       });
-
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       if (data.success && data.chat) {
         // Convertir mensajes del backend al formato del frontend
@@ -1534,13 +1738,34 @@ export default function StudyChat() {
           } else {
             console.log("[loadChat] No hay tema en metadata");
           }
+          
+          // Verificar si hay información del formulario inicial
+          if (data.chat.metadata.initialForm) {
+            setInitialFormData(data.chat.metadata.initialForm);
+            setShowInitialForm(false); // Ya tiene datos, no mostrar formulario
+          } else if (data.chat.messages.length === 0) {
+            // Si no hay mensajes y no hay datos del formulario, mostrar formulario
+            setShowInitialForm(true);
+          }
         } else {
           console.log("[loadChat] No hay metadata en el chat");
+          // Si no hay metadata y no hay mensajes, mostrar formulario
+          if (data.chat.messages.length === 0) {
+            setShowInitialForm(true);
+          }
         }
 
-        // Cargar nivel de la conversación (esto actualizará el tema si es diferente)
+        // Limpiar estado anterior al cargar un nuevo chat
+        setLearnedWordsCount(0);
+        setShowLanguageTool(false);
+        setShowCodeTool(false);
+
+        // Cargar nivel de la conversación (esto actualizará el tema, nivel, palabras aprendidas y herramientas)
         if (userId && chatId) {
           await loadChatLevel(chatId);
+        } else {
+          // Si no hay chatId, limpiar el nivel actual
+          setCurrentChatLevel(null);
         }
       }
     } catch (error) {
@@ -1590,6 +1815,10 @@ export default function StudyChat() {
         }),
       });
       
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       if (data.success && data.chat) {
         // Limpiar estado y cargar el nuevo chat
@@ -1610,38 +1839,19 @@ export default function StudyChat() {
         setNewChatColor("#6366f1");
         setNewChatIcon("chat");
         
-        // Si se seleccionó un tema sugerido (predefinedName existe), agregar mensaje inicial con botones de nivel
+        // Mostrar formulario inicial para recopilar información del usuario
+        const topic = predefinedName || chatName;
+        setShowInitialForm(true);
+        setInitialFormData({
+          level: null,
+          learningGoal: "",
+          timeAvailable: "",
+        });
+        
+        // Si se seleccionó un tema sugerido (predefinedName existe), establecer el tema
         if (predefinedName) {
           console.log(`[handleCreateNewChat] Tema sugerido detectado: ${predefinedName}`);
           setCurrentChatLevel({ topic: predefinedName, level: 0 }); // Establecer nivel 0 por defecto
-          
-          // Establecer el nivel en el backend también para que quede guardado con el tema
-          if (userId && newChatId) {
-            fetch("/api/study-agents/set-chat-level", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                userId,
-                chatId: newChatId,
-                level: 0,
-                topic: predefinedName,
-              }),
-            }).then(res => res.json()).then(data => {
-              console.log(`[handleCreateNewChat] Nivel establecido en backend:`, data);
-            }).catch(err => console.error("Error estableciendo nivel inicial:", err));
-          }
-          
-          // Agregar mensaje inicial del asistente con botones de nivel
-          addMessage({
-            role: "assistant",
-            content: `¡Excelente elección! Vamos a darle caña a **${predefinedName}**. Para poder ayudarte mejor, dime:
-
-¿Qué nivel tienes (Principiante, Intermedio, Avanzado)?
-
-En cuanto me digas, empezamos.`,
-            type: "level_selection", // Nuevo tipo de mensaje para selección de nivel
-            topic: predefinedName, // Guardar el tema para los botones
-          });
         }
         
         // Refrescar sidebar
@@ -1773,6 +1983,136 @@ En cuanto me digas, empezamos.`,
     });
 
     try {
+      // Detectar URLs en el mensaje
+      const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[^\s]+\.[a-z]{2,}\/[^\s]*)/gi;
+      const urls = userMessage.match(urlRegex);
+      
+      if (urls && urls.length > 0) {
+        // Procesar cada URL encontrada
+        for (const url of urls) {
+          setLoadingMessage(`Procesando ${url}...`);
+          
+          try {
+            const response = await fetch("/api/study-agents/process-url", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                url: url,
+                userId: userId,
+                apiKey: apiKeys?.openai,
+                model: selectedModel,
+              }),
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              
+              if (data.success) {
+                if (data.type === "video") {
+                  // Mostrar resumen del video con formato mejorado
+                  const videoContent = `---
+### 🎬 Resumen del Video
+
+**📺 Título:** ${data.title || "Video"}
+
+**🔗 URL:** [${url}](${data.url})
+
+---
+
+#### 📝 Resumen:
+
+${data.summary || data.description || "No se pudo obtener el resumen del video."}
+
+---
+
+*✨ Puedes hacer preguntas sobre el contenido del video.*`;
+                  
+                  addMessage({
+                    role: "assistant",
+                    content: videoContent,
+                    type: "notes",
+                  });
+                } else if (data.type === "text") {
+                  // Mostrar contenido extraído con formato mejorado y diseño visual atractivo
+                  const contentPreview = data.content.length > 3000 
+                    ? data.content.substring(0, 3000) + "...\n\n---\n\n*💡 Contenido truncado. Puedes hacer preguntas sobre el contenido completo.*"
+                    : data.content;
+                  
+                  // Limpiar la URL para evitar saltos de línea y espacios
+                  const cleanUrl = url.trim().replace(/\s+/g, '').replace(/\n/g, '').replace(/\r/g, '');
+                  
+                  // Formato mejorado con diseño visual atractivo usando solo markdown
+                  // Usar código inline para la URL para evitar que se rompa en markdown
+                  const formattedContent = `---
+## 🌐 ${data.title || "Contenido Web Extraído"}
+
+**🔗 URL Original:** [Ver página](${cleanUrl})
+
+\`${cleanUrl}\`
+
+---
+
+### 📋 Contenido Extraído:
+
+${contentPreview}
+
+---
+
+> ✨ **Este contenido ha sido procesado y está disponible para consultas.**  
+> Puedes hacer preguntas sobre él en el chat.
+
+---`;
+                  
+                  addMessage({
+                    role: "assistant",
+                    content: formattedContent,
+                    type: "notes",
+                  });
+                  
+                  // Opcionalmente, almacenar el contenido en memoria para hacer preguntas sobre él
+                  // Esto requeriría un endpoint adicional para almacenar contenido de URLs
+                }
+              } else {
+                addMessage({
+                  role: "assistant",
+                  content: `❌ Error al procesar la URL: ${data.error || "Error desconocido"}`,
+                  type: "message",
+                });
+              }
+            } else {
+              addMessage({
+                role: "assistant",
+                content: `❌ Error al procesar la URL: ${url}`,
+                type: "message",
+              });
+            }
+          } catch (error) {
+            console.error("Error procesando URL:", error);
+            addMessage({
+              role: "assistant",
+              content: `❌ Error al procesar la URL: ${url}`,
+              type: "message",
+            });
+          }
+        }
+        
+        // Continuar con el procesamiento normal después de procesar las URLs
+        // El contenido de las URLs ya está almacenado en memoria y estará disponible
+        // para el contexto de la pregunta
+        // Limpiar las URLs del mensaje para que la pregunta se procese correctamente
+        if (urls && urls.length > 0) {
+          // Eliminar las URLs del mensaje original para que solo quede la pregunta
+          let cleanedMessage = userMessage;
+          urls.forEach(url => {
+            cleanedMessage = cleanedMessage.replace(url, '').trim();
+          });
+          // Si después de eliminar las URLs queda texto, actualizar el mensaje
+          if (cleanedMessage.length > 0) {
+            userMessage = cleanedMessage;
+          }
+        }
+      }
+      
       // Detectar comandos especiales
       const lowerInput = userMessage.toLowerCase();
       
@@ -1799,6 +2139,9 @@ En cuanto me digas, empezamos.`,
       if (requestedLevel !== null && currentChatId) {
         // Cambiar el nivel manualmente
         try {
+          // Obtener el tema del chat actual (desde currentChatLevel o desde el título del chat)
+          const chatTopic = currentChatLevel?.topic || null;
+          
           const response = await fetch("/api/study-agents/set-chat-level", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1806,6 +2149,7 @@ En cuanto me digas, empezamos.`,
               userId,
               chatId: currentChatId,
               level: requestedLevel,
+              topic: chatTopic, // Enviar el tema si está disponible
             }),
           });
           
@@ -1839,9 +2183,82 @@ En cuanto me digas, empezamos.`,
       const testKeywords = ["test", "examen", "evaluación", "prueba", "cuestionario", "genera un test", "hazme un test", "crea un test", "quiero un test"];
       const isTestRequest = testKeywords.some(keyword => lowerInput.includes(keyword));
       
+      // Detectar si el usuario está pidiendo flashcards
+      const flashcardKeywords = [
+        "flashcard", "flashcards", "flash card", "flash cards",
+        "quiero flashcards", "muéstrame flashcards", "dame flashcards",
+        "genera flashcards", "haz flashcards", "crea flashcards", "hazme flashcards",
+        "quiero tarjetas", "muéstrame tarjetas", "dame tarjetas",
+        "genera tarjetas", "haz tarjetas", "crea tarjetas", "hazme tarjetas"
+      ];
+      const isFlashcardRequest = flashcardKeywords.some(keyword => lowerInput.includes(keyword));
+      
       // Detectar si el usuario está pidiendo un ejercicio
       const exerciseKeywords = ["ejercicio", "ejercicios", "genera un ejercicio", "hazme un ejercicio", "crea un ejercicio", "quiero un ejercicio", "hazme ejercicio", "crea ejercicio"];
       const isExerciseRequest = exerciseKeywords.some(keyword => lowerInput.includes(keyword));
+
+      // Si se solicita flashcards, activar la herramienta automáticamente
+      if (isFlashcardRequest) {
+        // Extraer tema de la solicitud
+        let flashcardTopic: string | null = null;
+        const flashcardTopicPatterns = [
+          /flashcards?\s+(?:de|sobre|acerca de|del|de la|de los|de las|para)\s+(.+?)(?:\s+con|\s*$)/i,
+          /hazme\s+flashcards?\s+(?:de|sobre|acerca de|para)\s+(.+?)(?:\s+con|\s*$)/i,
+          /crea\s+flashcards?\s+(?:de|sobre|acerca de|para)\s+(.+?)(?:\s+con|\s*$)/i,
+          /genera\s+flashcards?\s+(?:de|sobre|acerca de|para)\s+(.+?)(?:\s+con|\s*$)/i,
+          /dame\s+flashcards?\s+(?:de|sobre|acerca de|para)\s+(.+?)(?:\s+con|\s*$)/i,
+          /tarjetas?\s+(?:de|sobre|acerca de|para)\s+(.+?)(?:\s+con|\s*$)/i,
+          /hazme\s+tarjetas?\s+(?:de|sobre|acerca de|para)\s+(.+?)(?:\s+con|\s*$)/i,
+          /dame\s+tarjetas?\s+(?:de|sobre|acerca de|para)\s+(.+?)(?:\s+con|\s*$)/i,
+        ];
+        
+        for (const pattern of flashcardTopicPatterns) {
+          const match = userMessage.match(pattern);
+          if (match && match[1]) {
+            flashcardTopic = match[1].trim();
+            flashcardTopic = flashcardTopic.replace(/^(de|sobre|acerca de|del|de la|de los|de las|para)\s+/i, '').trim();
+            flashcardTopic = flashcardTopic.replace(/\s+con\s+.+$/i, '').trim();
+            if (flashcardTopic && flashcardTopic.length > 2) {
+              break;
+            }
+          }
+        }
+        
+        // Si no se encontró tema específico, usar el tema del chat actual o "General"
+        if (!flashcardTopic) {
+          flashcardTopic = currentChatLevel?.topic || "General";
+        }
+        
+        // Establecer el tema PRIMERO antes de activar la herramienta
+        // Esto asegura que cuando el componente se monte, tenga el tema correcto
+        if (flashcardTopic) {
+          const newLevel = currentChatLevel?.level || 0;
+          setCurrentChatLevel({ topic: flashcardTopic, level: newLevel });
+          
+          // Guardar el nivel en el backend si hay chatId
+          if (currentChatId && userId) {
+            fetch("/api/study-agents/set-chat-level", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId,
+                chatId: currentChatId,
+                level: newLevel,
+                topic: flashcardTopic,
+              }),
+            }).catch(err => console.error("Error estableciendo tema de flashcards:", err));
+          }
+        }
+        
+        // Activar la herramienta de flashcards DESPUÉS de establecer el tema
+        // Usar setTimeout para asegurar que el estado se actualice primero
+        setTimeout(() => {
+          setShowLanguageTool(true);
+        }, 100);
+        
+        // Continuar con la respuesta normal del asistente
+        // (no retornar aquí, dejar que el flujo normal continúe)
+      }
 
       if (lowerInput.includes("genera apuntes") || lowerInput.includes("crea apuntes")) {
         await generateNotes();
@@ -2035,8 +2452,9 @@ En cuanto me digas, empezamos.`,
           content: msg.content,
         }));
       
-      // Obtener el tema del chat actual
+      // Obtener el tema y nivel del chat actual
       const topic = currentChatLevel?.topic || null;
+      const level = currentChatLevel?.level || null;
       
       // Llamar a la API con la key del usuario y el modelo seleccionado
       const response = await fetch("/api/study-agents/generate-notes", {
@@ -2047,6 +2465,7 @@ En cuanto me digas, empezamos.`,
           uploadedFiles: uploadedFiles,
           model: selectedModel === "auto" ? null : selectedModel,
           userId: userId,
+          chatId: currentChatId, // Pasar chatId para obtener el nivel
           conversationHistory: conversationHistory,
           topic: topic,
         }),
@@ -2207,7 +2626,7 @@ En cuanto me digas, empezamos.`,
             content: `Test generado con ${data.test?.questions?.length || 0} preguntas`,
             type: "test" as const,
             timestamp: new Date(),
-            costEstimate,
+          costEstimate,
           }];
         });
       } else {
@@ -2532,6 +2951,7 @@ En cuanto me digas, empezamos.`,
           userId: userId,
           chatId: currentChatId || currentChatIdRef.current,
           topic: chatTopic,
+          initial_form_data: (initialFormData.level !== null || initialFormData.learningGoal || initialFormData.timeAvailable) ? initialFormData : null,
         }),
       });
 
@@ -2967,8 +3387,8 @@ En cuanto me digas, empezamos.`,
     <>
       {/* Modal para crear nuevo chat */}
       {showNewChatModal && (
-        <div
-          style={{
+    <div
+      style={{
             position: "fixed",
             top: 0,
             left: sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0",
@@ -3170,6 +3590,18 @@ En cuanto me digas, empezamos.`,
                   background: ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.6)" : "rgba(148, 163, 184, 0.7)"};
                 }
               `}} />
+              <style>{`
+                @keyframes fadeIn {
+                  from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                  }
+                  to {
+                    opacity: 1;
+                    transform: translateY(0);
+                  }
+                }
+              `}</style>
               <p
                 className={outfit.className}
                 style={{
@@ -3182,63 +3614,107 @@ En cuanto me digas, empezamos.`,
               >
                 O selecciona una sugerencia:
               </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "3rem", paddingBottom: "2rem", paddingRight: "0", paddingLeft: "0", width: "100%", boxSizing: "border-box" }}>
-                {topicSuggestions.map((section) => (
-                    <div key={section.name} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                      {/* Header de sección */}
-                      <div
+              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", paddingBottom: "2rem", paddingRight: "0", paddingLeft: "0", width: "100%", boxSizing: "border-box" }}>
+                {topicSuggestions.map((section) => {
+                  const isExpanded = expandedSections.has(section.name);
+                  return (
+                    <div key={section.name} style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+                      {/* Header de sección - clickeable para expandir/colapsar */}
+                      <button
+                        onClick={() => {
+                          setExpandedSections(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(section.name)) {
+                              newSet.delete(section.name);
+                            } else {
+                              newSet.add(section.name);
+                            }
+                            return newSet;
+                          });
+                        }}
                         style={{
                           display: "flex",
                           alignItems: "center",
+                          justifyContent: "space-between",
                           gap: "1.25rem",
                           padding: "1rem 1.25rem",
-                          borderBottom: `2px solid ${section.color}30`,
+                          border: `2px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.2)"}`,
                           background: colorTheme === "dark" 
                             ? `linear-gradient(90deg, ${section.color}12 0%, transparent 100%)`
                             : `linear-gradient(90deg, ${section.color}08 0%, transparent 100%)`,
                           borderRadius: "16px",
-                          marginBottom: "0.5rem",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: "52px",
-                            height: "52px",
-                            borderRadius: "14px",
-                            background: section.color,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            flexShrink: 0,
-                            boxShadow: `0 6px 16px ${section.color}60`,
-                          }}
-                        >
-                          {getSectionIcon(section.name)}
-                        </div>
-                        <h3
-                          className={spaceGrotesk.className}
-                          style={{
-                            fontSize: "1.35rem",
-                            fontWeight: 700,
-                            letterSpacing: "-0.015em",
-                            color: colorTheme === "dark" ? "#f1f5f9" : "#0f172a",
-                            margin: 0,
-                            lineHeight: 1.3,
-                          }}
-                        >
-                          {section.name}
-                        </h3>
-                      </div>
-                      {/* Grid de temas */}
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-                          gap: "1.25rem",
+                          marginBottom: "0",
+                          cursor: "pointer",
+                          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                           width: "100%",
                           boxSizing: "border-box",
                         }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = colorTheme === "dark" 
+                            ? `linear-gradient(90deg, ${section.color}20 0%, transparent 100%)`
+                            : `linear-gradient(90deg, ${section.color}15 0%, transparent 100%)`;
+                          e.currentTarget.style.borderColor = section.color + "60";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = colorTheme === "dark" 
+                            ? `linear-gradient(90deg, ${section.color}12 0%, transparent 100%)`
+                            : `linear-gradient(90deg, ${section.color}08 0%, transparent 100%)`;
+                          e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.2)";
+                        }}
                       >
+                        <div style={{ display: "flex", alignItems: "center", gap: "1.25rem", flex: 1 }}>
+                          <div
+                            style={{
+                              width: "52px",
+                              height: "52px",
+                              borderRadius: "14px",
+                              background: section.color,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                              boxShadow: `0 6px 16px ${section.color}60`,
+                            }}
+                          >
+                            {getSectionIcon(section.name)}
+                          </div>
+                          <h3
+                            className={spaceGrotesk.className}
+                            style={{
+                              fontSize: "1.35rem",
+                              fontWeight: 700,
+                              letterSpacing: "-0.015em",
+                              color: colorTheme === "dark" ? "#f1f5f9" : "#0f172a",
+                              margin: 0,
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {section.name}
+                          </h3>
+                        </div>
+                        <HiChevronDown
+                          size={24}
+                          color={colorTheme === "dark" ? "#f1f5f9" : "#0f172a"}
+                          style={{
+                            transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                            transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                            flexShrink: 0,
+                          }}
+                        />
+                      </button>
+                      {/* Grid de temas - se muestra solo si está expandido */}
+                      {isExpanded && (
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                            gap: "1.25rem",
+                            width: "100%",
+                            boxSizing: "border-box",
+                            paddingTop: "1.5rem",
+                            animation: "fadeIn 0.3s ease-in-out",
+                          }}
+                        >
                         {section.topics.map((topic) => {
                           const topicColor = section.color;
                           const topicIcon = getTopicIcon(topic);
@@ -3365,9 +3841,11 @@ En cuanto me digas, empezamos.`,
                             </button>
                           );
                         })}
-                      </div>
+                        </div>
+                      )}
                     </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -3389,14 +3867,116 @@ En cuanto me digas, empezamos.`,
         colorTheme={colorTheme}
         onCollapsedChange={setSidebarCollapsed}
       />
+      {/* Premium Background Effects - Full Screen (Fixed Position) */}
+      <div 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0",
+          right: 0,
+          bottom: 0,
+          pointerEvents: 'none',
+          zIndex: 0,
+          transition: "left 0.3s ease",
+          overflow: 'visible',
+        }}
+      >
+        {/* Subtle Orbs - Full Screen */}
+        <div 
+          className="absolute rounded-full blur-[120px] opacity-8"
+          style={{
+            width: '600px',
+            height: '600px',
+            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            top: "5%",
+            left: "10%",
+            animation: "floatOrbMain1 45s ease-in-out infinite",
+          }}
+        />
+        <div 
+          className="absolute rounded-full blur-[100px] opacity-6"
+          style={{
+            width: '500px',
+            height: '500px',
+            background: "linear-gradient(135deg, #a855f7, #6366f1)",
+            bottom: "10%",
+            right: "10%",
+            animation: "floatOrbMain2 55s ease-in-out infinite reverse",
+          }}
+        />
+        <div 
+          className="absolute rounded-full blur-[90px] opacity-5"
+          style={{
+            width: '450px',
+            height: '450px',
+            background: "linear-gradient(135deg, #8b5cf6, #a855f7)",
+            top: "50%",
+            left: "50%",
+            transform: 'translate(-50%, -50%)',
+            animation: "floatOrbMain3 60s ease-in-out infinite",
+          }}
+        />
+
+        {/* Full Screen Grid Pattern */}
+        <div 
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: `
+              linear-gradient(rgba(99, 102, 241, 0.02) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(99, 102, 241, 0.02) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px',
+            maskImage: 'radial-gradient(ellipse 100% 100% at 50% 50%, black 40%, transparent 70%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 100% 100% at 50% 50%, black 40%, transparent 70%)',
+          }}
+        />
+
+        {/* Full Screen Rising Lines */}
+        {[...Array(15)].map((_, i) => {
+          const seed = i * 11 + 7;
+          const width = (seed % 15) / 10 + 0.5;
+          const height = (seed % 200) + 150;
+          const left = (seed * 13) % 100;
+          const duration = (seed % 60) / 10 + 8;
+          const delay = (seed % 40) / 10;
+          const opacity = (seed % 30) / 100 + 0.1;
+          const colorVariant = seed % 2 === 0 ? '99, 102, 241' : '139, 92, 246';
+          return (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                width: `${width}px`,
+                height: `${height}px`,
+                background: `linear-gradient(to top, rgba(${colorVariant}, 0), rgba(${colorVariant}, ${opacity}))`,
+                left: `${left}%`,
+                bottom: '-200px',
+                borderRadius: '2px',
+                animation: `riseLineChat ${duration}s linear infinite`,
+                animationDelay: `${delay}s`,
+                boxShadow: `0 0 ${(seed % 80) / 10 + 3}px rgba(${colorVariant}, 0.2)`,
+              }}
+            />
+          );
+        })}
+      </div>
+
       <div
         style={{
           marginLeft: sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0",
           transition: "margin-left 0.3s ease",
           minHeight: "calc(100vh - 50vh)",
-          background: colorTheme === "light" ? "#ffffff" : "var(--bg-secondary)",
+          background: colorTheme === "light" 
+            ? "linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)" 
+            : "linear-gradient(180deg, rgba(18, 18, 26, 0.95) 0%, rgba(10, 10, 15, 0.95) 100%)",
           display: "flex",
           flexDirection: "column",
+          position: "relative",
+          zIndex: 1,
         }}
       >
       {/* API Key Configuration Modal */}
@@ -3411,7 +3991,7 @@ En cuanto me digas, empezamos.`,
         />
       )}
       
-      {/* Selector de Tema y Modelo Global */}
+      {/* Selector de Tema y Modelo Global - Premium Design */}
       <div style={{
         display: "flex",
         justifyContent: "flex-end",
@@ -3419,11 +3999,17 @@ En cuanto me digas, empezamos.`,
         padding: "1rem 1.5rem",
         gap: "0.75rem",
         background: colorTheme === "dark" 
-          ? "rgba(26, 26, 36, 0.4)" 
-          : "rgba(255, 255, 255, 0.7)",
-        backdropFilter: "blur(10px)",
-        borderBottom: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.2)"}`,
+          ? "rgba(26, 26, 36, 0.6)" 
+          : "rgba(255, 255, 255, 0.8)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.25)"}`,
         flexWrap: "wrap",
+        position: "relative",
+        zIndex: 10,
+        boxShadow: colorTheme === "dark"
+          ? "0 2px 8px rgba(0, 0, 0, 0.1)"
+          : "0 2px 8px rgba(0, 0, 0, 0.05)",
       }}>
         {/* Selector de Modelo */}
         {isMounted && (
@@ -3436,116 +4022,210 @@ En cuanto me digas, empezamos.`,
             }}>
               Modelo:
             </span>
-            <div style={{ position: "relative", display: "inline-block" }}>
-              {/* Texto visible que muestra solo el nombre del modelo */}
               <div
+              ref={modelDropdownRef}
+              style={{ position: "relative", display: "inline-block" }}
+            >
+              <button
+                onClick={() => setShowModelDropdown(!showModelDropdown)}
                 style={{
-                  padding: "0.625rem 1.25rem",
-                  paddingRight: "2.5rem",
-                  background: colorTheme === "dark"
-                    ? "rgba(26, 26, 36, 0.8)"
-                    : "rgba(255, 255, 255, 0.9)",
-                  border: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.3)"}`,
-                  borderRadius: "10px",
-                  color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
-                  pointerEvents: "none",
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
                   display: "flex",
                   alignItems: "center",
-                  zIndex: 1,
-                }}
-              >
-                {selectedModel === "auto" ? "Automático (Optimiza Costes)" :
-                 selectedModel === "gpt-4-turbo" ? "GPT-4 Turbo" :
-                 selectedModel === "gpt-4o" ? "GPT-4o" :
-                 selectedModel === "gpt-4" ? "GPT-4" :
-                 selectedModel === "gpt-3.5-turbo" ? "GPT-3.5 Turbo" :
-                 selectedModel}
-              </div>
-              {/* Select funcional pero con el texto oculto */}
-              <select
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                style={{
-                  padding: "0.625rem 1.25rem",
-                  paddingRight: "2.5rem",
-                  background: "transparent",
-                  border: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.3)"}`,
-                  borderRadius: "10px",
-                  color: "transparent",
-                  cursor: "pointer",
+                  gap: "0.5rem",
+                  padding: "0.625rem 1rem",
+                  paddingRight: "2rem",
+                  background: colorTheme === "dark"
+                    ? "rgba(99, 102, 241, 0.1)"
+                    : "rgba(99, 102, 241, 0.08)",
+                  border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.25)"}`,
+                  borderRadius: "8px",
+                  color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
                   fontSize: "0.875rem",
                   fontWeight: 600,
-                  transition: "all 0.3s ease",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
                   outline: "none",
-                  position: "relative",
-                  zIndex: 2,
-                  appearance: "none",
-                  WebkitAppearance: "none",
-                  MozAppearance: "none",
                 }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "#6366f1";
-                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.1)";
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = colorTheme === "dark"
+                    ? "rgba(99, 102, 241, 0.15)"
+                    : "rgba(99, 102, 241, 0.12)";
+                  e.currentTarget.style.borderColor = colorTheme === "dark"
+                    ? "rgba(99, 102, 241, 0.4)"
+                    : "rgba(99, 102, 241, 0.35)";
                 }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.3)";
-                  e.currentTarget.style.boxShadow = "none";
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = colorTheme === "dark"
+                    ? "rgba(99, 102, 241, 0.1)"
+                    : "rgba(99, 102, 241, 0.08)";
+                  e.currentTarget.style.borderColor = colorTheme === "dark"
+                    ? "rgba(99, 102, 241, 0.3)"
+                    : "rgba(99, 102, 241, 0.25)";
                 }}
               >
+                <span>
+                  {selectedModel === "auto" ? "Automático (Optimiza Costes)" :
+                   selectedModel === "gpt-5" ? "GPT-5" :
+                   selectedModel === "gpt-4o" ? "GPT-4o" :
+                   selectedModel === "llama3.1" ? "Llama 3.1" :
+                 selectedModel}
+                </span>
+                <span style={{
+                  fontSize: "0.625rem",
+                  transform: showModelDropdown ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s ease",
+                  display: "inline-block",
+                }}>
+                  ▼
+                </span>
+              </button>
+              
+              {showModelDropdown && (
+                <div 
+                  className="model-dropdown-scroll"
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                style={{
+                    position: "absolute",
+                    top: "calc(100% + 0.5rem)",
+                    left: 0,
+                    background: colorTheme === "dark" 
+                      ? "rgba(26, 26, 36, 0.95)" 
+                      : "rgba(255, 255, 255, 0.95)",
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
+                    borderRadius: "12px",
+                    padding: "0.375rem",
+                    minWidth: "260px",
+                    maxHeight: "200px",
+                    overflowY: "auto",
+                    overflowX: "hidden",
+                    boxShadow: colorTheme === "dark"
+                      ? "0 8px 32px rgba(0, 0, 0, 0.4)"
+                      : "0 8px 32px rgba(0, 0, 0, 0.15)",
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(148, 163, 184, 0.2)"}`,
+                    zIndex: 10000,
+                    scrollbarWidth: "thin",
+                    scrollbarColor: `${colorTheme === "dark" ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.5)"} ${colorTheme === "dark" ? "rgba(26, 26, 36, 0.3)" : "rgba(255, 255, 255, 0.3)"}`,
+                    pointerEvents: "auto",
+                }}
+                >
+                  <style dangerouslySetInnerHTML={{__html: `
+                    .model-dropdown-scroll::-webkit-scrollbar {
+                      width: 6px;
+                    }
+                    .model-dropdown-scroll::-webkit-scrollbar-track {
+                      background: ${colorTheme === "dark" ? "rgba(26, 26, 36, 0.2)" : "rgba(241, 245, 249, 0.4)"};
+                      border-radius: 6px;
+                    }
+                    .model-dropdown-scroll::-webkit-scrollbar-thumb {
+                      background: ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.5)"};
+                      border-radius: 6px;
+                      border: 1px solid ${colorTheme === "dark" ? "rgba(26, 26, 36, 0.2)" : "rgba(255, 255, 255, 0.3)"};
+                    }
+                    .model-dropdown-scroll::-webkit-scrollbar-thumb:hover {
+                      background: ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.6)" : "rgba(148, 163, 184, 0.7)"};
+                    }
+                  `}} />
                 {(() => {
                   // Función para obtener el precio por 1000 tokens (entrada + salida)
-                  const getPricePer1K = (modelKey: string): string => {
+                    const getPricePer1K = (modelKey: string): number => {
                     const pricing = MODEL_PRICING[modelKey.toLowerCase()] || MODEL_PRICING["gpt-4-turbo"];
-                    const totalPer1K = pricing.input + pricing.output;
-                    return formatCost(totalPer1K);
-                  };
+                      return pricing.input + pricing.output;
+                    };
+                    
+                    const formatPrice = (price: number): string => {
+                      return formatCost(price);
+                    };
+                    
+                    const models = [
+                      { value: "auto", label: "Automático", subtitle: "Optimiza Costes", price: null, priceValue: 0 },
+                      { value: "gpt-5", label: "GPT-5", subtitle: null, price: null, priceValue: getPricePer1K("gpt-5") },
+                      { value: "gpt-4o", label: "GPT-4o", subtitle: null, price: null, priceValue: getPricePer1K("gpt-4o") },
+                      { value: "llama3.1", label: "Llama 3.1", subtitle: "Gratis", price: "Gratis", priceValue: 0 },
+                    ];
+                    
+                    // Ordenar por precio (Automático primero, luego modelos de pago, luego gratis)
+                    const sortedModels = models.sort((a, b) => {
+                      if (a.value === "auto") return -1; // Automático siempre primero
+                      if (b.value === "auto") return 1;
+                      // Modelos gratis (precio 0) al final
+                      if (a.priceValue === 0 && b.priceValue > 0) return 1;
+                      if (b.priceValue === 0 && a.priceValue > 0) return -1;
+                      // Ordenar modelos de pago por precio ascendente
+                      return a.priceValue - b.priceValue;
+                    });
+                    
+                    // Formatear precios después de ordenar
+                    sortedModels.forEach(model => {
+                      if (model.priceValue > 0) {
+                        model.price = formatPrice(model.priceValue);
+                      }
+                    });
                   
+                    return sortedModels.map((model) => {
+                      const isSelected = selectedModel === model.value;
                   return (
-                    <>
-                      <option value="auto" style={{ color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24", fontWeight: 600 }}>
-                        Automático
-                      </option>
-                      <option value="gpt-3.5-turbo" style={{ color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24" }}>
-                        GPT-3.5 Turbo ({getPricePer1K("gpt-3.5-turbo")}/1K tokens)
-                      </option>
-                      <option value="gpt-4o-mini" style={{ color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24" }}>
-                        GPT-4o Mini ({getPricePer1K("gpt-4o-mini")}/1K tokens)
-                      </option>
-                      <option value="gpt-4-turbo" style={{ color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24" }}>
-                        GPT-4 Turbo ({getPricePer1K("gpt-4-turbo")}/1K tokens)
-                      </option>
-                      <option value="gpt-4o" style={{ color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24" }}>
-                        GPT-4o ({getPricePer1K("gpt-4o")}/1K tokens)
-                      </option>
-                      <option value="gpt-4" style={{ color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24" }}>
-                        GPT-4 ({getPricePer1K("gpt-4")}/1K tokens)
-                      </option>
-                    </>
-                  );
-                })()}
-              </select>
-              {/* Icono de flecha */}
-              <div
+                        <button
+                          key={model.value}
+                          onClick={() => {
+                            setSelectedModel(model.value);
+                            setShowModelDropdown(false);
+                          }}
                 style={{
-                  position: "absolute",
-                  right: "0.75rem",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  pointerEvents: "none",
-                  zIndex: 3,
+                            width: "100%",
+                            padding: "0.5rem 0.75rem",
+                            background: isSelected
+                              ? (colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.15)")
+                              : "transparent",
+                            border: "none",
+                            borderRadius: "8px",
                   color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
-                  fontSize: "0.75rem",
-                }}
-              >
-                ▼
+                            fontSize: "0.8125rem",
+                            fontWeight: isSelected ? 600 : 500,
+                            cursor: "pointer",
+                            textAlign: "left",
+                            transition: "all 0.2s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "0.5rem",
+                            marginBottom: "0.125rem",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected) {
+                              e.currentTarget.style.background = colorTheme === "dark"
+                                ? "rgba(99, 102, 241, 0.1)"
+                                : "rgba(99, 102, 241, 0.08)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected) {
+                              e.currentTarget.style.background = "transparent";
+                            }
+                          }}
+                        >
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.125rem", flex: 1, minWidth: 0 }}>
+                            <span style={{ fontSize: "0.8125rem" }}>{model.label}</span>
+                            {(model.subtitle || model.price) && (
+                              <span style={{
+                                fontSize: "0.6875rem",
+                                color: colorTheme === "dark" ? "#94a3b8" : "#64748b",
+                                fontWeight: 400,
+                              }}>
+                                {model.subtitle || `${model.price}/1K tokens`}
+                              </span>
+                            )}
               </div>
+                          {isSelected && (
+                            <HiCheck size={14} color="#6366f1" style={{ flexShrink: 0 }} />
+                          )}
+                        </button>
+                      );
+                    });
+                  })()}
+                </div>
+              )}
             </div>
           </>
         )}
@@ -3633,11 +4313,13 @@ En cuanto me digas, empezamos.`,
           margin: "0 auto",
           padding: "2rem 1rem",
           position: "relative",
+          zIndex: 1,
         }}
       >
         {/* Messages */}
         <div
           ref={messagesContainerRef}
+          className="messages-container-scroll"
           style={{
             flex: 1,
             overflowY: "auto",
@@ -3645,255 +4327,890 @@ En cuanto me digas, empezamos.`,
             padding: "1rem",
             paddingBottom: "2rem",
             position: "relative",
+            zIndex: 1,
+            scrollbarWidth: "thin",
+            scrollbarColor: `${colorTheme === "dark" ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.5)"} ${colorTheme === "dark" ? "rgba(26, 26, 36, 0.3)" : "rgba(255, 255, 255, 0.3)"}`,
           }}
         >
-          {messages.length === 0 && (
+          {showInitialForm && (
+            <div
+              style={{
+                maxWidth: "600px",
+                margin: "1.5rem auto",
+                padding: "1.75rem",
+                background: colorTheme === "dark" 
+                  ? "rgba(26, 26, 36, 0.95)"
+                  : "#ffffff",
+                borderRadius: "12px",
+                border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+                boxShadow: colorTheme === "dark" 
+                  ? "0 4px 16px rgba(0, 0, 0, 0.2)"
+                  : "0 4px 16px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              {/* Header */}
+              <div style={{ marginBottom: "1.5rem" }}>
+                <h2 style={{
+                  fontSize: "1.3rem",
+                  fontWeight: 600,
+                  margin: 0,
+                  marginBottom: "0.5rem",
+                  color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                  lineHeight: 1.4,
+                }}>
+                  Información inicial
+                </h2>
+                <p style={{
+                  fontSize: "1.05rem",
+                  color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}>
+                  Opcional • Ayuda a personalizar tus respuestas
+                </p>
+              </div>
+              
+              <div style={{ 
+                display: "flex", 
+                flexDirection: "column", 
+                gap: "1.25rem",
+              }}>
+                {/* Pregunta 1: Nivel */}
+                <div>
+                  <label style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                    fontSize: "1.05rem",
+                    fontWeight: 500,
+                    marginBottom: "0.75rem",
+                    color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                    lineHeight: 1.5,
+                  }}>
+                    <TargetIcon size={20} color={colorTheme === "dark" ? "#6366f1" : "#6366f1"} />
+                    Nivel (0-10)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={initialFormData.level ?? ""}
+                    onChange={(e) => setInitialFormData({
+                      ...initialFormData,
+                      level: e.target.value ? parseInt(e.target.value) : null,
+                    })}
+                    placeholder="Ej: 3"
+                    style={{
+                      width: "100%",
+                      padding: "0.875rem 1rem",
+                      borderRadius: "8px",
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+                      background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.5)" : "#ffffff",
+                      color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                      fontSize: "1.1rem",
+                      transition: "all 0.2s ease",
+                      outline: "none",
+                      fontFamily: "inherit",
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#6366f1";
+                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.1)";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                  />
+                </div>
+
+                {/* Pregunta 2: Objetivo */}
+                <div>
+                  <label style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                    fontSize: "1.05rem",
+                    fontWeight: 500,
+                    marginBottom: "0.75rem",
+                    color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                    lineHeight: 1.5,
+                  }}>
+                    <LightbulbIcon size={20} color={colorTheme === "dark" ? "#6366f1" : "#6366f1"} />
+                    ¿Para qué quieres aprender {currentChatLevel?.topic || "este tema"}?
+                  </label>
+                  <textarea
+                    value={initialFormData.learningGoal}
+                    onChange={(e) => setInitialFormData({
+                      ...initialFormData,
+                      learningGoal: e.target.value,
+                    })}
+                    placeholder="Ej: Voy a vivir en Japón en un año y quiero aprender japonés para comunicarme"
+                    rows={3}
+                    style={{
+                      width: "100%",
+                      padding: "0.875rem 1rem",
+                      borderRadius: "8px",
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+                      background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.5)" : "#ffffff",
+                      color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                      fontSize: "1.1rem",
+                      resize: "vertical",
+                      fontFamily: "inherit",
+                      transition: "all 0.2s ease",
+                      outline: "none",
+                      lineHeight: 1.6,
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#6366f1";
+                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.1)";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                  />
+                </div>
+
+                {/* Pregunta 3: Tiempo disponible */}
+                <div>
+                  <label style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                    fontSize: "1.05rem",
+                    fontWeight: 500,
+                    marginBottom: "0.75rem",
+                    color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                    lineHeight: 1.5,
+                  }}>
+                    <HiClock size={20} color={colorTheme === "dark" ? "#6366f1" : "#6366f1"} />
+                    ¿Cuánto tiempo tienes?
+                  </label>
+                  <input
+                    type="text"
+                    value={initialFormData.timeAvailable}
+                    onChange={(e) => setInitialFormData({
+                      ...initialFormData,
+                      timeAvailable: e.target.value,
+                    })}
+                    placeholder="Ej: 1 semana, 1 mes, 1 año"
+                    style={{
+                      width: "100%",
+                      padding: "0.875rem 1rem",
+                      borderRadius: "8px",
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+                      background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.5)" : "#ffffff",
+                      color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                      fontSize: "1.1rem",
+                      transition: "all 0.2s ease",
+                      outline: "none",
+                      fontFamily: "inherit",
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#6366f1";
+                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.1)";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                  />
+                </div>
+
+                {/* Botones */}
+                <div style={{ 
+                  display: "flex", 
+                  gap: "0.75rem", 
+                  justifyContent: "flex-end", 
+                  marginTop: "0.75rem",
+                }}>
+                  <button
+                    onClick={() => {
+                      setShowInitialForm(false);
+                    }}
+                    style={{
+                      padding: "0.75rem 1.5rem",
+                      borderRadius: "8px",
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.3)" : "rgba(148, 163, 184, 0.4)"}`,
+                      background: "transparent",
+                      color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                      fontSize: "1.05rem",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      outline: "none",
+                      fontFamily: "inherit",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.05)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "transparent";
+                    }}
+                  >
+                    Omitir
+                  </button>
+                  <button
+                    onClick={async () => {
+                      // Guardar respuestas en metadata del chat
+                      if (currentChatId && userId) {
+                        try {
+                          // Obtener chat actual
+                          const loadResponse = await fetch("/api/study-agents/load-chat", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ userId, chatId: currentChatId }),
+                          });
+                          
+                          if (loadResponse.ok) {
+                            const chatData = await loadResponse.json();
+                            const currentMetadata = chatData.chat?.metadata || {};
+                            
+                            // Actualizar metadata con las respuestas del formulario
+                            const updatedMetadata = {
+                              ...currentMetadata,
+                              initialForm: initialFormData,
+                            };
+                            
+                            // Guardar chat actualizado
+                            await fetch("/api/study-agents/save-chat", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                userId,
+                                chatId: currentChatId,
+                                title: chatData.chat?.title || "Nueva conversación",
+                                messages: chatData.chat?.messages || [],
+                                metadata: updatedMetadata,
+                              }),
+                            });
+                            
+                            // Si hay nivel, actualizarlo también
+                            if (initialFormData.level !== null) {
+                              await fetch("/api/study-agents/set-chat-level", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  userId,
+                                  chatId: currentChatId,
+                                  level: initialFormData.level,
+                                  topic: currentChatLevel?.topic || chatData.chat?.metadata?.topic || null,
+                                }),
+                              });
+                              setCurrentChatLevel(prev => prev ? { ...prev, level: initialFormData.level! } : null);
+                            }
+                          }
+                        } catch (error) {
+                          console.error("Error guardando formulario:", error);
+                        }
+                      }
+                      
+                      setShowInitialForm(false);
+                    }}
+                    style={{
+                      padding: "0.75rem 1.75rem",
+                      borderRadius: "8px",
+                      border: "none",
+                      background: "#6366f1",
+                      color: "white",
+                      fontSize: "1.05rem",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      outline: "none",
+                      fontFamily: "inherit",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "#4f46e5";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "#6366f1";
+                    }}
+                  >
+                    Continuar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {messages.length === 0 && !showInitialForm && (
             <div
               style={{
                 textAlign: "center",
-                padding: "3rem 1rem",
+                padding: "4rem 1rem 3rem",
                 color: "var(--text-secondary)",
+                maxWidth: "1000px",
+                margin: "0 auto",
               }}
             >
-              <h3
-                className={spaceGrotesk.className}
-                style={{
-                  fontSize: "clamp(1.5rem, 4vw, 2rem)",
-                  marginBottom: "1.5rem",
-                  fontWeight: 600,
-                  color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                  letterSpacing: "-0.01em",
-                  lineHeight: 1.3,
-                }}
-              >
-                ¡Hola! Soy tu asistente de estudio
-              </h3>
-              <p className={outfit.className} style={{ marginBottom: "2rem" }}>
-                Puedes empezar por:
-              </p>
+              <div style={{ marginBottom: "2.5rem" }}>
+                <h3
+                  className={spaceGrotesk.className}
+                  style={{
+                    fontSize: "clamp(2rem, 5vw, 2.75rem)",
+                    marginBottom: "1rem",
+                    fontWeight: 700,
+                    background: colorTheme === "dark"
+                      ? "linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%)"
+                      : "linear-gradient(135deg, #1a1a24 0%, #6366f1 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    letterSpacing: "-0.02em",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  ¡Hola! Soy tu asistente de estudio
+                </h3>
+                <p 
+                  className={outfit.className} 
+                  style={{ 
+                    fontSize: "1.125rem",
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    maxWidth: "600px",
+                    margin: "0 auto",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Te ayudo a aprender de manera eficiente. Sube documentos, genera apuntes, haz preguntas y evalúa tu conocimiento.
+                </p>
+              </div>
+              
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                  gap: "1rem",
-                  maxWidth: "800px",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                  gap: "1.5rem",
+                  maxWidth: "1100px",
                   margin: "0 auto",
                 }}
               >
+                {/* Tarjeta 1: Sube documentos - Premium Design */}
                 <div
+                  onClick={() => fileInputRef.current?.click()}
                   style={{
-                    padding: "1.5rem",
+                    padding: "2rem 1.5rem",
                     background: colorTheme === "dark"
-                      ? "rgba(26, 26, 36, 0.8)"
-                      : "#ffffff",
-                    borderRadius: "12px",
-                    border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+                      ? "linear-gradient(135deg, rgba(26, 26, 36, 0.8), rgba(30, 30, 45, 0.6))"
+                      : "linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9))",
+                    borderRadius: "20px",
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.25)" : "rgba(99, 102, 241, 0.2)"}`,
                     boxShadow: colorTheme === "dark"
-                      ? "0 2px 8px rgba(0, 0, 0, 0.2)"
-                      : "0 2px 8px rgba(0, 0, 0, 0.08)",
-                    transition: "all 0.2s ease",
+                      ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+                      : "0 8px 32px rgba(99, 102, 241, 0.12), 0 0 0 1px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                     cursor: "pointer",
+                    position: "relative",
+                    overflow: "hidden",
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.5)";
+                    e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(99, 102, 241, 0.6)" : "rgba(99, 102, 241, 0.4)";
+                    e.currentTarget.style.boxShadow = colorTheme === "dark"
+                      ? "0 16px 48px rgba(99, 102, 241, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                      : "0 16px 48px rgba(99, 102, 241, 0.2), 0 0 0 1px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.9)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
+                    e.currentTarget.style.transform = "translateY(0) scale(1)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(99, 102, 241, 0.25)" : "rgba(99, 102, 241, 0.2)";
+                    e.currentTarget.style.boxShadow = colorTheme === "dark"
+                      ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+                      : "0 8px 32px rgba(99, 102, 241, 0.12), 0 0 0 1px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)";
                   }}
                 >
-                  <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}>
+                  {/* Premium Shimmer Effect */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: "-100%",
+                      width: "100%",
+                      height: "100%",
+                      background: "linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent)",
+                      transition: "left 0.6s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.left = "100%";
+                    }}
+                  />
+                  <div style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
+                  }} />
+                  <div style={{ marginBottom: "1.25rem", display: "flex", justifyContent: "center" }}>
                     <div style={{
-                      padding: "0.75rem",
-                      background: colorTheme === "dark"
-                        ? "rgba(99, 102, 241, 0.1)"
-                        : "rgba(99, 102, 241, 0.08)",
-                      borderRadius: "8px",
+                      padding: "1rem",
+                      background: "linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15))",
+                      borderRadius: "12px",
                       display: "inline-flex",
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.2)"}`,
                     }}>
-                      <FileIcon size={24} color="#6366f1" />
+                      <FileIcon size={28} color="#6366f1" />
                     </div>
                   </div>
                   <strong style={{ 
                     color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                    fontSize: "1.15rem",
+                    fontSize: "1.25rem",
                     display: "block",
-                    marginBottom: "0.5rem",
+                    marginBottom: "0.75rem",
                     fontWeight: 700,
+                    letterSpacing: "-0.01em",
                   }}>Sube documentos</strong>
                   <p style={{ 
-                    fontSize: "0.875rem", 
+                    fontSize: "0.9375rem", 
                     marginTop: "0.5rem", 
-                    opacity: 0.85,
-                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563",
+                    opacity: 0.9,
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                     lineHeight: 1.6,
                   }}>
-                    Arrastra PDFs para procesarlos
+                    Arrastra PDFs para procesarlos y crear tu base de conocimiento
                   </p>
                 </div>
+
+                {/* Tarjeta 2: Genera apuntes - Premium Design */}
                 <div
+                  onClick={async () => {
+                    await generateNotes();
+                  }}
                   style={{
-                    padding: "1.5rem",
+                    padding: "2rem 1.5rem",
                     background: colorTheme === "dark"
-                      ? "rgba(26, 26, 36, 0.8)"
-                      : "#ffffff",
-                    borderRadius: "12px",
-                    border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+                      ? "linear-gradient(135deg, rgba(26, 26, 36, 0.8), rgba(30, 30, 45, 0.6))"
+                      : "linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9))",
+                    borderRadius: "20px",
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.25)" : "rgba(16, 185, 129, 0.2)"}`,
                     boxShadow: colorTheme === "dark"
-                      ? "0 2px 8px rgba(0, 0, 0, 0.2)"
-                      : "0 2px 8px rgba(0, 0, 0, 0.08)",
-                    transition: "all 0.2s ease",
+                      ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+                      : "0 8px 32px rgba(16, 185, 129, 0.12), 0 0 0 1px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                     cursor: "pointer",
+                    position: "relative",
+                    overflow: "hidden",
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(16, 185, 129, 0.4)" : "rgba(16, 185, 129, 0.5)";
+                    e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(16, 185, 129, 0.6)" : "rgba(16, 185, 129, 0.4)";
+                    e.currentTarget.style.boxShadow = colorTheme === "dark"
+                      ? "0 16px 48px rgba(16, 185, 129, 0.4), 0 0 0 1px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                      : "0 16px 48px rgba(16, 185, 129, 0.2), 0 0 0 1px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.9)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
+                    e.currentTarget.style.transform = "translateY(0) scale(1)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(16, 185, 129, 0.25)" : "rgba(16, 185, 129, 0.2)";
+                    e.currentTarget.style.boxShadow = colorTheme === "dark"
+                      ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+                      : "0 8px 32px rgba(16, 185, 129, 0.12), 0 0 0 1px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)";
                   }}
                 >
-                  <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}>
+                  {/* Premium Shimmer Effect */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: "-100%",
+                      width: "100%",
+                      height: "100%",
+                      background: "linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent)",
+                      transition: "left 0.6s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.left = "100%";
+                    }}
+                  />
+                  <div style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #10b981, #059669)",
+                  }} />
+                  <div style={{ marginBottom: "1.25rem", display: "flex", justifyContent: "center" }}>
                     <div style={{
-                      padding: "0.75rem",
-                      background: colorTheme === "dark"
-                        ? "rgba(16, 185, 129, 0.1)"
-                        : "rgba(16, 185, 129, 0.08)",
-                      borderRadius: "8px",
+                      padding: "1rem",
+                      background: "linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15))",
+                      borderRadius: "12px",
                       display: "inline-flex",
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.2)"}`,
                     }}>
-                      <NotesIcon size={24} color="#10b981" />
+                      <NotesIcon size={28} color="#10b981" />
                     </div>
                   </div>
                   <strong style={{ 
                     color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                    fontSize: "1.15rem",
+                    fontSize: "1.25rem",
                     display: "block",
-                    marginBottom: "0.5rem",
+                    marginBottom: "0.75rem",
                     fontWeight: 700,
+                    letterSpacing: "-0.01em",
                   }}>Genera apuntes</strong>
                   <p style={{ 
-                    fontSize: "0.875rem", 
+                    fontSize: "0.9375rem", 
                     marginTop: "0.5rem", 
-                    opacity: 0.85,
-                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563",
+                    opacity: 0.9,
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                     lineHeight: 1.6,
                   }}>
-                    Di &quot;genera apuntes&quot;
+                    Crea apuntes estructurados con esquemas y diagramas interactivos
                   </p>
                 </div>
+
+                {/* Tarjeta 3: Haz preguntas - Premium Design */}
                 <div
+                  onClick={() => {
+                    textareaRef.current?.focus();
+                    scrollToBottom();
+                  }}
                   style={{
-                    padding: "1.5rem",
+                    padding: "2rem 1.5rem",
                     background: colorTheme === "dark"
-                      ? "rgba(26, 26, 36, 0.8)"
-                      : "#ffffff",
-                    borderRadius: "12px",
-                    border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+                      ? "linear-gradient(135deg, rgba(26, 26, 36, 0.8), rgba(30, 30, 45, 0.6))"
+                      : "linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9))",
+                    borderRadius: "20px",
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(245, 158, 11, 0.25)" : "rgba(245, 158, 11, 0.2)"}`,
                     boxShadow: colorTheme === "dark"
-                      ? "0 2px 8px rgba(0, 0, 0, 0.2)"
-                      : "0 2px 8px rgba(0, 0, 0, 0.08)",
-                    transition: "all 0.2s ease",
+                      ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+                      : "0 8px 32px rgba(245, 158, 11, 0.12), 0 0 0 1px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                     cursor: "pointer",
+                    position: "relative",
+                    overflow: "hidden",
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(245, 158, 11, 0.4)" : "rgba(245, 158, 11, 0.5)";
+                    e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(245, 158, 11, 0.6)" : "rgba(245, 158, 11, 0.4)";
+                    e.currentTarget.style.boxShadow = colorTheme === "dark"
+                      ? "0 16px 48px rgba(245, 158, 11, 0.4), 0 0 0 1px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                      : "0 16px 48px rgba(245, 158, 11, 0.2), 0 0 0 1px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.9)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
+                    e.currentTarget.style.transform = "translateY(0) scale(1)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(245, 158, 11, 0.25)" : "rgba(245, 158, 11, 0.2)";
+                    e.currentTarget.style.boxShadow = colorTheme === "dark"
+                      ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+                      : "0 8px 32px rgba(245, 158, 11, 0.12), 0 0 0 1px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)";
                   }}
                 >
-                  <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}>
+                  {/* Premium Shimmer Effect */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: "-100%",
+                      width: "100%",
+                      height: "100%",
+                      background: "linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.1), transparent)",
+                      transition: "left 0.6s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.left = "100%";
+                    }}
+                  />
+                  <div style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #f59e0b, #d97706)",
+                  }} />
+                  <div style={{ marginBottom: "1.25rem", display: "flex", justifyContent: "center" }}>
                     <div style={{
-                      padding: "0.75rem",
-                      background: colorTheme === "dark"
-                        ? "rgba(245, 158, 11, 0.1)"
-                        : "rgba(245, 158, 11, 0.08)",
-                      borderRadius: "8px",
+                      padding: "1rem",
+                      background: "linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15))",
+                      borderRadius: "12px",
                       display: "inline-flex",
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(245, 158, 11, 0.3)" : "rgba(245, 158, 11, 0.2)"}`,
                     }}>
-                      <QuestionIcon size={24} color="#f59e0b" />
+                      <QuestionIcon size={28} color="#f59e0b" />
                     </div>
                   </div>
                   <strong style={{ 
                     color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                    fontSize: "1.15rem",
+                    fontSize: "1.25rem",
                     display: "block",
-                    marginBottom: "0.5rem",
+                    marginBottom: "0.75rem",
                     fontWeight: 700,
+                    letterSpacing: "-0.01em",
                   }}>Haz preguntas</strong>
                   <p style={{ 
-                    fontSize: "0.875rem", 
+                    fontSize: "0.9375rem", 
                     marginTop: "0.5rem", 
-                    opacity: 0.85,
-                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563",
+                    opacity: 0.9,
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                     lineHeight: 1.6,
                   }}>
-                    Pregunta sobre el contenido
+                    Pregunta sobre cualquier tema y obtén respuestas precisas con RAG
                   </p>
                 </div>
+
+                {/* Tarjeta 4: Genera tests - Premium Design */}
                 <div
+                  onClick={async () => {
+                    await generateTest();
+                  }}
                   style={{
-                    padding: "1.5rem",
+                    padding: "2rem 1.5rem",
                     background: colorTheme === "dark"
-                      ? "rgba(26, 26, 36, 0.8)"
-                      : "#ffffff",
-                    borderRadius: "12px",
-                    border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+                      ? "linear-gradient(135deg, rgba(26, 26, 36, 0.8), rgba(30, 30, 45, 0.6))"
+                      : "linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9))",
+                    borderRadius: "20px",
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(236, 72, 153, 0.25)" : "rgba(236, 72, 153, 0.2)"}`,
                     boxShadow: colorTheme === "dark"
-                      ? "0 2px 8px rgba(0, 0, 0, 0.2)"
-                      : "0 2px 8px rgba(0, 0, 0, 0.08)",
-                    transition: "all 0.2s ease",
+                      ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(236, 72, 153, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+                      : "0 8px 32px rgba(236, 72, 153, 0.12), 0 0 0 1px rgba(236, 72, 153, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                     cursor: "pointer",
+                    position: "relative",
+                    overflow: "hidden",
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(236, 72, 153, 0.4)" : "rgba(236, 72, 153, 0.5)";
+                    e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(236, 72, 153, 0.6)" : "rgba(236, 72, 153, 0.4)";
+                    e.currentTarget.style.boxShadow = colorTheme === "dark"
+                      ? "0 16px 48px rgba(236, 72, 153, 0.4), 0 0 0 1px rgba(236, 72, 153, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                      : "0 16px 48px rgba(236, 72, 153, 0.2), 0 0 0 1px rgba(236, 72, 153, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.9)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
+                    e.currentTarget.style.transform = "translateY(0) scale(1)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(236, 72, 153, 0.25)" : "rgba(236, 72, 153, 0.2)";
+                    e.currentTarget.style.boxShadow = colorTheme === "dark"
+                      ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(236, 72, 153, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+                      : "0 8px 32px rgba(236, 72, 153, 0.12), 0 0 0 1px rgba(236, 72, 153, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)";
                   }}
                 >
-                  <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}>
+                  {/* Premium Shimmer Effect */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: "-100%",
+                      width: "100%",
+                      height: "100%",
+                      background: "linear-gradient(90deg, transparent, rgba(236, 72, 153, 0.1), transparent)",
+                      transition: "left 0.6s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.left = "100%";
+                    }}
+                  />
+                  <div style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #ec4899, #db2777)",
+                  }} />
+                  <div style={{ marginBottom: "1.25rem", display: "flex", justifyContent: "center" }}>
                     <div style={{
-                      padding: "0.75rem",
-                      background: colorTheme === "dark"
-                        ? "rgba(236, 72, 153, 0.1)"
-                        : "rgba(236, 72, 153, 0.08)",
-                      borderRadius: "8px",
+                      padding: "1rem",
+                      background: "linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(219, 39, 119, 0.15))",
+                      borderRadius: "12px",
                       display: "inline-flex",
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(236, 72, 153, 0.3)" : "rgba(236, 72, 153, 0.2)"}`,
                     }}>
-                      <TestIcon size={24} color="#ec4899" />
+                      <TestIcon size={28} color="#ec4899" />
                     </div>
                   </div>
                   <strong style={{ 
                     color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                    fontSize: "1.15rem",
+                    fontSize: "1.25rem",
                     display: "block",
-                    marginBottom: "0.5rem",
+                    marginBottom: "0.75rem",
                     fontWeight: 700,
+                    letterSpacing: "-0.01em",
                   }}>Genera tests</strong>
                   <p style={{ 
-                    fontSize: "0.875rem", 
+                    fontSize: "0.9375rem", 
                     marginTop: "0.5rem", 
-                    opacity: 0.85,
-                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563",
+                    opacity: 0.9,
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                     lineHeight: 1.6,
                   }}>
-                    Di &quot;genera test&quot;
+                    Crea tests personalizados con corrección automática y feedback
+                  </p>
+                </div>
+
+                {/* Tarjeta 5: Genera ejercicios */}
+                <div
+                  onClick={async () => {
+                    await generateExercise();
+                  }}
+                  style={{
+                    padding: "2rem 1.5rem",
+                    background: colorTheme === "dark"
+                      ? "rgba(26, 26, 36, 0.6)"
+                      : "rgba(255, 255, 255, 0.9)",
+                    borderRadius: "16px",
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(139, 92, 246, 0.2)" : "rgba(139, 92, 246, 0.15)"}`,
+                    boxShadow: colorTheme === "dark"
+                      ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(139, 92, 246, 0.1)"
+                      : "0 4px 20px rgba(139, 92, 246, 0.08), 0 0 0 1px rgba(139, 92, 246, 0.1)",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    cursor: "pointer",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(139, 92, 246, 0.5)" : "rgba(139, 92, 246, 0.3)";
+                    e.currentTarget.style.boxShadow = colorTheme === "dark"
+                      ? "0 8px 30px rgba(139, 92, 246, 0.3), 0 0 0 1px rgba(139, 92, 246, 0.2)"
+                      : "0 8px 30px rgba(139, 92, 246, 0.15), 0 0 0 1px rgba(139, 92, 246, 0.2)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(139, 92, 246, 0.2)" : "rgba(139, 92, 246, 0.15)";
+                    e.currentTarget.style.boxShadow = colorTheme === "dark"
+                      ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(139, 92, 246, 0.1)"
+                      : "0 4px 20px rgba(139, 92, 246, 0.08), 0 0 0 1px rgba(139, 92, 246, 0.1)";
+                  }}
+                >
+                  <div style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #8b5cf6, #7c3aed)",
+                  }} />
+                  <div style={{ marginBottom: "1.25rem", display: "flex", justifyContent: "center" }}>
+                    <div style={{
+                      padding: "1rem",
+                      background: "linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(124, 58, 237, 0.15))",
+                      borderRadius: "12px",
+                      display: "inline-flex",
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(139, 92, 246, 0.3)" : "rgba(139, 92, 246, 0.2)"}`,
+                    }}>
+                      <ExerciseIcon size={28} color="#8b5cf6" />
+                    </div>
+                  </div>
+                  <strong style={{ 
+                    color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                    fontSize: "1.25rem",
+                    display: "block",
+                    marginBottom: "0.75rem",
+                    fontWeight: 700,
+                    letterSpacing: "-0.01em",
+                  }}>Genera ejercicios</strong>
+                  <p style={{ 
+                    fontSize: "0.9375rem", 
+                    marginTop: "0.5rem", 
+                    opacity: 0.9,
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    lineHeight: 1.6,
+                  }}>
+                    Crea ejercicios prácticos adaptados a tu nivel para reforzar el aprendizaje
+                  </p>
+                </div>
+
+                {/* Tarjeta 6: Explica concepto */}
+                <div
+                  onClick={() => {
+                    setInput("Explica el concepto de ");
+                    textareaRef.current?.focus();
+                    scrollToBottom();
+                  }}
+                  style={{
+                    padding: "2rem 1.5rem",
+                    background: colorTheme === "dark"
+                      ? "rgba(26, 26, 36, 0.6)"
+                      : "rgba(255, 255, 255, 0.9)",
+                    borderRadius: "16px",
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(6, 182, 212, 0.2)" : "rgba(6, 182, 212, 0.15)"}`,
+                    boxShadow: colorTheme === "dark"
+                      ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(6, 182, 212, 0.1)"
+                      : "0 4px 20px rgba(6, 182, 212, 0.08), 0 0 0 1px rgba(6, 182, 212, 0.1)",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    cursor: "pointer",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(6, 182, 212, 0.5)" : "rgba(6, 182, 212, 0.3)";
+                    e.currentTarget.style.boxShadow = colorTheme === "dark"
+                      ? "0 8px 30px rgba(6, 182, 212, 0.3), 0 0 0 1px rgba(6, 182, 212, 0.2)"
+                      : "0 8px 30px rgba(6, 182, 212, 0.15), 0 0 0 1px rgba(6, 182, 212, 0.2)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(6, 182, 212, 0.2)" : "rgba(6, 182, 212, 0.15)";
+                    e.currentTarget.style.boxShadow = colorTheme === "dark"
+                      ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(6, 182, 212, 0.1)"
+                      : "0 4px 20px rgba(6, 182, 212, 0.08), 0 0 0 1px rgba(6, 182, 212, 0.1)";
+                  }}
+                >
+                  <div style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #06b6d4, #0891b2)",
+                  }} />
+                  <div style={{ marginBottom: "1.25rem", display: "flex", justifyContent: "center" }}>
+                    <div style={{
+                      padding: "1rem",
+                      background: "linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(8, 145, 178, 0.15))",
+                      borderRadius: "12px",
+                      display: "inline-flex",
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(6, 182, 212, 0.3)" : "rgba(6, 182, 212, 0.2)"}`,
+                    }}>
+                      <LightbulbIcon size={28} color="#06b6d4" />
+                    </div>
+                  </div>
+                  <strong style={{ 
+                    color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                    fontSize: "1.25rem",
+                    display: "block",
+                    marginBottom: "0.75rem",
+                    fontWeight: 700,
+                    letterSpacing: "-0.01em",
+                  }}>Explica concepto</strong>
+                  <p style={{ 
+                    fontSize: "0.9375rem", 
+                    marginTop: "0.5rem", 
+                    opacity: 0.9,
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    lineHeight: 1.6,
+                  }}>
+                    Obtén explicaciones detalladas y claras sobre cualquier concepto
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <div
               key={message.id}
+              className={`message-container ${message.role === "user" ? "user-message-premium" : "assistant-message-premium"}`}
               style={{
                 display: "flex",
                 justifyContent: message.role === "user" ? "flex-end" : "flex-start",
                 marginBottom: "1.5rem",
+                animation: message.role === "user" 
+                  ? `userMessageEnter 1.1s cubic-bezier(0.25, 0.1, 0.25, 1) ${index * 0.05}s forwards`
+                  : `assistantMessageEnter 1.3s cubic-bezier(0.25, 0.1, 0.25, 1) ${index * 0.05}s forwards`,
               }}
             >
               <div
+                className="message-bubble-premium"
                 style={{
                   maxWidth: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" ? "100%" : "85%",
                   width: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" ? "100%" : undefined,
@@ -3910,14 +5227,49 @@ En cuanto me digas, empezamos.`,
                       ? `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`
                       : "none",
                   boxShadow: message.role === "user"
-                    ? "0 2px 8px rgba(99, 102, 241, 0.2)"
+                    ? "0 4px 16px rgba(99, 102, 241, 0.3), 0 2px 8px rgba(99, 102, 241, 0.2)"
                     : colorTheme === "dark"
-                    ? "0 2px 8px rgba(0, 0, 0, 0.2)"
-                    : "0 2px 8px rgba(0, 0, 0, 0.08)",
+                    ? "0 4px 16px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)"
+                    : "0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08)",
                   color: message.role === "user" ? "white" : (colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"),
                   position: "relative",
+                  overflow: "hidden",
+                  willChange: "transform, opacity",
                 }}
               >
+                {/* Efecto de entrada único para usuario - solo una vez */}
+                {message.role === "user" && (
+                  <div 
+                    className="user-entry-effect"
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: "linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.15) 30%, transparent 60%)",
+                      animation: "userEntryShine 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards",
+                      pointerEvents: "none",
+                    }}
+                  />
+                )}
+                
+                {/* Efecto de entrada único para asistente - solo una vez */}
+                {message.role === "assistant" && (
+                  <div 
+                    className="assistant-entry-effect"
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: "linear-gradient(90deg, transparent 0%, rgba(99, 102, 241, 0.25) 40%, rgba(139, 92, 246, 0.2) 50%, rgba(99, 102, 241, 0.25) 60%, transparent 100%)",
+                      animation: "assistantEntryReveal 1.3s cubic-bezier(0.4, 0, 0.2, 1) forwards",
+                      pointerEvents: "none",
+                    }}
+                  />
+                )}
                 {message.type === "notes" ? (
                   <>
                     <NotesViewer 
@@ -4167,6 +5519,44 @@ En cuanto me digas, empezamos.`,
                           p: ({ ...props }) => <p {...props} style={{ margin: "1rem 0", textDecoration: "none", fontSize: "1.1rem" }} />,
                           li: ({ ...props }) => <li {...props} style={{ textDecoration: "none", marginBottom: "0.5rem", fontSize: "1.05rem" }} />,
                           ul: ({ ...props }) => <ul {...props} style={{ margin: "1rem 0", paddingLeft: "1.5rem" }} />,
+                          a: ({ href, children, ...props }) => (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              {...props}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "0.5rem",
+                                padding: "0.5rem 1rem",
+                                background: colorTheme === "dark" ? "rgba(96, 165, 250, 0.1)" : "rgba(37, 99, 235, 0.1)",
+                                borderRadius: "8px",
+                                border: `1px solid ${colorTheme === "dark" ? "rgba(96, 165, 250, 0.3)" : "rgba(37, 99, 235, 0.3)"}`,
+                                color: colorTheme === "dark" ? "#60a5fa" : "#2563eb",
+                                textDecoration: "none",
+                                fontWeight: 500,
+                                margin: "0.25rem 0",
+                                transition: "all 0.2s ease",
+                                cursor: "pointer",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = colorTheme === "dark" ? "rgba(96, 165, 250, 0.2)" : "rgba(37, 99, 235, 0.2)";
+                                e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(96, 165, 250, 0.5)" : "rgba(37, 99, 235, 0.5)";
+                                e.currentTarget.style.transform = "translateY(-1px)";
+                                e.currentTarget.style.boxShadow = `0 4px 12px ${colorTheme === "dark" ? "rgba(96, 165, 250, 0.2)" : "rgba(37, 99, 235, 0.2)"}`;
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = colorTheme === "dark" ? "rgba(96, 165, 250, 0.1)" : "rgba(37, 99, 235, 0.1)";
+                                e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(96, 165, 250, 0.3)" : "rgba(37, 99, 235, 0.3)";
+                                e.currentTarget.style.transform = "translateY(0)";
+                                e.currentTarget.style.boxShadow = "none";
+                              }}
+                            >
+                              <span>🔗</span>
+                              {children}
+                            </a>
+                          ),
                         }}
                       >
                         {message.content}
@@ -4174,6 +5564,8 @@ En cuanto me digas, empezamos.`,
                     </div>
                   </div>
                 ) : message.type === "level_selection" ? (
+                  // Ocultar mensajes antiguos de level_selection que contengan "Excelente elección"
+                  message.content.includes("Excelente elección") || message.content.includes("darle caña") ? null : (
                   <div
                     style={{
                       lineHeight: 1.6,
@@ -4258,7 +5650,7 @@ En cuanto me digas, empezamos.`,
                                     // Agregar mensaje del asistente confirmando y empezando
                                     addMessage({
                                       role: "assistant",
-                                      content: `Perfecto, nivel **${label}** (${level}/10) seleccionado. ¡Empecemos a trabajar con **${message.topic}**! ¿En qué te gustaría enfocarnos primero?`,
+                                      content: `Perfecto, nivel **${label}** (${level}/10) seleccionado. ¿En qué te gustaría enfocarnos primero?`,
                                       type: "message",
                                     });
                                   } else {
@@ -4337,6 +5729,7 @@ En cuanto me digas, empezamos.`,
                       </div>
                     </div>
                   </div>
+                  )
                 ) : (
                   <>
                     {message.role === "assistant" ? (
@@ -4377,14 +5770,14 @@ En cuanto me digas, empezamos.`,
                         </ReactMarkdown>
                       </div>
                     ) : (
-                      <div
-                        style={{
-                          whiteSpace: "pre-wrap",
-                          lineHeight: 1.6,
-                        }}
-                      >
-                        {message.content}
-                      </div>
+                    <div
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {message.content}
+                    </div>
                     )}
                     {message.costEstimate && (
                       <div style={{
@@ -4416,83 +5809,144 @@ En cuanto me digas, empezamos.`,
             </div>
           ))}
 
-          {isLoading && (
+          {(isLoading || isGeneratingTest || isGeneratingExercise) && (
             <div
+              className="message-container loading-message-container"
               style={{
                 display: "flex",
                 justifyContent: "flex-start",
                 marginBottom: "1.5rem",
+                animation: "loadingMessageEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                opacity: 1,
               }}
             >
               <div
+                className="premium-loading-card"
                 style={{
-                  padding: "1.25rem 1.5rem",
-                  borderRadius: "12px",
+                  padding: "1.75rem 2.25rem",
+                  borderRadius: "20px",
                   background: colorTheme === "dark" 
-                    ? "rgba(26, 26, 36, 0.8)"
-                    : "#ffffff",
-                  border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+                    ? "linear-gradient(135deg, rgba(26, 26, 36, 0.98), rgba(30, 30, 45, 0.95))"
+                    : "linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(248, 250, 252, 0.98))",
+                  border: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.3)"}`,
                   boxShadow: colorTheme === "dark"
-                    ? "0 2px 8px rgba(0, 0, 0, 0.2)"
-                    : "0 2px 8px rgba(0, 0, 0, 0.08)",
+                    ? "0 12px 48px rgba(99, 102, 241, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 60px rgba(99, 102, 241, 0.2)"
+                    : "0 12px 48px rgba(99, 102, 241, 0.2), 0 0 0 1px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 60px rgba(99, 102, 241, 0.1)",
                   display: "flex",
                   alignItems: "center",
-                  gap: "1rem",
+                  gap: "1.75rem",
+                  position: "relative",
+                  overflow: "hidden",
+                  backdropFilter: "blur(24px)",
+                  WebkitBackdropFilter: "blur(24px)",
+                  minWidth: "360px",
+                  transform: "translateZ(0)",
+                  willChange: "transform, opacity",
                 }}
               >
-                <div style={{ position: "relative", width: "40px", height: "40px" }}>
-                  <div
-                    style={{
-                      position: "absolute",
-                      width: "40px",
-                      height: "40px",
-                      border: `4px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.3)"}`,
-                      borderTop: "4px solid #6366f1",
-                      borderRadius: "50%",
-                      animation: "spin 0.8s linear infinite",
-                    }}
-                  />
-                  <div
-                    style={{
-                      position: "absolute",
-                      width: "28px",
-                      height: "28px",
-                      top: "6px",
-                      left: "6px",
-                      border: `3px solid ${colorTheme === "dark" ? "rgba(6, 182, 212, 0.2)" : "rgba(6, 182, 212, 0.3)"}`,
-                      borderTop: "3px solid #06b6d4",
-                      borderRadius: "50%",
-                      animation: "spin 1.2s linear infinite reverse",
-                    }}
-                  />
+                {/* Animated Background Glow - Multiple Layers - Fixed to prevent square flashes */}
+                <div 
+                  className="loading-card-glow"
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    width: "200%",
+                    height: "200%",
+                    transform: "translate(-50%, -50%)",
+                    background: `radial-gradient(ellipse at center, ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.25)" : "rgba(99, 102, 241, 0.18)"} 0%, ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)"} 40%, transparent 70%)`,
+                    animation: "loadingGlowRotate 8s linear infinite",
+                    pointerEvents: "none",
+                    zIndex: 0,
+                    borderRadius: "50%",
+                    filter: "blur(40px)",
+                  }}
+                />
+                <div 
+                  className="loading-card-glow-secondary"
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    width: "180%",
+                    height: "180%",
+                    transform: "translate(-50%, -50%)",
+                    background: `radial-gradient(ellipse at center, ${colorTheme === "dark" ? "rgba(139, 92, 246, 0.2)" : "rgba(139, 92, 246, 0.12)"} 0%, ${colorTheme === "dark" ? "rgba(139, 92, 246, 0.08)" : "rgba(139, 92, 246, 0.06)"} 45%, transparent 75%)`,
+                    animation: "loadingGlowRotate 10s linear infinite reverse",
+                    pointerEvents: "none",
+                    zIndex: 0,
+                    borderRadius: "50%",
+                    filter: "blur(35px)",
+                  }}
+                />
+                
+                {/* Premium Loading Animation - Enhanced */}
+                <div className="premium-loading-indicator-enhanced">
+                  <div className="loading-orb-container-enhanced">
+                    <div className="loading-orb-enhanced orb-1-enhanced"></div>
+                    <div className="loading-orb-enhanced orb-2-enhanced"></div>
+                    <div className="loading-orb-enhanced orb-3-enhanced"></div>
+                    <div className="loading-orb-enhanced orb-4-enhanced"></div>
+                  </div>
+                  <div className="loading-pulse-ring-enhanced ring-1"></div>
+                  <div className="loading-pulse-ring-enhanced ring-2"></div>
+                  <div className="loading-center-core"></div>
                 </div>
-                <div>
+                
+                <div style={{ position: "relative", zIndex: 1, flex: 1 }}>
                   <div style={{ 
-                    fontSize: "1rem", 
-                    fontWeight: 600,
+                    fontSize: "1.125rem", 
+                    fontWeight: 700,
                     color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                    marginBottom: "0.25rem",
+                    marginBottom: "0.5rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                    letterSpacing: "-0.01em",
                   }}>
-                    {isGeneratingTest ? "Generando test..." : (loadingMessage || "Procesando...")}
+                    <span>
+                      {isGeneratingTest 
+                        ? "Generando test..." 
+                        : isGeneratingExercise 
+                        ? "Generando ejercicio..." 
+                        : (loadingMessage || "Procesando...")}
+                    </span>
+                    <span className="loading-dots-enhanced">
+                      <span>.</span>
+                      <span>.</span>
+                      <span>.</span>
+                    </span>
                   </div>
                   <div style={{ 
                     fontSize: "0.875rem", 
-                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563",
-                    opacity: 0.8,
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    opacity: 0.9,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
                   }}>
-                    Esto puede tardar unos segundos
+                    <div className="loading-progress-bar-container">
+                      <div className="loading-progress-bar"></div>
+                    </div>
+                    <span>Esto puede tardar unos segundos</span>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Herramienta de flashcards para idiomas - al final de los mensajes */}
-          {showLanguageTool && currentChatLevel && isLanguageTopic(currentChatLevel.topic) && (
-            <div style={{ marginBottom: "1.5rem" }}>
+          {/* Herramienta de flashcards para idiomas y temas generales - al final de los mensajes */}
+          {showLanguageTool && (currentChatLevel?.topic || detectContextualTools.hasLanguage || detectContextualTools.explicitFlashcardRequest) && (
+            <div 
+              className="component-enter"
+              style={{ 
+                marginBottom: "1.5rem",
+                animation: "slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
+            >
               <LanguageFlashcards
-                language={currentChatLevel.topic}
-                level={currentChatLevel.level}
+                language={detectContextualTools.detectedLanguage || currentChatLevel?.topic || (detectContextualTools.explicitFlashcardRequest ? "General" : "Idioma")}
+                level={currentChatLevel?.level || 0}
                 colorTheme={colorTheme}
                 apiKey={apiKeys?.openai}
                 userId={userId}
@@ -4503,11 +5957,21 @@ En cuanto me digas, empezamos.`,
             </div>
           )}
 
-          {/* Herramienta de intérprete para lenguajes de programación - al final de los mensajes */}
-          {showCodeTool && currentChatLevel && isProgrammingLanguage(currentChatLevel.topic) && (
+          {/* Herramienta de intérprete SQL - al final de los mensajes */}
+          {showCodeTool && detectContextualTools.hasSQL && (
             <div style={{ marginBottom: "1.5rem" }}>
               <CodeInterpreter
-                language={currentChatLevel.topic}
+                language="SQL"
+                colorTheme={colorTheme}
+              />
+            </div>
+          )}
+
+          {/* Herramienta de intérprete para lenguajes de programación - al final de los mensajes */}
+          {showCodeTool && !detectContextualTools.hasSQL && ((currentChatLevel && isProgrammingLanguage(currentChatLevel.topic)) || detectContextualTools.hasProgramming) && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <CodeInterpreter
+                language={detectContextualTools.detectedProgramming || currentChatLevel?.topic || "Python"}
                 colorTheme={colorTheme}
               />
             </div>
@@ -4763,10 +6227,10 @@ En cuanto me digas, empezamos.`,
             bottom: 0,
             display: "flex",
             flexDirection: "column",
-            gap: "0.75rem",
-            padding: "1rem",
+            gap: isMobile ? "0.5rem" : "0.75rem",
+            padding: isMobile ? "0.75rem" : "1rem",
             background: colorTheme === "light" ? "#ffffff" : "rgba(26, 26, 36, 0.95)",
-            borderRadius: "12px",
+            borderRadius: isMobile ? "8px" : "12px",
             border: colorTheme === "light" 
               ? "1px solid rgba(148, 163, 184, 0.3)" 
               : "1px solid rgba(148, 163, 184, 0.2)",
@@ -4778,7 +6242,7 @@ En cuanto me digas, empezamos.`,
           }}
         >
           {/* File Upload and Settings */}
-          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: isMobile ? "0.5rem" : "0.75rem", flexWrap: "wrap", alignItems: "center", overflowX: isMobile ? "auto" : "visible" }}>
             <input
               ref={fileInputRef}
               type="file"
@@ -4798,9 +6262,9 @@ En cuanto me digas, empezamos.`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "0.5rem",
-                height: "48px",
-                padding: "0 1rem",
+                gap: isMobile ? "0.375rem" : "0.5rem",
+                height: isMobile ? "40px" : "48px",
+                padding: isMobile ? "0 0.75rem" : "0 1rem",
                 background: (isLoading || isGeneratingTest)
                   ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.2)")
                   : (colorTheme === "light" ? "#ffffff" : "#ffffff"),
@@ -4828,7 +6292,7 @@ En cuanto me digas, empezamos.`,
               }}
             >
               <NotesIcon 
-                size={20} 
+                size={isMobile ? 18 : 20} 
                 color={
                   (isLoading || isGeneratingTest)
                     ? "rgba(26, 36, 52, 0.4)"
@@ -4836,11 +6300,12 @@ En cuanto me digas, empezamos.`,
                 } 
               />
               <span style={{
-                fontSize: "0.875rem",
+                fontSize: isMobile ? "0.75rem" : "0.875rem",
                 fontWeight: 600,
                 color: (isLoading || isGeneratingTest)
                   ? "rgba(26, 36, 52, 0.4)"
-                  : "#1a1a24"
+                  : "#1a1a24",
+                whiteSpace: "nowrap",
               }}>Apuntes</span>
             </button>
             <button
@@ -4854,9 +6319,9 @@ En cuanto me digas, empezamos.`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "0.5rem",
-                height: "48px",
-                padding: "0 1rem",
+                gap: isMobile ? "0.375rem" : "0.5rem",
+                height: isMobile ? "40px" : "48px",
+                padding: isMobile ? "0 0.75rem" : "0 1rem",
                 background: (isLoading || isGeneratingTest)
                   ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.2)")
                   : (colorTheme === "light" ? "#ffffff" : "#ffffff"),
@@ -4882,19 +6347,20 @@ En cuanto me digas, empezamos.`,
               }}
             >
               <TestIcon 
-                size={20} 
+                size={isMobile ? 18 : 20} 
                 color={
                   (isLoading || isGeneratingTest)
                     ? "rgba(26, 36, 52, 0.4)"
                     : "#1a1a24"
-                } 
+                }
               />
               <span style={{
-                fontSize: "0.875rem",
+                fontSize: isMobile ? "0.75rem" : "0.875rem",
                 fontWeight: 600,
                 color: (isLoading || isGeneratingTest)
                   ? "rgba(26, 36, 52, 0.4)"
-                  : "#1a1a24"
+                  : "#1a1a24",
+                whiteSpace: "nowrap",
               }}>{isGeneratingTest ? "Generando test..." : "Test"}</span>
             </button>
             <button
@@ -4908,9 +6374,9 @@ En cuanto me digas, empezamos.`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "0.5rem",
-                height: "48px",
-                padding: "0 1rem",
+                gap: isMobile ? "0.375rem" : "0.5rem",
+                height: isMobile ? "40px" : "48px",
+                padding: isMobile ? "0 0.75rem" : "0 1rem",
                 background: (isLoading || isGeneratingExercise || isGeneratingTest)
                   ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.2)")
                   : (colorTheme === "light" ? "#ffffff" : "#ffffff"),
@@ -4936,7 +6402,7 @@ En cuanto me digas, empezamos.`,
               }}
             >
               <ExerciseIcon 
-                size={20} 
+                size={isMobile ? 18 : 20} 
                 color={
                   (isLoading || isGeneratingExercise || isGeneratingTest)
                     ? "rgba(26, 36, 52, 0.4)"
@@ -4944,24 +6410,25 @@ En cuanto me digas, empezamos.`,
                 } 
               />
               <span style={{
-                fontSize: "0.875rem",
+                fontSize: isMobile ? "0.75rem" : "0.875rem",
                 fontWeight: 600,
                 color: (isLoading || isGeneratingExercise || isGeneratingTest)
                   ? "rgba(26, 36, 52, 0.4)"
-                  : "#1a1a24"
+                  : "#1a1a24",
+                whiteSpace: "nowrap",
               }}>{isGeneratingExercise ? "Generando ejercicio..." : "Ejercicio"}</span>
             </button>
             
-            {/* Botón de herramienta de idioma (flashcards) */}
-            {currentChatLevel && isLanguageTopic(currentChatLevel.topic) && (
-              <button
+            {/* Botón de herramienta de idioma (flashcards) - disponible si el tema es un idioma O si se detecta en el contexto O si se solicita explícitamente */}
+            {((currentChatLevel && isLanguageTopic(currentChatLevel.topic)) || detectContextualTools.hasLanguage || detectContextualTools.explicitFlashcardRequest) && (
+            <button
                 onClick={() => setShowLanguageTool(!showLanguageTool)}
                 title="Flashcards de vocabulario"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
+              style={{
+                display: "flex",
+                alignItems: "center",
                   justifyContent: "center",
-                  gap: "0.5rem",
+                gap: "0.5rem",
                   height: "48px",
                   padding: "0 1rem",
                   background: showLanguageTool
@@ -4969,7 +6436,7 @@ En cuanto me digas, empezamos.`,
                     : (colorTheme === "light" ? "#ffffff" : "#ffffff"),
                   border: `1px solid ${showLanguageTool ? "#6366f1" : "rgba(148, 163, 184, 0.2)"}`,
                   borderRadius: "24px",
-                  cursor: "pointer",
+                cursor: "pointer",
                   transition: "all 0.2s ease",
                   boxShadow: showLanguageTool ? "0 2px 8px rgba(99, 102, 241, 0.3)" : "0 1px 3px rgba(0, 0, 0, 0.1)",
                   flexShrink: 0,
@@ -4978,14 +6445,46 @@ En cuanto me digas, empezamos.`,
                 <BookIcon size={20} color={showLanguageTool ? "white" : "#1a1a24"} />
                 <span style={{
                   fontSize: "0.875rem",
-                  fontWeight: 600,
+                fontWeight: 600,
                   color: showLanguageTool ? "white" : "#1a1a24",
                 }}>Flashcards</span>
               </button>
             )}
-
-            {/* Botón de herramienta de programación (intérprete) */}
-            {currentChatLevel && isProgrammingLanguage(currentChatLevel.topic) && (
+            
+            {/* Botón de intérprete SQL - disponible si se detecta SQL en el contexto */}
+            {detectContextualTools.hasSQL && (
+              <button
+                onClick={() => setShowCodeTool(!showCodeTool)}
+                title="Intérprete SQL"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                  height: "48px",
+                  padding: "0 1rem",
+                  background: showCodeTool
+                    ? "#10b981"
+                    : (colorTheme === "light" ? "#ffffff" : "#ffffff"),
+                  border: `1px solid ${showCodeTool ? "#10b981" : "rgba(148, 163, 184, 0.2)"}`,
+                  borderRadius: "24px",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: showCodeTool ? "0 2px 8px rgba(16, 185, 129, 0.3)" : "0 1px 3px rgba(0, 0, 0, 0.1)",
+                  flexShrink: 0,
+                }}
+              >
+                <HiCircleStack size={20} color={showCodeTool ? "white" : "#1a1a24"} />
+                <span style={{
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  color: showCodeTool ? "white" : "#1a1a24",
+                }}>SQL</span>
+              </button>
+            )}
+            
+            {/* Botón de intérprete de código - disponible si se detecta programación en el contexto */}
+            {((currentChatLevel && isProgrammingLanguage(currentChatLevel.topic)) || detectContextualTools.hasProgramming) && !detectContextualTools.hasSQL && (
               <button
                 onClick={() => setShowCodeTool(!showCodeTool)}
                 title="Intérprete de código"
@@ -4997,13 +6496,13 @@ En cuanto me digas, empezamos.`,
                   height: "48px",
                   padding: "0 1rem",
                   background: showCodeTool
-                    ? "#6366f1"
+                    ? "#10b981"
                     : (colorTheme === "light" ? "#ffffff" : "#ffffff"),
-                  border: `1px solid ${showCodeTool ? "#6366f1" : "rgba(148, 163, 184, 0.2)"}`,
+                  border: `1px solid ${showCodeTool ? "#10b981" : "rgba(148, 163, 184, 0.2)"}`,
                   borderRadius: "24px",
                   cursor: "pointer",
                   transition: "all 0.2s ease",
-                  boxShadow: showCodeTool ? "0 2px 8px rgba(99, 102, 241, 0.3)" : "0 1px 3px rgba(0, 0, 0, 0.1)",
+                  boxShadow: showCodeTool ? "0 2px 8px rgba(16, 185, 129, 0.3)" : "0 1px 3px rgba(0, 0, 0, 0.1)",
                   flexShrink: 0,
                 }}
               >
@@ -5012,7 +6511,7 @@ En cuanto me digas, empezamos.`,
                   fontSize: "0.875rem",
                   fontWeight: 600,
                   color: showCodeTool ? "white" : "#1a1a24",
-                }}>Intérprete</span>
+                }}>Código</span>
               </button>
             )}
 
@@ -5021,9 +6520,10 @@ En cuanto me digas, empezamos.`,
               <div style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "0.75rem",
-                marginLeft: "auto",
+                gap: isMobile ? "0.5rem" : "0.75rem",
+                marginLeft: isMobile ? "0" : "auto",
                 flexShrink: 0,
+                flexWrap: isMobile ? "wrap" : "nowrap",
               }}>
                 {/* Contador de palabras aprendidas (solo para idiomas) - a la izquierda del nivel */}
                 {isLanguageTopic(currentChatLevel.topic) && (
@@ -5036,11 +6536,50 @@ En cuanto me digas, empezamos.`,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      height: "48px",
-                      padding: "0 1rem",
+                      height: isMobile ? "36px" : "48px",
+                      padding: isMobile ? "0 0.75rem" : "0 1rem",
                       background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
                       borderRadius: "24px",
-                      fontSize: "0.875rem",
+                      fontSize: isMobile ? "0.75rem" : "0.875rem",
+                      fontWeight: 600,
+                      color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                      border: "none",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                      e.currentTarget.style.background = colorTheme === "dark" 
+                        ? "rgba(99, 102, 241, 0.15)" 
+                        : "rgba(99, 102, 241, 0.12)";
+              }}
+              onMouseLeave={(e) => {
+                      e.currentTarget.style.background = colorTheme === "dark" 
+                        ? "rgba(99, 102, 241, 0.1)" 
+                        : "rgba(99, 102, 241, 0.08)";
+                    }}
+                  >
+                    <MdMenuBook size={18} style={{ marginRight: "0.5rem" }} />
+                    <span>{learnedWordsCount} palabras</span>
+                  </button>
+                )}
+                
+                <div 
+                  ref={levelDropdownRef}
+                  style={{
+                    position: "relative",
+                  }}
+                >
+                  <button
+                    onClick={() => setShowLevelDropdown(!showLevelDropdown)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: isMobile ? "0.5rem" : "0.75rem",
+                      height: isMobile ? "36px" : "48px",
+                      padding: isMobile ? "0 0.75rem" : "0 1rem",
+                      background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+                      borderRadius: "24px",
+                      fontSize: isMobile ? "0.75rem" : "0.875rem",
                       fontWeight: 600,
                       color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
                       border: "none",
@@ -5058,24 +6597,259 @@ En cuanto me digas, empezamos.`,
                         : "rgba(99, 102, 241, 0.08)";
                     }}
                   >
-                    <MdMenuBook size={18} style={{ marginRight: "0.5rem" }} />
-                    <span>{learnedWordsCount} palabras</span>
+                    <span>Nivel {currentChatLevel.level}/10</span>
+                    <span style={{
+                      fontSize: "0.75rem",
+                      transform: showLevelDropdown ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.2s ease",
+                    }}>
+                      ▲
+                    </span>
                   </button>
-                )}
-                
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "48px",
-                  padding: "0 1rem",
-                  background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
-                  borderRadius: "24px",
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
-                  color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                }}>
-                  <span>Nivel {currentChatLevel.level}/10</span>
+                  
+                  {showLevelDropdown && (
+                    <div style={{
+                      position: "absolute",
+                      bottom: "calc(100% + 0.5rem)",
+                      right: 0,
+                      background: colorTheme === "dark" 
+                        ? "rgba(26, 26, 36, 0.95)" 
+                        : "rgba(255, 255, 255, 0.95)",
+                      backdropFilter: "blur(20px)",
+                      WebkitBackdropFilter: "blur(20px)",
+                      borderRadius: "12px",
+                      padding: "1rem",
+                      minWidth: "240px",
+                      width: "240px",
+                      boxShadow: colorTheme === "dark"
+                        ? "0 8px 32px rgba(0, 0, 0, 0.4)"
+                        : "0 8px 32px rgba(0, 0, 0, 0.15)",
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(148, 163, 184, 0.2)"}`,
+                      zIndex: 1000,
+                    }}>
+                      {/* Slider principal */}
+                      <div style={{
+                        position: "relative",
+                        marginBottom: "0.75rem",
+                      }}>
+                        <input
+                          type="range"
+                          min="0"
+                          max="10"
+                          step="1"
+                          value={currentChatLevel.level}
+                          onChange={async (e) => {
+                            const newLevel = parseInt(e.target.value);
+                            if (newLevel !== currentChatLevel.level && currentChatId && userId) {
+                              try {
+                                const requestBody = {
+                                  userId,
+                                  chatId: currentChatId,
+                                  level: newLevel,
+                                  topic: currentChatLevel.topic,
+                                };
+                                
+                                console.log("📊 [Frontend] Enviando set-chat-level desde slider:", requestBody);
+                                
+                                const response = await fetch("/api/study-agents/set-chat-level", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify(requestBody),
+                                });
+                                
+                                if (!response.ok) {
+                                  const errorText = await response.text();
+                                  console.error("📊 [Frontend] Error en respuesta del slider:", response.status, errorText);
+                                  throw new Error(`Error ${response.status}: ${errorText}`);
+                                }
+                                
+                                const data = await response.json();
+                                if (data.success) {
+                                  setCurrentChatLevel({ topic: currentChatLevel.topic, level: newLevel });
+                } else {
+                                  console.error("📊 [Frontend] Error en data del slider:", data);
+                                }
+                              } catch (err) {
+                                console.error("📊 [Frontend] Error actualizando nivel desde slider:", err);
+                              }
+                            }
+                          }}
+                          style={{
+                            width: "100%",
+                            height: "8px",
+                            borderRadius: "4px",
+                            background: "transparent",
+                            outline: "none",
+                            cursor: "pointer",
+                            WebkitAppearance: "none",
+                            appearance: "none",
+                            margin: "0",
+                            padding: "0",
+                          }}
+                          onMouseUp={() => {
+                            setTimeout(() => setShowLevelDropdown(false), 200);
+                          }}
+                        />
+                        <style>{`
+                          input[type="range"]::-webkit-slider-runnable-track {
+                            width: 100%;
+                            height: 8px;
+                            background: ${colorTheme === "dark" 
+                              ? "rgba(99, 102, 241, 0.2)" 
+                              : "rgba(99, 102, 241, 0.15)"};
+                            border-radius: 4px;
+                          }
+                          input[type="range"]::-webkit-slider-thumb {
+                            -webkit-appearance: none;
+                            appearance: none;
+                            width: 20px;
+                            height: 20px;
+                            border-radius: 50%;
+                            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+                            cursor: pointer;
+                            box-shadow: ${colorTheme === "dark" 
+                              ? "0 2px 8px rgba(99, 102, 241, 0.4)" 
+                              : "0 2px 8px rgba(99, 102, 241, 0.3)"};
+                            border: 2px solid ${colorTheme === "dark" ? "#1a1a24" : "#ffffff"};
+                            transition: all 0.2s ease;
+                            margin-top: -6px;
+                          }
+                          input[type="range"]::-webkit-slider-thumb:hover {
+                            transform: scale(1.1);
+                            box-shadow: ${colorTheme === "dark" 
+                              ? "0 4px 12px rgba(99, 102, 241, 0.5)" 
+                              : "0 4px 12px rgba(99, 102, 241, 0.4)"};
+                          }
+                          input[type="range"]::-moz-range-track {
+                            width: 100%;
+                            height: 8px;
+                            background: ${colorTheme === "dark" 
+                              ? "rgba(99, 102, 241, 0.2)" 
+                              : "rgba(99, 102, 241, 0.15)"};
+                            border-radius: 4px;
+                            border: none;
+                          }
+                          input[type="range"]::-moz-range-thumb {
+                            width: 20px;
+                            height: 20px;
+                            border-radius: 50%;
+                            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+                            cursor: pointer;
+                            box-shadow: ${colorTheme === "dark" 
+                              ? "0 2px 8px rgba(99, 102, 241, 0.4)" 
+                              : "0 2px 8px rgba(99, 102, 241, 0.3)"};
+                            border: 2px solid ${colorTheme === "dark" ? "#1a1a24" : "#ffffff"};
+                            transition: all 0.2s ease;
+                          }
+                          input[type="range"]::-moz-range-thumb:hover {
+                            transform: scale(1.1);
+                            box-shadow: ${colorTheme === "dark" 
+                              ? "0 4px 12px rgba(99, 102, 241, 0.5)" 
+                              : "0 4px 12px rgba(99, 102, 241, 0.4)"};
+                          }
+                          input[type="range"]::-ms-track {
+                            width: 100%;
+                            height: 8px;
+                            background: transparent;
+                            border-color: transparent;
+                            color: transparent;
+                          }
+                          input[type="range"]::-ms-thumb {
+                            width: 20px;
+                            height: 20px;
+                            border-radius: 50%;
+                            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+                            cursor: pointer;
+                            border: 2px solid ${colorTheme === "dark" ? "#1a1a24" : "#ffffff"};
+                          }
+                        `}</style>
+                      </div>
+                      
+                      {/* Input numérico y valor */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "0.75rem",
+                      }}>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          value={currentChatLevel.level}
+                          onChange={async (e) => {
+                            const newLevel = Math.max(0, Math.min(10, parseInt(e.target.value) || 0));
+                            if (newLevel !== currentChatLevel.level && currentChatId && userId) {
+                              try {
+                                const requestBody = {
+                                  userId,
+                                  chatId: currentChatId,
+                                  level: newLevel,
+                                  topic: currentChatLevel.topic,
+                                };
+                                
+                                console.log("📊 [Frontend] Enviando set-chat-level:", requestBody);
+                                
+                                const response = await fetch("/api/study-agents/set-chat-level", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify(requestBody),
+                                });
+                                
+                                if (!response.ok) {
+                                  const errorText = await response.text();
+                                  console.error("📊 [Frontend] Error en respuesta:", response.status, errorText);
+                                  throw new Error(`Error ${response.status}: ${errorText}`);
+                                }
+                                
+                                const data = await response.json();
+                                if (data.success) {
+                                  setCurrentChatLevel({ topic: currentChatLevel.topic, level: newLevel });
+                                } else {
+                                  console.error("📊 [Frontend] Error en data:", data);
+                                }
+                              } catch (err) {
+                                console.error("📊 [Frontend] Error actualizando nivel:", err);
+                              }
+                            }
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: "0.5rem 0.75rem",
+                            background: colorTheme === "dark" 
+                              ? "rgba(99, 102, 241, 0.1)" 
+                              : "rgba(99, 102, 241, 0.08)",
+                            border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.25)"}`,
+                            borderRadius: "8px",
+                            fontSize: "0.875rem",
+                            fontWeight: 600,
+                            color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
+                            textAlign: "center",
+                            cursor: "text",
+                            outline: "none",
+                          }}
+                          onFocus={(e) => {
+                            e.currentTarget.style.border = colorTheme === "dark" 
+                              ? "1px solid rgba(99, 102, 241, 0.5)" 
+                              : "1px solid rgba(99, 102, 241, 0.4)";
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.style.border = colorTheme === "dark" 
+                              ? "1px solid rgba(99, 102, 241, 0.3)" 
+                              : "1px solid rgba(99, 102, 241, 0.25)";
+                          }}
+                        />
+                        <div style={{
+                          fontSize: "0.875rem",
+                          fontWeight: 600,
+                          color: colorTheme === "dark" ? "#94a3b8" : "#64748b",
+                          whiteSpace: "nowrap",
+                        }}>
+                          / 10
+              </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -5087,9 +6861,15 @@ En cuanto me digas, empezamos.`,
             )}
           </div>
 
-          {/* Text Input */}
-          <div style={{ display: "flex", gap: "0.75rem", alignItems: "stretch" }}>
-            {/* Botón Subir PDF */}
+          {/* Text Input - Premium Design */}
+          <div style={{ 
+            display: "flex", 
+            gap: isMobile ? "0.5rem" : "0.75rem", 
+            alignItems: "stretch",
+            position: "relative",
+            zIndex: 10,
+          }}>
+            {/* Botón Subir PDF - Premium */}
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading}
@@ -5102,43 +6882,49 @@ En cuanto me digas, empezamos.`,
                 background:
                   isLoading
                     ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(99, 102, 241, 0.3)")
-                    : (colorTheme === "light" ? "#ffffff" : "#6366f1"),
+                    : (colorTheme === "light" 
+                        ? "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)" 
+                        : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"),
                 border: colorTheme === "light" && !isLoading
-                  ? `1px solid rgba(148, 163, 184, 0.2)`
+                  ? `1px solid rgba(148, 163, 184, 0.25)`
                   : "none",
                 borderRadius: "50%",
                 cursor: isLoading ? "not-allowed" : "pointer",
-                transition: "all 0.2s ease",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 opacity: isLoading ? 0.6 : 1,
-                boxShadow: colorTheme === "light" && !isLoading
-                  ? "0 1px 3px rgba(0, 0, 0, 0.1)"
-                  : "none",
+                boxShadow: isLoading
+                  ? "none"
+                  : (colorTheme === "light"
+                      ? "0 4px 12px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
+                      : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)"),
                 flexShrink: 0,
+                position: "relative",
+                overflow: "hidden",
               }}
               onMouseEnter={(e) => {
                 if (!isLoading) {
-                  if (colorTheme === "light") {
-                    e.currentTarget.style.background = "#f8f9fa";
-                  } else {
-                    e.currentTarget.style.background = "#4f46e5";
-                  }
+                  e.currentTarget.style.transform = "scale(1.1)";
+                  e.currentTarget.style.boxShadow = colorTheme === "light"
+                    ? "0 6px 20px rgba(99, 102, 241, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9)"
+                    : "0 6px 24px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)";
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isLoading) {
-                  if (colorTheme === "light") {
-                    e.currentTarget.style.background = "#ffffff";
-                  } else {
-                    e.currentTarget.style.background = "#6366f1";
-                  }
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = isLoading
+                    ? "none"
+                    : (colorTheme === "light"
+                        ? "0 4px 12px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
+                        : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)");
                 }
               }}
             >
               <UploadIcon 
-                size={20} 
+                size={isMobile ? 18 : 20} 
                 color={
                   isLoading
                     ? (colorTheme === "light" ? "rgba(26, 36, 52, 0.4)" : "rgba(255, 255, 255, 0.5)")
@@ -5170,36 +6956,39 @@ En cuanto me digas, empezamos.`,
               disabled={isLoading}
               style={{
                 flex: 1,
-                padding: "0.5rem 1rem",
+                padding: isMobile ? "0.5rem 0.75rem" : "0.5rem 1rem",
                 background: colorTheme === "dark" 
-                  ? "rgba(26, 26, 36, 0.8)" 
-                  : "#ffffff",
-                border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+                  ? "linear-gradient(135deg, rgba(26, 26, 36, 0.9), rgba(30, 30, 45, 0.8))" 
+                  : "linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95))",
+                border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.25)" : "rgba(148, 163, 184, 0.3)"}`,
                 borderRadius: "24px",
                 color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                fontSize: "1rem",
+                fontSize: isMobile ? "0.875rem" : "1rem",
                 resize: "none",
-                minHeight: "48px",
-                height: "48px",
+                minHeight: isMobile ? "40px" : "48px",
+                height: isMobile ? "40px" : "48px",
                 maxHeight: "150px",
                 fontFamily: "inherit",
                 boxShadow: colorTheme === "dark"
-                  ? "0 2px 8px rgba(0, 0, 0, 0.2)"
-                  : "0 2px 8px rgba(0, 0, 0, 0.08)",
+                  ? "0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+                  : "0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
                 lineHeight: "1.5",
                 overflowY: "auto",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
               className="custom-textarea"
             />
             {/* Botón de Micrófono */}
-            <button
+                <button
               onClick={handleVoiceInput}
               disabled={isLoading || isGeneratingTest || isGeneratingExercise}
               title={isListening ? "Detener grabación" : "Hablar (mantén presionado)"}
-              style={{
-                width: "48px",
-                height: "48px",
-                minWidth: "48px",
+                  style={{
+                width: isMobile ? "40px" : "48px",
+                height: isMobile ? "40px" : "48px",
+                minWidth: isMobile ? "40px" : "48px",
                 padding: 0,
                 background: isListening
                   ? (colorTheme === "light" ? "#ef4444" : "#dc2626")
@@ -5208,40 +6997,40 @@ En cuanto me digas, empezamos.`,
                   ? `1px solid rgba(148, 163, 184, 0.2)`
                   : "none",
                 borderRadius: "50%",
-                cursor: (isLoading || isGeneratingTest) ? "not-allowed" : "pointer",
+                    cursor: (isLoading || isGeneratingTest) ? "not-allowed" : "pointer",
                 transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                 opacity: (isLoading || isGeneratingTest) ? 0.6 : 1,
                 boxShadow: colorTheme === "light" && !isListening
                   ? "0 1px 3px rgba(0, 0, 0, 0.1)"
                   : isListening
                   ? "0 0 0 4px rgba(239, 68, 68, 0.2)"
                   : "none",
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => {
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) => {
                 if (!isLoading && !isGeneratingTest && !isListening) {
                   if (colorTheme === "light") {
                     e.currentTarget.style.background = "#f8f9fa";
                   } else {
                     e.currentTarget.style.background = "rgba(99, 102, 241, 0.3)";
                   }
-                }
-              }}
-              onMouseLeave={(e) => {
+                    }
+                  }}
+                  onMouseLeave={(e) => {
                 if (!isLoading && !isGeneratingTest && !isListening) {
                   if (colorTheme === "light") {
                     e.currentTarget.style.background = "#ffffff";
                   } else {
                     e.currentTarget.style.background = "rgba(99, 102, 241, 0.2)";
                   }
-                }
-              }}
-            >
+                    }
+                  }}
+                >
               <FaMicrophone 
-                size={20} 
+                size={isMobile ? 18 : 20} 
                 color={
                   isListening
                     ? "white"
@@ -5250,64 +7039,70 @@ En cuanto me digas, empezamos.`,
                     : (colorTheme === "light" ? "#1a1a24" : "white")
                 } 
               />
-            </button>
-            {/* Botón Enviar */}
-            <button
-              onClick={handleSend}
+                </button>
+              {/* Botón Enviar - Premium */}
+              <button
+                onClick={handleSend}
                 disabled={isLoading || isGeneratingTest || isGeneratingExercise || !input.trim()}
-              title="Enviar mensaje"
-              style={{
-                width: "48px",
-                height: "48px",
-                minWidth: "48px",
+                title="Enviar mensaje"
+                style={{
+                width: isMobile ? "40px" : "48px",
+                height: isMobile ? "40px" : "48px",
+                minWidth: isMobile ? "40px" : "48px",
                 padding: 0,
-                background:
-                  (isLoading || isGeneratingTest || !input.trim())
+                  background:
+                    (isLoading || isGeneratingTest || !input.trim())
                     ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(99, 102, 241, 0.3)")
-                    : (colorTheme === "light" ? "#ffffff" : "#6366f1"),
+                    : (colorTheme === "light" 
+                        ? "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)" 
+                        : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"),
                 border: colorTheme === "light" && (input.trim() && !isLoading && !isGeneratingTest)
-                  ? `1px solid rgba(148, 163, 184, 0.2)`
+                  ? `1px solid rgba(148, 163, 184, 0.25)`
                   : "none",
                 borderRadius: "50%",
-                cursor: (isLoading || isGeneratingTest || !input.trim()) ? "not-allowed" : "pointer",
-                transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: (isLoading || isGeneratingTest || !input.trim()) ? 0.6 : 1,
-                boxShadow: colorTheme === "light" && (input.trim() && !isLoading && !isGeneratingTest)
-                  ? "0 1px 3px rgba(0, 0, 0, 0.1)"
-                  : "none",
+                  cursor: (isLoading || isGeneratingTest || !input.trim()) ? "not-allowed" : "pointer",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity: (isLoading || isGeneratingTest || !input.trim()) ? 0.6 : 1,
+                boxShadow: (isLoading || isGeneratingTest || !input.trim())
+                  ? "none"
+                  : (colorTheme === "light"
+                      ? "0 4px 12px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
+                      : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)"),
                 flexShrink: 0,
-              }}
-              onMouseEnter={(e) => {
-                if (!isLoading && !isGeneratingTest && input.trim()) {
-                  if (colorTheme === "light") {
-                    e.currentTarget.style.background = "#f8f9fa";
-                  } else {
-                    e.currentTarget.style.background = "#4f46e5";
+                position: "relative",
+                overflow: "hidden",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isLoading && !isGeneratingTest && input.trim()) {
+                    e.currentTarget.style.transform = "scale(1.1)";
+                    e.currentTarget.style.boxShadow = colorTheme === "light"
+                      ? "0 6px 20px rgba(99, 102, 241, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9)"
+                      : "0 6px 24px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)";
                   }
-                }
-              }}
-              onMouseLeave={(e) => {
+                }}
+                onMouseLeave={(e) => {
                 if (!isLoading && !isGeneratingTest && input.trim()) {
-                  if (colorTheme === "light") {
-                    e.currentTarget.style.background = "#ffffff";
-                  } else {
-                    e.currentTarget.style.background = "#6366f1";
-                  }
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = (isLoading || isGeneratingTest || !input.trim())
+                    ? "none"
+                    : (colorTheme === "light"
+                        ? "0 4px 12px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
+                        : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)");
                 }
-              }}
-            >
+                }}
+              >
               <SendIcon 
-                size={20} 
+                size={isMobile ? 18 : 20} 
                 color={
                   (isLoading || isGeneratingTest || !input.trim())
                     ? (colorTheme === "light" ? "rgba(26, 36, 52, 0.4)" : "rgba(255, 255, 255, 0.5)")
                     : (colorTheme === "light" ? "#1a1a24" : "white")
                 } 
               />
-            </button>
+              </button>
           </div>
         </div>
         
@@ -5663,8 +7458,718 @@ En cuanto me digas, empezamos.`,
             transform: translateY(0);
           }
         }
+        /* ===== ANIMACIONES PREMIUM ULTRA FLUIDAS ===== */
+        
+        /* Entrada del mensaje del usuario - Ultra fluida con múltiples etapas */
+        @keyframes userMessageEnter {
+          0% {
+            opacity: 0;
+            transform: translateX(150px) scale(0.85) perspective(1200px) rotateY(-15deg) translateZ(-50px);
+            filter: blur(12px);
+          }
+          8% {
+            opacity: 0.15;
+            transform: translateX(100px) scale(0.88) perspective(1200px) rotateY(-10deg) translateZ(-30px);
+            filter: blur(9px);
+          }
+          18% {
+            opacity: 0.35;
+            transform: translateX(60px) scale(0.91) perspective(1200px) rotateY(-6deg) translateZ(-15px);
+            filter: blur(6px);
+          }
+          30% {
+            opacity: 0.55;
+            transform: translateX(25px) scale(0.94) perspective(1200px) rotateY(-3deg) translateZ(-5px);
+            filter: blur(4px);
+          }
+          45% {
+            opacity: 0.75;
+            transform: translateX(-5px) scale(0.98) perspective(1200px) rotateY(1.5deg) translateZ(5px);
+            filter: blur(2px);
+          }
+          60% {
+            opacity: 0.88;
+            transform: translateX(2px) scale(1.01) perspective(1200px) rotateY(-0.8deg) translateZ(8px);
+            filter: blur(0.8px);
+          }
+          75% {
+            opacity: 0.95;
+            transform: translateX(-1px) scale(0.995) perspective(1200px) rotateY(0.4deg) translateZ(5px);
+            filter: blur(0.3px);
+          }
+          88% {
+            opacity: 0.98;
+            transform: translateX(0.5px) scale(1.002) perspective(1200px) rotateY(-0.2deg) translateZ(2px);
+            filter: blur(0.1px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateX(0) scale(1) perspective(1200px) rotateY(0deg) translateZ(0);
+            filter: blur(0);
+          }
+        }
+        
+        /* Efecto de brillo premium para usuario */
+        @keyframes userEntryShine {
+          0% {
+            transform: translateX(-120%) translateY(-50%) rotate(25deg) scaleY(2);
+            opacity: 0;
+          }
+          20% {
+            opacity: 0.8;
+          }
+          50% {
+            opacity: 1;
+          }
+          80% {
+            opacity: 0.8;
+          }
+          100% {
+            transform: translateX(220%) translateY(-50%) rotate(25deg) scaleY(2);
+            opacity: 0;
+          }
+        }
+        
+        /* Entrada del mensaje del asistente - Ultra fluida con profundidad */
+        @keyframes assistantMessageEnter {
+          0% {
+            opacity: 0;
+            transform: translateY(60px) scale(0.88) perspective(1200px) rotateX(12deg) translateZ(-40px);
+            filter: blur(14px) brightness(0.6) contrast(0.8);
+          }
+          10% {
+            opacity: 0.2;
+            transform: translateY(45px) scale(0.90) perspective(1200px) rotateX(8deg) translateZ(-25px);
+            filter: blur(10px) brightness(0.7) contrast(0.85);
+          }
+          22% {
+            opacity: 0.4;
+            transform: translateY(32px) scale(0.92) perspective(1200px) rotateX(5deg) translateZ(-12px);
+            filter: blur(7px) brightness(0.8) contrast(0.9);
+          }
+          35% {
+            opacity: 0.6;
+            transform: translateY(20px) scale(0.94) perspective(1200px) rotateX(3deg) translateZ(-4px);
+            filter: blur(5px) brightness(0.88) contrast(0.95);
+          }
+          50% {
+            opacity: 0.78;
+            transform: translateY(10px) scale(0.96) perspective(1200px) rotateX(1.5deg) translateZ(3px);
+            filter: blur(3px) brightness(0.94) contrast(0.98);
+          }
+          65% {
+            opacity: 0.88;
+            transform: translateY(4px) scale(0.98) perspective(1200px) rotateX(0.5deg) translateZ(6px);
+            filter: blur(1.5px) brightness(0.97) contrast(1);
+          }
+          80% {
+            opacity: 0.95;
+            transform: translateY(1px) scale(0.99) perspective(1200px) rotateX(-0.3deg) translateZ(4px);
+            filter: blur(0.6px) brightness(0.99) contrast(1.02);
+          }
+          92% {
+            opacity: 0.98;
+            transform: translateY(0.3px) scale(1.005) perspective(1200px) rotateX(0.1deg) translateZ(1px);
+            filter: blur(0.2px) brightness(1) contrast(1.01);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1) perspective(1200px) rotateX(0deg) translateZ(0);
+            filter: blur(0) brightness(1) contrast(1);
+          }
+        }
+        
+        /* Efecto de revelado premium para asistente */
+        @keyframes assistantEntryReveal {
+          0% {
+            transform: translateX(-110%) scaleX(0.3) scaleY(1.2);
+            opacity: 0;
+          }
+          15% {
+            opacity: 0.5;
+          }
+          35% {
+            opacity: 0.85;
+          }
+          55% {
+            opacity: 0.95;
+          }
+          75% {
+            opacity: 0.7;
+          }
+          100% {
+            transform: translateX(210%) scaleX(1) scaleY(1);
+            opacity: 0;
+          }
+        }
+        
+        /* Estilos base para los contenedores - Optimizados para 60fps */
+        .user-message-premium,
+        .assistant-message-premium {
+          animation-fill-mode: forwards !important;
+          transform-style: preserve-3d;
+          will-change: transform, opacity, filter;
+        }
+        
+        .message-bubble-premium {
+          position: relative;
+          backface-visibility: hidden;
+          transform-style: preserve-3d;
+          will-change: transform, opacity, filter;
+          transform: translateZ(0);
+        }
+        
+        @keyframes flashcardSuccess {
+          0% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.03);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+        
+        @keyframes flashcardError {
+          0%, 100% {
+            transform: translateX(0);
+          }
+          10%, 30%, 50%, 70%, 90% {
+            transform: translateX(-4px);
+          }
+          20%, 40%, 60%, 80% {
+            transform: translateX(4px);
+          }
+        }
+        
+        @keyframes fadeInScale {
+          0% {
+            opacity: 0;
+            transform: scale(0.98);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        
+        .message-container {
+          animation-fill-mode: forwards !important;
+        }
+        
+        .user-message,
+        .assistant-message {
+          animation-fill-mode: forwards !important;
+        }
+        
+        /* Premium Chat Background Animations */
+        @keyframes floatOrbChat1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          25% { transform: translate(40px, -60px) scale(1.1); }
+          50% { transform: translate(-30px, 50px) scale(0.9); }
+          75% { transform: translate(60px, 30px) scale(1.05); }
+        }
+        @keyframes floatOrbChat2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(-50px, -80px) scale(1.15); }
+          66% { transform: translate(40px, 70px) scale(0.85); }
+        }
+        @keyframes pulseBgChat {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.03); }
+        }
+        @keyframes riseLineChat {
+          0% {
+            transform: translateY(0);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(calc(-100vh - 200px));
+            opacity: 0;
+          }
+        }
+        @keyframes floatOrbMain1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          25% { transform: translate(30px, -40px) scale(1.1); }
+          50% { transform: translate(-20px, 35px) scale(0.9); }
+          75% { transform: translate(45px, 25px) scale(1.05); }
+        }
+        @keyframes floatOrbMain2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(-35px, -55px) scale(1.15); }
+          66% { transform: translate(30px, 50px) scale(0.85); }
+        }
+        @keyframes floatOrbMain3 {
+          0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+          50% { transform: translate(-50%, -50%) scale(1.2) rotate(180deg); }
+        }
+        
+        /* ===== ANIMACIONES PREMIUM DE CARGA ULTRA MEJORADAS ===== */
+        
+        /* Entrada del mensaje de carga */
+        @keyframes loadingMessageEnter {
+          0% {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            filter: blur(4px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            filter: blur(0);
+          }
+        }
+        
+        /* Glow rotativo del fondo - Suave y circular */
+        @keyframes loadingGlowRotate {
+          0% {
+            transform: translate(-50%, -50%) rotate(0deg) scale(1);
+            opacity: 0.8;
+          }
+          50% {
+            transform: translate(-50%, -50%) rotate(180deg) scale(1.1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(-50%, -50%) rotate(360deg) scale(1);
+            opacity: 0.8;
+          }
+        }
+        
+        /* Estilos del scrollbar del contenedor de mensajes */
+        .messages-container-scroll::-webkit-scrollbar {
+          width: 10px;
+        }
+        .messages-container-scroll::-webkit-scrollbar-track {
+          background: ${colorTheme === "dark" ? "rgba(26, 26, 36, 0.2)" : "rgba(248, 250, 252, 0.4)"};
+          border-radius: 10px;
+          margin: 4px 0;
+        }
+        .messages-container-scroll::-webkit-scrollbar-thumb {
+          background: ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.5)"};
+          border-radius: 10px;
+          border: 2px solid ${colorTheme === "dark" ? "rgba(26, 26, 36, 0.2)" : "rgba(248, 250, 252, 0.4)"};
+          transition: background 0.2s ease;
+        }
+        .messages-container-scroll::-webkit-scrollbar-thumb:hover {
+          background: ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.6)" : "rgba(148, 163, 184, 0.7)"};
+        }
+        
+        /* Contenedor principal del indicador de carga premium mejorado */
+        .premium-loading-indicator-enhanced {
+          position: relative;
+          width: 90px;
+          height: 90px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          z-index: 1;
+        }
+        
+        /* Contenedor de orbes flotantes mejorado */
+        .loading-orb-container-enhanced {
+          position: relative;
+          width: 100%;
+          height: 100%;
+        }
+        
+        /* Orbes minimalistas y fluidos */
+        .loading-orb-enhanced {
+          position: absolute;
+          border-radius: 50%;
+          animation: loadingOrbRotateEnhanced 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          will-change: transform;
+          backface-visibility: hidden;
+        }
+        
+        .loading-orb-enhanced.orb-1-enhanced {
+          width: 12px;
+          height: 12px;
+          background: #6366f1;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          animation-delay: 0s;
+          opacity: 0.9;
+        }
+        
+        .loading-orb-enhanced.orb-2-enhanced {
+          width: 10px;
+          height: 10px;
+          background: #8b5cf6;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          animation-delay: 0.2s;
+          opacity: 0.8;
+        }
+        
+        .loading-orb-enhanced.orb-3-enhanced {
+          width: 8px;
+          height: 8px;
+          background: #a855f7;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          animation-delay: 0.4s;
+          opacity: 0.7;
+        }
+        
+        .loading-orb-enhanced.orb-4-enhanced {
+          width: 6px;
+          height: 6px;
+          background: #6366f1;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          animation-delay: 0.6s;
+          opacity: 0.6;
+        }
+        
+        /* Núcleo central minimalista */
+        .loading-center-core {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 6px;
+          height: 6px;
+          background: #6366f1;
+          border-radius: 50%;
+          animation: loadingCorePulse 2s ease-in-out infinite;
+          z-index: 2;
+        }
+        
+        /* Anillos de pulso minimalistas */
+        .loading-pulse-ring-enhanced {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          border-radius: 50%;
+          pointer-events: none;
+        }
+        
+        .loading-pulse-ring-enhanced.ring-1 {
+          width: 70px;
+          height: 70px;
+          border: 1px solid rgba(99, 102, 241, 0.3);
+          animation: loadingPulseRingEnhanced 2s ease-out infinite;
+        }
+        
+        .loading-pulse-ring-enhanced.ring-2 {
+          width: 70px;
+          height: 70px;
+          border: 1px solid rgba(139, 92, 246, 0.25);
+          animation: loadingPulseRingEnhanced 2s ease-out infinite 0.5s;
+        }
+        
+        /* Animación minimalista y fluida */
+        @keyframes loadingOrbRotateEnhanced {
+          0% {
+            transform: translate(-50%, -50%) rotate(0deg) translateX(32px) rotate(0deg);
+            opacity: 0.4;
+          }
+          50% {
+            transform: translate(-50%, -50%) rotate(180deg) translateX(32px) rotate(-180deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(-50%, -50%) rotate(360deg) translateX(32px) rotate(-360deg);
+            opacity: 0.4;
+          }
+        }
+        
+        /* Animación del núcleo central minimalista */
+        @keyframes loadingCorePulse {
+          0%, 100% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.6;
+          }
+          50% {
+            transform: translate(-50%, -50%) scale(1.3);
+            opacity: 1;
+          }
+        }
+        
+        /* Animación del anillo de pulso minimalista */
+        @keyframes loadingPulseRingEnhanced {
+          0% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.6;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(1.4);
+            opacity: 0;
+          }
+        }
+        
+        /* Puntos de carga animados mejorados */
+        .loading-dots-enhanced {
+          display: inline-flex;
+          gap: 3px;
+          align-items: center;
+        }
+        
+        .loading-dots-enhanced span {
+          display: inline-block;
+          font-size: 1.5rem;
+          line-height: 1;
+          animation: loadingDotPulseEnhanced 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          font-weight: 700;
+        }
+        
+        .loading-dots-enhanced span:nth-child(1) {
+          animation-delay: 0s;
+        }
+        
+        .loading-dots-enhanced span:nth-child(2) {
+          animation-delay: 0.3s;
+        }
+        
+        .loading-dots-enhanced span:nth-child(3) {
+          animation-delay: 0.6s;
+        }
+        
+        @keyframes loadingDotPulseEnhanced {
+          0%, 100% {
+            opacity: 0.2;
+            transform: scale(0.8) translateY(0);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.3) translateY(-4px);
+          }
+        }
+        
+        /* Barra de progreso animada */
+        .loading-progress-bar-container {
+          width: 120px;
+          height: 3px;
+          background: ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.2)"};
+          border-radius: 3px;
+          overflow: hidden;
+          position: relative;
+        }
+        
+        .loading-progress-bar {
+          height: 100%;
+          width: 40%;
+          background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7, #8b5cf6, #6366f1);
+          background-size: 200% 100%;
+          border-radius: 3px;
+          animation: loadingProgressBar 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+        }
+        
+        @keyframes loadingProgressBar {
+          0% {
+            transform: translateX(-100%);
+            background-position: 0% 0%;
+          }
+          50% {
+            transform: translateX(200%);
+            background-position: 100% 0%;
+          }
+          100% {
+            transform: translateX(500%);
+            background-position: 200% 0%;
+          }
+        }
+        
+        /* Mantener compatibilidad con la versión anterior */
+        .premium-loading-indicator {
+          position: relative;
+          width: 64px;
+          height: 64px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .loading-orb-container {
+          position: relative;
+          width: 100%;
+          height: 100%;
+        }
+        
+        .loading-orb {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(8px);
+          animation: loadingOrbRotate 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        
+        .loading-orb.orb-1 {
+          width: 20px;
+          height: 20px;
+          background: linear-gradient(135deg, #6366f1, #8b5cf6);
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          animation-delay: 0s;
+          box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+        }
+        
+        .loading-orb.orb-2 {
+          width: 16px;
+          height: 16px;
+          background: linear-gradient(135deg, #8b5cf6, #a855f7);
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          animation-delay: 0.3s;
+          box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+        }
+        
+        .loading-orb.orb-3 {
+          width: 12px;
+          height: 12px;
+          background: linear-gradient(135deg, #a855f7, #6366f1);
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          animation-delay: 0.6s;
+          box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+        }
+        
+        .loading-pulse-ring {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 64px;
+          height: 64px;
+          border: 3px solid rgba(99, 102, 241, 0.3);
+          border-radius: 50%;
+          animation: loadingPulseRing 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        
+        @keyframes loadingOrbRotate {
+          0% {
+            transform: translate(-50%, -50%) rotate(0deg) translateX(24px) rotate(0deg) scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: translate(-50%, -50%) rotate(180deg) translateX(24px) rotate(-180deg) scale(1.2);
+            opacity: 0.8;
+          }
+          100% {
+            transform: translate(-50%, -50%) rotate(360deg) translateX(24px) rotate(-360deg) scale(1);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes loadingPulseRing {
+          0% {
+            transform: translate(-50%, -50%) scale(0.8);
+            opacity: 1;
+            border-color: rgba(99, 102, 241, 0.5);
+          }
+          50% {
+            transform: translate(-50%, -50%) scale(1.2);
+            opacity: 0.6;
+            border-color: rgba(139, 92, 246, 0.3);
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(1.5);
+            opacity: 0;
+            border-color: rgba(168, 85, 247, 0.1);
+          }
+        }
+        
+        .loading-dots {
+          display: inline-flex;
+          gap: 2px;
+        }
+        
+        .loading-dots span {
+          display: inline-block;
+          animation: loadingDotPulse 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        
+        .loading-dots span:nth-child(1) {
+          animation-delay: 0s;
+        }
+        
+        .loading-dots span:nth-child(2) {
+          animation-delay: 0.2s;
+        }
+        
+        .loading-dots span:nth-child(3) {
+          animation-delay: 0.4s;
+        }
+        
+        @keyframes loadingDotPulse {
+          0%, 100% {
+            opacity: 0.3;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.2);
+          }
+        }
+        
+        /* Skeleton loader premium */
+        .premium-skeleton-loader {
+          background: ${colorTheme === "dark" 
+            ? "linear-gradient(90deg, rgba(26, 26, 36, 0.6) 0%, rgba(30, 30, 45, 0.8) 50%, rgba(26, 26, 36, 0.6) 100%)"
+            : "linear-gradient(90deg, rgba(248, 250, 252, 0.6) 0%, rgba(255, 255, 255, 0.9) 50%, rgba(248, 250, 252, 0.6) 100%)"};
+          background-size: 200% 100%;
+          animation: skeletonShimmer 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          border: ${colorTheme === "dark" 
+            ? "1px solid rgba(148, 163, 184, 0.1)" 
+            : "1px solid rgba(148, 163, 184, 0.15)"};
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .premium-skeleton-loader::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            90deg,
+            transparent,
+            ${colorTheme === "dark" 
+              ? "rgba(99, 102, 241, 0.2)" 
+              : "rgba(99, 102, 241, 0.15)"},
+            transparent
+          );
+          animation: skeletonShine 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        
+        @keyframes skeletonShimmer {
+          0% {
+            background-position: -200% 0;
+          }
+          100% {
+            background-position: 200% 0;
+          }
+        }
+        
+        @keyframes skeletonShine {
+          0% {
+            left: -100%;
+          }
+          100% {
+            left: 100%;
+          }
+        }
       `}</style>
-      </div>
+    </div>
     </>
   );
 }
@@ -5687,6 +8192,195 @@ function NotesViewer({
   const textColor = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
   const bgColor = colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff";
   const borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
+  
+  // Función helper para detectar si es un idioma
+  const isLanguageTopic = (topic: string | null | undefined): boolean => {
+    if (!topic) return false;
+    const topicLower = topic.toLowerCase();
+    return topicLower.includes("inglés") || topicLower.includes("english") ||
+      topicLower.includes("francés") || topicLower.includes("francais") ||
+      topicLower.includes("alemán") || topicLower.includes("deutsch") ||
+      topicLower.includes("italiano") || topicLower.includes("portugués") ||
+      topicLower.includes("chino") || topicLower.includes("mandarín") || topicLower.includes("simplificado") ||
+      topicLower.includes("japonés") || topicLower.includes("japones") ||
+      topicLower.includes("coreano") || topicLower.includes("catalán") ||
+      topicLower.includes("catalan") || topicLower.includes("ruso");
+  };
+  
+  const isLanguage = isLanguageTopic(language);
+  
+  // Función helper para detectar si un texto es del idioma objetivo (no una traducción)
+  const isTargetLanguageText = (text: string, targetLanguage: string | null | undefined): boolean => {
+    if (!targetLanguage || !text || text.trim().length === 0) return false;
+    
+    const textLower = text.toLowerCase().trim();
+    const langLower = targetLanguage.toLowerCase();
+    
+    // Detectar caracteres típicos del español (si los tiene, probablemente es español, no inglés)
+    const spanishChars = /[áéíóúñüÁÉÍÓÚÑÜ]/;
+    if (spanishChars.test(text)) {
+      return false; // Tiene caracteres españoles, no es el idioma objetivo
+    }
+    
+    // Palabras comunes en español que indican que es una traducción
+    const spanishCommonWords = [
+      "el", "la", "los", "las", "un", "una", "unos", "unas",
+      "de", "del", "en", "con", "por", "para", "sobre", "bajo",
+      "es", "son", "está", "están", "fue", "fueron",
+      "tengo", "tiene", "tenemos", "tienen",
+      "soy", "eres", "somos", "son",
+      "yo", "tú", "él", "ella", "nosotros", "vosotros", "ellos", "ellas",
+      "mi", "tu", "su", "nuestro", "vuestro", "su",
+      "que", "cual", "cuando", "donde", "como", "porque",
+      "y", "o", "pero", "sin", "entre", "hasta", "desde"
+    ];
+    
+    const words = textLower.split(/\s+/).filter(w => w.length > 0);
+    const cleanWords = words.map(w => w.replace(/[.,;:!?()\[\]{}'"]/g, ''));
+    
+    // Contar palabras comunes en español
+    const spanishWordCount = cleanWords.filter(word => 
+      spanishCommonWords.includes(word)
+    ).length;
+    
+    // Si más del 30% de las palabras son comunes en español, probablemente es español
+    if (words.length > 0 && spanishWordCount / words.length > 0.3) {
+      return false;
+    }
+    
+    // Detectar si es inglés (idioma objetivo más común)
+    if (langLower.includes("inglés") || langLower.includes("english")) {
+      // Palabras comunes en inglés
+      const englishCommonWords = [
+        "the", "a", "an", "is", "are", "was", "were", "be", "been",
+        "have", "has", "had", "do", "does", "did", "will", "would",
+        "i", "you", "he", "she", "it", "we", "they",
+        "my", "your", "his", "her", "its", "our", "their",
+        "and", "or", "but", "with", "from", "to", "of", "in", "on", "at",
+        "this", "that", "these", "those", "what", "which", "who", "where", "when", "how", "why"
+      ];
+      
+      const englishWordCount = cleanWords.filter(word => 
+        englishCommonWords.includes(word)
+      ).length;
+      
+      // Si tiene palabras comunes en inglés, probablemente es inglés
+      if (englishWordCount > 0) {
+        return true;
+      }
+      
+      // Si es una palabra/frase corta sin caracteres especiales, verificar más cuidadosamente
+      if (words.length <= 5 && !spanishChars.test(text)) {
+        // Verificar que no sea una palabra común en español sin acentos
+        const spanishWordsWithoutAccents = ["el", "la", "de", "en", "con", "por", "para", "que", "es", "son", "un", "una"];
+        const isSpanishWord = spanishWordsWithoutAccents.some(word => textLower === word || cleanWords.includes(word));
+        
+        if (!isSpanishWord) {
+          // Si parece una palabra/frase en inglés (solo letras, sin acentos), probablemente es inglés
+          // Pero solo si no parece español
+          if (spanishWordCount === 0 || (words.length > 1 && spanishWordCount / words.length < 0.2)) {
+            return true;
+          }
+        }
+      }
+      
+      return false;
+    }
+    
+    // Para otros idiomas, usar una lógica similar pero adaptada
+    // Por ahora, si no tiene caracteres españoles y no parece español, asumir que es el idioma objetivo
+    return !spanishChars.test(text) && (words.length === 0 || spanishWordCount / words.length < 0.2);
+  };
+  
+  // Procesar bloques de video antes de renderizar
+  const processVideoBlocks = (text: string): (string | JSX.Element)[] => {
+    const videoBlockRegex = /<youtube-video\s+([^>]+)\s*\/>/g;
+    const parts: (string | JSX.Element)[] = [];
+    let lastIndex = 0;
+    let match;
+    let partIndex = 0;
+    
+    while ((match = videoBlockRegex.exec(text)) !== null) {
+      // Añadir texto antes del video
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      
+      // Parsear atributos del video
+      const attrs = match[1].match(/(\w+)="([^"]+)"/g) || [];
+      const videoProps: { [key: string]: string } = {};
+      attrs.forEach(attr => {
+        const attrMatch = attr.match(/(\w+)="([^"]+)"/);
+        if (attrMatch) {
+          videoProps[attrMatch[1]] = attrMatch[2];
+        }
+      });
+      
+      const videoId = videoProps.id || "";
+      const videoUrl = videoProps.url || `https://www.youtube.com/watch?v=${videoId}`;
+      const videoTitle = videoProps.title || "Video de YouTube";
+      
+      if (videoId) {
+        parts.push(
+          <div key={`video-${partIndex++}`} style={{
+            margin: "1.5rem 0",
+            borderRadius: "12px",
+            overflow: "hidden",
+            border: `1px solid ${borderColor}`,
+          }}>
+            <div style={{
+              padding: "1rem",
+              background: colorTheme === "dark" ? "rgba(239, 68, 68, 0.1)" : "rgba(239, 68, 68, 0.08)",
+              borderBottom: `1px solid ${borderColor}`,
+            }}>
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                marginBottom: "0.5rem",
+              }}>
+                <span style={{ fontSize: "1.2rem" }}>🎬</span>
+                <strong style={{ color: textColor }}>{videoTitle}</strong>
+              </div>
+            </div>
+            <div style={{
+              position: "relative",
+              paddingBottom: "56.25%", // 16:9 aspect ratio
+              height: 0,
+              overflow: "hidden",
+            }}>
+              <iframe
+                width="100%"
+                height="100%"
+                src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                }}
+              />
+            </div>
+          </div>
+        );
+      }
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Añadir texto restante
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+    
+    return parts.length > 0 ? parts : [text];
+  };
+  
+  const processedContent = processVideoBlocks(content);
   
   // ELIMINADO: Todo el código de Mermaid - ahora usamos DiagramRenderer con JSON
   // Ya no se necesita useEffect para Mermaid porque usamos diagramas JSON
@@ -6124,11 +8818,11 @@ function NotesViewer({
 
       {/* Contenido del resumen */}
       <div style={{ position: "relative", width: "100%" }}>
-        <style jsx global>{`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
+      <style jsx global>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
         .notes-viewer :global(h1) {
           font-size: clamp(2rem, 5vw, 3rem);
           font-weight: 700;
@@ -6337,12 +9031,28 @@ function NotesViewer({
           border-radius: 2px;
         }
         .notes-viewer :global(a) {
-          color: #6366f1;
+          color: ${colorTheme === "dark" ? "#60a5fa" : "#2563eb"};
           text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: ${colorTheme === "dark" ? "rgba(96, 165, 250, 0.1)" : "rgba(37, 99, 235, 0.1)"};
+          border-radius: 8px;
+          border: 1px solid ${colorTheme === "dark" ? "rgba(96, 165, 250, 0.3)" : "rgba(37, 99, 235, 0.3)"};
           transition: all 0.2s ease;
+          font-weight: 500;
+          margin: 0.25rem 0;
+        }
+        .notes-viewer :global(a::before) {
+          content: "🔗";
+          font-size: 1rem;
         }
         .notes-viewer :global(a:hover) {
-          color: #06b6d4;
+          background: ${colorTheme === "dark" ? "rgba(96, 165, 250, 0.2)" : "rgba(37, 99, 235, 0.2)"};
+          border-color: ${colorTheme === "dark" ? "rgba(96, 165, 250, 0.5)" : "rgba(37, 99, 235, 0.5)"};
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px ${colorTheme === "dark" ? "rgba(96, 165, 250, 0.2)" : "rgba(37, 99, 235, 0.2)"};
         }
         /* Tarjetas especiales para conceptos clave */
         .notes-viewer :global(.concept-card) {
@@ -6459,13 +9169,14 @@ function NotesViewer({
             }}
             className="notes-viewer"
           >
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-          h2: ({ ...props }) => (
-            <h2 {...props} style={{ display: "flex", alignItems: "center", gap: "0.75rem" }} />
-          ),
-        h3: ({ ...props }) => {
+            {processedContent.map((part, index) => {
+              if (typeof part === 'string') {
+                return (
+                  <ReactMarkdown key={`text-${index}`} remarkPlugins={[remarkGfm]} components={{
+                    h2: ({ ...props }) => (
+                      <h2 {...props} style={{ display: "flex", alignItems: "center", gap: "0.75rem" }} />
+                    ),
+                    h3: ({ ...props }) => {
             // Usar un índice determinístico basado en el contenido para evitar problemas de hidratación
             const icons = [
               <SparkleIcon key="sparkle" size={18} color="#6366f1" />,
@@ -6525,13 +9236,16 @@ function NotesViewer({
           },
           strong: ({ ...props }: { children?: React.ReactNode }) => {
             const text = String(props.children || "");
-            // Si es un idioma y el texto en negrita parece una palabra/frase del idioma, añadir botón de audio
+            // Si es un idioma y el texto en negrita es del idioma objetivo, añadir botón de audio
             if (isLanguage && language && text.length > 0 && text.length < 50) {
               // No añadir en palabras comunes como "Definición:", "Ejemplo:", etc.
               const commonWords = ["definición", "ejemplo", "importante", "concepto", "regla", "nota"];
               const isCommonWord = commonWords.some(word => text.toLowerCase().includes(word));
               
-              if (!isCommonWord && !text.includes(":") && !text.match(/^\d+$/)) {
+              // Verificar que el texto sea del idioma objetivo (no una traducción)
+              const isTargetLang = isTargetLanguageText(text, language);
+              
+              if (!isCommonWord && !text.includes(":") && !text.match(/^\d+$/) && isTargetLang) {
                 return (
                   <strong {...props} style={{ 
                     display: "inline-flex",
@@ -6548,15 +9262,17 @@ function NotesViewer({
             return <strong {...props} style={{ fontWeight: 700 }} />;
           },
           td: ({ ...props }: { children?: React.ReactNode }) => {
-            // Añadir botones de audio en las celdas de tablas de vocabulario
+            // Añadir botones de audio solo en celdas con texto del idioma objetivo (no traducciones)
             if (isLanguage && language) {
               const cellText = String(props.children || "").trim();
-              // Detectar si es la primera columna (vocabulario) en una tabla
-              // Las tablas de vocabulario suelen tener formato: | Vocabulario | Traducción | ...
-              if (cellText.length > 0 && cellText.length < 100 && !cellText.match(/^[|:\- ]+$/)) {
+              // Verificar que el texto sea del idioma objetivo (no una traducción)
+              const isTargetLang = isTargetLanguageText(cellText, language);
+              
+              if (cellText.length > 0 && cellText.length < 100 && !cellText.match(/^[|:\- ]+$/) && isTargetLang) {
                 // No añadir en encabezados de tabla o separadores
                 if (!cellText.includes("Vocabulario") && !cellText.includes("Traducción") && 
-                    !cellText.includes("Contexto") && !cellText.includes("---")) {
+                    !cellText.includes("Contexto") && !cellText.includes("---") &&
+                    !cellText.includes("Vocabulary") && !cellText.includes("Translation")) {
                   return (
                     <td {...props}>
                       <div style={{ display: "inline-flex", alignItems: "center", gap: "0.375rem" }}>
@@ -6570,7 +9286,7 @@ function NotesViewer({
             }
             return <td {...props} />;
           },
-          code: ({ className, children, ...props }: { className?: string; children?: React.ReactNode }) => {
+        code: ({ className, children, ...props }: { className?: string; children?: React.ReactNode }) => {
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : '';
             const codeString = String(children).replace(/\n$/, '');
@@ -6739,14 +9455,56 @@ function NotesViewer({
               </code>
             );
           },
+          a: ({ href, children, ...props }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              {...props}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                padding: "0.5rem 1rem",
+                background: colorTheme === "dark" ? "rgba(96, 165, 250, 0.1)" : "rgba(37, 99, 235, 0.1)",
+                borderRadius: "8px",
+                border: `1px solid ${colorTheme === "dark" ? "rgba(96, 165, 250, 0.3)" : "rgba(37, 99, 235, 0.3)"}`,
+                color: colorTheme === "dark" ? "#60a5fa" : "#2563eb",
+                textDecoration: "none",
+                fontWeight: 500,
+                margin: "0.25rem 0",
+                transition: "all 0.2s ease",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = colorTheme === "dark" ? "rgba(96, 165, 250, 0.2)" : "rgba(37, 99, 235, 0.2)";
+                e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(96, 165, 250, 0.5)" : "rgba(37, 99, 235, 0.5)";
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow = `0 4px 12px ${colorTheme === "dark" ? "rgba(96, 165, 250, 0.2)" : "rgba(37, 99, 235, 0.2)"}`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = colorTheme === "dark" ? "rgba(96, 165, 250, 0.1)" : "rgba(37, 99, 235, 0.1)";
+                e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(96, 165, 250, 0.3)" : "rgba(37, 99, 235, 0.3)";
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              <span>🔗</span>
+              {children}
+            </a>
+          ),
         }}
               >
-                {content}
+                {part}
               </ReactMarkdown>
+                );
+              }
+              return part;
+            })}
+            </div>
           </div>
         </div>
       </div>
-    </div>
   );
 }
 
@@ -6829,16 +9587,16 @@ function TestComponent({
         >
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             <TestIcon size={20} color="#6366f1" />
-            <h3
-              style={{
+              <h3
+                style={{
                 fontSize: "1.25rem",
                 fontWeight: 600,
                 color: textColor,
-                margin: 0,
-              }}
-            >
-              Test de Evaluación
-            </h3>
+                  margin: 0,
+                }}
+              >
+                Test de Evaluación
+              </h3>
             <span style={{ fontSize: "0.875rem", color: secondaryTextColor }}>
               · Nivel: {test.user_level !== undefined ? `${test.user_level}/10` : test.difficulty}
             </span>
@@ -7704,7 +10462,7 @@ function SuccessMessage({
       const trimmed = data.trim();
       if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || 
           (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
-        successData = JSON.parse(data);
+      successData = JSON.parse(data);
       } else {
         // Si no es JSON, tratarlo como string simple
         console.warn("SuccessMessage: data is string but not JSON, treating as plain text");
@@ -9130,7 +11888,7 @@ function AudioButton({
   );
 }
 
-// Componente de flashcards para idiomas
+// Componente de flashcards para idiomas y temas generales
 function LanguageFlashcards({
   language,
   level,
@@ -9150,6 +11908,43 @@ function LanguageFlashcards({
   currentChatLevel?: { topic: string; level: number } | null;
   setCurrentChatLevel?: (level: { topic: string; level: number }) => void;
 }) {
+  // Función helper para detectar si es un idioma (copiada del componente principal)
+  const isLanguageTopic = (topic: string | null | undefined): boolean => {
+    if (!topic) return false;
+    const topicLower = topic.toLowerCase();
+    
+    // Lista de idiomas conocidos
+    const knownLanguages = [
+      "inglés", "english", "francés", "francais", "alemán", "deutsch", "german",
+      "italiano", "italian", "portugués", "portuguese", "chino", "mandarín", "simplificado", "chinese",
+      "japonés", "japanese", "japones", "coreano", "korean", "catalán", "catalan",
+      "ruso", "russian", "español", "spanish", "árabe", "arabic", "hindi",
+      "turco", "turkish", "polaco", "polish", "griego", "greek", "holandés", "dutch",
+      "sueco", "swedish", "noruego", "norwegian", "danés", "danish", "finlandés", "finnish",
+      "checo", "czech", "rumano", "romanian", "húngaro", "hungarian", "búlgaro", "bulgarian",
+      "croata", "croatian", "serbio", "serbian", "esloveno", "slovenian", "eslovaco", "slovak",
+      "ucraniano", "ukrainian", "bielorruso", "belarusian", "hebreo", "hebrew", "tailandés", "thai",
+      "vietnamita", "vietnamese", "indonesio", "indonesian", "malayo", "malay", "filipino", "tagalog"
+    ];
+    
+    if (knownLanguages.some(lang => topicLower.includes(lang))) {
+      return true;
+    }
+    
+    const languageKeywords = [
+      "idioma", "language", "lengua", "vocabulario", "vocabulary",
+      "gramática", "grammar", "aprender", "learn", "estudiar", "study"
+    ];
+    
+    if (languageKeywords.some(keyword => topicLower.includes(keyword))) {
+      const programmingKeywords = ["python", "javascript", "java", "sql", "c++", "c#", "programación", "programming", "código", "code"];
+      if (!programmingKeywords.some(keyword => topicLower.includes(keyword))) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
   const [words, setWords] = useState<Array<{ 
     word: string; 
     translation: string; 
@@ -9185,6 +11980,13 @@ function LanguageFlashcards({
     example?: string;
     romanization?: string;
   }>>([]);
+  const [checkedWord, setCheckedWord] = useState<{ 
+    word: string; 
+    translation: string; 
+    example?: string;
+    romanization?: string;
+    options?: string[];
+  } | null>(null);
 
   const textColor = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
   const bgColor = colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff";
@@ -9214,18 +12016,25 @@ function LanguageFlashcards({
     loadLearnedWords();
   }, [userId, language]);
 
-  // Cargar palabras iniciales
+  // Cargar palabras iniciales cuando cambia el idioma, nivel o cuando se monta el componente
   useEffect(() => {
-    if (apiKey) {
+    if (apiKey && language) {
+      // Limpiar palabras anteriores cuando cambia el tema
+      setWords([]);
+      setCurrentIndex(0);
+      // Cargar nuevas palabras
       loadWords(10);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language, level]);
+  }, [language, level, apiKey]);
 
   const loadWords = async (count: number = 10) => {
     if (!apiKey) return;
     
     setIsLoading(true);
+    
+    // Detectar si es un idioma o un tema general
+    const isLanguage = isLanguageTopic(language);
     try {
       // Determinar el nombre del idioma en su idioma nativo
       const languageNames: Record<string, string> = {
@@ -9247,20 +12056,17 @@ function LanguageFlashcards({
         "ruso": "Русский",
       };
 
-      const langKey = language.toLowerCase();
-      const nativeName = languageNames[langKey] || language;
-
-      // Detectar si el idioma necesita romanización
-      const needsRomanization = langKey.includes("japonés") || langKey.includes("japones") ||
-                                langKey.includes("chino") || langKey.includes("coreano") ||
-                                langKey.includes("ruso") || langKey.includes("árabe");
-
-      const response = await fetch("/api/study-agents/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          apiKey,
-          question: `Genera ${count} palabras o frases comunes en ${nativeName} (${language}) para nivel ${level}/10. 
+      let question: string;
+      
+      if (isLanguage) {
+        // Prompt para idiomas
+        const langKey = language.toLowerCase();
+        const nativeName = languageNames[langKey] || language;
+        const needsRomanization = langKey.includes("japonés") || langKey.includes("japones") ||
+                                  langKey.includes("chino") || langKey.includes("coreano") ||
+                                  langKey.includes("ruso") || langKey.includes("árabe");
+        
+        question = `Genera ${count} palabras o frases comunes en ${nativeName} (${language}) para nivel ${level}/10. 
 IMPORTANTE: 
 - Usa caracteres nativos del idioma (hiragana/katakana/kanji para japonés, hanzi para chino, hangul para coreano, etc.)
 ${needsRomanization ? `- Incluye la romanización (pronunciación en letras latinas) en el campo "romanization"` : ""}
@@ -9268,11 +12074,63 @@ ${needsRomanization ? `- Incluye la romanización (pronunciación en letras lati
 - Para nivel 4-6: palabras intermedias
 - Para nivel 7-10: palabras avanzadas y frases complejas
 - El campo "example" debe ser SOLO en el idioma objetivo, sin traducción
-- Genera 4 opciones de respuesta: 1 correcta (la traducción) y 3 incorrectas pero que tengan sentido (palabras relacionadas, sinónimos cercanos, o palabras del mismo tema)
-- Las opciones incorrectas deben ser plausibles pero claramente diferentes
+
+🚨 REGLAS CRÍTICAS PARA OPCIONES MÚLTIPLES:
+1. **UNA ÚNICA RESPUESTA CORRECTA**: DEBE haber exactamente UNA traducción correcta y clara. NO puede haber ambigüedad.
+2. **OPCIONES NO AMBIGUAS**: Las 4 opciones deben ser claramente diferentes entre sí. NO uses sinónimos cercanos que puedan confundirse con la traducción correcta.
+3. **OPCIONES INCORRECTAS CLARAMENTE DISTINTAS**: Las 3 opciones incorrectas deben ser:
+   - Palabras de temas completamente diferentes (ej: si la palabra es "apple" (manzana), NO uses "pera" o "naranja", usa palabras de otros temas como "casa", "libro", "agua")
+   - O palabras que suenen similar pero signifiquen algo completamente diferente
+   - NUNCA uses palabras que puedan ser traducciones alternativas válidas
+4. **VERIFICACIÓN OBLIGATORIA**: ANTES de generar las opciones, VERIFICA que:
+   - Solo UNA opción es la traducción correcta
+   - Las otras 3 opciones son claramente incorrectas y no pueden confundirse
+   - No hay ambigüedad sobre cuál es la respuesta correcta
+
+Genera 4 opciones de respuesta en este orden:
+- La PRIMERA opción DEBE ser SIEMPRE la traducción correcta (la misma que el campo "translation")
+- Las otras 3 opciones deben ser traducciones de palabras completamente diferentes del mismo idioma
 
 Responde SOLO con un JSON array válido en este formato exacto (sin texto adicional):
-[{"word": "palabra_o_frase_en_idioma_objetivo", "translation": "traducción_al_español", "example": "ejemplo_solo_en_idioma_objetivo_sin_traducción"${needsRomanization ? ', "romanization": "pronunciacion_en_letras_latinas"' : ""}, "options": ["traducción_correcta", "opción_incorrecta_1_relacionada", "opción_incorrecta_2_relacionada", "opción_incorrecta_3_relacionada"]}]`,
+[{"word": "palabra_o_frase_en_idioma_objetivo", "translation": "traducción_al_español", "example": "ejemplo_solo_en_idioma_objetivo_sin_traducción"${needsRomanization ? ', "romanization": "pronunciacion_en_letras_latinas"' : ""}, "options": ["traducción_correcta", "traducción_de_palabra_diferente_1", "traducción_de_palabra_diferente_2", "traducción_de_palabra_diferente_3"]}]`;
+      } else {
+        // Prompt para temas generales (como morse, matemáticas, etc.)
+        question = `Genera ${count} conceptos, términos o preguntas sobre "${language}" para nivel ${level}/10 en formato de flashcards.
+
+IMPORTANTE:
+- Para nivel 0-3: conceptos básicos y fundamentales
+- Para nivel 4-6: conceptos intermedios
+- Para nivel 7-10: conceptos avanzados y especializados
+- El campo "word" debe contener el concepto, término o pregunta
+- El campo "translation" debe contener la definición, explicación o respuesta
+- El campo "example" debe contener un ejemplo práctico o uso del concepto (opcional)
+
+🚨 REGLAS CRÍTICAS PARA OPCIONES MÚLTIPLES:
+1. **UNA ÚNICA RESPUESTA CORRECTA**: DEBE haber exactamente UNA definición/explicación correcta. NO puede haber ambigüedad.
+2. **OPCIONES NO AMBIGUAS**: Las 4 opciones deben ser claramente diferentes entre sí. NO uses definiciones similares que puedan confundirse con la correcta.
+3. **OPCIONES INCORRECTAS CLARAMENTE DISTINTAS**: Las 3 opciones incorrectas deben ser:
+   - Definiciones de conceptos completamente diferentes (ej: si el concepto es "variable", NO uses "constante" o "parámetro", usa definiciones de conceptos diferentes como "función", "clase", "objeto")
+   - O definiciones que suenen similares pero sean de conceptos diferentes
+   - NUNCA uses definiciones que puedan ser correctas para el concepto
+4. **VERIFICACIÓN OBLIGATORIA**: ANTES de generar las opciones, VERIFICA que:
+   - Solo UNA opción es la definición/explicación correcta
+   - Las otras 3 opciones son claramente incorrectas y no pueden confundirse
+   - No hay ambigüedad sobre cuál es la respuesta correcta
+
+Genera 4 opciones de respuesta en este orden:
+- La PRIMERA opción DEBE ser SIEMPRE la definición/explicación correcta (la misma que el campo "translation")
+- Las otras 3 opciones deben ser definiciones/explicaciones de conceptos completamente diferentes
+
+Responde SOLO con un JSON array válido en este formato exacto (sin texto adicional):
+[{"word": "concepto_o_término", "translation": "definición_o_explicación", "example": "ejemplo_práctico_opcional", "options": ["definición_correcta", "definición_de_concepto_diferente_1", "definición_de_concepto_diferente_2", "definición_de_concepto_diferente_3"]}]`;
+      }
+      
+      const response = await fetch("/api/study-agents/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apiKey,
+          question,
           userId: "flashcards",
           chatId: "flashcards",
           topic: language,
@@ -9288,14 +12146,18 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
             const newWords = JSON.parse(jsonMatch[0]);
             
             // Filtrar palabras que ya están en la lista de palabras aprendidas
+            // También filtrar palabras que ya están en el array actual de words
             const learnedWordsSet = new Set(learnedWordsList.map(w => w.word.toLowerCase().trim()));
+            const existingWordsSet = new Set(words.map(w => w.word?.toLowerCase().trim() || ""));
+            
             const filteredWords = newWords.filter((word: any) => {
               const wordLower = word.word?.toLowerCase().trim() || "";
-              return !learnedWordsSet.has(wordLower);
+              // Excluir si ya está aprendida O si ya está en la lista actual
+              return !learnedWordsSet.has(wordLower) && !existingWordsSet.has(wordLower);
             });
             
             if (filteredWords.length === 0) {
-              console.log("Todas las palabras generadas ya están aprendidas. Generando más...");
+              console.log("Todas las palabras generadas ya están aprendidas o ya están en la lista. Generando más...");
               // Si todas las palabras ya están aprendidas, intentar generar más
               // Pero evitar recursión infinita limitando el número de intentos
               if (count < 50) {
@@ -9308,14 +12170,85 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
               }
             }
             
-            // Mezclar las opciones aleatoriamente para cada palabra
+            // Validar y preparar las opciones para cada palabra
+            const normalizeOption = (text: string) => {
+              return text?.toLowerCase().trim().replace(/[.,;:!?()]/g, '') || "";
+            };
+            
             const wordsWithShuffledOptions = filteredWords.map((word: any) => {
               if (word.options && word.options.length > 0) {
+                // Normalizar todas las opciones para comparación
+                const correctTranslation = word.translation || "";
+                const correctNormalized = normalizeOption(correctTranslation);
+                
+                // Filtrar opciones duplicadas (normalizadas)
+                const uniqueOptions: string[] = [];
+                const seenNormalized = new Set<string>();
+                
+                for (const opt of word.options) {
+                  const optNormalized = normalizeOption(opt);
+                  if (!seenNormalized.has(optNormalized) && opt && opt.trim()) {
+                    uniqueOptions.push(opt);
+                    seenNormalized.add(optNormalized);
+                  }
+                }
+                
+                // Asegurarse de que la traducción correcta esté en las opciones
+                const hasCorrect = uniqueOptions.some(opt => normalizeOption(opt) === correctNormalized);
+                if (!hasCorrect && correctTranslation) {
+                  // Si la traducción correcta no está, añadirla al principio
+                  uniqueOptions.unshift(correctTranslation);
+                }
+                
+                // Asegurarse de que hay exactamente 4 opciones únicas
+                if (uniqueOptions.length < 4) {
+                  // Si faltan opciones, añadir opciones genéricas pero diferentes
+                  const genericOptions = ["Opción A", "Opción B", "Opción C"];
+                  let genericIndex = 0;
+                  while (uniqueOptions.length < 4 && genericIndex < genericOptions.length) {
+                    const generic = genericOptions[genericIndex];
+                    if (!uniqueOptions.some(opt => normalizeOption(opt) === normalizeOption(generic))) {
+                      uniqueOptions.push(generic);
+                    }
+                    genericIndex++;
+                  }
+                  // Si aún faltan, duplicar la última (no ideal, pero necesario)
+                  while (uniqueOptions.length < 4) {
+                    uniqueOptions.push(`Opción ${uniqueOptions.length + 1}`);
+                  }
+                } else if (uniqueOptions.length > 4) {
+                  // Si hay más de 4, asegurarse de que la correcta esté y tomar 3 incorrectas únicas
+                  const correctIndex = uniqueOptions.findIndex(opt => normalizeOption(opt) === correctNormalized);
+                  if (correctIndex >= 0) {
+                    // Tomar la correcta y 3 incorrectas diferentes
+                    const incorrect = uniqueOptions.filter((opt, idx) => 
+                      idx !== correctIndex && normalizeOption(opt) !== correctNormalized
+                    ).slice(0, 3);
+                    uniqueOptions.length = 0;
+                    uniqueOptions.push(correctTranslation, ...incorrect);
+                  } else {
+                    // Si no se encontró la correcta, tomar las primeras 4
+                    uniqueOptions.length = 4;
+                  }
+                }
+                
                 // Mezclar las opciones aleatoriamente
-                const shuffled = [...word.options].sort(() => Math.random() - 0.5);
+                const shuffled = [...uniqueOptions].sort(() => Math.random() - 0.5);
+                
                 return { ...word, options: shuffled };
+              } else {
+                // Si no hay opciones, crear opciones básicas
+                const correctTranslation = word.translation || "";
+                return {
+                  ...word,
+                  options: [
+                    correctTranslation,
+                    "Opción 2",
+                    "Opción 3",
+                    "Opción 4"
+                  ]
+                };
               }
-              return word;
             });
             setWords(prev => [...prev, ...wordsWithShuffledOptions]);
           }
@@ -9330,30 +12263,77 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
     }
   };
 
-  // Calcular la palabra actual de forma consistente
+  // Filtrar palabras aprendidas del array de words antes de mostrar
+  const filteredWords = useMemo(() => {
+    if (learnedWordsList.length === 0) return words;
+    
+    const learnedWordsSet = new Set(learnedWordsList.map(w => w.word.toLowerCase().trim()));
+    return words.filter(word => {
+      const wordLower = word.word?.toLowerCase().trim() || "";
+      return !learnedWordsSet.has(wordLower);
+    });
+  }, [words, learnedWordsList]);
+
+  // Calcular la palabra actual de forma consistente (usando palabras filtradas)
   const currentWord = useMemo(() => {
-    const displayWords = isShowingFailedWords ? failedWords : words;
+    const displayWords = isShowingFailedWords ? failedWords : filteredWords;
     if (displayWords.length === 0) return null;
     const safeIndex = Math.min(currentIndex, displayWords.length - 1);
     return displayWords[safeIndex] || null;
-  }, [isShowingFailedWords, failedWords, words, currentIndex]);
+  }, [isShowingFailedWords, failedWords, filteredWords, currentIndex]);
 
   const handleCheck = (selectedTranslation: string) => {
-    if (!currentWord) return;
-    
-    // Obtener la palabra actual del array correcto usando el índice actual
-    const displayWords = isShowingFailedWords ? failedWords : words;
+    // CRÍTICO: Capturar la palabra actual en el momento exacto del clic
+    // para evitar que cambie durante la verificación
+    const displayWords = isShowingFailedWords ? failedWords : filteredWords;
     if (displayWords.length === 0) return;
     const safeIndex = Math.min(currentIndex, displayWords.length - 1);
-    const actualCurrentWord = displayWords[safeIndex];
+    const wordBeingChecked = displayWords[safeIndex];
     
-    if (!actualCurrentWord || actualCurrentWord.word !== currentWord.word) {
-      // Si la palabra no coincide, no procesar (evitar desincronización)
+    if (!wordBeingChecked) {
+      console.error("[LanguageFlashcards] No se encontró la palabra en el índice:", safeIndex);
       return;
     }
     
-    const isAnswerCorrect = selectedTranslation === actualCurrentWord.translation;
+    // Normalizar las traducciones para comparación (case-insensitive, sin espacios extra, sin acentos opcionales)
+    const normalize = (text: string) => {
+      return text?.toLowerCase().trim().replace(/[.,;:!?()]/g, '') || "";
+    };
+    
+    const selectedNormalized = normalize(selectedTranslation);
+    const correctTranslationNormalized = normalize(wordBeingChecked.translation);
+    
+    // También verificar si alguna de las opciones coincide exactamente con la traducción correcta
+    let isAnswerCorrect = selectedNormalized === correctTranslationNormalized;
+    
+    // Si no coincide directamente, verificar si la opción seleccionada es igual a alguna opción que coincida con la correcta
+    if (!isAnswerCorrect && wordBeingChecked.options) {
+      // Buscar si alguna opción es la correcta
+      const correctOption = wordBeingChecked.options.find((opt: string) => 
+        normalize(opt) === correctTranslationNormalized
+      );
+      
+      // Si encontramos la opción correcta, verificar si la seleccionada es esa
+      if (correctOption) {
+        isAnswerCorrect = normalize(selectedTranslation) === normalize(correctOption);
+      }
+    }
+    
+    console.log("[LanguageFlashcards] Verificando respuesta:", {
+      palabra: wordBeingChecked.word,
+      palabraIndex: safeIndex,
+      seleccionada: selectedTranslation,
+      seleccionadaNormalizada: selectedNormalized,
+      correcta: wordBeingChecked.translation,
+      correctaNormalizada: correctTranslationNormalized,
+      esCorrecta: isAnswerCorrect,
+      currentIndex,
+      totalPalabras: displayWords.length,
+      opciones: wordBeingChecked.options
+    });
 
+    // Guardar la palabra que se está verificando para mostrarla en la respuesta
+    setCheckedWord(wordBeingChecked);
     setIsCorrect(isAnswerCorrect);
     setShowAnswer(true);
     setStats(prev => ({ 
@@ -9362,19 +12342,19 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
     }));
 
     if (isAnswerCorrect) {
-      // Agregar a palabras aprendidas si no está ya
-      if (!learnedWords.find(w => w.word === actualCurrentWord.word)) {
-        setLearnedWords(prev => [...prev, actualCurrentWord]);
+      // Agregar a palabras aprendidas si no está ya (usar wordBeingChecked, no currentWord)
+      if (!learnedWords.find(w => w.word === wordBeingChecked.word)) {
+        setLearnedWords(prev => [...prev, wordBeingChecked]);
         
         // Actualizar también la lista local de palabras aprendidas para filtrar futuras palabras
         setLearnedWordsList(prev => {
-          const wordLower = actualCurrentWord.word.toLowerCase().trim();
+          const wordLower = wordBeingChecked.word.toLowerCase().trim();
           if (!prev.find(w => w.word.toLowerCase().trim() === wordLower)) {
             return [...prev, {
-              word: actualCurrentWord.word,
-              translation: actualCurrentWord.translation,
-              example: actualCurrentWord.example,
-              romanization: actualCurrentWord.romanization,
+              word: wordBeingChecked.word,
+              translation: wordBeingChecked.translation,
+              example: wordBeingChecked.example,
+              romanization: wordBeingChecked.romanization,
             }];
           }
           return prev;
@@ -9388,11 +12368,11 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
             body: JSON.stringify({
               userId,
               language,
-              word: actualCurrentWord.word,
-              translation: actualCurrentWord.translation,
+              word: wordBeingChecked.word,
+              translation: wordBeingChecked.translation,
               source: "flashcards",
-              example: actualCurrentWord.example,
-              romanization: actualCurrentWord.romanization,
+              example: wordBeingChecked.example,
+              romanization: wordBeingChecked.romanization,
             }),
           })
           .then(async (res) => {
@@ -9411,6 +12391,20 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
                 }
               })
               .catch(err => console.error("Error loading words count:", err));
+              
+              // Recargar la lista completa de palabras aprendidas para asegurar que se filtren correctamente
+              fetch("/api/study-agents/get-learned-words", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, language }),
+              })
+              .then(async (wordsRes) => {
+                const wordsData = await wordsRes.json();
+                if (wordsData.success) {
+                  setLearnedWordsList(wordsData.words || []);
+                }
+              })
+              .catch(err => console.error("Error reloading learned words:", err));
               
               // Si hay actualización de nivel, actualizar el nivel del chat
               if (data.level_update && currentChatLevel && setCurrentChatLevel && currentChatLevel.topic === language) {
@@ -9434,26 +12428,29 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
           .catch(err => console.error("Error saving learned word:", err));
         }
       }
-      // Remover de palabras fallidas si estaba ahí
+      // Remover de palabras fallidas si estaba ahí (usar wordBeingChecked)
       setFailedWords(prev => {
-        const filtered = prev.filter(w => w.word !== actualCurrentWord.word);
+        const filtered = prev.filter(w => w.word !== wordBeingChecked.word);
         // Si estamos mostrando palabras fallidas y acabamos de eliminar la palabra actual, ajustar el índice
         if (isShowingFailedWords) {
           if (filtered.length === 0) {
             // Si no quedan palabras fallidas, volver a palabras normales
             setIsShowingFailedWords(false);
             setCurrentIndex(0);
-          } else if (safeIndex >= filtered.length) {
-            // Ajustar el índice si está fuera de rango
-            setCurrentIndex(Math.min(safeIndex, filtered.length - 1));
+          } else {
+            const safeIndex = Math.min(currentIndex, filtered.length - 1);
+            if (safeIndex >= filtered.length) {
+              // Ajustar el índice si está fuera de rango
+              setCurrentIndex(Math.min(safeIndex, filtered.length - 1));
+            }
           }
         }
         return filtered;
       });
     } else {
-      // Agregar a palabras fallidas si no está ya
-      if (!failedWords.find(w => w.word === actualCurrentWord.word)) {
-        setFailedWords(prev => [...prev, actualCurrentWord]);
+      // Agregar a palabras fallidas si no está ya (usar wordBeingChecked)
+      if (!failedWords.find(w => w.word === wordBeingChecked.word)) {
+        setFailedWords(prev => [...prev, wordBeingChecked]);
       }
     }
   };
@@ -9468,6 +12465,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
     setSelectedOption(null);
     setShowAnswer(false);
     setIsCorrect(null);
+    setCheckedWord(null); // Limpiar la palabra verificada
   };
 
   const handleNext = () => {
@@ -9481,16 +12479,23 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
         setCurrentIndex(prev => prev + 1);
       }
     } else {
-      // Avanzar en palabras normales
-      setCurrentIndex(prev => (prev + 1) % words.length);
+      // Avanzar en palabras normales (usar filteredWords para excluir aprendidas)
+      if (currentIndex >= filteredWords.length - 1) {
+        // Si terminamos todas las palabras filtradas, cargar más
+        loadWords(10);
+        setCurrentIndex(0);
+      } else {
+        setCurrentIndex(prev => prev + 1);
+      }
     }
     
     setSelectedOption(null);
     setShowAnswer(false);
     setIsCorrect(null);
+    setCheckedWord(null); // Limpiar la palabra verificada al avanzar
 
-    // Cargar más palabras si nos quedamos sin
-    if (!isShowingFailedWords && currentIndex >= words.length - 3 && !isLoading) {
+    // Cargar más palabras si nos quedamos sin (usar filteredWords)
+    if (!isShowingFailedWords && currentIndex >= filteredWords.length - 3 && !isLoading && filteredWords.length > 0) {
       loadWords(10);
     }
   };
@@ -9505,8 +12510,51 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
         border: `1px solid ${borderColor}`,
         textAlign: "center",
         color: textColor,
+        animation: "fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
       }}>
-        {isLoading ? "Cargando palabras..." : "No hay palabras disponibles"}
+        {isLoading ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1.5rem", padding: "2rem" }}>
+            {/* Premium Loading Animation - Enhanced */}
+            <div className="premium-loading-indicator-enhanced" style={{ marginBottom: "0.5rem" }}>
+              <div className="loading-orb-container-enhanced">
+                <div className="loading-orb-enhanced orb-1-enhanced"></div>
+                <div className="loading-orb-enhanced orb-2-enhanced"></div>
+                <div className="loading-orb-enhanced orb-3-enhanced"></div>
+                <div className="loading-orb-enhanced orb-4-enhanced"></div>
+              </div>
+              <div className="loading-pulse-ring-enhanced ring-1"></div>
+              <div className="loading-pulse-ring-enhanced ring-2"></div>
+              <div className="loading-center-core"></div>
+            </div>
+            <div style={{ 
+              fontSize: "1rem",
+              fontWeight: 600,
+              color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+            }}>
+              <span>Cargando palabras</span>
+              <span className="loading-dots-enhanced">
+                <span>.</span>
+                <span>.</span>
+                <span>.</span>
+              </span>
+            </div>
+            {/* Premium Skeleton loader */}
+            <div style={{
+              width: "100%",
+              maxWidth: "300px",
+              marginTop: "1rem",
+            }}>
+              <div className="premium-skeleton-loader" style={{ height: "200px", marginBottom: "1rem", borderRadius: "12px" }}></div>
+              <div className="premium-skeleton-loader" style={{ height: "16px", width: "80%", margin: "0 auto 0.5rem", borderRadius: "8px" }}></div>
+              <div className="premium-skeleton-loader" style={{ height: "16px", width: "60%", margin: "0 auto", borderRadius: "8px" }}></div>
+            </div>
+          </div>
+        ) : (
+          "No hay palabras disponibles"
+        )}
       </div>
     );
   }
@@ -9628,20 +12676,25 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
       </div>
 
       {/* Card de palabra */}
-      <div style={{
-        background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
-        borderRadius: "16px",
-        padding: "2rem",
-        marginBottom: "1.5rem",
-        border: `2px solid ${isCorrect === true ? "#10b981" : isCorrect === false ? "#ef4444" : "transparent"}`,
-        transition: "all 0.3s ease",
-        minHeight: "200px",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        position: "relative",
-      }}>
+      <div 
+        className={showAnswer ? (isCorrect ? "flashcard-flip" : "") : ""}
+        style={{
+          background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+          borderRadius: "16px",
+          padding: "2rem",
+          marginBottom: "1.5rem",
+          border: `2px solid ${isCorrect === true ? "#10b981" : isCorrect === false ? "#ef4444" : "transparent"}`,
+          transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+          minHeight: "200px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          position: "relative",
+          transform: showAnswer && isCorrect ? "scale(1.02)" : showAnswer && isCorrect === false ? "scale(0.98)" : "scale(1)",
+          animation: showAnswer && isCorrect ? "bounceIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)" : showAnswer && isCorrect === false ? "pulse 0.3s ease" : "fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      >
         {/* Botón de audio en esquina superior derecha */}
         {language && (
           <div style={{
@@ -9649,7 +12702,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
             top: "1rem",
             right: "1rem",
           }}>
-            <AudioButton text={currentWord.word} language={language} colorTheme={colorTheme} size={20} />
+            <AudioButton text={(checkedWord || currentWord).word} language={language} colorTheme={colorTheme} size={20} />
           </div>
         )}
         
@@ -9660,10 +12713,10 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
           textAlign: "center",
           marginBottom: "0.5rem",
         }}>
-          {currentWord.word}
+          {(checkedWord || currentWord).word}
         </div>
         
-        {currentWord.romanization && (
+        {(checkedWord || currentWord).romanization && (
           <div style={{
             fontSize: "1rem",
             color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
@@ -9672,11 +12725,11 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
             textAlign: "center",
             opacity: 0.8,
           }}>
-            {currentWord.romanization}
+            {(checkedWord || currentWord).romanization}
           </div>
         )}
         
-        {currentWord.example && !showAnswer && (
+        {(checkedWord || currentWord).example && !showAnswer && (
           <div style={{
             fontSize: "0.875rem",
             color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
@@ -9684,27 +12737,33 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
             marginBottom: "1rem",
             textAlign: "center",
           }}>
-            {currentWord.example}
+            {(checkedWord || currentWord).example}
           </div>
         )}
 
-        {showAnswer && (
-          <div style={{
-            marginTop: "1rem",
-            padding: "1rem",
-            background: colorTheme === "dark" ? "rgba(16, 185, 129, 0.15)" : "rgba(16, 185, 129, 0.1)",
-            borderRadius: "8px",
-            border: `1px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.4)"}`,
-          }}>
-            <div style={{ fontSize: "1.25rem", fontWeight: 600, color: "#10b981" }}>
-              {currentWord.translation}
+        {showAnswer && checkedWord && (() => {
+          console.log("[LanguageFlashcards] Mostrando traducción de checkedWord:", checkedWord.translation, "para palabra:", checkedWord.word);
+          return (
+            <div style={{
+              marginTop: "1rem",
+              padding: "1rem",
+              background: colorTheme === "dark" ? "rgba(16, 185, 129, 0.15)" : "rgba(16, 185, 129, 0.1)",
+              borderRadius: "8px",
+              border: `1px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.4)"}`,
+            }}>
+              <div style={{ fontSize: "0.875rem", fontWeight: 500, color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b", marginBottom: "0.5rem" }}>
+                Traducción correcta:
+              </div>
+              <div style={{ fontSize: "1.25rem", fontWeight: 600, color: "#10b981" }}>
+                {checkedWord.translation}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Opciones múltiples */}
-      {!showAnswer && currentWord.options && currentWord.options.length > 0 && (
+      {((!showAnswer && currentWord?.options) || (showAnswer && checkedWord?.options)) && (
         <div style={{ marginBottom: "1rem" }}>
           <div style={{
             fontSize: "0.875rem",
@@ -9712,7 +12771,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
             color: textColor,
             marginBottom: "0.75rem",
           }}>
-            Selecciona la traducción correcta:
+            {showAnswer ? "Respuesta:" : "Selecciona la traducción correcta:"}
           </div>
           <div style={{
             display: "flex",
@@ -9720,9 +12779,22 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
             gap: "0.75rem",
             flexWrap: "wrap",
           }}>
-            {currentWord.options.map((option, index) => {
+            {((showAnswer && checkedWord) ? (checkedWord.options || []) : (currentWord?.options || [])).map((option, index) => {
               const isSelected = selectedOption === option;
-              const isCorrectOption = option === currentWord.translation;
+              // CRÍTICO: Cuando se muestra la respuesta, SIEMPRE usar checkedWord
+              // Cuando no se muestra, usar currentWord
+              const wordToCheck = showAnswer ? checkedWord : currentWord;
+              if (!wordToCheck) return null;
+              const correctTranslation = wordToCheck.translation || "";
+              
+              // Normalizar para comparación (case-insensitive, sin espacios extra, sin puntuación)
+              const normalize = (text: string) => {
+                return text?.toLowerCase().trim().replace(/[.,;:!?()]/g, '') || "";
+              };
+              
+              const optionNormalized = normalize(option);
+              const correctNormalized = normalize(correctTranslation);
+              const isCorrectOption = optionNormalized === correctNormalized;
               
               return (
                 <button
@@ -9765,24 +12837,8 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
                     fontWeight: isSelected ? 600 : 500,
                     cursor: showAnswer ? "default" : "pointer",
                     textAlign: "center",
-                    transition: "all 0.2s ease",
+                    transition: "background-color 0.2s ease, border-color 0.2s ease",
                     fontFamily: outfit.style.fontFamily,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!showAnswer && !isSelected) {
-                      e.currentTarget.style.background = colorTheme === "dark"
-                        ? "rgba(99, 102, 241, 0.15)"
-                        : "rgba(99, 102, 241, 0.1)";
-                      e.currentTarget.style.border = `2px solid #6366f1`;
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!showAnswer && !isSelected) {
-                      e.currentTarget.style.background = colorTheme === "dark"
-                        ? "rgba(148, 163, 184, 0.08)"
-                        : "rgba(148, 163, 184, 0.05)";
-                      e.currentTarget.style.border = `1px solid ${borderColor}`;
-                    }
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem" }}>

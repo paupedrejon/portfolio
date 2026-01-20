@@ -154,6 +154,70 @@ UPLOAD_DIR = "documents"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
+def save_user_cost(user_id: str, input_tokens: int, output_tokens: int, model: str, system: StudyAgentsSystem) -> bool:
+    """
+    Calcula y guarda el coste de una llamada a la API
+    
+    Args:
+        user_id: ID del usuario
+        input_tokens: Tokens de entrada
+        output_tokens: Tokens de salida
+        model: Nombre del modelo usado
+        system: Sistema de agentes (para acceder al ModelManager)
+        
+    Returns:
+        True si se guardó correctamente
+    """
+    try:
+        if not user_id or (input_tokens == 0 and output_tokens == 0):
+            return False
+        
+        # Calcular coste usando ModelManager
+        # Intentar obtener ModelManager desde los agentes (todos usan el mismo)
+        cost = 0.0
+        model_manager = None
+        
+        # Intentar obtener ModelManager desde cualquier agente
+        if hasattr(system, 'qa_assistant') and hasattr(system.qa_assistant, 'model_manager'):
+            model_manager = system.qa_assistant.model_manager
+        elif hasattr(system, 'explanation_agent') and hasattr(system.explanation_agent, 'model_manager'):
+            model_manager = system.explanation_agent.model_manager
+        elif hasattr(system, 'test_generator') and hasattr(system.test_generator, 'model_manager'):
+            model_manager = system.test_generator.model_manager
+        
+        if model_manager:
+            cost = model_manager.estimate_cost(model, input_tokens, output_tokens)
+        else:
+            # Fallback: calcular manualmente usando precios estándar
+            try:
+                # Importar ModelManager desde el directorio padre
+                import sys
+                import os
+                parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                if parent_dir not in sys.path:
+                    sys.path.insert(0, parent_dir)
+                from model_manager import ModelManager
+                temp_manager = ModelManager()
+                cost = temp_manager.estimate_cost(model, input_tokens, output_tokens)
+            except Exception as e:
+                print(f"⚠️ Error al calcular coste con ModelManager: {e}")
+                # Si todo falla, usar estimación básica
+                cost = 0.0
+        
+        # Guardar estadísticas (el coste solo puede aumentar, nunca disminuir)
+        # El método save_user_stats ya suma al coste existente, así que el coste total nunca disminuirá
+        if hasattr(system, 'memory') and hasattr(system.memory, 'save_user_stats'):
+            if cost > 0:
+                return system.memory.save_user_stats(user_id, input_tokens, output_tokens, cost, model)
+        
+        return False
+    except Exception as e:
+        print(f"⚠️ Error al guardar coste del usuario: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def get_or_create_system(api_key: Optional[str] = None, mode: str = "auto") -> StudyAgentsSystem:
     """
     Obtiene o crea un sistema de agentes para una API key
@@ -202,6 +266,7 @@ class QuestionRequest(BaseModel):
     model: Optional[str] = "gpt-4-turbo"
     chat_id: Optional[str] = None  # ID de la conversación para obtener el nivel y tema
     topic: Optional[str] = None  # Tema del chat si está disponible
+    initial_form_data: Optional[Dict] = None  # Datos del formulario inicial (nivel, objetivo, tiempo)
 
 
 class TestRequest(BaseModel):
@@ -230,6 +295,7 @@ class GenerateNotesRequest(BaseModel):
     apiKey: Optional[str] = None
     model: Optional[str] = "gpt-4-turbo"
     user_id: Optional[str] = None
+    chat_id: Optional[str] = None  # ID de la conversación para obtener el nivel
     conversation_history: Optional[List[dict]] = None
     topic: Optional[str] = None
 
@@ -243,6 +309,7 @@ class GenerateExerciseRequest(BaseModel):
     model: Optional[str] = None
     conversation_history: Optional[List[Dict[str, str]]] = None
     user_id: Optional[str] = None
+    chat_id: Optional[str] = None
 
 class CorrectExerciseRequest(BaseModel):
     """Modelo para corregir un ejercicio"""
@@ -429,16 +496,48 @@ async def generate_notes(request: GenerateNotesRequest):
         if not final_topics and request.topic:
             final_topics = [request.topic]
         
+        # Obtener nivel del usuario desde la conversación si hay chat_id
+        user_level = None
+        if request.user_id and request.chat_id:
+            try:
+                chat_data = progress_tracker_instance.get_chat_level(request.user_id, request.chat_id)
+                user_level = chat_data.get("level", 0)
+                print(f"📊 Nivel del usuario en conversación '{request.chat_id}': {user_level}/10")
+            except Exception as e:
+                print(f"⚠️ No se pudo obtener el nivel del usuario desde chat_id: {e}")
+        
         # Generar resumen basado en la conversación y temas (model=None usa modo automático)
         notes = system.generate_notes(
             topics=final_topics, 
             model=request.model if request.model else None, 
             user_id=request.user_id,
             conversation_history=request.conversation_history,
-            topic=request.topic
+            topic=request.topic,
+            user_level=user_level,  # Pasar el nivel obtenido del chat
+            chat_id=request.chat_id  # Pasar chat_id para mantener chats separados
         )
         
         print(f"[FastAPI] Apuntes generados exitosamente ({len(notes)} caracteres)")
+        
+        # generate_notes ahora devuelve usage_info internamente, pero no lo expone
+        # Necesitamos obtenerlo del agente si está disponible
+        if request.user_id:
+            # Intentar obtener el modelo usado y tokens del agente
+            model_used = request.model or "gpt-3.5-turbo"
+            input_tokens = 0
+            output_tokens = 0
+            
+            if hasattr(system, 'explanation_agent') and hasattr(system.explanation_agent, 'current_model_config'):
+                if system.explanation_agent.current_model_config:
+                    model_used = system.explanation_agent.current_model_config.name
+            
+            # Estimar tokens basándose en la longitud del contenido si no están disponibles
+            # Aproximación: 1 token ≈ 4 caracteres
+            if input_tokens == 0 and output_tokens == 0:
+                input_tokens = len(str(request.conversation_history or "")) // 4 if request.conversation_history else 1000
+                output_tokens = len(notes) // 4
+            
+            save_user_cost(request.user_id, input_tokens, output_tokens, model_used, system)
         
         return {
             "success": True,
@@ -482,6 +581,7 @@ async def ask_question(request: QuestionRequest):
         
         # Obtener tema del chat si está disponible
         chat_topic = request.topic
+        initial_form = request.initial_form_data
         if not chat_topic and request.chat_id:
             try:
                 chat_data = progress_tracker_instance.get_chat_level(request.user_id, request.chat_id)
@@ -489,21 +589,42 @@ async def ask_question(request: QuestionRequest):
             except Exception as e:
                 print(f"⚠️ No se pudo obtener el tema del chat: {e}")
         
+        # Si no se proporcionó initial_form_data, intentar obtenerlo del chat
+        if not initial_form and request.chat_id:
+            try:
+                # Cargar chat para obtener metadata
+                from chat_storage import load_chat
+                chat_data = load_chat(request.user_id, request.chat_id)
+                if chat_data and chat_data.get("metadata", {}).get("initialForm"):
+                    initial_form = chat_data["metadata"]["initialForm"]
+                    print(f"📋 Datos del formulario inicial obtenidos del chat: nivel={initial_form.get('level')}, objetivo={initial_form.get('learningGoal', '')[:50]}...")
+            except Exception as e:
+                print(f"⚠️ No se pudo obtener datos del formulario inicial: {e}")
+        
         # Responder pregunta (model=None usa modo automático)
         answer, usage_info = system.ask_question(
             request.question, 
             request.user_id, 
             model=request.model if request.model else None,
             chat_id=request.chat_id,
-            topic=chat_topic
+            topic=chat_topic,
+            initial_form_data=initial_form
         )
+        
+        # Calcular y guardar coste
+        input_tokens = usage_info.get("inputTokens", 0)
+        output_tokens = usage_info.get("outputTokens", 0)
+        model_used = usage_info.get("model") or request.model or "gpt-3.5-turbo"
+        
+        if request.user_id:
+            save_user_cost(request.user_id, input_tokens, output_tokens, model_used, system)
         
         return {
             "success": True,
             "answer": answer,
             "question": request.question,
-            "inputTokens": usage_info.get("inputTokens", 0),
-            "outputTokens": usage_info.get("outputTokens", 0)
+            "inputTokens": input_tokens,
+            "outputTokens": output_tokens
         }
     except HTTPException:
         raise
@@ -554,11 +675,19 @@ async def generate_test(request: TestRequest):
             user_level=user_level
         )
         
+        # Calcular y guardar coste
+        input_tokens = usage_info.get("inputTokens", 0)
+        output_tokens = usage_info.get("outputTokens", 0)
+        model_used = usage_info.get("model") or request.model or "gpt-3.5-turbo"
+        
+        if request.user_id:
+            save_user_cost(request.user_id, input_tokens, output_tokens, model_used, system)
+        
         return {
             "success": True,
             "test": test,
-            "inputTokens": usage_info.get("inputTokens", 0),
-            "outputTokens": usage_info.get("outputTokens", 0)
+            "inputTokens": input_tokens,
+            "outputTokens": output_tokens
         }
     except HTTPException:
         raise
@@ -589,11 +718,16 @@ async def grade_test(request: GradeTestRequest):
         # Corregir test
         feedback, usage_info = system.grade_test(request.test_id, request.answers)
         
+        # Calcular y guardar coste (necesitamos user_id, pero no está en el request)
+        # Por ahora, no guardamos coste para grade_test si no hay user_id
+        input_tokens = usage_info.get("inputTokens", 0)
+        output_tokens = usage_info.get("outputTokens", 0)
+        
         return {
             "success": True,
             "feedback": feedback,
-            "inputTokens": usage_info.get("inputTokens", 0),
-            "outputTokens": usage_info.get("outputTokens", 0)
+            "inputTokens": input_tokens,
+            "outputTokens": output_tokens
         }
     except HTTPException:
         raise
@@ -644,15 +778,24 @@ async def generate_exercise(request: GenerateExerciseRequest):
             model=request.model if request.model else None,
             conversation_history=request.conversation_history,
             user_id=request.user_id if request.user_id else None,
-            user_level=user_level
+            user_level=user_level,
+            chat_id=request.chat_id
         )
+        
+        # Calcular y guardar coste
+        input_tokens = usage_info.get("inputTokens", 0)
+        output_tokens = usage_info.get("outputTokens", 0)
+        model_used = usage_info.get("model") or request.model or "gpt-3.5-turbo"
+        
+        if request.user_id:
+            save_user_cost(request.user_id, input_tokens, output_tokens, model_used, system)
         
         return {
             "success": True,
             "exercise": exercise,
             "exercise_id": exercise.get("exercise_id", ""),
-            "inputTokens": usage_info.get("inputTokens", 0),
-            "outputTokens": usage_info.get("outputTokens", 0)
+            "inputTokens": input_tokens,
+            "outputTokens": output_tokens
         }
     except HTTPException:
         raise
@@ -887,12 +1030,20 @@ async def correct_exercise(request: CorrectExerciseRequest):
                     chat_id=chat_id  # Pasar chat_id si está disponible
                 )
         
+        # Calcular y guardar coste
+        input_tokens = usage_info.get("inputTokens", 0)
+        output_tokens = usage_info.get("outputTokens", 0)
+        model_used = usage_info.get("model") or request.model or "gpt-3.5-turbo"
+        
+        if request.user_id:
+            save_user_cost(request.user_id, input_tokens, output_tokens, model_used, system)
+        
         return {
             "success": True,
             "correction": correction,
             "progress_update": progress_update,
-            "inputTokens": usage_info.get("inputTokens", 0),
-            "outputTokens": usage_info.get("outputTokens", 0)
+            "inputTokens": input_tokens,
+            "outputTokens": output_tokens
         }
     except HTTPException:
         raise
@@ -948,7 +1099,7 @@ async def save_chat_endpoint(request: SaveChatRequest):
 @app.post("/api/load-chat")
 async def load_chat_endpoint(request: LoadChatRequest):
     """
-    Carga una conversación
+    Carga una conversación y sincroniza el historial con MemoryManager
     
     Args:
         request: Solicitud con user_id y chat_id
@@ -964,6 +1115,12 @@ async def load_chat_endpoint(request: LoadChatRequest):
         
         if not chat_data:
             raise HTTPException(status_code=404, detail="Chat no encontrado")
+        
+        # Sincronizar historial con MemoryManager para mantener chats separados
+        # Nota: Esto solo funciona si hay un sistema ya creado con la misma API key
+        # En la práctica, el historial se sincronizará cuando se use el chat por primera vez
+        # ya que get_or_create_system requiere una API key
+        print(f"📝 Chat cargado: {request.chat_id} con {len(chat_data.get('messages', []))} mensajes")
         
         return {
             "success": True,
@@ -1022,6 +1179,17 @@ async def delete_chat_endpoint(request: DeleteChatRequest):
         
         if not deleted:
             raise HTTPException(status_code=404, detail="Chat no encontrado")
+        
+        # Eliminar también el progreso asociado al chat
+        try:
+            progress_tracker_instance.delete_chat_progress(
+                user_id=request.user_id,
+                chat_id=request.chat_id
+            )
+            print(f"[FastAPI] Progreso del chat {request.chat_id} eliminado correctamente")
+        except Exception as progress_error:
+            print(f"[FastAPI] Error al eliminar progreso del chat: {str(progress_error)}")
+            # No fallar la eliminación del chat si falla la eliminación del progreso
         
         return {
             "success": True,
@@ -1111,6 +1279,19 @@ class SetChatLevelRequest(BaseModel):
     chat_id: str
     level: int  # 0-10
     topic: Optional[str] = None
+
+
+class GetUserStatsRequest(BaseModel):
+    """Modelo para obtener estadísticas de un usuario"""
+    user_id: str
+
+
+class ProcessURLRequest(BaseModel):
+    """Modelo para procesar una URL"""
+    url: str
+    user_id: Optional[str] = None
+    apiKey: Optional[str] = None
+    model: Optional[str] = None
 
 
 @app.post("/api/get-progress")
@@ -1390,6 +1571,254 @@ async def get_learned_words_count_endpoint(request: GetLearnedWordsRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/get-user-stats")
+async def get_user_stats_endpoint(request: GetUserStatsRequest):
+    """
+    Obtiene las estadísticas de tokens y costes de un usuario
+    
+    Args:
+        request: Solicitud con user_id
+        
+    Returns:
+        Estadísticas del usuario (tokens, costes, etc.)
+    """
+    try:
+        if not request.user_id:
+            raise HTTPException(status_code=400, detail="user_id requerido")
+        
+        # Obtener sistema para acceder a memory_manager
+        system = get_or_create_system(api_key=None, mode="auto")
+        
+        # Obtener estadísticas del usuario
+        if hasattr(system, 'memory') and hasattr(system.memory, 'get_user_stats'):
+            stats = system.memory.get_user_stats(request.user_id)
+            return {
+                "success": True,
+                "stats": stats
+            }
+        else:
+            return {
+                "success": True,
+                "stats": {
+                    "total_input_tokens": 0,
+                    "total_output_tokens": 0,
+                    "total_cost": 0.0,
+                    "total_requests": 0,
+                    "by_model": {}
+                }
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[FastAPI] Error en get-user-stats: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/process-url")
+async def process_url_endpoint(request: ProcessURLRequest):
+    """
+    Procesa una URL: extrae contenido de texto o resume videos
+    
+    Args:
+        request: Solicitud con URL a procesar
+        
+    Returns:
+        Contenido extraído o resumen del video
+    """
+    try:
+        import re
+        import requests
+        from bs4 import BeautifulSoup
+        from urllib.parse import urlparse
+        
+        # Limpiar URL: eliminar saltos de línea, retornos de carro y espacios
+        url = request.url.strip().replace('\n', '').replace('\r', '').replace(' ', '')
+        
+        # Validar que sea una URL válida
+        if not url.startswith(('http://', 'https://')):
+            url = 'https://' + url
+        
+        # Detectar si es un video (YouTube, Vimeo, etc.)
+        is_video = False
+        video_platform = None
+        
+        if 'youtube.com' in url or 'youtu.be' in url:
+            is_video = True
+            video_platform = 'youtube'
+        elif 'vimeo.com' in url:
+            is_video = True
+            video_platform = 'vimeo'
+        
+        if is_video:
+            # Para videos, intentar obtener información y resumir
+            try:
+                # Obtener información básica del video
+                response = requests.get(url, timeout=10, headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                })
+                response.raise_for_status()
+                
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Extraer título y descripción
+                title = soup.find('title')
+                title_text = title.text if title else "Video"
+                
+                # Buscar descripción (varía según la plataforma)
+                description = ""
+                if video_platform == 'youtube':
+                    meta_desc = soup.find('meta', {'name': 'description'})
+                    if meta_desc:
+                        description = meta_desc.get('content', '')
+                
+                # Si hay API key, usar el sistema para generar un resumen
+                if request.apiKey:
+                    system = get_or_create_system(request.apiKey, mode="auto")
+                    
+                    prompt = f"""Resume el siguiente video de {video_platform}:
+
+Título: {title_text}
+Descripción: {description}
+URL: {url}
+
+Proporciona un resumen completo y detallado del contenido del video, incluyendo:
+- Los temas principales tratados
+- Los puntos clave explicados
+- Cualquier información importante mencionada
+- Conclusiones o recomendaciones si las hay
+
+Resumen:"""
+                    
+                    # Usar el agente de QA para generar el resumen
+                    answer, usage_info = system.ask_question(
+                        prompt,
+                        request.user_id or "default",
+                        model=request.model if request.model else None
+                    )
+                    
+                    # Guardar coste si hay user_id
+                    if request.user_id:
+                        input_tokens = usage_info.get("inputTokens", 0)
+                        output_tokens = usage_info.get("outputTokens", 0)
+                        model_used = usage_info.get("model") or request.model or "gpt-3.5-turbo"
+                        save_user_cost(request.user_id, input_tokens, output_tokens, model_used, system)
+                    
+                    return {
+                        "success": True,
+                        "type": "video",
+                        "platform": video_platform,
+                        "title": title_text,
+                        "summary": answer,
+                        "url": url
+                    }
+                else:
+                    # Sin API key, devolver información básica
+                    return {
+                        "success": True,
+                        "type": "video",
+                        "platform": video_platform,
+                        "title": title_text,
+                        "description": description,
+                        "url": url,
+                        "message": "Para obtener un resumen detallado, configura tu API key de OpenAI"
+                    }
+                    
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": f"Error al procesar video: {str(e)}",
+                    "url": url
+                }
+        else:
+            # Para páginas web de texto, extraer contenido
+            try:
+                response = requests.get(url, timeout=10, headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                })
+                response.raise_for_status()
+                
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Eliminar scripts y estilos
+                for script in soup(["script", "style", "nav", "footer", "header", "aside"]):
+                    script.decompose()
+                
+                # Extraer texto principal
+                title = soup.find('title')
+                title_text = title.text if title else ""
+                
+                # Buscar contenido principal
+                main_content = soup.find('main') or soup.find('article') or soup.find('div', class_=re.compile('content|main|article', re.I))
+                
+                if main_content:
+                    text = main_content.get_text(separator='\n', strip=True)
+                else:
+                    # Si no hay main/article, usar body
+                    body = soup.find('body')
+                    if body:
+                        text = body.get_text(separator='\n', strip=True)
+                    else:
+                        text = soup.get_text(separator='\n', strip=True)
+                
+                # Limpiar texto (eliminar líneas vacías múltiples y URLs rotas)
+                lines = [line.strip() for line in text.split('\n') if line.strip()]
+                # Unir líneas que parecen ser parte de una URL rota
+                cleaned_lines = []
+                for i, line in enumerate(lines):
+                    # Si la línea anterior termina con parte de una URL y esta línea parece continuarla
+                    if (cleaned_lines and 
+                        cleaned_lines[-1] and 
+                        ('http' in cleaned_lines[-1] or cleaned_lines[-1].endswith('/') or 
+                         any(char in cleaned_lines[-1] for char in ['?', '&', '='])) and
+                        not line.startswith('http') and len(line) < 50 and 
+                        not line[0].isupper() and not line.endswith('.')):
+                        # Probablemente es continuación de URL, unir sin espacio
+                        cleaned_lines[-1] = cleaned_lines[-1] + line
+                    else:
+                        cleaned_lines.append(line)
+                cleaned_text = '\n'.join(cleaned_lines[:500])  # Limitar a 500 líneas
+                
+                # Almacenar contenido en memoria para que esté disponible en preguntas
+                if request.user_id:
+                    try:
+                        system = get_or_create_system(request.apiKey, mode="auto") if request.apiKey else None
+                        if system and system.memory:
+                            # Crear documento con título y contenido
+                            document_text = f"Título: {title_text}\nURL: {url}\n\nContenido:\n{cleaned_text}"
+                            system.memory.store_documents(
+                                [document_text],
+                                [{"source": "url", "url": url, "title": title_text, "user_id": request.user_id}],
+                                chat_id=request.chat_id if hasattr(request, 'chat_id') else None,
+                                user_id=request.user_id
+                            )
+                            print(f"📚 Contenido de URL almacenado en memoria: {url}")
+                    except Exception as e:
+                        print(f"⚠️ Error al almacenar contenido de URL en memoria: {e}")
+                
+                return {
+                    "success": True,
+                    "type": "text",
+                    "title": title_text,
+                    "content": cleaned_text,
+                    "url": url
+                }
+                
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": f"Error al procesar URL: {str(e)}",
+                    "url": url
+                }
+                
+    except Exception as e:
+        print(f"[FastAPI] Error en process-url: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/set-chat-level")
 async def set_chat_level_endpoint(request: SetChatLevelRequest):
     """
@@ -1403,11 +1832,40 @@ async def set_chat_level_endpoint(request: SetChatLevelRequest):
     """
     try:
         print(f"[FastAPI] set-chat-level recibido: user_id={request.user_id}, chat_id={request.chat_id}, level={request.level}, topic={request.topic}")
+        
+        # Si no se proporciona el topic, intentar obtenerlo del chat almacenado
+        topic_to_use = request.topic
+        if not topic_to_use:
+            try:
+                from chat_storage import load_chat
+                chat_data = load_chat(request.user_id, request.chat_id)
+                if chat_data:
+                    # Intentar obtener el tema desde metadata o título
+                    if chat_data.get("metadata", {}).get("topic"):
+                        topic_to_use = chat_data["metadata"]["topic"]
+                        print(f"[FastAPI] Tema obtenido desde metadata: {topic_to_use}")
+                    elif chat_data.get("title"):
+                        topic_to_use = chat_data["title"]
+                        print(f"[FastAPI] Tema obtenido desde título del chat: {topic_to_use}")
+                    else:
+                        # Intentar obtener desde progress_tracker
+                        chat_level_data = progress_tracker_instance.get_chat_level(request.user_id, request.chat_id)
+                        if chat_level_data and chat_level_data.get("topic"):
+                            topic_to_use = chat_level_data["topic"]
+                            print(f"[FastAPI] Tema obtenido desde progress_tracker: {topic_to_use}")
+            except Exception as e:
+                print(f"[FastAPI] No se pudo obtener el tema del chat: {e}")
+        
+        # Si aún no hay tema, usar "General" por defecto
+        if not topic_to_use:
+            topic_to_use = "General"
+            print(f"[FastAPI] Usando tema por defecto: {topic_to_use}")
+        
         result = progress_tracker_instance.set_chat_level(
             user_id=request.user_id,
             chat_id=request.chat_id,
             level=request.level,
-            topic=request.topic
+            topic=topic_to_use
         )
         print(f"[FastAPI] Nivel establecido: {result}")
         return {"success": True, "result": result}

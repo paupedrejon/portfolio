@@ -60,12 +60,12 @@
     },
     "chats": {
       "chat-1767526732477": {
-        "level": 10,
+        "level": 5,
         "experience": 300,
         "exercises_completed": 0,
         "tests_completed": 6,
         "topic": "General",
-        "last_updated": "2026-01-04T12:48:05.047329"
+        "last_updated": "2026-01-16T23:58:38.531309"
       },
       "chat-1767527460548": {
         "level": 4,
@@ -146,6 +146,70 @@
         "tests_completed": 0,
         "topic": "Italiano",
         "last_updated": "2026-01-11T22:02:02.887689"
+      },
+      "chat-1768166606531": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Git",
+        "last_updated": "2026-01-11T22:23:28.641530"
+      },
+      "chat-1768166607950": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Git",
+        "last_updated": "2026-01-11T22:23:28.655029"
+      },
+      "general-1768585022479": {
+        "level": 5,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "General",
+        "last_updated": "2026-01-16T22:28:14.413605"
+      },
+      "chat-1768603289453": {
+        "level": 5,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "General",
+        "last_updated": "2026-01-17T00:09:28.495745"
+      },
+      "chat-1768642609692": {
+        "level": 3,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "General",
+        "last_updated": "2026-01-17T10:37:02.848431"
+      },
+      "chat-1768642794262": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Alemán",
+        "last_updated": "2026-01-17T10:39:54.609015"
+      },
+      "chat-1768643224278": {
+        "level": 5,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Inglés",
+        "last_updated": "2026-01-17T11:49:25.362584"
+      },
+      "chat-1768648592295": {
+        "level": 4,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "SQL",
+        "last_updated": "2026-01-17T12:17:02.115767"
       }
     },
     "Python": {
@@ -154,6 +218,202 @@
       "exercises_completed": 5,
       "tests_completed": 0,
       "last_updated": "2026-01-11T12:22:09.287731"
+    },
+    "html": {
+      "level": 1,
+      "experience": 3,
+      "exercises_completed": 0,
+      "tests_completed": 0,
+      "last_updated": "2026-01-16T18:47:09.587855"
+    },
+    "api": {
+      "level": 1,
+      "experience": 3,
+      "exercises_completed": 0,
+      "tests_completed": 0,
+      "last_updated": "2026-01-16T23:46:09.996434"
+    }
+  },
+  "543cc71e-bb8d-40c5-b98b-cbbcb71047fe": {
+    "chats": {
+      "chat-1768319762836": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "SQL",
+        "last_updated": "2026-01-13T16:56:05.142009"
+      },
+      "chat-1768321640201": {
+        "level": 7,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Inglés",
+        "last_updated": "2026-01-13T17:30:03.821530"
+      },
+      "chat-1768322130627": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "SQL",
+        "last_updated": "2026-01-13T17:35:31.046434"
+      },
+      "chat-1768322354554": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Inglés",
+        "last_updated": "2026-01-13T17:39:17.220646"
+      },
+      "chat-1768322520668": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Japonés",
+        "last_updated": "2026-01-13T17:42:01.064828"
+      },
+      "chat-1768323139711": {
+        "level": 3,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Alemán",
+        "last_updated": "2026-01-13T18:49:16.807241"
+      },
+      "chat-1768323701182": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Ruso",
+        "last_updated": "2026-01-13T18:01:42.439496"
+      },
+      "chat-1768323984225": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Inglés",
+        "last_updated": "2026-01-13T18:06:26.334178"
+      },
+      "chat-1768324383262": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Inglés",
+        "last_updated": "2026-01-13T18:13:03.531583"
+      },
+      "chat-1768324780405": {
+        "level": 7,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Inglés",
+        "last_updated": "2026-01-13T18:19:42.945492"
+      },
+      "chat-1768325723067": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Alemán",
+        "last_updated": "2026-01-13T18:35:23.933765"
+      },
+      "chat-1768325707214": {
+        "level": 4,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Alemán",
+        "last_updated": "2026-01-13T18:37:04.903191"
+      },
+      "chat-1768331406425": {
+        "level": 4,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "General",
+        "last_updated": "2026-01-13T20:25:12.890823"
+      },
+      "general-1768328573984": {
+        "level": 2,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "General",
+        "last_updated": "2026-01-13T22:33:09.100754"
+      },
+      "chat-1768337531329": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Inglés",
+        "last_updated": "2026-01-13T21:52:15.355367"
+      },
+      "chat-1768337532422": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Inglés",
+        "last_updated": "2026-01-13T22:05:11.630423"
+      },
+      "chat-1768339719859": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Francés",
+        "last_updated": "2026-01-13T22:28:42.976322"
+      }
+    },
+    "sql": {
+      "level": 1,
+      "experience": 6,
+      "exercises_completed": 0,
+      "tests_completed": 0,
+      "last_updated": "2026-01-13T17:36:51.469965"
+    },
+    "español": {
+      "level": 1,
+      "experience": 3,
+      "exercises_completed": 0,
+      "tests_completed": 0,
+      "last_updated": "2026-01-13T17:46:28.505309"
+    }
+  },
+  "3cb04694-90fb-45bd-9e38-c88dbc54ef5f": {
+    "chats": {
+      "chat-1768927118986": {
+        "level": 5,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Inglés",
+        "last_updated": "2026-01-20T18:41:14.915420"
+      },
+      "general-1768417562149": {
+        "level": 6,
+        "experience": 50,
+        "exercises_completed": 0,
+        "tests_completed": 1,
+        "topic": "General",
+        "last_updated": "2026-01-20T18:35:43.412455"
+      },
+      "chat-1768931231569": {
+        "level": 0,
+        "experience": 0,
+        "exercises_completed": 0,
+        "tests_completed": 0,
+        "topic": "Inglés",
+        "last_updated": "2026-01-20T18:47:36.522887"
+      }
     }
   }
 }

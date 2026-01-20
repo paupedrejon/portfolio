@@ -1,0 +1,55 @@
+{
+  "user_id": "543cc71e-bb8d-40c5-b98b-cbbcb71047fe",
+  "language": "Japonés",
+  "words": [
+    {
+      "word": "ありがとう",
+      "translation": "Gracias",
+      "source": "flashcards",
+      "example": "ありがとう、助かりました。",
+      "romanization": "Arigatou",
+      "learned_at": "2026-01-13T17:42:57.074419"
+    },
+    {
+      "word": "さようなら",
+      "translation": "Adiós",
+      "source": "flashcards",
+      "example": "さようなら、また会いましょう。",
+      "romanization": "Sayounara",
+      "learned_at": "2026-01-13T17:43:04.618326"
+    },
+    {
+      "word": "はい",
+      "translation": "Sí",
+      "source": "flashcards",
+      "example": "はい、分かりました。",
+      "romanization": "Hai",
+      "learned_at": "2026-01-13T17:43:07.288351"
+    },
+    {
+      "word": "いいえ",
+      "translation": "No",
+      "source": "flashcards",
+      "example": "いいえ、違います。",
+      "romanization": "Iie",
+      "learned_at": "2026-01-13T17:43:11.289483"
+    },
+    {
+      "word": "おはようございます",
+      "translation": "Buenos días",
+      "source": "flashcards",
+      "example": "おはようございます、今日はいい天気ですね。",
+      "romanization": "Ohayou gozaimasu",
+      "learned_at": "2026-01-13T17:43:16.875358"
+    },
+    {
+      "word": "こんにちは",
+      "translation": "Hola",
+      "source": "flashcards",
+      "example": "こんにちは、元気ですか？",
+      "romanization": "Konnichiwa",
+      "learned_at": "2026-01-13T17:43:38.680891"
+    }
+  ],
+  "updated_at": "2026-01-13T17:43:38.680898"
+}

@@ -24,10 +24,14 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [compact, setCompact] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
   const isStudyAgentsPage = pathname?.startsWith("/study-agents");
   const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [apiKeys, setApiKeys] = useState<{ openai: string } | null>(null);
+  const [totalLevel, setTotalLevel] = useState<number>(0);
+  const [monthlyCost, setMonthlyCost] = useState<number>(0);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -44,7 +48,10 @@ export default function Header() {
 
   useEffect(() => {
     const checkWidth = () => {
-      setCompact(window.innerWidth < 900);
+      const width = window.innerWidth;
+      setCompact(width < 900);
+      setIsMobile(width < 640);
+      setIsTablet(width >= 640 && width < 1024);
     };
     checkWidth();
     window.addEventListener("resize", checkWidth);
@@ -102,6 +109,69 @@ export default function Header() {
     };
   }, [isStudyAgentsPage]);
 
+  // Cargar nivel total del usuario y coste del mes
+  useEffect(() => {
+    if (isStudyAgentsPage && session?.user?.id) {
+      const loadTotalLevel = async () => {
+        try {
+          const response = await fetch("/api/study-agents/get-progress", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: session.user.id }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.progress) {
+              const progressData = data.progress || {};
+              const topics = Object.entries(progressData);
+              const level = topics.reduce((sum, [, topicData]: [string, any]) => {
+                const topicLevel = (topicData && typeof topicData === 'object' && 'level' in topicData) ? (topicData.level || 0) : 0;
+                return sum + topicLevel;
+              }, 0);
+              setTotalLevel(level);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading total level:", error);
+        }
+      };
+      
+      const loadMonthlyCost = async () => {
+        try {
+          const response = await fetch("/api/study-agents/get-user-stats", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: session.user.id }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.stats) {
+              // Asegurar que el coste sea un número
+              const cost = typeof data.stats.total_cost === 'string' 
+                ? parseFloat(data.stats.total_cost) 
+                : (data.stats.total_cost || 0);
+              setMonthlyCost(cost);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading monthly cost:", error);
+        }
+      };
+      
+      loadTotalLevel();
+      loadMonthlyCost();
+      
+      // Actualizar coste cada 5 segundos para reflejar cambios recientes
+      const costInterval = setInterval(() => {
+        loadMonthlyCost();
+      }, 5000);
+      
+      return () => clearInterval(costInterval);
+    }
+  }, [isStudyAgentsPage, session?.user?.id]);
+
   const handleKeysConfigured = (keys: { openai: string }) => {
     setApiKeys(keys);
     setShowAPIKeyConfig(false);
@@ -141,10 +211,11 @@ export default function Header() {
           zIndex: 10,
           maxWidth: '1200px',
           margin: '0 auto',
-          padding: '0 2rem',
+          padding: isMobile ? '0 1rem' : isTablet ? '0 1.5rem' : '0 2rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          gap: isMobile ? '0.5rem' : '1rem',
         }}
       >
         {/* Logo */}
@@ -236,88 +307,224 @@ export default function Header() {
 
         {/* API Config Button, Profile Button and Logout Button (Study Agents) */}
         {isStudyAgentsPage && session && (
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "0.5rem" : "0.75rem", flexWrap: "nowrap" }}>
             {/* Profile Button */}
-            <button
-              onClick={() => setShowProfile(true)}
-              title="Ver mi progreso"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "48px",
-                height: "48px",
-                background: "#ffffff",
-                border: "none",
-                borderRadius: "24px",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "0.9";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "1";
-              }}
-            >
-              <StarIcon size={18} color="#1a1a24" />
-            </button>
+            {!isMobile && (
+              <button
+                onClick={() => setShowProfile(true)}
+                title="Ver mi progreso"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: isMobile ? "40px" : "48px",
+                  height: isMobile ? "40px" : "48px",
+                  background: "#ffffff",
+                  border: "none",
+                  borderRadius: "24px",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                }}
+              >
+                <StarIcon size={isMobile ? 16 : 18} color="#1a1a24" />
+              </button>
+            )}
             
             {/* API Config Button */}
-            <button
-              onClick={() => setShowAPIKeyConfig(true)}
-              title={apiKeys?.openai ? "API Configurada" : "Configurar API"}
+            {!isMobile && (
+              <button
+                onClick={() => setShowAPIKeyConfig(true)}
+                title={apiKeys?.openai ? "API Configurada" : "Configurar API"}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: isMobile ? "40px" : "48px",
+                  height: isMobile ? "40px" : "48px",
+                  background: "#ffffff",
+                  border: "none",
+                  borderRadius: "24px",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                }}
+              >
+                <KeyIcon size={isMobile ? 16 : 18} color="#1a1a24" />
+              </button>
+            )}
+
+            {/* Cajita con foto, nombre, nivel total y botón de cerrar sesión */}
+            <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                width: "48px",
-                height: "48px",
+                gap: isMobile ? "0.5rem" : "0.75rem",
+                padding: isMobile ? "0.375rem 0.5rem 0.375rem 0.375rem" : "0.5rem 0.75rem 0.5rem 0.5rem",
                 background: "#ffffff",
-                border: "none",
                 borderRadius: "24px",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "0.9";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "1";
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+                maxWidth: isMobile ? "200px" : isTablet ? "280px" : "none",
+                flexShrink: 1,
+                minWidth: 0,
               }}
             >
-              <KeyIcon size={18} color="#1a1a24" />
-            </button>
+              {/* Foto del usuario */}
+              <div
+                style={{
+                  width: isMobile ? "28px" : "32px",
+                  height: isMobile ? "28px" : "32px",
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  border: "2px solid rgba(99, 102, 241, 0.3)",
+                  flexShrink: 0,
+                  background: session.user?.image ? "transparent" : "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {session.user?.image ? (
+                  <img
+                    src={session.user.image}
+                    alt={session.user.name || "Usuario"}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                    onError={(e) => {
+                      // Si la imagen falla, mostrar iniciales
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `<div style="color: white; font-size: 12px; font-weight: 600;">${(session.user?.name || "U").charAt(0).toUpperCase()}</div>`;
+                      }
+                    }}
+                  />
+                ) : (
+                  <div style={{ color: "white", fontSize: "12px", fontWeight: 600 }}>
+                    {(session.user?.name || "U").charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              
+              {/* Nombre y nivel */}
+              <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? "0.25rem" : "0.375rem", flex: 1, minWidth: 0 }}>
+                {!isMobile && (
+                  <div
+                    style={{
+                      fontSize: isTablet ? "0.8125rem" : "0.875rem",
+                      fontWeight: 600,
+                      color: "#1a1a24",
+                      lineHeight: 1.2,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {session.user?.name || "Usuario"}
+                  </div>
+                )}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: isMobile ? "0.5rem" : "0.75rem",
+                    fontSize: isMobile ? "0.6875rem" : "0.75rem",
+                    color: "#64748b",
+                    flexWrap: "nowrap",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "0.25rem" : "0.375rem" }}>
+                    {!isMobile && <span>Nivel:</span>}
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minWidth: isMobile ? "20px" : "24px",
+                        padding: isMobile ? "0.125rem 0.375rem" : "0.125rem 0.5rem",
+                        background: "rgba(99, 102, 241, 0.1)",
+                        borderRadius: "6px",
+                        border: "1px solid rgba(99, 102, 241, 0.3)",
+                        fontWeight: 700,
+                        color: "#6366f1",
+                        fontSize: isMobile ? "0.6875rem" : "0.75rem",
+                      }}
+                    >
+                      {totalLevel}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "0.25rem" : "0.375rem" }}>
+                    {!isMobile && <span>Coste:</span>}
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minWidth: isMobile ? "20px" : "24px",
+                        padding: isMobile ? "0.125rem 0.375rem" : "0.125rem 0.5rem",
+                        background: "rgba(239, 68, 68, 0.1)",
+                        borderRadius: "6px",
+                        border: "1px solid rgba(239, 68, 68, 0.3)",
+                        fontWeight: 700,
+                        color: "#ef4444",
+                        fontSize: isMobile ? "0.6875rem" : "0.75rem",
+                      }}
+                    >
+                      {monthlyCost.toFixed(2).replace(".", ",")}€
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botón de cerrar sesión */}
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                title="Cerrar sesión"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: isMobile ? "28px" : "32px",
+                  height: isMobile ? "28px" : "32px",
+                  background: "transparent",
+                  border: "none",
+                  borderRadius: "50%",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                <svg width={isMobile ? "16" : "18"} height={isMobile ? "16" : "18"} viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </button>
+            </div>
             
-            {/* Logout Button */}
-            <button
-              onClick={() => signOut({ callbackUrl: "/" })}
-              title="Cerrar sesión"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "48px",
-                height: "48px",
-                background: "#ffffff",
-                border: "none",
-                borderRadius: "24px",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "0.9";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "1";
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a1a24" strokeWidth="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-            </button>
           </div>
         )}
 
@@ -514,8 +721,7 @@ export default function Header() {
       {/* Profile View Modal */}
       {showProfile && session && isStudyAgentsPage && (
         <ProfileView
-          userId={session.user?.email || session.user?.id || ""}
-          colorTheme="dark"
+          userId={session.user?.id || session.user?.email || ""}
           onClose={() => setShowProfile(false)}
         />
       )}

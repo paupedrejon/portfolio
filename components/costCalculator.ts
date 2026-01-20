@@ -5,12 +5,16 @@
 // Precios por 1000 tokens (en USD) - actualizados a precios de OpenAI 2024
 export const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   "auto": { input: 0.0, output: 0.0 }, // Modo automático: gratis (Ollama) o muy barato (GPT-3.5)
+  "gpt-5": { input: 0.015, output: 0.06 }, // GPT-5 premium
+  "gpt-5-pro": { input: 0.03, output: 0.12 }, // GPT-5 Pro (máxima calidad)
   "gpt-4": { input: 0.03, output: 0.06 },
   "gpt-4-turbo": { input: 0.01, output: 0.03 },
   "gpt-4o": { input: 0.005, output: 0.015 },
   "gpt-4o-mini": { input: 0.00015, output: 0.0006 },
   "gpt-3.5-turbo": { input: 0.0005, output: 0.0015 },
   "gpt-3.5-turbo-16k": { input: 0.003, output: 0.004 },
+  "llama3.1": { input: 0.0, output: 0.0 }, // Llama 3.1 (gratis, local)
+  "llama3.2": { input: 0.0, output: 0.0 }, // Llama 3.2 (gratis, local)
 };
 
 export interface CostEstimate {
@@ -38,7 +42,13 @@ export function calculateCost(
   
   // Si no se encuentra exacto, buscar por prefijo
   if (!pricing) {
-    if (normalizedModel.includes("gpt-4o")) {
+    if (normalizedModel.includes("gpt-5-pro")) {
+      pricing = MODEL_PRICING["gpt-5-pro"];
+    } else if (normalizedModel.includes("gpt-5")) {
+      pricing = MODEL_PRICING["gpt-5"];
+    } else if (normalizedModel.includes("llama3.1") || normalizedModel.includes("llama3")) {
+      pricing = MODEL_PRICING["llama3.1"];
+    } else if (normalizedModel.includes("gpt-4o")) {
       pricing = MODEL_PRICING["gpt-4o"];
     } else if (normalizedModel.includes("gpt-4-turbo")) {
       pricing = MODEL_PRICING["gpt-4-turbo"];

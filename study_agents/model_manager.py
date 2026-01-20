@@ -151,6 +151,26 @@ class ModelManager:
             requires_api_key=True,
             quality_level="high"
         ),
+        
+        # Modelos PREMIUM (OpenAI) - Máxima calidad, solo cuando es crítico
+        ModelConfig(
+            name="gpt-5",
+            provider=ModelProvider.OPENAI,
+            cost_per_1k_input=0.015,    # $0.015 por 1k tokens input (estimado)
+            cost_per_1k_output=0.06,    # $0.06 por 1k tokens output (estimado)
+            max_tokens=16384,  # Límite real: 16,384 tokens de salida (contexto 128k+)
+            requires_api_key=True,
+            quality_level="premium"  # Nueva categoría de máxima calidad
+        ),
+        ModelConfig(
+            name="gpt-5-pro",
+            provider=ModelProvider.OPENAI,
+            cost_per_1k_input=0.03,     # $0.03 por 1k tokens input (estimado)
+            cost_per_1k_output=0.12,    # $0.12 por 1k tokens output (estimado)
+            max_tokens=16384,  # Límite real: 16,384 tokens de salida (contexto 128k+)
+            requires_api_key=True,
+            quality_level="premium"  # Máxima calidad disponible
+        ),
     ]
     
     def __init__(self, api_key: Optional[str] = None, mode: str = "auto"):
@@ -186,7 +206,7 @@ class ModelManager:
         Returns:
             Lista de modelos disponibles ordenados de más barato a más caro
         """
-        quality_order = {"low": 0, "medium": 1, "high": 2}
+        quality_order = {"low": 0, "medium": 1, "high": 2, "premium": 3}
         min_quality_level = quality_order.get(min_quality, 0)
         
         available = []
@@ -220,20 +240,39 @@ class ModelManager:
         task_type: str = "general",
         min_quality: str = "medium",
         preferred_model: Optional[str] = None,
-        context_length: Optional[int] = None
+        context_length: Optional[int] = None,
+        force_premium: bool = False
     ) -> Tuple[ModelConfig, Any]:
         """
         Selecciona el mejor modelo disponible para una tarea
         
         Args:
             task_type: Tipo de tarea ("qa", "generation", "analysis", "general")
-            min_quality: Calidad mínima requerida
+            min_quality: Calidad mínima requerida ("low", "medium", "high", "premium")
             preferred_model: Modelo preferido por el usuario (si está disponible)
             context_length: Longitud del contexto requerida (en tokens)
+            force_premium: Si es True, fuerza el uso de un modelo premium (GPT-5 o GPT-5 Pro)
         
         Returns:
             Tupla (ModelConfig, LLM instance)
         """
+        # Si force_premium es True, usar modelo premium
+        if force_premium:
+            min_quality = "premium"
+            # Buscar primero GPT-5, luego GPT-5 Pro
+            premium_models = ["gpt-5", "gpt-5-pro"]
+            for premium_model in premium_models:
+                for model in self.MODELS:
+                    if model.name == premium_model:
+                        if model.provider == ModelProvider.OPENAI and not self.api_key:
+                            continue
+                        if context_length and model.max_tokens and context_length > model.max_tokens:
+                            continue
+                        llm = self._create_llm(model)
+                        if llm:
+                            logger.info(f"✅ Usando modelo premium forzado: {model.name}")
+                            return model, llm
+        
         # Si hay un modelo preferido y está disponible, usarlo
         if preferred_model:
             for model in self.MODELS:

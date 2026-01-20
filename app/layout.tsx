@@ -11,8 +11,11 @@ export const metadata = {
   title: "Pau Pedrejon — Software Engineer & Developer",
   description: "Portfolio showcasing my projects, skills and experience as a software engineer specializing in game development, web applications, and creative technology.",
   icons: {
-    icon: '/LOGO_portfolio.png',
-    shortcut: '/LOGO_portfolio.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/LOGO_portfolio.png', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
     apple: '/LOGO_portfolio.png',
   },
 };

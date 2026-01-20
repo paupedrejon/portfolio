@@ -21,6 +21,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from memory.memory_manager import MemoryManager
 import tiktoken
 import sys
+import requests
+import re
+import requests
+import re
 
 # Importar model_manager
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -53,6 +57,8 @@ class ExplanationAgent:
         self.llm = None  # Se inicializará cuando se necesite
         self.model_manager = None
         self.current_model_config = None
+        self.unsplash_api_key = os.getenv("UNSPLASH_API_KEY")  # Opcional: API key de Unsplash
+        self.youtube_api_key = os.getenv("YOUTUBE_API_KEY")  # Opcional: API key de YouTube
         
         # Inicializar model_manager si está disponible
         if ModelManager:
@@ -77,6 +83,290 @@ class ExplanationAgent:
                     print(f"⚠️ Warning: No se pudo inicializar el LLM: {e}")
             else:
                 print("⚠️ Explanation Agent inicializado sin API key (se requerirá para usar)")
+    
+    def search_image(self, query: str) -> Optional[Dict[str, str]]:
+        """
+        Busca una imagen relevante usando Unsplash API o fallback a Pexels
+        
+        Args:
+            query: Término de búsqueda para la imagen
+            
+        Returns:
+            Diccionario con url, description, o None si no se encuentra
+        """
+        try:
+            # Intentar con Unsplash primero (si hay API key)
+            if self.unsplash_api_key:
+                try:
+                    search_url = "https://api.unsplash.com/search/photos"
+                    params = {
+                        "query": query,
+                        "per_page": 1,
+                        "orientation": "landscape",
+                        "client_id": self.unsplash_api_key,
+                    }
+                    
+                    response = requests.get(search_url, params=params, timeout=10)
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    if data.get("results") and len(data["results"]) > 0:
+                        photo = data["results"][0]
+                        image_url = photo["urls"]["regular"]
+                        description = photo.get("description") or photo.get("alt_description") or query
+                        return {
+                            "url": image_url,
+                            "description": description,
+                            "source": "Unsplash",
+                        }
+                except Exception as e:
+                    print(f"⚠️ Error usando Unsplash API: {e}, intentando Pexels")
+            
+            # Fallback a Pexels
+            try:
+                search_url = "https://api.pexels.com/v1/search"
+                headers = {}
+                if os.getenv("PEXELS_API_KEY"):
+                    headers["Authorization"] = os.getenv("PEXELS_API_KEY")
+                params = {
+                    "query": query,
+                    "per_page": 1,
+                    "orientation": "landscape",
+                }
+                
+                response = requests.get(search_url, headers=headers if headers else None, params=params, timeout=10)
+                response.raise_for_status()
+                data = response.json()
+                
+                if data.get("photos") and len(data["photos"]) > 0:
+                    photo = data["photos"][0]
+                    image_url = photo["src"]["large"]
+                    description = photo.get("alt") or query
+                    return {
+                        "url": image_url,
+                        "description": description,
+                        "source": "Pexels",
+                    }
+            except Exception as e:
+                print(f"⚠️ Error usando Pexels API: {e}")
+            
+            return None
+            
+        except Exception as e:
+            print(f"⚠️ Error buscando imagen: {e}")
+            return None
+    
+    def search_youtube_video(self, query: str) -> Optional[Dict[str, str]]:
+        """
+        Busca un video relevante de YouTube usando la API o web scraping
+        
+        Args:
+            query: Término de búsqueda para el video
+            
+        Returns:
+            Diccionario con videoId, title, description, o None si no se encuentra
+        """
+        try:
+            # Intentar con YouTube Data API v3 si hay API key
+            if self.youtube_api_key:
+                try:
+                    search_url = "https://www.googleapis.com/youtube/v3/search"
+                    params = {
+                        "part": "snippet",
+                        "q": query,
+                        "type": "video",
+                        "maxResults": 5,
+                        "key": self.youtube_api_key,
+                        "videoCategoryId": "27",  # Educación
+                        "order": "relevance",
+                    }
+                    
+                    response = requests.get(search_url, params=params, timeout=10)
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    if data.get("items") and len(data["items"]) > 0:
+                        # Buscar el video más relevante
+                        best_video = None
+                        best_score = 0
+                        
+                        query_lower = query.lower()
+                        educational_keywords = ["explicación", "tutorial", "educativo", "aprender", "curso", "lección", "explicar", "cómo"]
+                        has_educational = any(keyword in query_lower for keyword in educational_keywords)
+                        
+                        for item in data["items"]:
+                            snippet = item.get("snippet", {})
+                            title = snippet.get("title", "").lower()
+                            description = snippet.get("description", "").lower()
+                            
+                            # Calcular score de relevancia
+                            score = 0
+                            query_words = query_lower.split()
+                            
+                            # Puntos por palabras coincidentes en el título
+                            for word in query_words:
+                                if word in title:
+                                    score += 3
+                                if word in description:
+                                    score += 1
+                            
+                            # Bonus si tiene términos educativos (si no los tiene la query)
+                            if not has_educational:
+                                if any(keyword in title or keyword in description for keyword in educational_keywords):
+                                    score += 2
+                            
+                            if score > best_score:
+                                best_score = score
+                                best_video = item
+                        
+                        if best_video:
+                            video_id = best_video["id"]["videoId"]
+                            snippet = best_video.get("snippet", {})
+                            return {
+                                "videoId": video_id,
+                                "title": snippet.get("title", ""),
+                                "description": snippet.get("description", ""),
+                                "url": f"https://www.youtube.com/watch?v={video_id}",
+                            }
+                except Exception as e:
+                    print(f"⚠️ Error usando YouTube API: {e}, intentando web scraping")
+            
+            # Fallback: web scraping básico (sin API key)
+            try:
+                search_url = f"https://www.youtube.com/results?search_query={requests.utils.quote(query)}"
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+                response = requests.get(search_url, headers=headers, timeout=10)
+                response.raise_for_status()
+                
+                # Buscar video ID en el HTML (método básico)
+                import re
+                video_id_pattern = r'"videoId":"([a-zA-Z0-9_-]{11})"'
+                matches = re.findall(video_id_pattern, response.text)
+                
+                if matches:
+                    video_id = matches[0]
+                    return {
+                        "videoId": video_id,
+                        "title": query,
+                        "description": "",
+                        "url": f"https://www.youtube.com/watch?v={video_id}",
+                    }
+            except Exception as e:
+                print(f"⚠️ Error usando web scraping de YouTube: {e}")
+            
+            return None
+            
+        except Exception as e:
+            print(f"⚠️ Error buscando video: {e}")
+            return None
+    
+    def _process_image_blocks(self, content: str) -> str:
+        """
+        Procesa bloques de imagen en el contenido y los reemplaza con URLs reales
+        
+        Args:
+            content: Contenido con bloques de imagen
+            
+        Returns:
+            Contenido con bloques de imagen reemplazados por markdown de imágenes
+        """
+        # Patrón para detectar bloques de imagen
+        image_block_pattern = r'```image\s*\n(.*?)```'
+        
+        def replace_image_block(match):
+            block_content = match.group(1).strip()
+            
+            # Extraer query y description del bloque
+            query = None
+            description = None
+            
+            for line in block_content.split('\n'):
+                if line.startswith('query:'):
+                    query = line.replace('query:', '').strip()
+                elif line.startswith('description:'):
+                    description = line.replace('description:', '').strip()
+            
+            # Si no hay query, usar la description o el contenido completo
+            if not query:
+                query = description or block_content
+            
+            if not query:
+                return ""
+            
+            # Buscar imagen
+            image_data = self.search_image(query)
+            
+            if image_data:
+                image_url = image_data["url"]
+                image_desc = image_data.get("description", description or query)
+                print(f"✅ Imagen encontrada para '{query}': {image_url[:80]}...")
+                
+                # Reemplazar con markdown de imagen
+                return f'\n\n![{image_desc}]({image_url})\n\n*Imagen: {image_desc}*\n\n'
+            else:
+                print(f"⚠️ No se encontró imagen para '{query}', dejando descripción")
+                return f'\n\n*💡 Imagen sugerida: {description or query}*\n\n'
+        
+        # Reemplazar todos los bloques de imagen
+        processed_content = re.sub(image_block_pattern, replace_image_block, content, flags=re.DOTALL | re.IGNORECASE)
+        
+        return processed_content
+    
+    def _process_video_blocks(self, content: str) -> str:
+        """
+        Procesa bloques de video de YouTube en el contenido y los reemplaza con información del video
+        
+        Args:
+            content: Contenido con bloques de video
+            
+        Returns:
+            Contenido con bloques de video reemplazados por información del video
+        """
+        # Patrón para detectar bloques de video
+        video_block_pattern = r'```youtube-video\s*\n(.*?)```'
+        
+        def replace_video_block(match):
+            block_content = match.group(1).strip()
+            
+            # Extraer query y description del bloque
+            query = None
+            description = None
+            
+            for line in block_content.split('\n'):
+                if line.startswith('query:'):
+                    query = line.replace('query:', '').strip()
+                elif line.startswith('description:'):
+                    description = line.replace('description:', '').strip()
+            
+            # Si no hay query, usar la description o el contenido completo
+            if not query:
+                query = description or block_content
+            
+            if not query:
+                return ""
+            
+            # Buscar video
+            video_data = self.search_youtube_video(query)
+            
+            if video_data:
+                video_id = video_data["videoId"]
+                video_title = video_data.get("title", query)
+                video_url = video_data.get("url", f"https://www.youtube.com/watch?v={video_id}")
+                print(f"✅ Video encontrado para '{query}': {video_id}")
+                
+                # Reemplazar con formato especial que el frontend puede procesar
+                # El frontend detectará este formato y mostrará el visualizador
+                return f'\n\n<youtube-video id="{video_id}" url="{video_url}" title="{video_title}" />\n\n'
+            else:
+                print(f"⚠️ No se encontró video para '{query}', dejando descripción")
+                return f'\n\n*🎬 Video sugerido: {description or query}*\n\n'
+        
+        # Reemplazar todos los bloques de video
+        processed_content = re.sub(video_block_pattern, replace_video_block, content, flags=re.DOTALL | re.IGNORECASE)
+        
+        return processed_content
     
     def generate_explanations(self, max_concepts: int = 20) -> Dict[str, str]:
         """
@@ -191,7 +481,7 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
                 "status": "error"
             }
     
-    def generate_notes(self, topics: Optional[List[str]] = None, model: Optional[str] = None, user_level: Optional[int] = None, conversation_history: Optional[List[dict]] = None, topic: Optional[str] = None) -> str:
+    def generate_notes(self, topics: Optional[List[str]] = None, model: Optional[str] = None, user_level: Optional[int] = None, conversation_history: Optional[List[dict]] = None, topic: Optional[str] = None, chat_id: Optional[str] = None, user_id: Optional[str] = None) -> tuple[str, dict]:
         """
         Genera resumen completo de la conversación en formato Markdown
         
@@ -209,12 +499,16 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
             try:
                 # Seleccionar modelo automáticamente (prioriza gratis > barato > caro)
                 # Para generación de apuntes, necesitamos contexto amplio y buena calidad
-                self.current_model_config, self.llm = self.model_manager.select_model(
+                self.current_model_config, base_llm = self.model_manager.select_model(
                     task_type="generation",
                     min_quality="medium",
                     preferred_model=model if model else None,
                     context_length=8000  # Necesitamos contexto amplio
                 )
+                # Aumentar temperatura para más variación en los apuntes
+                if hasattr(base_llm, 'temperature'):
+                    base_llm.temperature = 0.9
+                self.llm = base_llm
                 print(f"✅ Usando modelo: {self.current_model_config.name} (costo: ${self.current_model_config.cost_per_1k_input:.4f}/{self.current_model_config.cost_per_1k_output:.4f} por 1k tokens)")
             except Exception as e:
                 error_msg = f"⚠️ Error al seleccionar modelo automáticamente: {str(e)}"
@@ -224,19 +518,19 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
                     try:
                         self.llm = ChatOpenAI(
                             model="gpt-3.5-turbo",  # Modelo más barato
-                            temperature=0.7,
+                            temperature=0.9,  # Aumentada para más variación
                             api_key=self.api_key,
                             max_tokens=None
                         )
                         print("✅ Fallback a gpt-3.5-turbo")
                     except Exception as e2:
-                        return f"# Error\n\n⚠️ Error al inicializar el modelo: {str(e2)}"
+                        return f"# Error\n\n⚠️ Error al inicializar el modelo: {str(e2)}", {"inputTokens": 0, "outputTokens": 0, "model": None}
                 else:
-                    return "# Error\n\n⚠️ Se requiere configurar una API key de OpenAI o tener Ollama instalado. Por favor, configura tu API key o instala Ollama."
+                    return "# Error\n\n⚠️ Se requiere configurar una API key de OpenAI o tener Ollama instalado. Por favor, configura tu API key o instala Ollama.", {"inputTokens": 0, "outputTokens": 0, "model": None}
         else:
             # Fallback: usar OpenAI directamente
             if not self.api_key:
-                return "# Error\n\n⚠️ Se requiere configurar una API key de OpenAI para generar apuntes. Por favor, configura tu API key."
+                return "# Error\n\n⚠️ Se requiere configurar una API key de OpenAI para generar apuntes. Por favor, configura tu API key.", {"inputTokens": 0, "outputTokens": 0, "model": None}
             
             # Usar modelo especificado o el más barato disponible
             model_to_use = model if model else "gpt-3.5-turbo"  # Por defecto usar el más barato
@@ -244,7 +538,7 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
             try:
                 self.llm = ChatOpenAI(
                     model=model_to_use,
-                    temperature=0.7,
+                    temperature=0.9,  # Aumentada para más variación en los apuntes
                     api_key=self.api_key,
                     max_tokens=None
                 )
@@ -254,18 +548,37 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
                     print(f"⚠️ Modelo {model_to_use} no disponible, usando gpt-3.5-turbo como fallback")
                     self.llm = ChatOpenAI(
                         model="gpt-3.5-turbo",
-                        temperature=0.7,
+                        temperature=0.9,  # Aumentada para más variación
                         api_key=self.api_key,
                         max_tokens=None
                     )
                 except Exception as e2:
-                    return f"# Error\n\n⚠️ Error al inicializar el modelo: {str(e2)}"
+                    return f"# Error\n\n⚠️ Error al inicializar el modelo: {str(e2)}", {"inputTokens": 0, "outputTokens": 0, "model": None}
         
         # Definir el prompt template que se usará en ambos casos
         # Usar raw string (r"""...""") para evitar problemas con secuencias de escape
         prompt_template = r"""Eres un Arquitecto de Conocimiento experto en crear 'Hojas de Estudio de Alto Rendimiento'.
 
 Tu objetivo NO es resumir, sino destilar la información para que sea memorizable al instante.
+
+**🚨 CRÍTICO - DETECCIÓN DE TEMARIOS:**
+Si el contenido fuente es un TEMARIO (lista de temas de examen/oposición), NO generes apuntes sobre "el temario", "qué temas entran" o "el contenido del examen". 
+En su lugar, genera contenido educativo COMPLETO sobre CADA UNO de los temas listados. 
+Crea apuntes detallados que cubran el contenido real de cada tema, como si fueras a enseñar ese tema desde cero.
+Si hay múltiples temas, organiza el contenido por tema y cubre todos los temas listados con su contenido educativo completo.
+
+{language_instruction}
+
+### 🎲 VARIACIÓN Y ORIGINALIDAD (IMPORTANTE):
+
+**CRÍTICO**: Cada vez que generes apuntes, varía el contenido significativamente:
+- Usa diferentes ejemplos, palabras y frases
+- Cambia el orden de los conceptos presentados
+- Incluye contenido diferente pero igualmente relevante y útil
+- NO repitas exactamente el mismo contenido de generaciones anteriores
+- Si es un idioma, incluye vocabulario y frases diferentes cada vez
+- Varía los ejemplos prácticos y casos de uso
+- Presenta la información desde diferentes ángulos o enfoques
 
 CONTENIDO FUENTE:
 {content}
@@ -282,9 +595,13 @@ CONTENIDO FUENTE:
 
 4. **NO MERMAID:** Absolutamente prohibido usar bloques ```mermaid. Si necesitas un diagrama, usa SOLO el formato JSON especificado abajo.
 
-### 📊 ADAPTACIÓN AL NIVEL (CRÍTICO):
+### 📊 ADAPTACIÓN AL NIVEL (CRÍTICO - OBLIGATORIO):
 
-El nivel del estudiante está indicado en {level_note}. **ADÁPTATE ESTRICTAMENTE AL NIVEL**:
+**NIVEL ACTUAL DEL ESTUDIANTE: {user_level}/10**
+
+{level_note}
+
+**DEBES ADAPTAR ESTRICTAMENTE TODO EL CONTENIDO AL NIVEL {user_level}/10. NO uses contenido de otros niveles.**
 
 **NIVEL 0-1 (Principiante Absoluto):**
 - Solo vocabulario esencial: saludos, números 1-10, colores básicos
@@ -366,29 +683,105 @@ El nivel del estudiante está indicado en {level_note}. **ADÁPTATE ESTRICTAMENT
 
 ---
 
-### 🎨 INSTRUCCIONES PARA DIAGRAMAS (JSON ONLY):
+### 🎨 INSTRUCCIONES PARA DIAGRAMAS (JSON ONLY) - REGLAS ESTRICTAS:
 
-Si el contenido se beneficia de una visualización (jerarquías, procesos, comparaciones VS), genera UN bloque de código `diagram-json` al final de la sección correspondiente.
+**🚫 PROHIBIDO GENERAR DIAGRAMAS PARA:**
+- Vocabulario, palabras, frases o listas de términos
+- Estructuras gramaticales o reglas de idioma
+- Procesos, pasos o instrucciones
+- Conceptos individuales o explicaciones de un solo tema
+- Guías de uso, tutoriales o procedimientos
+- Cualquier contenido que NO sea una comparación directa de 2 elementos
 
-**Plantilla JSON Estricta:**
+**✅ SOLO GENERA DIAGRAMAS SI:**
+- Es una comparación DIRECTA de EXACTAMENTE 2 elementos (ej: "Python vs JavaScript", "A vs B")
+- El título contiene "vs", "versus", "contra" o "comparación" seguido de 2 elementos
+- Necesitas comparar características, ventajas/desventajas, o diferencias entre 2 cosas específicas
+
+**FORMATO OBLIGATORIO PARA COMPARACIONES:**
 
 ```diagram-json
 {
-  "title": "Título del Diagrama",
+  "title": "Elemento A vs Elemento B",
   "nodes": [
-    {"id": "A", "label": "Concepto Central", "color": "#6366f1"},
-    {"id": "B", "label": "Subconcepto", "color": "#10b981", "description": "Explicación breve"}
+    {"id": "A", "label": "Elemento A", "color": "#6366f1"},
+    {"id": "B", "label": "Elemento B", "color": "#10b981"}
   ],
-  "edges": [
-    {"from": "A", "to": "B"}
-  ]
+  "edges": []
 }
 ```
 
-**IMPORTANTE**: 
-- SOLO genera diagramas para comparaciones directas de DOS elementos (ej: "A vs B")
-- NO generes diagramas para vocabulario, frases, estructuras gramaticales, o listas de conceptos
-- Si tienes dudas, NO generes diagrama. Usa listas o tablas en su lugar.
+**REGLAS CRÍTICAS:**
+- DEBE tener EXACTAMENTE 2 nodos (ni más, ni menos)
+- El título DEBE contener "vs", "versus", "contra" o "comparación"
+- NO uses edges (conexiones) en comparaciones
+- Si NO es una comparación de 2 elementos → NO generes diagrama
+- Si tienes CUALQUIER duda → NO generes diagrama. Usa tablas o listas en su lugar.
+
+### 🖼️ INSTRUCCIONES PARA IMÁGENES:
+
+**✅ GENERA BLOQUES DE IMAGEN CUANDO:**
+- Una imagen ayudaría significativamente a explicar un concepto visual (ej: diagramas anatómicos, estructuras químicas, mapas, gráficos)
+- El concepto es difícil de entender sin una representación visual
+- Estás explicando algo que se beneficia de una ilustración (ej: partes de una célula, estructura de un átomo, mapa geográfico)
+
+**FORMATO OBLIGATORIO PARA IMÁGENES:**
+
+```image
+query: descripción de lo que debe mostrar la imagen
+description: explicación de cómo la imagen ayuda a entender el concepto
+```
+
+**EJEMPLOS VÁLIDOS:**
+```image
+query: estructura de una célula eucariota con orgánulos etiquetados
+description: Esta imagen muestra las partes principales de una célula eucariota, ayudando a visualizar la organización celular.
+```
+
+```image
+query: tabla periódica de elementos químicos
+description: La tabla periódica muestra la organización de los elementos químicos según su número atómico y propiedades.
+```
+
+**REGLAS:**
+- Solo genera bloques de imagen cuando realmente añadan valor educativo
+- La descripción debe explicar por qué la imagen es útil para entender el concepto
+- Usa queries descriptivas y específicas (en español o inglés)
+- NO generes imágenes para conceptos abstractos que no se beneficien de una visualización
+- **IMPORTANTE**: Si el concepto se beneficiaría de una imagen, SIEMPRE incluye un bloque de imagen
+
+### 🎬 INSTRUCCIONES PARA VIDEOS:
+
+**✅ GENERA BLOQUES DE VIDEO CUANDO:**
+- Un video explicativo ayudaría significativamente a entender un concepto (ej: procesos, tutoriales, demostraciones)
+- El concepto es mejor explicado con movimiento o secuencia (ej: cómo funciona algo, pasos de un proceso)
+- Estás explicando algo que se beneficia de una demostración visual (ej: cómo resolver un problema, cómo usar una herramienta)
+- El usuario explícitamente pide un video o visualización
+
+**FORMATO OBLIGATORIO PARA VIDEOS:**
+
+```youtube-video
+query: descripción de lo que debe explicar el video
+description: explicación de cómo el video ayuda a entender el concepto
+```
+
+**EJEMPLOS VÁLIDOS:**
+```youtube-video
+query: cómo funciona el sistema circulatorio explicación educativa
+description: Este video muestra cómo funciona el sistema circulatorio con animaciones que ayudan a visualizar el flujo de sangre.
+```
+
+```youtube-video
+query: tutorial cómo resolver ecuaciones de segundo grado paso a paso
+description: Este video explica paso a paso cómo resolver ecuaciones de segundo grado con ejemplos prácticos.
+```
+
+**REGLAS:**
+- Solo genera bloques de video cuando realmente añadan valor educativo
+- La descripción debe explicar por qué el video es útil para entender el concepto
+- Usa queries descriptivas y específicas (en español o inglés)
+- **IMPORTANTE**: Si el concepto se beneficiaría de un video, SIEMPRE incluye un bloque de video
+- Prioriza videos educativos y tutoriales sobre entretenimiento
 
 {level_note}"""
 
@@ -410,6 +803,68 @@ Si el contenido se beneficia de una visualización (jerarquías, procesos, compa
         if not final_topics and topic:
             final_topics = [topic]
         
+        # Detectar si el contenido es un temario (lista de temas) en lugar de contenido educativo
+        def detect_and_extract_topics_from_syllabus(content: str) -> Optional[List[str]]:
+            """Detecta si el contenido es un temario y extrae los temas listados"""
+            if not content:
+                return None
+            
+            content_lower = content.lower()
+            
+            # Palabras clave que indican que es un temario
+            syllabus_keywords = [
+                "temario", "temas del examen", "temas de la oposición", "temas a estudiar",
+                "programa", "índice de temas", "lista de temas", "contenido del examen",
+                "temas incluidos", "materias del examen"
+            ]
+            
+            is_syllabus = any(keyword in content_lower for keyword in syllabus_keywords)
+            
+            if not is_syllabus:
+                return None
+            
+            # Intentar extraer temas del temario
+            import re
+            topics = []
+            
+            # Patrones comunes para listas de temas:
+            # 1. Tema 1: Título del tema
+            # 2. 1. Título del tema
+            # 3. - Título del tema
+            # 4. • Título del tema
+            
+            patterns = [
+                r'(?:tema|tema\s+\d+|^\d+\.)\s*[:\-]?\s*([^\n]+?)(?=\n(?:tema|tema\s+\d+|\d+\.|$))',
+                r'^\d+\.\s*([^\n]+)',
+                r'^[-•]\s*([^\n]+)',
+                r'(?:tema|tema\s+\d+)\s+([^\n]+?)(?=\n(?:tema|tema\s+\d+|\d+\.|$))',
+            ]
+            
+            for pattern in patterns:
+                matches = re.findall(pattern, content, re.MULTILINE | re.IGNORECASE)
+                if matches:
+                    topics.extend([m.strip() for m in matches if len(m.strip()) > 5])  # Filtrar temas muy cortos
+            
+            # Si encontramos temas, devolverlos
+            if topics:
+                # Limpiar y deduplicar
+                cleaned_topics = []
+                seen = set()
+                for topic in topics:
+                    topic_clean = topic.strip()
+                    # Eliminar prefijos comunes
+                    topic_clean = re.sub(r'^(tema\s*\d+[:\-]?\s*)', '', topic_clean, flags=re.IGNORECASE)
+                    topic_clean = re.sub(r'^\d+[:\-]?\s*', '', topic_clean)
+                    if topic_clean and len(topic_clean) > 5 and topic_clean.lower() not in seen:
+                        cleaned_topics.append(topic_clean)
+                        seen.add(topic_clean.lower())
+                
+                if cleaned_topics:
+                    print(f"📋 Temario detectado con {len(cleaned_topics)} temas extraídos")
+                    return cleaned_topics[:20]  # Limitar a 20 temas para no sobrecargar
+        
+            return None
+        
         # Determinar si hay historial de conversación relevante al tema
         has_relevant_conversation = False
         if conversation_text and final_topics:
@@ -418,6 +873,21 @@ Si el contenido se beneficia de una visualización (jerarquías, procesos, compa
             if main_topic_lower in conversation_text.lower():
                 has_relevant_conversation = True
                 print(f"📝 Historial de conversación contiene información sobre '{final_topics[0]}'")
+        
+        # Detectar si el contenido subido es un temario
+        all_content = self.memory.get_all_documents(limit=50)
+        syllabus_topics = None
+        if all_content:
+            combined_doc_content = "\n\n".join(all_content[:10])  # Revisar primeros documentos
+            syllabus_topics = detect_and_extract_topics_from_syllabus(combined_doc_content)
+            
+            if syllabus_topics:
+                print(f"📋 TEMARIO DETECTADO: Se encontraron {len(syllabus_topics)} temas en el documento")
+                print(f"📋 Primeros temas: {', '.join(syllabus_topics[:5])}")
+                # Si se detectó un temario y el usuario pide apuntes/tests, usar los temas del temario
+                if not final_topics or (len(final_topics) == 1 and final_topics[0].lower() in ["temario", "temas", "contenido"]):
+                    final_topics = syllabus_topics
+                    print(f"✅ Usando temas del temario para generar contenido educativo")
         
         if final_topics:
             # Si hay historial relevante, usarlo primero
@@ -433,8 +903,13 @@ Si el contenido se beneficia de una visualización (jerarquías, procesos, compa
                 else:
                     print(f"📝 No hay historial de conversación, generando apuntes educativos desde cero para '{final_topics[0]}'")
                 
-                main_topic = final_topics[0] if isinstance(final_topics, list) else str(final_topics)
-                combined_content = f"TEMA: {main_topic}\n\nEste resumen se generará basándose en el conocimiento educativo sobre {main_topic}, adaptado al nivel del estudiante."
+                # Si hay múltiples temas (temario), generar contenido sobre todos ellos
+                if isinstance(final_topics, list) and len(final_topics) > 1:
+                    topics_list = "\n".join([f"- {t}" for t in final_topics[:15]])  # Limitar a 15 temas
+                    combined_content = f"TEMARIO - TEMAS A PREPARAR:\n\n{topics_list}\n\n🚨 INSTRUCCIÓN CRÍTICA: El usuario quiere preparar estos temas de una oposición/examen. NO generes contenido sobre 'el temario' o 'qué temas entran'. En su lugar, genera contenido educativo COMPLETO sobre CADA UNO de estos temas. Crea apuntes detallados que cubran el contenido real de cada tema, como si fueras a enseñar ese tema desde cero. Organiza el contenido por tema y cubre todos los temas listados."
+                else:
+                    main_topic = final_topics[0] if isinstance(final_topics, list) else str(final_topics)
+                    combined_content = f"TEMA: {main_topic}\n\nEste resumen se generará basándose en el conocimiento educativo sobre {main_topic}, adaptado al nivel del estudiante."
                 
                 # Si hay historial no relevante, añadirlo al final pero con menor prioridad
                 if conversation_text:
@@ -531,23 +1006,47 @@ Si el contenido se beneficia de una visualización (jerarquías, procesos, compa
             if len(content_words) < 10:
                 print(f"❌ Contenido tiene muy pocas palabras: {len(content_words)}")
                 return "# Resumen\n\n⚠️ El contenido disponible tiene muy pocas palabras. Por favor, sube documentos con más texto."
-        
-        # Validar palabras solo si no es contenido generado desde cero
-        if not combined_content.strip().startswith("TEMA:"):
-            content_words = combined_content.split()
             print(f"✅ Contenido válido: {len(content_words)} palabras")
         else:
             print(f"✅ Generando contenido educativo desde cero para el tema especificado")
         
         # Preparar nota de nivel si está disponible
         level_note = ""
+        user_level_display = user_level if user_level is not None else 0
         if user_level is not None:
             if user_level <= 3:
-                level_note = "\n\n**NIVEL DEL ESTUDIANTE**: Principiante (nivel {}/10). Adapta el contenido para que sea claro y accesible, usando lenguaje simple y explicaciones detalladas.".format(user_level)
+                level_note = f"""
+**NIVEL PRINCIPIANTE ({user_level}/10) - INSTRUCCIONES OBLIGATORIAS:**
+- Solo vocabulario esencial: saludos, números 1-10, colores básicos
+- Frases de supervivencia muy simples: "Hola", "Adiós", "Gracias", "¿Cómo estás?"
+- Pronunciación básica explicada con letras
+- Sin gramática compleja, solo estructuras simples
+- Ejemplos muy simples y comunes
+- Lenguaje extremadamente simple y claro
+- Explicaciones paso a paso muy detalladas"""
             elif user_level <= 6:
-                level_note = "\n\n**NIVEL DEL ESTUDIANTE**: Intermedio (nivel {}/10). Puedes usar terminología técnica pero siempre con explicaciones claras.".format(user_level)
+                level_note = f"""
+**NIVEL INTERMEDIO ({user_level}/10) - INSTRUCCIONES OBLIGATORIAS:**
+- Vocabulario temático: trabajo, viajes, hobbies, emociones
+- Tiempos verbales: presente, pasado simple, futuro cercano
+- Estructuras complejas básicas: condicionales simples, comparativos
+- Frases útiles para situaciones comunes
+- Ejemplos contextualizados
+- Puedes usar terminología técnica pero siempre con explicaciones claras"""
             else:
-                level_note = "\n\n**NIVEL DEL ESTUDIANTE**: Avanzado (nivel {}/10). Puedes usar terminología técnica avanzada y profundizar en los conceptos.".format(user_level)
+                level_note = f"""
+**NIVEL AVANZADO ({user_level}/10) - INSTRUCCIONES OBLIGATORIAS:**
+- Vocabulario sofisticado: términos académicos, literarios, técnicos
+- Tiempos verbales avanzados: pluscuamperfecto, subjuntivo complejo
+- Expresiones idiomáticas raras y cultas
+- Gramática compleja: perífrasis, construcciones estilísticas
+- Diferencias regionales detalladas (dialectos, acentos)
+- Matices y sutilezas del idioma
+- Ejemplos de literatura o discursos formales
+- Puedes usar terminología técnica avanzada y profundizar en los conceptos"""
+        else:
+            level_note = "\n\n**NIVEL NO ESPECIFICADO**: Usa nivel intermedio por defecto."
+            user_level_display = 5
         
         # Preparar nombre del tema
         topic_name = ""
@@ -565,9 +1064,69 @@ Si el contenido se beneficia de una visualización (jerarquías, procesos, compa
         if not topic_name:
             topic_name = "Estudio"
         
+        # Detectar si el tema es un idioma para generar en ese idioma
+        is_language_topic = False
+        language_name = ""
+        if topic_name:
+            topic_lower = topic_name.lower()
+            language_map = {
+                "inglés": "inglés", "english": "inglés",
+                "francés": "francés", "francais": "francés", "french": "francés",
+                "alemán": "alemán", "deutsch": "alemán", "german": "alemán",
+                "italiano": "italiano", "italian": "italiano",
+                "portugués": "portugués", "portuguese": "portugués",
+                "chino": "chino", "chinese": "chino", "mandarín": "chino",
+                "japonés": "japonés", "japanese": "japonés", "japones": "japonés",
+                "coreano": "coreano", "korean": "coreano",
+                "ruso": "ruso", "russian": "ruso",
+                "español": "español", "spanish": "español",
+            }
+            for key, value in language_map.items():
+                if key in topic_lower:
+                    is_language_topic = True
+                    language_name = value
+                    break
+        
+        # Preparar instrucción de idioma
+        language_instruction = ""
+        if is_language_topic and language_name:
+            language_instruction = f"""
+### 🌍 IDIOMA DE GENERACIÓN (CRÍTICO):
+
+**IMPORTANTE**: El tema es "{topic_name}" ({language_name}). 
+
+**ESTRUCTURA DE IDIOMAS:**
+- Las **explicaciones, títulos y descripciones** deben estar en **ESPAÑOL** (el idioma con el que te hablo)
+- El **contenido del idioma objetivo** ({language_name}) debe estar en **{language_name.upper()}**
+- Las **traducciones** deben mostrar: palabra en {language_name} → traducción en español
+
+Ejemplo CORRECTO para Inglés:
+- Título: "# Inglés" (en español)
+- Concepto: "**Hello**: Hola." (palabra en inglés, traducción en español)
+- Ejemplo: "Hello, how are you?": ¿Cómo estás? (frase en inglés, traducción en español)
+
+Ejemplo CORRECTO para Francés:
+- Título: "# Francés" (en español)
+- Concepto: "**Bonjour**: Buenos días." (palabra en francés, traducción en español)
+- Ejemplo: "Bonjour, comment allez-vous?": Buenos días, ¿cómo está usted? (frase en francés, traducción en español)
+
+**REGLA**: Explica en español, pero muestra el contenido del idioma objetivo en {language_name}.
+"""
+        
         # Usar replace directo en lugar de format para evitar problemas con llaves en el contenido
         # Esto es más seguro cuando el contenido puede contener llaves también
-        prompt = prompt_template.replace("{content}", combined_content).replace("{level_note}", level_note).replace("{topic_name}", topic_name)
+        # Reemplazar también {language_name} y {user_level} en el prompt
+        # Asegurarse de que user_level_display esté definido
+        if 'user_level_display' not in locals():
+            user_level_display = user_level if user_level is not None else 0
+        
+        final_prompt = prompt_template.replace("{content}", combined_content).replace("{level_note}", level_note).replace("{topic_name}", topic_name).replace("{language_instruction}", language_instruction).replace("{user_level}", str(user_level_display))
+        if is_language_topic and language_name:
+            final_prompt = final_prompt.replace("{language_name}", language_name)
+        else:
+            final_prompt = final_prompt.replace("{language_name}", "el idioma objetivo")
+        
+        prompt = final_prompt
 
         try:
             print("🔄 Invocando LLM para generar apuntes...")
@@ -576,8 +1135,42 @@ Si el contenido se beneficia de una visualización (jerarquías, procesos, compa
             print(f"✅ Respuesta recibida: {len(notes_content)} caracteres")
             print(f"📄 Primeros 300 caracteres: {notes_content[:300]}")
             
-            # POST-PROCESAMIENTO: Eliminar cualquier bloque Mermaid que el modelo pueda haber generado
+            # Capturar tokens de uso
+            usage_info = {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "model": None
+            }
+            
+            # Determinar el modelo usado
+            model_used = None
+            if self.current_model_config:
+                model_used = self.current_model_config.name
+            elif model:
+                model_used = model
+            elif hasattr(self.llm, 'model_name'):
+                model_used = self.llm.model_name
+            elif hasattr(self.llm, 'model'):
+                model_used = self.llm.model
+            else:
+                model_used = "gpt-3.5-turbo"  # Fallback
+            
+            usage_info["model"] = model_used
+            
+            # Intentar obtener tokens de la metadata de la respuesta
+            if hasattr(response, 'response_metadata') and response.response_metadata:
+                token_usage = response.response_metadata.get('token_usage', {})
+                usage_info["inputTokens"] = token_usage.get('prompt_tokens', 0)
+                usage_info["outputTokens"] = token_usage.get('completion_tokens', 0)
+            else:
+                # Estimar tokens si no están disponibles (1 token ≈ 4 caracteres)
+                usage_info["inputTokens"] = len(prompt) // 4
+                usage_info["outputTokens"] = len(notes_content) // 4
+            
+            # POST-PROCESAMIENTO: Eliminar cualquier bloque Mermaid y validar diagramas JSON
             import re
+            import json as json_module
+            
             # Detectar y eliminar bloques de código Mermaid (multilínea)
             # Patrón mejorado que captura bloques completos con cualquier contenido entre los backticks
             mermaid_patterns = [
@@ -606,38 +1199,87 @@ Si el contenido se beneficia de una visualización (jerarquías, procesos, compa
             # Limpiar líneas vacías múltiples que puedan quedar después de eliminar bloques
             notes_content = re.sub(r'\n{3,}', '\n\n', notes_content)
             
-            # Validar que hay bloques diagram-json en la respuesta
-            diagram_json_count = notes_content.count('```diagram-json') + notes_content.count('``` diagram-json')
-            if diagram_json_count == 0:
-                print("⚠️ Advertencia: No se encontraron bloques diagram-json en la respuesta")
-                print(f"📄 Primeros 500 caracteres de la respuesta: {notes_content[:500]}")
+            # Validar y filtrar diagramas JSON: solo mantener comparaciones 1vs1 válidas
+            diagram_json_pattern = r'```\s*diagram-json\s*\n(.*?)```'
+            diagram_matches = list(re.finditer(diagram_json_pattern, notes_content, re.DOTALL))
+            
+            diagrams_to_remove = []
+            valid_diagrams_count = 0
+            
+            for match in diagram_matches:
+                diagram_block = match.group(0)
+                diagram_content = match.group(1).strip()
+                
+                try:
+                    # Intentar parsear el JSON
+                    diagram_data = json_module.loads(diagram_content)
+                    
+                    # Validar que sea una comparación válida
+                    title = (diagram_data.get("title", "") or "").lower()
+                    nodes = diagram_data.get("nodes", [])
+                    
+                    # Verificar que el título contenga palabras de comparación
+                    has_comparison_keyword = any(keyword in title for keyword in [" vs ", " versus", " contra ", " vs. ", "comparación"])
+                    
+                    # Verificar que tenga exactamente 2 nodos
+                    has_exactly_2_nodes = len(nodes) == 2
+                    
+                    # Si NO es una comparación válida, marcarlo para eliminación
+                    if not (has_comparison_keyword and has_exactly_2_nodes):
+                        diagrams_to_remove.append(match)
+                        print(f"🚫 Diagrama eliminado: '{diagram_data.get('title', 'Sin título')}' - No es comparación válida (nodos: {len(nodes)}, tiene 'vs': {has_comparison_keyword})")
+                    else:
+                        valid_diagrams_count += 1
+                        print(f"✅ Diagrama válido: '{diagram_data.get('title', 'Sin título')}' - Comparación 1vs1")
+                        
+                except (json_module.JSONDecodeError, AttributeError, TypeError) as e:
+                    # Si no se puede parsear, eliminar el diagrama
+                    diagrams_to_remove.append(match)
+                    print(f"🚫 Diagrama eliminado: Error al parsear JSON - {e}")
+            
+            # Eliminar diagramas inválidos (de atrás hacia adelante para no afectar índices)
+            for match in reversed(diagrams_to_remove):
+                notes_content = notes_content[:match.start()] + notes_content[match.end():]
+            
+            # Validar que hay bloques diagram-json válidos en la respuesta
+            total_diagrams = notes_content.count('```diagram-json') + notes_content.count('``` diagram-json')
+            if valid_diagrams_count == 0 and total_diagrams > 0:
+                print("⚠️ Todos los diagramas fueron eliminados por no ser comparaciones válidas")
+            elif valid_diagrams_count > 0:
+                print(f"✅ Post-procesamiento: {valid_diagrams_count} diagrama(s) válido(s) de comparación 1vs1")
             else:
-                print(f"✅ Post-procesamiento: Bloques Mermaid eliminados, {diagram_json_count} diagrama(s) JSON encontrado(s)")
+                print("ℹ️ No se encontraron diagramas en la respuesta")
+            
+            # POST-PROCESAMIENTO: Procesar bloques de imagen y video
+            notes_content = self._process_image_blocks(notes_content)
+            notes_content = self._process_video_blocks(notes_content)
             
             # Validar que la respuesta no esté vacía
             if not notes_content or not notes_content.strip():
-                return "# Error\n\n⚠️ La respuesta del modelo está vacía. Por favor, intenta de nuevo."
+                return "# Error\n\n⚠️ La respuesta del modelo está vacía. Por favor, intenta de nuevo.", {"inputTokens": 0, "outputTokens": 0, "model": model_used if 'model_used' in locals() else None}
             
             # Validar que la respuesta contenga contenido válido
             if len(notes_content.strip()) < 50:
-                return f"# Error\n\n⚠️ La respuesta del modelo es demasiado corta. Respuesta recibida: {notes_content[:200]}"
+                return f"# Error\n\n⚠️ La respuesta del modelo es demasiado corta. Respuesta recibida: {notes_content[:200]}", {"inputTokens": 0, "outputTokens": 0, "model": model_used}
             
-            return notes_content
+            return notes_content, usage_info
         except KeyError as e:
             error_str = str(e)
             print(f"❌ KeyError al generar apuntes: {error_str}")
             import traceback
             traceback.print_exc()
-            return f"# Error\n\n⚠️ Error al procesar la respuesta: {error_str}. Por favor, intenta de nuevo o verifica que hay contenido disponible."
+            model_used = self.current_model_config.name if self.current_model_config else (model or "gpt-3.5-turbo")
+            return f"# Error\n\n⚠️ Error al procesar la respuesta: {error_str}. Por favor, intenta de nuevo o verifica que hay contenido disponible.", {"inputTokens": 0, "outputTokens": 0, "model": model_used}
         except Exception as e:
             error_str = str(e)
             print(f"❌ Error al generar apuntes: {error_str}")
             import traceback
             traceback.print_exc()
+            model_used = self.current_model_config.name if self.current_model_config else (model or "gpt-3.5-turbo")
             # Si el error es por límite de tokens, sugerir usar menos contenido
             if "context_length" in error_str.lower() or "tokens" in error_str.lower():
-                return f"# Error\n\nEl contenido es demasiado extenso. Por favor, intenta generar apuntes sobre temas específicos o divide el documento en partes más pequeñas.\n\nError: {error_str}"
-            return f"# Error\n\nNo se pudieron generar los apuntes: {error_str}"
+                return f"# Error\n\nEl contenido es demasiado extenso. Por favor, intenta generar apuntes sobre temas específicos o divide el documento en partes más pequeñas.\n\nError: {error_str}", {"inputTokens": 0, "outputTokens": 0, "model": model_used}
+            return f"# Error\n\nNo se pudieron generar los apuntes: {error_str}", {"inputTokens": 0, "outputTokens": 0, "model": model_used}
     
     def explain_concept(self, concept: str) -> str:
         """
@@ -676,7 +1318,9 @@ Si el contenido se beneficia de una visualización (jerarquías, procesos, compa
             except Exception as e:
                 return f"# Error\n\n⚠️ Error al inicializar el modelo: {str(e)}"
         
-        relevant_content = self.memory.retrieve_relevant_content(concept, n_results=5)
+        # Nota: explain_concept no tiene chat_id, pero debería tenerlo para mantener chats separados
+        # Por ahora, sin chat_id no recuperará contenido (evita mezclar chats)
+        relevant_content = self.memory.retrieve_relevant_content(concept, n_results=5, chat_id=None, user_id=None)
         
         if not relevant_content:
             return f"# Concepto: {concept}\n\nNo se encontró información sobre '{concept}' en los documentos procesados. Por favor, asegúrate de haber subido documentos que contengan este concepto."

@@ -4,7 +4,28 @@ const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Verificar que el body no esté vacío
+    const text = await request.text();
+    if (!text || text.trim() === '') {
+      console.error('📊 [Next.js API] Error: Body vacío en set-chat-level');
+      return NextResponse.json(
+        { error: 'El body de la petición está vacío' },
+        { status: 400 }
+      );
+    }
+
+    let body;
+    try {
+      body = JSON.parse(text);
+    } catch (parseError) {
+      console.error('📊 [Next.js API] Error al parsear JSON:', parseError);
+      console.error('📊 [Next.js API] Text recibido:', text);
+      return NextResponse.json(
+        { error: 'JSON inválido en el body de la petición' },
+        { status: 400 }
+      );
+    }
+
     const { userId, chatId, level, topic } = body;
 
     if (!userId || !chatId || level === undefined) {
@@ -58,7 +79,17 @@ export async function POST(request: NextRequest) {
       result: data.result,
     });
   } catch (error: any) {
-    console.error('Error setting chat level:', error);
+    console.error('📊 [Next.js API] Error setting chat level:', error);
+    console.error('📊 [Next.js API] Error stack:', error.stack);
+    
+    // Si es un error de JSON, dar un mensaje más específico
+    if (error instanceof SyntaxError || error.message?.includes('JSON')) {
+      return NextResponse.json(
+        { error: 'Error al parsear el JSON de la petición. Verifica que el body esté correctamente formateado.' },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: error.message || 'Error al establecer el nivel' },
       { status: 500 }

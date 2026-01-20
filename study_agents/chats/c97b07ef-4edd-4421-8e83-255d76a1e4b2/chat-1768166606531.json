@@ -1,0 +1,35 @@
+{
+  "chat_id": "chat-1768166606531",
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "title": "Git",
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "¡Excelente elección! Vamos a darle caña a **Git**. Para poder ayudarte mejor, dime:\n\n¿Qué nivel tienes (Principiante, Intermedio, Avanzado)?\n\nEn cuanto me digas, empezamos.",
+      "type": "level_selection",
+      "timestamp": "2026-01-11T21:23:28.340Z",
+      "topic": "Git"
+    },
+    {
+      "role": "user",
+      "content": "como cambio de rama?",
+      "type": "message",
+      "timestamp": "2026-01-11T21:23:39.223Z"
+    },
+    {
+      "role": "assistant",
+      "content": "¡Claro! Cambiar de rama en **Git** es un proceso bastante sencillo. Aquí te explicaré cómo hacerlo de manera clara y estructurada.\n\n## Cambiar de Rama en Git\n\n### ¿Qué es una Rama en Git?\n\nUna **rama** en Git es una versión paralela de tu proyecto. Te permite trabajar en diferentes características o correcciones de errores sin afectar la rama principal (usualmente llamada `main` o `master`).\n\n### Comandos Básicos\n\nPara cambiar de rama, puedes utilizar los siguientes comandos:\n\n1. **Listar Ramas**: Para ver las ramas disponibles en tu repositorio, usa:\n   ```bash\n   git branch\n   ```\n\n2. **Cambiar de Rama**: Para cambiar a una rama existente, utiliza:\n   ```bash\n   git checkout nombre-de-la-rama\n   ```\n   o, en versiones más recientes de Git, puedes usar:\n   ```bash\n   git switch nombre-de-la-rama\n   ```\n\n3. **Crear y Cambiar a una Nueva Rama**: Si deseas crear una nueva rama y cambiarte a ella al mismo tiempo, utiliza:\n   ```bash\n   git checkout -b nombre-de-la-nueva-rama\n   ```\n   o:\n   ```bash\n   git switch -b nombre-de-la-nueva-rama\n   ```\n\n### Proceso Visual\n\nAquí hay un esquema visual sobre el proceso de cambiar de rama en Git:\n\n```diagram-json\n{\n  \"title\": \"Proceso de Cambio de Rama en Git\",\n  \"nodes\": [\n    {\"id\": \"A\", \"label\": \"Git: Cambio de Rama\", \"color\": \"#6366f1\"},\n    {\"id\": \"B\", \"label\": \"Listar Ramas\", \"color\": \"#10b981\", \"description\": \"Usa 'git branch' para ver todas las ramas disponibles.\"},\n    {\"id\": \"C\", \"label\": \"Cambiar a Rama Existente\", \"color\": \"#06b6d4\", \"description\": \"Usa 'git checkout nombre-de-la-rama' o 'git switch nombre-de-la-rama'.\"},\n    {\"id\": \"D\", \"label\": \"Crear y Cambiar a Nueva Rama\", \"color\": \"#f59e0b\", \"description\": \"Usa 'git checkout -b nombre-de-la-nueva-rama' o 'git switch -b nombre-de-la-nueva-rama'.\"}\n  ],\n  \"edges\": [\n    {\"from\": \"A\", \"to\": \"B\"},\n    {\"from\": \"A\", \"to\": \"C\"},\n    {\"from\": \"A\", \"to\": \"D\"}\n  ]\n}\n```\n\n### Notas Importantes\n\n- **Conflictos**: Si tienes cambios sin confirmar en la rama actual, es posible que Git no te permita cambiar de rama. Asegúrate de realizar un `commit` o `stash` de tus cambios antes de cambiar.\n- **Ramas Remotas**: Si deseas cambiar a una rama que existe en un repositorio remoto, primero necesitarás descargarla usando:\n  ```bash\n  git fetch\n  ```\n\n---\n\n## Resumen\n\n- **Listar ramas**: `git branch`\n- **Cambiar a rama existente**: `git checkout nombre-de-la-rama` o `git switch nombre-de-la-rama`\n- **Crear y cambiar a nueva rama**: `git checkout -b nombre-de-la-nueva-rama` o `git switch -b nombre-de-la-nueva-rama`\n\nSi tienes más preguntas sobre Git o necesitas aclarar algún concepto, ¡estaré encantado de ayudarte! 😊",
+      "type": "notes",
+      "timestamp": "2026-01-11T21:23:53.892Z"
+    }
+  ],
+  "created_at": "2026-01-11T22:23:28.272240",
+  "updated_at": "2026-01-11T22:23:55.073538",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#10b981",
+    "icon": "icon_git",
+    "topic": "Git"
+  }
+}

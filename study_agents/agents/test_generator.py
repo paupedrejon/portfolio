@@ -257,13 +257,90 @@ class TestGeneratorAgent:
                 print(f"  - Último mensaje: {conversation_history[-1]}")
         
         # Construir contexto PRIORIZANDO la conversación más reciente
+        # Detectar si el contenido es un temario (lista de temas) en lugar de contenido educativo
+        def detect_and_extract_topics_from_syllabus(content: str) -> Optional[List[str]]:
+            """Detecta si el contenido es un temario y extrae los temas listados"""
+            if not content:
+                return None
+            
+            content_lower = content.lower()
+            
+            # Palabras clave que indican que es un temario
+            syllabus_keywords = [
+                "temario", "temas del examen", "temas de la oposición", "temas a estudiar",
+                "programa", "índice de temas", "lista de temas", "contenido del examen",
+                "temas incluidos", "materias del examen"
+            ]
+            
+            is_syllabus = any(keyword in content_lower for keyword in syllabus_keywords)
+            
+            if not is_syllabus:
+                return None
+            
+            # Intentar extraer temas del temario
+            import re
+            topics_list = []
+            
+            # Patrones comunes para listas de temas:
+            patterns = [
+                r'(?:tema|tema\s+\d+|^\d+\.)\s*[:\-]?\s*([^\n]+?)(?=\n(?:tema|tema\s+\d+|\d+\.|$))',
+                r'^\d+\.\s*([^\n]+)',
+                r'^[-•]\s*([^\n]+)',
+                r'(?:tema|tema\s+\d+)\s+([^\n]+?)(?=\n(?:tema|tema\s+\d+|\d+\.|$))',
+            ]
+            
+            for pattern in patterns:
+                matches = re.findall(pattern, content, re.MULTILINE | re.IGNORECASE)
+                if matches:
+                    topics_list.extend([m.strip() for m in matches if len(m.strip()) > 5])
+            
+            # Si encontramos temas, devolverlos
+            if topics_list:
+                # Limpiar y deduplicar
+                cleaned_topics = []
+                seen = set()
+                for topic in topics_list:
+                    topic_clean = topic.strip()
+                    # Eliminar prefijos comunes
+                    topic_clean = re.sub(r'^(tema\s*\d+[:\-]?\s*)', '', topic_clean, flags=re.IGNORECASE)
+                    topic_clean = re.sub(r'^\d+[:\-]?\s*', '', topic_clean)
+                    if topic_clean and len(topic_clean) > 5 and topic_clean.lower() not in seen:
+                        cleaned_topics.append(topic_clean)
+                        seen.add(topic_clean.lower())
+                
+                if cleaned_topics:
+                    print(f"📋 Temario detectado en test_generator con {len(cleaned_topics)} temas extraídos")
+                    return cleaned_topics[:20]  # Limitar a 20 temas
+        
+            return None
+        
         context_parts = []
         use_specific_topic = False
+        
+        # Detectar si el contenido subido es un temario
+        all_content = self.memory.get_all_documents(limit=50)
+        syllabus_topics = None
+        if all_content:
+            combined_doc_content = "\n\n".join(all_content[:10])  # Revisar primeros documentos
+            syllabus_topics = detect_and_extract_topics_from_syllabus(combined_doc_content)
+            
+            if syllabus_topics:
+                print(f"📋 TEMARIO DETECTADO EN TEST: Se encontraron {len(syllabus_topics)} temas en el documento")
+                print(f"📋 Primeros temas: {', '.join(syllabus_topics[:5])}")
+                # Si se detectó un temario y no hay temas específicos, usar los temas del temario
+                if not topics or (len(topics) == 1 and topics[0].lower() in ["temario", "temas", "contenido"]):
+                    topics = syllabus_topics
+                    print(f"✅ Usando temas del temario para generar tests educativos")
         
         # 1. Si hay temas específicos, añadirlos
         if topics and len(topics) > 0:
             use_specific_topic = True
-            context_parts.append(f"Tema específico solicitado: {', '.join(topics)}")
+            # Si hay múltiples temas (temario), indicarlo claramente
+            if len(topics) > 1:
+                topics_list = "\n".join([f"- {t}" for t in topics[:15]])  # Limitar a 15 temas
+                context_parts.append(f"🚨 TEMARIO DETECTADO - TEMAS A PREPARAR:\n\n{topics_list}\n\nIMPORTANTE: El usuario quiere preparar estos temas de una oposición/examen. NO generes preguntas sobre 'el temario' o 'qué temas entran'. En su lugar, genera preguntas educativas sobre el CONTENIDO REAL de cada uno de estos temas. Crea preguntas que evalúen el conocimiento sobre el contenido educativo de cada tema.")
+            else:
+                context_parts.append(f"Tema específico solicitado: {', '.join(topics)}")
         
         # 2. PRIORIDAD: Añadir historial de conversación PRIMERO (más reciente primero)
         conversation_text = ""
@@ -913,6 +990,12 @@ RESTRICCIONES Y CONDICIONES OBLIGATORIAS:
             ("system", """Eres un experto en evaluación educativa. Generas tests de alta calidad que evalúan comprensión real.
             Debes generar preguntas variadas: opción múltiple, verdadero/falso.
             Cada pregunta debe tener una respuesta correcta clara y una explicación.
+            
+            **🚨 CRÍTICO - DETECCIÓN DE TEMARIOS:**
+            Si el contenido fuente es un TEMARIO (lista de temas de examen/oposición), NO generes preguntas sobre "el temario", "qué temas entran" o "el contenido del examen". 
+            En su lugar, genera preguntas educativas sobre el CONTENIDO REAL de cada uno de los temas listados. 
+            Crea preguntas que evalúen el conocimiento sobre el contenido educativo de cada tema, como si fueras a evaluar el conocimiento real del estudiante sobre esos temas.
+            Si hay múltiples temas, distribuye las preguntas entre los diferentes temas del temario.
             
             🚨🚨🚨 REGLA CRÍTICA DE PRIORIZACIÓN (NO NEGOCIABLE) 🚨🚨🚨:
             - El test DEBE estar basado EXCLUSIVAMENTE en el ÚLTIMO INTERCAMBIO (último mensaje usuario + último mensaje asistente) de la conversación proporcionada.

@@ -1,0 +1,42 @@
+{
+  "chat_id": "chat-1768328769818",
+  "user_id": "543cc71e-bb8d-40c5-b98b-cbbcb71047fe",
+  "title": "bluetooth",
+  "messages": [
+    {
+      "role": "user",
+      "content": "quiero saber como hacer que mis cascos SONY WH-CH520 se conecten por bluetooth a mi ordenador",
+      "type": "message",
+      "timestamp": "2026-01-13T18:26:48.179Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## Conexión de los Cascos Sony WH-CH520 a un Ordenador por Bluetooth\n\nConectar tus cascos Sony WH-CH520 a tu ordenador a través de Bluetooth es un proceso sencillo. A continuación, te detallo los pasos que debes seguir:\n\n### Pasos para Conectar\n\n1. **Preparar los Cascos**\n   - **Encender los Cascos**: Asegúrate de que tus cascos estén cargados y encendidos.\n   - **Modo de Emparejamiento**: Mantén presionado el botón de encendido durante unos segundos hasta que la luz indicadora parpadee en azul y rojo. Esto significa que tus cascos están en modo de emparejamiento.\n\n2. **Acceder a la Configuración de Bluetooth en el Ordenador**\n   - **Windows**:\n     - Haz clic en el **icono de Bluetooth** en la barra de tareas (generalmente en la esquina inferior derecha).\n     - Selecciona \"Agregar un dispositivo Bluetooth\".\n   - **Mac**:\n     - Ve a **Preferencias del Sistema** > **Bluetooth**.\n\n3. **Buscar Dispositivos**\n   - En la ventana de configuración de Bluetooth, tu ordenador comenzará a buscar dispositivos disponibles.\n   - Cuando veas \"Sony WH-CH520\" en la lista de dispositivos detectados, selecciónalo.\n\n4. **Conectar**\n   - Haz clic en \"Conectar\" o \"Emparejar\".\n   - Si te solicita un código, generalmente puedes usar \"0000\" o \"1234\".\n   - Espera unos segundos hasta que la luz indicadora en tus cascos se vuelva azul, indicando que están conectados.\n\n5. **Confirmar la Conexión**\n   - Una vez conectados, deberías poder escuchar sonido a través de tus cascos.\n   - Puedes verificar el estado de la conexión en la configuración de Bluetooth de tu ordenador.\n\n---\n\n### Consejos Adicionales\n\n- **Desconectar**: Para desconectar los cascos, puedes hacerlo desde el menú de Bluetooth de tu ordenador.\n- **Reconexión Automática**: La próxima vez que enciendas tus cascos, se deberían conectar automáticamente si el Bluetooth del ordenador está activado y los cascos están dentro del rango.\n\n---\n\n### Esquema Conceptual\n\nA continuación, te presento un esquema que resume el proceso de conexión de los cascos Sony WH-CH520 a un ordenador por Bluetooth:\n\n```diagram-json\n{\n  \"title\": \"Conexión de Cascos Sony WH-CH520 por Bluetooth\",\n  \"nodes\": [\n    {\"id\": \"A\", \"label\": \"Conexión de Cascos Sony WH-CH520\", \"color\": \"#6366f1\"},\n    {\"id\": \"B\", \"label\": \"Preparar los Cascos\", \"color\": \"#10b981\", \"description\": \"Encender y poner en modo de emparejamiento.\", \"letter\": \"H\"},\n    {\"id\": \"C\", \"label\": \"Acceder a Configuración de Bluetooth\", \"color\": \"#10b981\", \"description\": \"Abrir configuración de Bluetooth en Windows o Mac.\", \"letter\": \"C\"},\n    {\"id\": \"D\", \"label\": \"Buscar Dispositivos\", \"color\": \"#06b6d4\", \"description\": \"Buscar dispositivos Bluetooth disponibles en el ordenador.\", \"letter\": \"S\"},\n    {\"id\": \"E\", \"label\": \"Conectar\", \"color\": \"#f59e0b\", \"description\": \"Seleccionar los cascos y confirmar la conexión.\", \"letter\": \"C\"},\n    {\"id\": \"F\", \"label\": \"Confirmar la Conexión\", \"color\": \"#ec4899\", \"description\": \"Verificar que los cascos están conectados y funcionando.\", \"letter\": \"C\"}\n  ],\n  \"edges\": [\n    {\"from\": \"A\", \"to\": \"B\"},\n    {\"from\": \"A\", \"to\": \"C\"},\n    {\"from\": \"C\", \"to\": \"D\"},\n    {\"from\": \"D\", \"to\": \"E\"},\n    {\"from\": \"E\", \"to\": \"F\"}\n  ]\n}\n```\n\n---\n\nSi tienes alguna otra pregunta o necesitas más ayuda, ¡no dudes en preguntar! 😊",
+      "type": "notes",
+      "timestamp": "2026-01-13T18:27:58.514Z"
+    },
+    {
+      "role": "assistant",
+      "content": "{\"type\":\"success\",\"fileNames\":[\"50441774M.pdf\"]}",
+      "type": "success",
+      "timestamp": "2026-01-13T18:28:31.739Z"
+    },
+    {
+      "role": "assistant",
+      "content": "# Apuntes sobre la Conexión Bluetooth de los Sony WH-CH520\n\n## Introducción\nLos cascos Sony WH-CH520 son dispositivos inalámbricos que utilizan tecnología Bluetooth para conectarse a otros dispositivos como ordenadores, teléfonos y tabletas. A continuación, se presentan los pasos y consideraciones para realizar esta conexión.\n\n## Conceptos Clave\n- **Bluetooth**: Protocolo de comunicación inalámbrica que permite la conexión entre dispositivos a corta distancia.\n- **Emparejamiento**: Proceso mediante el cual dos dispositivos Bluetooth se reconocen y establecen una conexión.\n\n## Pasos para Conectar los Sony WH-CH520 a un Ordenador\n1. **Activar Bluetooth en el Ordenador**: Accede a la configuración de tu PC y asegúrate de que la función Bluetooth esté activada.\n2. **Encender los Cascos**: Presiona el botón de encendido de los cascos hasta que escuches un sonido que indica que están encendidos.\n3. **Modo de Emparejamiento**: Mantén presionado el botón de encendido durante unos segundos hasta que la luz LED parpadee, indicando que están en modo de emparejamiento.\n4. **Buscar Dispositivos en el PC**: Ve a la configuración de Bluetooth en tu ordenador y selecciona la opción para agregar un nuevo dispositivo.\n5. **Seleccionar los Cascos**: En la lista de dispositivos disponibles, elige 'Sony WH-CH520' y sigue las instrucciones en pantalla para completar el emparejamiento.\n6. **Confirmar Conexión**: Una vez emparejados, escucharás un sonido que indica que la conexión ha sido exitosa.\n\n## Consejos y Precauciones\n- **Mantener la Batería Cargada**: Asegúrate de que los cascos estén cargados para evitar desconexiones.\n- **Evitar Interferencias**: Mantén el ordenador y los cascos a una distancia razonable de otros dispositivos Bluetooth para evitar interferencias.\n- **Cuidado con el Volumen**: Ajusta el volumen a un nivel seguro para proteger tu audición.\n\n## Errores Comunes\n- **No Activar Bluetooth**: Asegúrate de que la función Bluetooth esté habilitada en tu ordenador antes de intentar conectar los cascos.\n- **Olvidar el Modo de Emparejamiento**: Si los cascos no están en modo de emparejamiento, no aparecerán en la lista de dispositivos.\n\n## Conclusión\nConectar tus Sony WH-CH520 a un ordenador es un proceso sencillo si sigues estos pasos. Recuerda siempre verificar que ambos dispositivos estén listos para emparejarse y disfrutar de tu música o llamadas de manera inalámbrica.",
+      "type": "notes",
+      "timestamp": "2026-01-13T18:29:01.939Z"
+    }
+  ],
+  "created_at": "2026-01-13T19:26:09.838906",
+  "updated_at": "2026-01-13T19:29:03.148542",
+  "metadata": {
+    "uploadedFiles": [
+      "50441774M.pdf"
+    ],
+    "selectedModel": "auto",
+    "color": "#6366f1",
+    "icon": "chat",
+    "topic": null
+  }
+}

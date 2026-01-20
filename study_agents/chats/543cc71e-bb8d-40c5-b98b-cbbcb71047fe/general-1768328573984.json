@@ -1,0 +1,19 @@
+{
+  "chat_id": "general-1768328573984",
+  "user_id": "543cc71e-bb8d-40c5-b98b-cbbcb71047fe",
+  "title": "General",
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "Error: Error al generar ejercicio: '\\n    \"exercise_id\"'",
+      "type": "message",
+      "timestamp": "2026-01-13T18:23:27.120Z"
+    }
+  ],
+  "created_at": "2026-01-13T19:23:29.050091",
+  "updated_at": "2026-01-13T19:23:29.050097",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto"
+  }
+}

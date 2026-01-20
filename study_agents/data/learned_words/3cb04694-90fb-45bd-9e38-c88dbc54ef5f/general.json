@@ -1,0 +1,47 @@
+{
+  "user_id": "3cb04694-90fb-45bd-9e38-c88dbc54ef5f",
+  "language": "General",
+  "words": [
+    {
+      "word": "apple",
+      "translation": "manzana",
+      "source": "flashcards",
+      "example": "I eat an apple.",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:37:26.727557"
+    },
+    {
+      "word": "cat",
+      "translation": "gato",
+      "source": "flashcards",
+      "example": "The cat is sleeping.",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:37:32.141930"
+    },
+    {
+      "word": "house",
+      "translation": "casa",
+      "source": "flashcards",
+      "example": "This is my house.",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:37:37.864608"
+    },
+    {
+      "word": "ball",
+      "translation": "pelota",
+      "source": "flashcards",
+      "example": "I play with a ball.",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:37:41.889855"
+    },
+    {
+      "word": "sun",
+      "translation": "sol",
+      "source": "flashcards",
+      "example": "The sun is shining.",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:37:48.348343"
+    }
+  ],
+  "updated_at": "2026-01-20T18:37:48.348350"
+}

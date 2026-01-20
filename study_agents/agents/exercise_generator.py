@@ -64,7 +64,9 @@ class ExerciseGeneratorAgent:
         constraints: Optional[str] = None,
         model: Optional[str] = None,
         conversation_history: Optional[List[Dict[str, str]]] = None,
-        user_level: Optional[int] = None
+        user_level: Optional[int] = None,
+        chat_id: Optional[str] = None,
+        user_id: Optional[str] = None
     ) -> Dict:
         """
         Genera un ejercicio complejo
@@ -137,15 +139,15 @@ class ExerciseGeneratorAgent:
                 context = f"Contexto de la conversación reciente:\n{conversation_text}\n\n"
                 print(f"  - Usando {len(recent_messages)} mensajes recientes de la conversación")
         
-        # Si no hay conversación suficiente, buscar en memoria
+        # Si no hay conversación suficiente, buscar en memoria (solo del chat actual)
         if not context or len(context) < 100:
             query = "conceptos principales del temario"
             if topics:
                 query = " ".join(topics)
-            relevant_content = self.memory.retrieve_relevant_content(query, n_results=5)
+            relevant_content = self.memory.retrieve_relevant_content(query, n_results=5, chat_id=chat_id, user_id=user_id)
             if relevant_content:
                 context += "\n\n".join(relevant_content[:3])
-                print(f"  - Usando {len(relevant_content[:3])} fragmentos de memoria")
+                print(f"  - Usando {len(relevant_content[:3])} fragmentos de memoria del chat {chat_id}")
         
         if not context:
             return {
@@ -295,6 +297,30 @@ El texto tiene 2 palabra(s)
 Si no sigues este formato EXACTO, el ejercicio será inválido.
 """
         
+        # Construir el ejemplo de JSON como cadena separada para evitar conflictos con el formateo
+        expected_answer_example = f'Código completo entre ```{programming_language.lower()} y ``` seguido de "Salida esperada: [output]"' if is_programming and programming_language else 'Respuesta correcta esperada (puede ser larga, numérica, código, etc.)'
+        topics_list_json = json.dumps(topics_list)
+        
+        # Construir el JSON de ejemplo como cadena
+        # Escapar las comillas dobles en expected_answer_example para que no rompan el JSON
+        expected_answer_escaped = expected_answer_example.replace('"', '\\"')
+        
+        # Construir el JSON de ejemplo como cadena literal para evitar conflictos con el formateo
+        # IMPORTANTE: Cuando se inserte en el prompt, todas las llaves deben estar doblemente escapadas
+        # para que se conviertan en llaves literales en el template de LangChain
+        json_example = (
+            "{{\n"
+            f'    "exercise_id": "{exercise_id}",\n'
+            '    "statement": "Enunciado completo y detallado del ejercicio",\n'
+            f'    "expected_answer": "{expected_answer_escaped}",\n'
+            '    "hints": ["Pista 1", "Pista 2"],\n'
+            '    "points": 10,\n'
+            '    "difficulty": "{{{{difficulty}}}}",\n'  # 4 llaves para que quede {{difficulty}} en el template
+            f'    "topics": {topics_list_json},\n'
+            '    "solution_steps": ["Paso 1 de la solución", "Paso 2", "Paso 3"]\n'
+            "}}"
+        )
+        
         # Construir prompt
         prompt = ChatPromptTemplate.from_messages([
             ("system", f"""Eres un experto educador que crea ejercicios complejos y desafiantes para estudiantes.
@@ -317,34 +343,24 @@ IMPORTANTE:
 - El ejercicio DEBE estar directamente relacionado con el tema de la conversación: {topics_str}
 - NO generes ejercicios sobre temas no relacionados con el tema especificado.
 - Si el tema es de programación, el ejercicio DEBE ser de código ejecutable."""),
-            ("human", f"""Genera un ejercicio {{difficulty}} sobre el siguiente contenido:
-
-{{context}}
-
-Temas específicos: {{topics}}
-Tipo de ejercicio sugerido: {{exercise_type}}
-{constraints_instruction}
-
-Instrucciones de dificultad: {{difficulty_instruction}}
-
-Genera el ejercicio en formato JSON con la siguiente estructura:
-{{
-    "exercise_id": "{exercise_id}",
-    "statement": "Enunciado completo y detallado del ejercicio",
-    "expected_answer": "{f'Código completo entre ```{programming_language.lower()} y ``` seguido de \"Salida esperada: [output]\"' if is_programming and programming_language else 'Respuesta correcta esperada (puede ser larga, numérica, código, etc.)'}",
-    "hints": ["Pista 1", "Pista 2"],
-    "points": 10,
-    "difficulty": "{{difficulty}}",
-    "topics": {topics_list},
-    "solution_steps": ["Paso 1 de la solución", "Paso 2", "Paso 3"]
-}}
-{programming_expected_answer_instruction}
-El enunciado debe ser claro, completo y proporcionar toda la información necesaria.
-La respuesta esperada debe ser detallada y servir como referencia para la corrección.
-Las pistas deben ayudar al estudiante sin dar la respuesta completa.
-Los pasos de solución deben mostrar cómo resolver el ejercicio paso a paso.
-
-Responde SOLO con el JSON, sin texto adicional antes o después.""")
+            ("human", ("Genera un ejercicio {difficulty} sobre el siguiente contenido:\n\n"
+                      "{context}\n\n"
+                      "Temas específicos: {topics}\n"
+                      "Tipo de ejercicio sugerido: {exercise_type}\n"
+                      "{constraints_instruction}\n\n"
+                      "Instrucciones de dificultad: {difficulty_instruction}\n\n"
+                      "Genera el ejercicio en formato JSON con la siguiente estructura (ejemplo):\n"
+                      "{json_example}\n"
+                      "{programming_expected_answer_instruction}\n"
+                      "El enunciado debe ser claro, completo y proporcionar toda la información necesaria.\n"
+                      "La respuesta esperada debe ser detallada y servir como referencia para la corrección.\n"
+                      "Las pistas deben ayudar al estudiante sin dar la respuesta completa.\n"
+                      "Los pasos de solución deben mostrar cómo resolver el ejercicio paso a paso.\n\n"
+                      "Responde SOLO con el JSON, sin texto adicional antes o después.").format(
+                constraints_instruction=constraints_instruction,
+                json_example=json_example,
+                programming_expected_answer_instruction=programming_expected_answer_instruction
+            ))
         ])
         
         try:
@@ -354,9 +370,7 @@ Responde SOLO con el JSON, sin texto adicional antes o después.""")
                 topics=topics_str,
                 exercise_type=exercise_type or "General",
                 constraints_instruction=constraints_instruction,
-                difficulty_instruction=difficulty_instructions.get(difficulty, difficulty_instructions["medium"]),
-                exercise_id=exercise_id,
-                topics_list=topics_list
+                difficulty_instruction=difficulty_instructions.get(difficulty, difficulty_instructions["medium"])
             )
             
             print(f"\n📝 Generando ejercicio {difficulty}...")

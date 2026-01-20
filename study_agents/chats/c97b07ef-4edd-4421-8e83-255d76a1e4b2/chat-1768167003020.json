@@ -1,0 +1,28 @@
+{
+  "chat_id": "chat-1768167003020",
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "title": "Noruego",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Quiero aprender noruego",
+      "type": "message",
+      "timestamp": "2026-01-11T21:30:10.181Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## Aprender Noruego: Guía Práctica\n\n¡Hola! Aprender un nuevo idioma como el **noruego** puede ser una experiencia emocionante y enriquecedora. Aquí te dejo una guía estructurada con pasos y recursos para que empieces en tu camino hacia el dominio del noruego.\n\n---\n\n### **1. Conocer el Idioma Noruego**\n- **Familia Lingüística**: Pertenece a la familia germánica.\n- **Dialecto**: Existen dos formas oficiales: **Bokmål** y **Nynorsk**.\n- **Uso**: Hablado principalmente en Noruega; tiene influencias del danés y el sueco.\n\n---\n\n### **2. Recursos para Aprender Noruego**\n- **Aplicaciones Móviles**:\n  - **Duolingo**: Ideal para principiantes, con lecciones interactivas.\n  - **Babbel**: Focalizado en diálogos prácticos y vocabulario útil.\n  \n- **Libros**:\n  - **\"Norwegian Grammar\"**: Para entender la estructura gramatical.\n  - **\"Learn Norwegian\"**: Un libro introductorio con ejercicios.\n\n- **Plataformas Online**:\n  - **Memrise**: Enfocado en vocabulario y frases útiles.\n  - **italki**: Conecta con hablantes nativos para practicar.\n\n---\n\n### **3. Estrategias de Aprendizaje**\n- **Escuchar y Repetir**:\n  - Escucha música noruega y repite las letras.\n  - Ve programas y películas en noruego con subtítulos.\n\n- **Práctica Regular**:\n  - Dedica al menos 30 minutos al día a estudiar.\n  - Usa tarjetas de memoria (flashcards) para vocabulario.\n\n- **Conversaciones**:\n  - Encuentra un compañero de intercambio de idiomas.\n  - Participa en grupos de conversación online o locales.\n\n---\n\n### **4. Evaluar tu Progreso**\n- **Tests de Nivel**:\n  - Realiza pruebas de nivel en plataformas como **Duolingo** o **Babbel**.\n  \n- **Feedback**:\n  - Graba tu voz y compárala con hablantes nativos.\n  - Usa foros para obtener retroalimentación de otros estudiantes.\n\n---\n\n### **5. Ejemplo de un Plan Semanal de Estudio**\n| Día         | Actividad                          | Duración |\n|-------------|------------------------------------|----------|\n| Lunes       | Lección de vocabulario en Duolingo | 30 min   |\n| Martes      | Escuchar música noruega            | 30 min   |\n| Miércoles   | Conversación en italki             | 1 hora   |\n| Jueves      | Leer un capítulo de un libro       | 30 min   |\n| Viernes     | Ver una película en noruego        | 2 horas  |\n| Sábado      | Revisar y practicar con flashcards  | 1 hora   |\n| Domingo     | Descanso o repaso libre            | -        |\n\n---\n\n### **Esquema Conceptual sobre el Aprendizaje del Noruego**\n¿Te gustaría visualizar mejor los conceptos y estrategias? Aquí tienes un esquema que resume todo lo que hemos discutido:\n\n```diagram-json\n{\n  \"title\": \"Aprender Noruego\",\n  \"nodes\": [\n    {\"id\": \"A\", \"label\": \"Aprender Noruego\", \"color\": \"#6366f1\"},\n    {\"id\": \"B\", \"label\": \"Recursos\", \"color\": \"#10b981\", \"description\": \"Aplicaciones, libros y plataformas online para el aprendizaje.\", \"letter\": \"R\"},\n    {\"id\": \"C\", \"label\": \"Estrategias de Aprendizaje\", \"color\": \"#10b981\", \"description\": \"Métodos para mejorar la práctica y la comprensión.\", \"letter\": \"S\"},\n    {\"id\": \"D\", \"label\": \"Evaluación del Progreso\", \"color\": \"#10b981\", \"description\": \"Métodos para medir y ajustar el aprendizaje.\", \"letter\": \"E\"},\n    {\"id\": \"E\", \"label\": \"Plan Semanal\", \"color\": \"#10b981\", \"description\": \"Ejemplo de un horario de estudio efectivo.\", \"letter\": \"P\"}\n  ],\n  \"edges\": [\n    {\"from\": \"A\", \"to\": \"B\"},\n    {\"from\": \"A\", \"to\": \"C\"},\n    {\"from\": \"A\", \"to\": \"D\"},\n    {\"from\": \"A\", \"to\": \"E\"}\n  ]\n}\n```\n\n---\n\n### **Conclusión**\nAprender noruego es un viaje que requiere dedicación y práctica constante. Utiliza los recursos y estrategias que hemos discutido para avanzar en tu aprendizaje. ¡Buena suerte y disfruta del proceso! Si tienes más preguntas o necesitas más información, no dudes en preguntar.",
+      "type": "notes",
+      "timestamp": "2026-01-11T21:30:26.817Z"
+    }
+  ],
+  "created_at": "2026-01-11T22:30:03.616647",
+  "updated_at": "2026-01-11T22:30:28.044294",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#6366f1",
+    "icon": "chat",
+    "topic": null
+  }
+}

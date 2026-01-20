@@ -1,0 +1,87 @@
+{
+  "user_id": "3cb04694-90fb-45bd-9e38-c88dbc54ef5f",
+  "language": "Inglés",
+  "words": [
+    {
+      "word": "hello",
+      "translation": "hola",
+      "source": "flashcards",
+      "example": "hello",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:07:52.786574"
+    },
+    {
+      "word": "please",
+      "translation": "por favor",
+      "source": "flashcards",
+      "example": "please",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:07:56.394603"
+    },
+    {
+      "word": "environment",
+      "translation": "entorno",
+      "source": "flashcards",
+      "example": "The environment needs protection.",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:29:19.788225"
+    },
+    {
+      "word": "experience",
+      "translation": "experiencia",
+      "source": "flashcards",
+      "example": "Experience teaches us valuable lessons.",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:29:21.976541"
+    },
+    {
+      "word": "opportunity",
+      "translation": "oportunidad",
+      "source": "flashcards",
+      "example": "This is a great opportunity.",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:29:25.441266"
+    },
+    {
+      "word": "responsibility",
+      "translation": "responsabilidad",
+      "source": "flashcards",
+      "example": "It's our responsibility to help others.",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:29:27.996398"
+    },
+    {
+      "word": "collaboration",
+      "translation": "colaboración",
+      "source": "flashcards",
+      "example": "Collaboration leads to success.",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:32:37.398036"
+    },
+    {
+      "word": "challenge",
+      "translation": "desafío",
+      "source": "flashcards",
+      "example": "This is a big challenge for us.",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:32:41.846726"
+    },
+    {
+      "word": "development",
+      "translation": "desarrollo",
+      "source": "flashcards",
+      "example": "The development of technology is rapid.",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:32:45.657396"
+    },
+    {
+      "word": "communication",
+      "translation": "comunicación",
+      "source": "flashcards",
+      "example": "Effective communication is key.",
+      "romanization": null,
+      "learned_at": "2026-01-20T18:33:18.956807"
+    }
+  ],
+  "updated_at": "2026-01-20T18:33:18.956815"
+}

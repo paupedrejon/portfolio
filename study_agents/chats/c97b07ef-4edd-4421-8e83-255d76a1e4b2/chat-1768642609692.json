@@ -1,0 +1,40 @@
+{
+  "chat_id": "chat-1768642609692",
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "title": "LLUVIAS",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Como se forma una lluvia?",
+      "type": "message",
+      "timestamp": "2026-01-17T09:37:06.872Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Lo siento, hubo un error al procesar tu pregunta. Por favor, intenta de nuevo. Error: Error code: 400 - {'error': {'message': \"This model's maximum context length is 8192 tokens. However, you requested 10656 tokens (2464 in the messages, 8192 in the completion). Please reduce the length of the messages or completion.\", 'type': 'invalid_request_error', 'param': 'messages', 'code': 'context_length_exceeded'}}",
+      "type": "message",
+      "timestamp": "2026-01-17T09:37:32.792Z"
+    },
+    {
+      "role": "user",
+      "content": "Como se forma una lluvia?",
+      "type": "message",
+      "timestamp": "2026-01-17T09:37:51.822Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## ¿Cómo se forma una lluvia?\n\nLa lluvia es un fenómeno meteorológico que ocurre cuando el agua cae desde las nubes a la superficie de la Tierra. Vamos a desglosar el proceso de formación de la lluvia de manera clara y sencilla.\n\n---\n\n### **Proceso de formación de la lluvia**\n\n1. **Evaporación**\n   - El **calor del sol** calienta el agua en ríos, lagos y océanos.\n   - El agua se convierte en **vapor** y asciende a la atmósfera.\n\n2. **Condensación**\n   - A medida que el vapor de agua sube, se enfría.\n   - El vapor se convierte en **pequeñas gotas de agua** que se agrupan formando **nubes**.\n\n3. **Crecimiento de las gotas**\n   - Dentro de las nubes, las gotas de agua se **unen** y crecen en tamaño.\n   - Cuando alcanzan un tamaño suficiente, la gravedad hace que caigan.\n\n4. **Precipitación**\n   - Las gotas de agua caen a la Tierra en forma de **lluvia**.\n   - Esta es la etapa final del proceso.\n\n---\n\n### **Tipos de lluvia**\n\n| Tipo de lluvia   | Descripción                                         |\n|------------------|-----------------------------------------------------|\n| **Lluvia frontal** | Ocurre cuando dos masas de aire de diferentes temperaturas se encuentran. |\n| **Lluvia orográfica** | Se forma cuando el aire húmedo asciende al encontrarse con montañas. |\n| **Lluvia convectiva** | Se produce por el calentamiento del aire en la superficie, que luego asciende. |\n\n---\n\n### **Factores que influyen en la formación de la lluvia**\n\n- **Temperatura**: Afecta la capacidad del aire para retener vapor de agua.\n- **Humedad**: Necesaria para que se forme el vapor de agua.\n- **Presión atmosférica**: Influye en el movimiento del aire y la formación de nubes.\n\n---\n\n### **Resumen visual del proceso**\n\n---\n\n### **Conclusión**\n\nLa lluvia es esencial para el ciclo del agua y tiene un papel crucial en el ecosistema. Al entender su formación, podemos apreciar mejor la importancia de este fenómeno natural. Si tienes más preguntas sobre el tema o algo relacionado, ¡no dudes en preguntar!",
+      "type": "notes",
+      "timestamp": "2026-01-17T09:38:04.153Z"
+    }
+  ],
+  "created_at": "2026-01-17T10:36:50.276961",
+  "updated_at": "2026-01-17T10:38:05.268240",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#6366f1",
+    "icon": "chat",
+    "topic": null
+  }
+}

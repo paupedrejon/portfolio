@@ -409,8 +409,143 @@ class ProgressTracker:
             return 10
     
     def get_all_topics(self, user_id: str) -> Dict[str, Dict]:
-        """Obtiene todos los temas con su progreso para un usuario"""
-        return self.get_user_progress(user_id)
+        """
+        Obtiene todos los temas con su progreso para un usuario
+        Incluye tanto los temas tradicionales como los niveles de las conversaciones (chats)
+        """
+        progress = self._load_progress()
+        
+        print(f"📊 [ProgressTracker] get_all_topics: user_id={user_id}")
+        print(f"📊 [ProgressTracker] Progress keys: {list(progress.keys())}")
+        
+        if user_id not in progress:
+            print(f"📊 [ProgressTracker] Usuario {user_id} no encontrado en progreso")
+            return {}
+        
+        user_progress = progress[user_id]
+        result = {}
+        
+        print(f"📊 [ProgressTracker] User progress keys: {list(user_progress.keys())}")
+        
+        # Primero, copiar los temas tradicionales (si existen)
+        for key, value in user_progress.items():
+            if key != "chats" and isinstance(value, dict) and "level" in value:
+                result[key] = value.copy()
+                print(f"📊 [ProgressTracker] Tema tradicional encontrado: {key} (nivel: {value.get('level', 0)})")
+        
+        # Luego, agregar los niveles de los chats agrupados por tema
+        # Validar que los chats existan antes de incluirlos
+        if "chats" in user_progress and isinstance(user_progress["chats"], dict):
+            print(f"📊 [ProgressTracker] Encontrados {len(user_progress['chats'])} chats en progreso")
+            
+            # Importar chat_storage para validar existencia
+            try:
+                import sys
+                import os
+                parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                chat_storage_path = os.path.join(parent_dir, "chat_storage.py")
+                if os.path.exists(chat_storage_path):
+                    import importlib.util
+                    spec = importlib.util.spec_from_file_location("chat_storage", chat_storage_path)
+                    chat_storage = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(chat_storage)
+                    
+                    chats_to_remove = []
+                    for chat_id, chat_data in user_progress["chats"].items():
+                        # Validar que el chat existe
+                        chat_file = chat_storage.get_chat_file_path(user_id, chat_id)
+                        if not chat_file.exists():
+                            print(f"📊 [ProgressTracker] Chat {chat_id} no existe, marcado para eliminar del progreso")
+                            chats_to_remove.append(chat_id)
+                            continue
+                        
+                        if isinstance(chat_data, dict) and "topic" in chat_data and chat_data["topic"]:
+                            topic = chat_data["topic"]
+                            chat_level = chat_data.get("level", 0)
+                            
+                            print(f"📊 [ProgressTracker] Chat {chat_id}: tema={topic}, nivel={chat_level}")
+                            
+                            # Si el tema ya existe, usar el nivel más alto entre el tema tradicional y los chats
+                            if topic in result:
+                                existing_level = result[topic].get("level", 0)
+                                if chat_level > existing_level:
+                                    result[topic]["level"] = chat_level
+                                    print(f"📊 [ProgressTracker] Actualizado nivel de {topic}: {existing_level} -> {chat_level}")
+                                # Combinar experiencia si existe
+                                chat_exp = chat_data.get("experience", 0)
+                                existing_exp = result[topic].get("experience", 0)
+                                result[topic]["experience"] = max(existing_exp, chat_exp)
+                            else:
+                                # Si el tema no existe, crear una entrada nueva basada en el chat
+                                result[topic] = {
+                                    "level": chat_level,
+                                    "experience": chat_data.get("experience", 0),
+                                    "exercises_completed": chat_data.get("exercises_completed", 0),
+                                    "tests_completed": chat_data.get("tests_completed", 0),
+                                    "last_updated": chat_data.get("last_updated"),
+                                }
+                                print(f"📊 [ProgressTracker] Nuevo tema desde chat: {topic} (nivel: {chat_level})")
+                        else:
+                            print(f"📊 [ProgressTracker] Chat {chat_id} sin tema válido: {chat_data}")
+                    
+                    # Limpiar chats huérfanos del progreso
+                    if chats_to_remove:
+                        print(f"📊 [ProgressTracker] Limpiando {len(chats_to_remove)} chats huérfanos del progreso")
+                        for chat_id in chats_to_remove:
+                            del user_progress["chats"][chat_id]
+                        self._save_progress(progress)
+                        print(f"📊 [ProgressTracker] Chats huérfanos eliminados del progreso")
+                else:
+                    # Si no se puede importar chat_storage, usar lógica sin validación
+                    print(f"📊 [ProgressTracker] No se pudo importar chat_storage, usando lógica sin validación")
+                    for chat_id, chat_data in user_progress["chats"].items():
+                        if isinstance(chat_data, dict) and "topic" in chat_data and chat_data["topic"]:
+                            topic = chat_data["topic"]
+                            chat_level = chat_data.get("level", 0)
+                            
+                            if topic in result:
+                                existing_level = result[topic].get("level", 0)
+                                if chat_level > existing_level:
+                                    result[topic]["level"] = chat_level
+                                chat_exp = chat_data.get("experience", 0)
+                                existing_exp = result[topic].get("experience", 0)
+                                result[topic]["experience"] = max(existing_exp, chat_exp)
+                            else:
+                                result[topic] = {
+                                    "level": chat_level,
+                                    "experience": chat_data.get("experience", 0),
+                                    "exercises_completed": chat_data.get("exercises_completed", 0),
+                                    "tests_completed": chat_data.get("tests_completed", 0),
+                                    "last_updated": chat_data.get("last_updated"),
+                                }
+            except Exception as e:
+                print(f"📊 [ProgressTracker] Error al validar chats: {e}")
+                # En caso de error, usar lógica sin validación
+                for chat_id, chat_data in user_progress["chats"].items():
+                    if isinstance(chat_data, dict) and "topic" in chat_data and chat_data["topic"]:
+                        topic = chat_data["topic"]
+                        chat_level = chat_data.get("level", 0)
+                        
+                        if topic in result:
+                            existing_level = result[topic].get("level", 0)
+                            if chat_level > existing_level:
+                                result[topic]["level"] = chat_level
+                            chat_exp = chat_data.get("experience", 0)
+                            existing_exp = result[topic].get("experience", 0)
+                            result[topic]["experience"] = max(existing_exp, chat_exp)
+                        else:
+                            result[topic] = {
+                                "level": chat_level,
+                                "experience": chat_data.get("experience", 0),
+                                "exercises_completed": chat_data.get("exercises_completed", 0),
+                                "tests_completed": chat_data.get("tests_completed", 0),
+                                "last_updated": chat_data.get("last_updated"),
+                            }
+        else:
+            print(f"📊 [ProgressTracker] No se encontraron chats o no es un diccionario")
+        
+        print(f"📊 [ProgressTracker] Resultado final: {len(result)} temas - {list(result.keys())}")
+        return result
     
     def get_chat_level(self, user_id: str, chat_id: str) -> Dict:
         """Obtiene el nivel actual de una conversación (chat) para un usuario"""
@@ -492,12 +627,42 @@ class ProgressTracker:
         return {
             "old_level": old_level,
             "new_level": level,
-            "topic": chat_data["topic"],
-            "chat_id": chat_id,
-            "experience": chat_data["experience"],
-            "exercises_completed": chat_data["exercises_completed"],
-            "tests_completed": chat_data["tests_completed"]
+            "topic": chat_data.get("topic"),
+            "chat_id": chat_id
         }
+    
+    def delete_chat_progress(self, user_id: str, chat_id: str) -> bool:
+        """
+        Elimina el progreso asociado a un chat cuando se elimina la conversación
+        
+        Args:
+            user_id: ID del usuario
+            chat_id: ID de la conversación a eliminar
+            
+        Returns:
+            True si se eliminó correctamente, False si no existía
+        """
+        print(f"📊 [ProgressTracker] delete_chat_progress: user_id={user_id}, chat_id={chat_id}")
+        progress = self._load_progress()
+        
+        if user_id not in progress:
+            print(f"📊 [ProgressTracker] Usuario {user_id} no encontrado en progreso")
+            return False
+        
+        if "chats" not in progress[user_id]:
+            print(f"📊 [ProgressTracker] No hay chats en el progreso del usuario {user_id}")
+            return False
+        
+        if chat_id not in progress[user_id]["chats"]:
+            print(f"📊 [ProgressTracker] Chat {chat_id} no encontrado en el progreso")
+            return False
+        
+        # Eliminar el chat del progreso
+        del progress[user_id]["chats"][chat_id]
+        self._save_progress(progress)
+        
+        print(f"📊 [ProgressTracker] Progreso del chat {chat_id} eliminado correctamente")
+        return True
     
     def detect_topic_from_messages(self, messages: list) -> str:
         """Detecta el tema principal de una conversación basado en los mensajes"""

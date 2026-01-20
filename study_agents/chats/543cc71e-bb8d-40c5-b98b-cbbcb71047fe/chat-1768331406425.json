@@ -1,0 +1,60 @@
+{
+  "chat_id": "chat-1768331406425",
+  "user_id": "543cc71e-bb8d-40c5-b98b-cbbcb71047fe",
+  "title": "Oposicion",
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "{\"type\":\"success\",\"fileNames\":[\"pri.pdf\"]}",
+      "type": "success",
+      "timestamp": "2026-01-13T19:10:11.263Z"
+    },
+    {
+      "role": "assistant",
+      "content": "# Apuntes sobre el Tema: Educació Primària\n\n## Conceptes Clau\n- **Desenvolupament psicoevolutiu**: Creixement integral dels infants entre 6 i 12 anys.\n- **Currículum**: Objectius i continguts que guien l'ensenyament.\n- **Tutoria**: Suport personalitzat per a l'aprenentatge dels alumnes.\n- **Atenció a la diversitat**: Estratègies per adaptar l'ensenyament a les necessitats de tots els alumnes.\n- **Avaluació**: Mètodes per mesurar el progrés acadèmic.\n- **Tecnologies de la informació**: Recursos digitals que milloren l'aprenentatge.\n\n## Aspectes Importants\n1. **Desenvolupament Psicoevolutiu**: Inclou aspectes cognitius, motrius, afectius i socials.\n2. **Currículum Educatiu**: Inclou la programació docent i la coordinació entre mestres.\n3. **Tutoria**: Funcions de suport i col·laboració amb les famílies.\n4. **Atenció a la Diversitat**: Adaptacions metodològiques i curriculars.\n5. **Avaluació**: Instruments i estratègies per avaluar els aprenentatges.\n\n## Exemple Pràctic\n- **Situació**: Alumne amb dificultats en matemàtiques.\n- **Acció**: Crear un pla d'acció que inclogui suport addicional i recursos interactius.",
+      "type": "notes",
+      "timestamp": "2026-01-13T19:10:55.046Z"
+    },
+    {
+      "role": "user",
+      "content": "Vull prepararme aquesta oposició, podem fer tests d'aquests temes?",
+      "type": "message",
+      "timestamp": "2026-01-13T19:11:45.357Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Test generado con 10 preguntas",
+      "type": "test",
+      "timestamp": "2026-01-13T19:12:12.690Z"
+    },
+    {
+      "role": "user",
+      "content": "No pero vull prepararme els temes, busca informació de cadascun dels temes aquests que surten en el pdf que t'he enviat",
+      "type": "message",
+      "timestamp": "2026-01-13T19:13:11.657Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## Resumen de Temas del PDF\n\nA continuación, te presento un resumen conciso de cada tema del temario que mencionaste, enfocado en los aspectos más relevantes para tu preparación:\n\n---\n\n### 26. L'àrea de llengua catalana i literatura en l'educació primària\n- **Enfoque**: Fomenta la competència comunicativa i la comprensió lectora.\n- **Objectius**: Desenvolupar habilitats lingüístiques i estimular la producció escrita.\n- **Relació amb altres àrees**: Interrelació amb ciències socials i matemàtiques.\n\n---\n\n### 27. La literatura catalana en el context escolar\n- **Manifestacions literàries**: Narrativa, poesia i teatre.\n- **Tècniques d'ensenyament**: Lectura en veu alta i anàlisi de textos.\n- **Biblioteca escolar**: Recurso essencial per a fomentar la lectura.\n\n---\n\n### 28. L'àmbit de llengües en l'educació primària\n- **Ensenyament integrat**: Importància del multilingüisme.\n- **Objectius**: Fomentar la comprensió intercultural i el desenvolupament de competències en diverses llengües.\n\n---\n\n### 8. Construcció de la noció de temps històric\n- **Àmbits d'estudi**: Processos històrics i grans etapes de la humanitat.\n- **Intervenció educativa**: Mètodes d'ensenyament sobre la història.\n\n---\n\n### 9. L'entorn i la seva conservació\n- **Relacions ecosistèmiques**: Factors de deterioració i regeneració.\n- **Intervenció educativa**: Projectes de conservació i sostenibilitat.\n\n---\n\n### 10. Aprenentatge dels fenòmens físics i canvis químics\n- **Experiències d'aprenentatge**: Observació de canvis físics i químics.\n\n---\n\n### 11. Educació per a la ciutadania i drets humans\n- **Enfocament**: Promoció de valors cívics i educació en drets humans.\n- **Propostes d'intervenció**: Activitats pràctiques i reflexives.\n\n---\n\nSi necessites més informació sobre algun tema en concret o vols aprofundir en algun aspecte, no dubtis a preguntar!",
+      "type": "notes",
+      "timestamp": "2026-01-13T19:14:07.446Z"
+    },
+    {
+      "role": "user",
+      "content": "em pots fer testos de cada un d'aquests temes que m'he de preparar per l'oposició?",
+      "type": "message",
+      "timestamp": "2026-01-13T19:14:50.149Z"
+    }
+  ],
+  "created_at": "2026-01-13T20:10:06.452996",
+  "updated_at": "2026-01-13T20:15:02.245132",
+  "metadata": {
+    "uploadedFiles": [
+      "pri.pdf"
+    ],
+    "selectedModel": "auto",
+    "color": "#6366f1",
+    "icon": "chat",
+    "topic": null
+  }
+}

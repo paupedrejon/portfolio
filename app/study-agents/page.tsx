@@ -65,12 +65,13 @@ export default function StudyAgentsPage() {
 
   return (
     <>
-      {/* Hero Section */}
+      {/* Hero Section - Premium Design */}
       <section className="hero-section" style={{ minHeight: '50vh', position: 'relative', overflow: 'hidden' }}>
         <div className="hero-grid" />
         
-        {/* Animated Background Orbs */}
+        {/* Animated Background Orbs - Premium Multi-layer */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Orb 1 - Slow Moving */}
           <div 
             className="absolute rounded-full blur-[120px] opacity-25"
             style={{
@@ -82,21 +83,61 @@ export default function StudyAgentsPage() {
               animation: "floatOrb1 60s ease-in-out infinite",
             }}
           />
+          {/* Orb 2 - Slow Moving */}
           <div 
             className="absolute rounded-full blur-[100px] opacity-20"
             style={{
               width: '500px',
               height: '500px',
-              background: "linear-gradient(135deg, #8b5cf6, #6366f1)",
+              background: "linear-gradient(135deg, #a855f7, #6366f1)",
               bottom: "20%",
               right: "15%",
               animation: "floatOrb2 70s ease-in-out infinite reverse",
             }}
           />
+          {/* Orb 3 - Floating */}
+          <div 
+            className="absolute rounded-full blur-[80px] opacity-15"
+            style={{
+              width: '400px',
+              height: '400px',
+              background: "linear-gradient(135deg, #8b5cf6, #a855f7)",
+              top: "50%",
+              left: "50%",
+              transform: 'translate(-50%, -50%)',
+              animation: "floatOrb3 80s ease-in-out infinite",
+            }}
+          />
+          {/* Orb 4 - Additional floating */}
+          <div 
+            className="absolute rounded-full blur-[90px] opacity-18"
+            style={{
+              width: '450px',
+              height: '450px',
+              background: "linear-gradient(135deg, #6366f1, #a855f7)",
+              top: "30%",
+              right: "30%",
+              animation: "floatOrb4 75s ease-in-out infinite",
+            }}
+          />
         </div>
 
-        {/* Rising Lines - Usar valores determinísticos para evitar errores de hidratación */}
-        {mounted && [...Array(15)].map((_, i) => {
+        {/* Animated Background Pattern */}
+        <div 
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `
+              radial-gradient(circle at 30% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+              radial-gradient(circle at 70% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+              radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.08) 0%, transparent 50%)
+            `,
+            animation: 'pulseBg 30s ease-in-out infinite',
+          }}
+        />
+
+        {/* Rising Lines - Premium Rain Effect */}
+        {mounted && [...Array(20)].map((_, i) => {
           // Usar valores determinísticos basados en el índice para evitar errores de hidratación
           const seed = i * 7 + 13; // Semilla determinística
           const width = (seed % 20) / 10 + 1; // 1-3px
@@ -106,6 +147,7 @@ export default function StudyAgentsPage() {
           const delay = (seed % 50) / 10; // 0-5s
           const opacity = (seed % 40) / 100 + 0.2; // 0.2-0.6
           const shadowSize = (seed % 100) / 10 + 5; // 5-15px
+          const colorVariant = seed % 2 === 0 ? '99, 102, 241' : '139, 92, 246';
           return (
             <div
               key={i}
@@ -113,13 +155,13 @@ export default function StudyAgentsPage() {
                 position: 'absolute',
                 width: `${width}px`,
                 height: `${height}px`,
-                background: `linear-gradient(to top, rgba(99, 102, 241, 0), rgba(99, 102, 241, ${opacity}))`,
+                background: `linear-gradient(to top, rgba(${colorVariant}, 0), rgba(${colorVariant}, ${opacity}))`,
                 left: `${left}%`,
                 bottom: '-200px',
                 borderRadius: '2px',
                 animation: `riseLine ${duration}s linear infinite`,
                 animationDelay: `${delay}s`,
-                boxShadow: `0 0 ${shadowSize}px rgba(99, 102, 241, 0.3)`,
+                boxShadow: `0 0 ${shadowSize}px rgba(${colorVariant}, 0.3)`,
               }}
             />
           );
@@ -224,6 +266,20 @@ export default function StudyAgentsPage() {
             0%, 100% { transform: translate(0, 0) scale(1); }
             33% { transform: translate(-80px, -120px) scale(1.15); }
             66% { transform: translate(60px, 100px) scale(0.85); }
+          }
+          @keyframes floatOrb3 {
+            0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+            50% { transform: translate(-50%, -50%) scale(1.2) rotate(180deg); }
+          }
+          @keyframes floatOrb4 {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            25% { transform: translate(-50px, 80px) scale(1.1) rotate(90deg); }
+            50% { transform: translate(60px, -40px) scale(0.95) rotate(180deg); }
+            75% { transform: translate(-30px, -60px) scale(1.05) rotate(270deg); }
+          }
+          @keyframes pulseBg {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
           }
           @keyframes riseLine {
             0% {

@@ -8,6 +8,8 @@ import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 import os
+import json
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -77,7 +79,27 @@ class MemoryManager:
                 print("✨ Nueva colección creada después de limpiar conflicto")
         
         # Historial de conversación por usuario (en memoria por ahora)
-        self.conversation_histories: Dict[str, List[Dict[str, str]]] = {}
+        # Historial de conversación indexado por user_id y luego por chat_id
+        # Estructura: {user_id: {chat_id: [messages]}}
+        self.conversation_histories: Dict[str, Dict[str, List[Dict[str, str]]]] = {}
+        
+        # Inicializar colección de estadísticas de usuarios
+        try:
+            try:
+                self.stats_collection = self.client.get_collection(
+                    name="user_stats"
+                )
+                print("📊 Colección de estadísticas existente encontrada")
+            except Exception:
+                # Si no existe, crear una nueva
+                self.stats_collection = self.client.create_collection(
+                    name="user_stats",
+                    metadata={"description": "Estadísticas de tokens y costes por usuario"}
+                )
+                print("✨ Nueva colección de estadísticas creada")
+        except Exception as e:
+            print(f"⚠️ Error al inicializar colección de estadísticas: {e}")
+            self.stats_collection = None
         
         print(f"💾 Memoria inicializada: {memory_type}")
         if self.api_key:
@@ -87,19 +109,28 @@ class MemoryManager:
         """Retorna el tipo de memoria"""
         return self.memory_type
     
-    def store_documents(self, documents: List[str], metadatas: Optional[List[Dict]] = None):
+    def store_documents(self, documents: List[str], metadatas: Optional[List[Dict]] = None, chat_id: Optional[str] = None, user_id: Optional[str] = None):
         """
         Almacena documentos en la memoria con embeddings
         
         Args:
             documents: Lista de textos de documentos
             metadatas: Metadatos opcionales para cada documento
+            chat_id: ID del chat para filtrar contenido (obligatorio para mantener chats separados)
+            user_id: ID del usuario para filtrar contenido (obligatorio para mantener chats separados)
         """
         if not documents:
             return
         
         if metadatas is None:
             metadatas = [{}] * len(documents)
+        
+        # Asegurarse de que cada documento tenga chat_id y user_id en metadatos
+        for i, metadata in enumerate(metadatas):
+            if chat_id:
+                metadata['chat_id'] = chat_id
+            if user_id:
+                metadata['user_id'] = user_id
         
         # Generar IDs únicos
         existing_count = self.collection.count()
@@ -112,18 +143,21 @@ class MemoryManager:
             ids=ids
         )
         
-        print(f"📚 {len(documents)} documentos almacenados en memoria")
+        print(f"📚 {len(documents)} documentos almacenados en memoria (chat_id: {chat_id})")
     
-    def retrieve_relevant_content(self, query: str, n_results: int = 5) -> List[str]:
+    def retrieve_relevant_content(self, query: str, n_results: int = 5, chat_id: Optional[str] = None, user_id: Optional[str] = None) -> List[str]:
         """
         Recupera contenido relevante para una consulta usando búsqueda semántica
+        IMPORTANTE: Filtra por chat_id y user_id para mantener chats independientes
         
         Args:
             query: Consulta de búsqueda
             n_results: Número de resultados a retornar
+            chat_id: ID del chat para filtrar contenido (obligatorio para mantener chats separados)
+            user_id: ID del usuario para filtrar contenido (obligatorio para mantener chats separados)
             
         Returns:
-            Lista de documentos relevantes
+            Lista de documentos relevantes del chat específico
         """
         # Verificar si hay documentos en la colección
         collection_count = self.collection.count()
@@ -131,91 +165,145 @@ class MemoryManager:
             # No hay documentos, retornar lista vacía sin intentar búsqueda
             return []
         
-        if not query.strip():
-            # Si la query está vacía, retornar algunos documentos aleatorios
-            results = self.collection.get(limit=min(n_results, collection_count))
-            documents = results.get('documents', [])
-            # Asegurarse de que es una lista plana
-            if documents and isinstance(documents, list):
-                return documents if isinstance(documents[0], str) else []
+        # Si no hay chat_id o user_id, retornar lista vacía para evitar mezclar chats
+        if not chat_id or not user_id:
+            print(f"⚠️ retrieve_relevant_content: chat_id o user_id no proporcionado. No se recuperará contenido para evitar mezclar chats.")
             return []
         
         try:
-            # Asegurarse de que n_results sea al menos 1 y no mayor que el número de documentos
-            safe_n_results = max(1, min(n_results, collection_count))
+            # Asegurarse de que n_results sea al menos 1
+            safe_n_results = max(1, n_results)
             
+            # Buscar contenido relevante
             results = self.collection.query(
                 query_texts=[query],
-                n_results=safe_n_results
+                n_results=min(safe_n_results * 3, collection_count),  # Buscar más para tener opciones al filtrar
+                where={"chat_id": chat_id, "user_id": user_id} if chat_id and user_id else None
             )
             
             documents = results.get('documents', [])
-            # ChromaDB retorna documents como lista de listas: [['doc1', 'doc2', ...]]
-            # Necesitamos extraer la primera lista interna
+            metadatas = results.get('metadatas', [])
+            
+            # Filtrar documentos por chat_id y user_id (doble verificación)
+            filtered_docs = []
             if documents and len(documents) > 0:
-                # documents es una lista de listas, tomar la primera
+                # documents es una lista de listas: [['doc1', 'doc2', ...]]
                 doc_list = documents[0] if isinstance(documents[0], list) else documents
-                # Asegurarse de que es una lista de strings
-                if isinstance(doc_list, list):
-                    return [str(doc) for doc in doc_list if doc]
-                return []
+                metadata_list = metadatas[0] if (metadatas and isinstance(metadatas[0], list)) else (metadatas if metadatas else [])
+                
+                # Filtrar por chat_id y user_id
+                for i, doc in enumerate(doc_list):
+                    if doc:
+                        metadata = metadata_list[i] if i < len(metadata_list) else {}
+                        # Solo incluir si pertenece al chat correcto
+                        if metadata.get('chat_id') == chat_id and metadata.get('user_id') == user_id:
+                            filtered_docs.append(str(doc))
+                            if len(filtered_docs) >= safe_n_results:
+                                break
+                
+                return filtered_docs
+            
             return []
         except Exception as e:
             print(f"⚠️ Error al buscar contenido: {e}")
-            # Fallback: retornar algunos documentos si hay disponibles
-            if collection_count > 0:
-                try:
-                    results = self.collection.get(limit=min(n_results, collection_count))
-                    documents = results.get('documents', [])
-                    # Asegurarse de que es una lista plana
-                    if documents and isinstance(documents, list):
-                        return documents if isinstance(documents[0], str) else []
-                except Exception as e2:
-                    print(f"⚠️ Error en fallback: {e2}")
+            # Si el error es por el filtro where (puede no estar soportado en todas las versiones de ChromaDB)
+            # Intentar sin filtro y filtrar manualmente
+            try:
+                results = self.collection.query(
+                    query_texts=[query],
+                    n_results=min(safe_n_results * 3, collection_count)
+                )
+                
+                documents = results.get('documents', [])
+                metadatas = results.get('metadatas', [])
+                
+                filtered_docs = []
+                if documents and len(documents) > 0:
+                    doc_list = documents[0] if isinstance(documents[0], list) else documents
+                    metadata_list = metadatas[0] if (metadatas and isinstance(metadatas[0], list)) else (metadatas if metadatas else [])
+                    
+                    for i, doc in enumerate(doc_list):
+                        if doc:
+                            metadata = metadata_list[i] if i < len(metadata_list) else {}
+                            if metadata.get('chat_id') == chat_id and metadata.get('user_id') == user_id:
+                                filtered_docs.append(str(doc))
+                                if len(filtered_docs) >= safe_n_results:
+                                    break
+                
+                return filtered_docs
+            except Exception as e2:
+                print(f"⚠️ Error en fallback: {e2}")
             return []
     
-    def get_conversation_history(self, user_id: str) -> List[Dict]:
+    def get_conversation_history(self, user_id: str, chat_id: Optional[str] = None) -> List[Dict]:
         """
-        Obtiene el historial de conversación de un usuario
+        Obtiene el historial de conversación de un usuario para un chat específico
         
         Args:
             user_id: ID del usuario
+            chat_id: ID del chat (opcional, si no se proporciona, devuelve todos los chats mezclados)
             
         Returns:
-            Historial de conversación
+            Historial de conversación del chat específico
         """
-        return self.conversation_histories.get(user_id, [])
+        if user_id not in self.conversation_histories:
+            return []
+        
+        # Si no hay chat_id, devolver historial vacío (no mezclar chats)
+        if chat_id is None:
+            return []
+        
+        # Devolver historial del chat específico
+        user_chats = self.conversation_histories[user_id]
+        return user_chats.get(chat_id, [])
     
-    def add_to_conversation_history(self, user_id: str, role: str, content: str):
+    def add_to_conversation_history(self, user_id: str, role: str, content: str, chat_id: Optional[str] = None):
         """
-        Añade un mensaje al historial de conversación
+        Añade un mensaje al historial de conversación de un chat específico
         
         Args:
             user_id: ID del usuario
             role: Rol (user/assistant/system)
             content: Contenido del mensaje
+            chat_id: ID del chat (opcional, pero recomendado para mantener chats separados)
         """
-        if user_id not in self.conversation_histories:
-            self.conversation_histories[user_id] = []
+        if chat_id is None:
+            # Si no hay chat_id, usar "default" para mantener compatibilidad
+            chat_id = "default"
         
-        self.conversation_histories[user_id].append({
+        if user_id not in self.conversation_histories:
+            self.conversation_histories[user_id] = {}
+        
+        if chat_id not in self.conversation_histories[user_id]:
+            self.conversation_histories[user_id][chat_id] = []
+        
+        self.conversation_histories[user_id][chat_id].append({
             "role": role,
             "content": content
         })
         
-        # Limitar historial a últimos 50 mensajes
-        if len(self.conversation_histories[user_id]) > 50:
-            self.conversation_histories[user_id] = self.conversation_histories[user_id][-50:]
+        # Limitar historial a últimos 50 mensajes por chat
+        if len(self.conversation_histories[user_id][chat_id]) > 50:
+            self.conversation_histories[user_id][chat_id] = self.conversation_histories[user_id][chat_id][-50:]
     
-    def clear_conversation_history(self, user_id: str):
+    def clear_conversation_history(self, user_id: str, chat_id: Optional[str] = None):
         """
-        Limpia el historial de conversación de un usuario
+        Limpia el historial de conversación de un usuario para un chat específico
         
         Args:
             user_id: ID del usuario
+            chat_id: ID del chat (opcional, si no se proporciona, limpia todos los chats del usuario)
         """
-        if user_id in self.conversation_histories:
-            self.conversation_histories[user_id] = []
+        if user_id not in self.conversation_histories:
+            return
+        
+        if chat_id is None:
+            # Limpiar todos los chats del usuario
+            self.conversation_histories[user_id] = {}
+        else:
+            # Limpiar solo el chat específico
+            if chat_id in self.conversation_histories[user_id]:
+                self.conversation_histories[user_id][chat_id] = []
     
     def get_all_documents(self, limit: int = 100) -> List[str]:
         """

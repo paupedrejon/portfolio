@@ -1,0 +1,64 @@
+{
+  "chat_id": "chat-1768643224278",
+  "user_id": "c97b07ef-4edd-4421-8e83-255d76a1e4b2",
+  "title": "Inglés",
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "¡Excelente elección! Vamos a darle caña a **Inglés**. Para poder ayudarte mejor, dime:\n\n¿Qué nivel tienes (Principiante, Intermedio, Avanzado)?\n\nEn cuanto me digas, empezamos.",
+      "type": "level_selection",
+      "timestamp": "2026-01-17T09:47:05.039Z",
+      "topic": "Inglés"
+    },
+    {
+      "role": "user",
+      "content": "Avanzado",
+      "type": "message",
+      "timestamp": "2026-01-17T09:47:08.600Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Perfecto, nivel **Avanzado** (7/10) seleccionado. ¡Empecemos a trabajar con **Inglés**! ¿En qué te gustaría enfocarnos primero?",
+      "type": "message",
+      "timestamp": "2026-01-17T09:47:08.600Z"
+    },
+    {
+      "role": "user",
+      "content": "Dame una imagen de como se aprende ingles",
+      "type": "message",
+      "timestamp": "2026-01-17T10:48:50.375Z"
+    },
+    {
+      "role": "assistant",
+      "content": "## Cómo se Aprende Inglés\n\nEl aprendizaje del inglés implica diversas etapas y actividades que se pueden representar visualmente. Aunque no puedo proporcionar una imagen directamente, aquí tienes una descripción de cómo se podría ilustrar el proceso:\n\n### Imagen Sugerida\n\n- **Escucha**: Una persona escuchando música o viendo una película en inglés.\n- **Lectura**: Alguien leyendo un libro o un artículo en inglés.\n- **Escritura**: Una persona escribiendo en un diario o en un ordenador.\n- **Conversación**: Dos personas hablando en inglés, quizás en un café.\n\n### Elementos Clave en la Imagen\n- **Inmersión Lingüística**: Representar a alguien interactuando con hablantes nativos.\n- **Uso de Recursos Digitales**: Mostrar aplicaciones de aprendizaje en un teléfono o tablet.\n- **Estudio Estructurado**: Una clase con un profesor y alumnos participando.\n\n### Conclusión\n\nEl aprendizaje del inglés es un proceso integral que combina varias habilidades. Para visualizarlo, imagina a una persona involucrada en estas actividades cotidianas. Si tienes más preguntas o necesitas información específica, ¡estaré encantado de ayudarte!",
+      "type": "notes",
+      "timestamp": "2026-01-17T10:49:25.442Z"
+    },
+    {
+      "role": "user",
+      "content": "Dame un video sobre como aprender ingles",
+      "type": "message",
+      "timestamp": "2026-01-17T10:49:44.139Z"
+    },
+    {
+      "role": "assistant",
+      "content": "¡Claro! Aquí tienes un par de videos recomendados que te ayudarán a aprender inglés:\n\n### Videos Recomendados para Aprender Inglés\n\n1. **English with Lucy**: [Aprende inglés con Lucy](https://www.youtube.com/c/EnglishwithLucy) - Este canal ofrece lecciones sobre gramática, vocabulario y pronunciación.\n2. **BBC Learning English**: [BBC Learning English](https://www.youtube.com/c/bbclearningenglish) - Aquí encontrarás videos sobre diversos temas y prácticas de conversación.\n3. **EngVid**: [EngVid](https://www.youtube.com/c/engvid) - Un canal con clases de profesores sobre diferentes aspectos del idioma.\n\n### Consejos para Aprender con Videos\n- **Toma Notas**: Escribe lo que aprendes para retener mejor la información.\n- **Repite en Voz Alta**: Practica la pronunciación imitando a los hablantes.\n- **Usa Subtítulos**: Activa los subtítulos en inglés para seguir el contenido más fácilmente.\n\nEstos recursos son excelentes para mejorar tu comprensión y habilidades en inglés. ¡Espero que te sean útiles! Si necesitas más recomendaciones, no dudes en preguntar.",
+      "type": "notes",
+      "timestamp": "2026-01-17T10:50:04.413Z"
+    }
+  ],
+  "created_at": "2026-01-17T10:47:05.028949",
+  "updated_at": "2026-01-17T11:50:05.595406",
+  "metadata": {
+    "uploadedFiles": [],
+    "selectedModel": "auto",
+    "color": "#3b82f6",
+    "icon": "flag_inglés",
+    "topic": "Inglés",
+    "initialForm": {
+      "level": 9,
+      "learningGoal": "QUiero ser ingles",
+      "timeAvailable": "1 dia y medio"
+    }
+  }
+}
