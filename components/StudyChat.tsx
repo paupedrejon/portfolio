@@ -12178,13 +12178,6 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
               romanization?: string;
               options?: string[];
             }
-            interface WordItem {
-              word?: string;
-              translation?: string;
-              example?: string;
-              romanization?: string;
-              options?: string[];
-            }
             const newWords: WordItem[] = JSON.parse(jsonMatch[0]);
             
             // Filtrar palabras que ya están en la lista de palabras aprendidas
