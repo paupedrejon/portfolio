@@ -260,12 +260,9 @@ import {
   HiChevronDown,
   HiChartBar,
   HiCube,
-  HiHome,
   HiLockClosed,
   HiCloud,
   HiWifi,
-  HiUser,
-  HiUserCircle,
   HiCheck,
   HiXMark,
 } from "react-icons/hi2";
@@ -377,7 +374,8 @@ export default function StudyChat() {
   }>>([]);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
-  // Función helper para guardar una palabra aprendida
+  // Función helper para guardar una palabra aprendida (no usada actualmente)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const saveLearnedWord = async (
     word: string,
     translation: string,
@@ -642,7 +640,8 @@ export default function StudyChat() {
     };
   }, [showLevelDropdown]);
 
-  // Colores disponibles para los chats
+  // Colores disponibles para los chats (no usados actualmente)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const chatColors = [
     { name: "Morado", value: "#6366f1" },
     { name: "Azul", value: "#3b82f6" },
@@ -658,7 +657,8 @@ export default function StudyChat() {
     { name: "Magenta", value: "#d946ef" },
   ];
 
-  // Iconos disponibles para los chats
+  // Iconos disponibles para los chats (no usados actualmente)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const chatIcons = [
     { name: "Chat", value: "chat" },
     { name: "Libro", value: "book" },
@@ -844,14 +844,12 @@ export default function StudyChat() {
   const [showLanguageTool, setShowLanguageTool] = useState(false);
   const [showCodeTool, setShowCodeTool] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isTablet, setIsTablet] = useState(false);
 
   // Detectar tamaño de pantalla
   useEffect(() => {
     const checkWidth = () => {
       const width = window.innerWidth;
       setIsMobile(width < 640);
-      setIsTablet(width >= 640 && width < 1024);
     };
     checkWidth();
     window.addEventListener("resize", checkWidth);
@@ -1133,7 +1131,8 @@ export default function StudyChat() {
     },
   ], []);
 
-  // Función para renderizar el icono según el tipo
+  // Función para renderizar el icono según el tipo (no usada actualmente)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const renderIcon = (iconType: string = "chat", color: string = "#6366f1", isSelected: boolean = false) => {
     const iconColor = color || "#6366f1";
     // Si está seleccionado, usar blanco. Si no, usar el color del tema
@@ -1190,6 +1189,7 @@ export default function StudyChat() {
     if (userId && !currentChatId) {
       loadOrCreateGeneralChat();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
   
   const loadOrCreateGeneralChat = async () => {
@@ -1531,6 +1531,7 @@ export default function StudyChat() {
         loadMessageLevel(msg.id, msg.content);
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length, userId]); // Solo cuando cambia la cantidad de mensajes
 
   // Función para guardar chat (con debounce)
@@ -1861,7 +1862,6 @@ export default function StudyChat() {
         setNewChatIcon("chat");
         
         // Mostrar formulario inicial para recopilar información del usuario
-        const topic = predefinedName || chatName;
         setShowInitialForm(true);
         setInitialFormData({
           level: null,
@@ -1889,7 +1889,11 @@ export default function StudyChat() {
   // Inicializar reconocimiento de voz
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      interface WindowWithSpeechRecognition extends Window {
+        SpeechRecognition?: new () => SpeechRecognition;
+        webkitSpeechRecognition?: new () => SpeechRecognition;
+      }
+      const SpeechRecognition = (window as WindowWithSpeechRecognition).SpeechRecognition || (window as WindowWithSpeechRecognition).webkitSpeechRecognition;
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
@@ -2474,8 +2478,8 @@ ${contentPreview}
         }));
       
       // Obtener el tema y nivel del chat actual
-      const topic = currentChatLevel?.topic || null;
-      const level = currentChatLevel?.level || null;
+      // const topic = currentChatLevel?.topic || null;
+      // const level = currentChatLevel?.level || null;
       
       // Llamar a la API con la key del usuario y el modelo seleccionado
       const response = await fetch("/api/study-agents/generate-notes", {
@@ -13146,6 +13150,7 @@ function CodeInterpreter({
     if (initialCode !== undefined && initialCode !== code) {
       setCode(initialCode);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCode]);
   
   // Notificar cambios de código (usar useRef para evitar bucles)
