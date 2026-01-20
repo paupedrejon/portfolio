@@ -763,7 +763,7 @@ export default function ChatSidebar({
                   lineHeight: 1.6,
                 }}
               >
-                ¿Estás seguro de que quieres eliminar <strong style={{ color: textColor }}>"{deleteConfirmChatTitle}"</strong>?
+                ¿Estás seguro de que quieres eliminar <strong style={{ color: textColor }}>&quot;{deleteConfirmChatTitle}&quot;</strong>?
                 <br />
                 Esta acción no se puede deshacer.
               </p>
