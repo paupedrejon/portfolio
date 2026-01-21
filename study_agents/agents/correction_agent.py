@@ -169,10 +169,8 @@ class CorrectionAgent:
         
         # Prompt para revisar y corregir
         # Definir variables para evitar backslashes en f-string
-        newline_escape = "\\n"
-        quote_escape = '\\"'
-        # Construir el prompt en partes para evitar problemas con backslashes en f-strings
-        escape_instruction = f"({newline_escape} para saltos de línea, {quote_escape} para comillas)"
+        # Usar concatenación simple en lugar de f-string para evitar problemas con backslashes
+        escape_instruction = "(\\n para saltos de línea, \\\" para comillas)"
         review_prompt = f"""Eres un revisor experto de respuestas educativas. Tu tarea es analizar si una respuesta tiene sentido en el contexto de la conversación y corregirla si es necesario.
 
 PREGUNTA DEL USUARIO:
