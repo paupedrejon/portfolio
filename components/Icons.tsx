@@ -372,7 +372,7 @@ export const BuildingIcon = ({ size = 20, color = "currentColor" }: { size?: num
 );
 
 // Iconos de banderas para idiomas - viewBox optimizado para llenar el contenedor
-export const FlagUKIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const FlagUKIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" preserveAspectRatio="none">
     <rect x="0" y="0" width="24" height="24" fill="#012169" />
     {/* Cruz de San Jorge (blanca) - vertical y horizontal */}
@@ -390,7 +390,7 @@ export const FlagUKIcon = ({ size = 20, color = "currentColor" }: { size?: numbe
   </svg>
 );
 
-export const FlagFRIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const FlagFRIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" preserveAspectRatio="none">
     <rect x="0" y="0" width="8" height="24" fill="#002654" />
     <rect x="8" y="0" width="8" height="24" fill="#FFFFFF" />
@@ -398,7 +398,7 @@ export const FlagFRIcon = ({ size = 20, color = "currentColor" }: { size?: numbe
   </svg>
 );
 
-export const FlagDEIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const FlagDEIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" preserveAspectRatio="none">
     <rect x="0" y="0" width="24" height="8" fill="#000000" />
     <rect x="0" y="8" width="24" height="8" fill="#DD0000" />
@@ -406,7 +406,7 @@ export const FlagDEIcon = ({ size = 20, color = "currentColor" }: { size?: numbe
   </svg>
 );
 
-export const FlagITIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const FlagITIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" preserveAspectRatio="none">
     <rect x="0" y="0" width="8" height="24" fill="#009246" />
     <rect x="8" y="0" width="8" height="24" fill="#FFFFFF" />
@@ -414,7 +414,7 @@ export const FlagITIcon = ({ size = 20, color = "currentColor" }: { size?: numbe
   </svg>
 );
 
-export const FlagPTIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const FlagPTIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" preserveAspectRatio="none">
     <rect x="0" y="0" width="10" height="24" fill="#006600" />
     <rect x="10" y="0" width="14" height="24" fill="#FF0000" />
@@ -426,7 +426,7 @@ export const FlagPTIcon = ({ size = 20, color = "currentColor" }: { size?: numbe
   </svg>
 );
 
-export const FlagCNIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const FlagCNIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" preserveAspectRatio="none">
     <rect x="0" y="0" width="24" height="24" fill="#DE2910" />
     {/* Estrella grande de 5 puntas (centro izquierda) */}
@@ -442,14 +442,14 @@ export const FlagCNIcon = ({ size = 20, color = "currentColor" }: { size?: numbe
   </svg>
 );
 
-export const FlagJPIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const FlagJPIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" preserveAspectRatio="none">
     <rect x="0" y="0" width="24" height="24" fill="#FFFFFF" />
     <circle cx="12" cy="12" r="7" fill="#BC002D" />
   </svg>
 );
 
-export const FlagKRIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const FlagKRIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" preserveAspectRatio="none">
     <rect x="0" y="0" width="24" height="24" fill="#FFFFFF" />
     {/* Círculo Taegeuk (yin-yang) - forma de S con mitad superior roja e inferior azul */}
@@ -463,7 +463,7 @@ export const FlagKRIcon = ({ size = 20, color = "currentColor" }: { size?: numbe
   </svg>
 );
 
-export const FlagCAIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const FlagCAIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" preserveAspectRatio="none">
     {/* Bandera de Cataluña (Senyera) - 4 rayas rojas sobre fondo amarillo, con líneas amarillas más gruesas */}
     <rect x="0" y="0" width="24" height="24" fill="#FCDD09" />
@@ -474,7 +474,7 @@ export const FlagCAIcon = ({ size = 20, color = "currentColor" }: { size?: numbe
   </svg>
 );
 
-export const FlagRUIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const FlagRUIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" preserveAspectRatio="none">
     <rect x="0" y="0" width="24" height="8" fill="#FFFFFF" />
     <rect x="0" y="8" width="24" height="8" fill="#0039A6" />
@@ -483,21 +483,21 @@ export const FlagRUIcon = ({ size = 20, color = "currentColor" }: { size?: numbe
 );
 
 // Iconos más específicos para temas
-export const PythonIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const PythonIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <path d="M9.585 2.33c.33-.33.858-.33 1.188 0 .33.33.33.858 0 1.188-.33.33-.858.33-1.188 0-.33-.33-.33-.858 0-1.188zM7.035 3.75c-.33.33-.33.858 0 1.188.33.33.858.33 1.188 0 .33-.33.33-.858 0-1.188-.33-.33-.858-.33-1.188 0z" fill="#3776AB"/>
     <path d="M12 2c-2.5 0-4.5 1.5-4.5 3.5v2.25h9V5.5c0-2-2-3.5-4.5-3.5zm-4.5 7.5H3v2.25c0 2 2 3.5 4.5 3.5s4.5-1.5 4.5-3.5V9.75h-4.5zm9 0h-4.5v2.25c0 1.5 1.5 2.25 3 2.25s3-.75 3-2.25V9.75zm-9 4.5H3c-2 0-3.5 1.5-3.5 3.5v2.25c0 2 2 3.5 4.5 3.5h9c2.5 0 4.5-1.5 4.5-3.5V18.5c0-2-2-3.5-4.5-3.5z" fill="#FFD43B"/>
   </svg>
 );
 
-export const JSIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const JSIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <rect x="2" y="2" width="20" height="20" rx="2" fill="#F7DF1E"/>
     <path d="M7 16.5c0 .83.67 1.5 1.5 1.5h3c1.38 0 2.5-1.12 2.5-2.5 0-1.38-1.12-2.5-2.5-2.5h-1.5v-2h1.5c2.48 0 4.5 2.02 4.5 4.5S14.98 18 12.5 18h-3c-.83 0-1.5-.67-1.5-1.5z" fill="#000000"/>
   </svg>
 );
 
-export const ReactIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const ReactIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <circle cx="12" cy="12" r="2" fill="#61DAFB"/>
     <ellipse cx="12" cy="12" rx="11" ry="4.2" stroke="#61DAFB" strokeWidth="1.5" fill="none"/>
@@ -506,7 +506,7 @@ export const ReactIcon = ({ size = 20, color = "currentColor" }: { size?: number
   </svg>
 );
 
-export const GitIcon = ({ size = 20, color = "currentColor" }: { size?: number; color?: string }) => (
+export const GitIcon = ({ size = 20 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="#F05032">
     <path d="M21.62 11.108L12.893 2.38a1.297 1.297 0 0 0-1.786 0L2.38 11.108a1.297 1.297 0 0 0 0 1.785l8.728 8.728a1.297 1.297 0 0 0 1.785 0l8.728-8.728a1.297 1.297 0 0 0 0-1.785zM13.98 19.43v-4.286h-3.96v4.286H6.57V9.714h1.45v3.857h3.96V9.714h1.45v9.714h-1.45zm-1.45-10.5c-.8 0-1.45-.65-1.45-1.45s.65-1.45 1.45-1.45 1.45.65 1.45 1.45-.65 1.45-1.45 1.45z"/>
   </svg>

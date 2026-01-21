@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 
 interface TopicProgress {
@@ -47,13 +47,7 @@ export default function ProfileView({ userId, onClose }: ProfileViewProps) {
     }
   }, []);
 
-  useEffect(() => {
-    loadProgress();
-    loadUserStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
-  
-  const loadUserStats = async () => {
+  const loadUserStats = useCallback(async () => {
     try {
       if (!userId || userId.trim() === "") {
         return;
@@ -90,20 +84,9 @@ export default function ProfileView({ userId, onClose }: ProfileViewProps) {
     } catch (error) {
       console.error("Error al cargar estadísticas del usuario:", error);
     }
-  };
-  
-  // Recargar estadísticas periódicamente para reflejar cambios
-  useEffect(() => {
-    if (userId) {
-      const statsInterval = setInterval(() => {
-        loadUserStats();
-      }, 5000); // Actualizar cada 5 segundos
-      
-      return () => clearInterval(statsInterval);
-    }
   }, [userId]);
 
-  const loadProgress = async () => {
+  const loadProgress = useCallback(async () => {
     try {
       setLoading(true);
       console.log(`📊 [ProfileView] ========== INICIO CARGA PROGRESO ==========`);
@@ -184,7 +167,12 @@ export default function ProfileView({ userId, onClose }: ProfileViewProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    loadProgress();
+    loadUserStats();
+  }, [loadProgress, loadUserStats]);
 
   const getLevelColor = (level: number) => {
     // Colores diferentes para cada nivel (0-10)
