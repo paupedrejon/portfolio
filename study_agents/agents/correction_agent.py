@@ -183,7 +183,7 @@ HISTORIAL DE CONVERSACIÓN:
 RESPUESTA GENERADA A REVISAR:
 {response}
 
-{f"APUNTES ANTERIORES (para comparar variación):\n{previous_notes[:1500] if previous_notes else 'No hay apuntes anteriores para comparar.'}" if is_notes else ""}
+{("APUNTES ANTERIORES (para comparar variación):\n" + (previous_notes[:1500] if previous_notes else 'No hay apuntes anteriores para comparar.')) if is_notes else ""}
 
 ---
 
