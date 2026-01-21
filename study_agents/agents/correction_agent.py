@@ -167,6 +167,12 @@ class CorrectionAgent:
         if context:
             context_str = f"\nContexto del temario disponible:\n{context[:2000]}"  # Limitar tamaño
         
+        # Preparar texto de apuntes anteriores (fuera del f-string para evitar problemas con backslashes)
+        previous_notes_text = ""
+        if is_notes:
+            notes_content = previous_notes[:1500] if previous_notes else 'No hay apuntes anteriores para comparar.'
+            previous_notes_text = f"\nAPUNTES ANTERIORES (para comparar variación):\n{notes_content}"
+        
         # Prompt para revisar y corregir
         review_prompt = f"""Eres un revisor experto de respuestas educativas. Tu tarea es analizar si una respuesta tiene sentido en el contexto de la conversación y corregirla si es necesario.
 
@@ -182,8 +188,7 @@ HISTORIAL DE CONVERSACIÓN:
 
 RESPUESTA GENERADA A REVISAR:
 {response}
-
-{("APUNTES ANTERIORES (para comparar variación):\n" + (previous_notes[:1500] if previous_notes else 'No hay apuntes anteriores para comparar.')) if is_notes else ""}
+{previous_notes_text}
 
 ---
 
