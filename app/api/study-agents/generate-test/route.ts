@@ -58,8 +58,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error('Error generating test:', error);
+    const message = error instanceof Error ? error.message : 'Error al generar test';
     return NextResponse.json(
-      { error: error.message || 'Error al generar test' },
+      { error: message },
       { status: 500 }
     );
   }

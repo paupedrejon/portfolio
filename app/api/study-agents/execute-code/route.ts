@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       });
     } catch (fetchError: unknown) {
       // Si hay error de conexión (backend no disponible)
-      if (fetchError.name === "AbortError" || fetchError.message?.includes("fetch")) {
+      if (fetchError instanceof Error && (fetchError.name === "AbortError" || fetchError.message?.includes("fetch"))) {
         return NextResponse.json(
           { 
             success: false, 
@@ -63,17 +63,18 @@ export async function POST(request: NextRequest) {
     console.error("Error in execute-code route:", error);
     
     // Manejar errores específicos
-    if (error.name === "AbortError") {
+    if (error instanceof Error && error.name === "AbortError") {
       return NextResponse.json(
         { success: false, error: "La ejecución del código tardó demasiado (timeout)" },
         { status: 504 }
       );
     }
     
+    const message = error instanceof Error ? error.message : "Error interno del servidor. Verifica que el backend FastAPI esté corriendo.";
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || "Error interno del servidor. Verifica que el backend FastAPI esté corriendo." 
+        error: message
       },
       { status: 500 }
     );

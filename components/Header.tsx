@@ -114,6 +114,7 @@ export default function Header() {
     if (isStudyAgentsPage && session?.user?.id) {
       const loadTotalLevel = async () => {
         try {
+          if (!session.user) return;
           const response = await fetch("/api/study-agents/get-progress", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -125,7 +126,12 @@ export default function Header() {
             if (data.success && data.progress) {
               const progressData = data.progress || {};
               const topics = Object.entries(progressData);
-              const level = topics.reduce((sum, [, topicData]: [string, any]) => {
+              interface TopicProgressData {
+                level?: number;
+                experience?: number;
+                [key: string]: unknown;
+              }
+              const level = (topics as Array<[string, TopicProgressData]>).reduce((sum: number, [, topicData]) => {
                 const topicLevel = (topicData && typeof topicData === 'object' && 'level' in topicData) ? (topicData.level || 0) : 0;
                 return sum + topicLevel;
               }, 0);
@@ -139,6 +145,7 @@ export default function Header() {
       
       const loadMonthlyCost = async () => {
         try {
+          if (!session.user) return;
           const response = await fetch("/api/study-agents/get-user-stats", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

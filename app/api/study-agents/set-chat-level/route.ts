@@ -80,18 +80,21 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error('📊 [Next.js API] Error setting chat level:', error);
-    console.error('📊 [Next.js API] Error stack:', error.stack);
+    if (error instanceof Error) {
+      console.error('📊 [Next.js API] Error stack:', error.stack);
+    }
     
     // Si es un error de JSON, dar un mensaje más específico
-    if (error instanceof SyntaxError || error.message?.includes('JSON')) {
+    if (error instanceof SyntaxError || (error instanceof Error && error.message?.includes('JSON'))) {
       return NextResponse.json(
         { error: 'Error al parsear el JSON de la petición. Verifica que el body esté correctamente formateado.' },
         { status: 400 }
       );
     }
     
+    const message = error instanceof Error ? error.message : 'Error al establecer el nivel';
     return NextResponse.json(
-      { error: error.message || 'Error al establecer el nivel' },
+      { error: message },
       { status: 500 }
     );
   }

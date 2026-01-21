@@ -37,8 +37,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error: unknown) {
     console.error("Error in add-learned-word route:", error);
+    const message = error instanceof Error ? error.message : "Error interno del servidor";
     return NextResponse.json(
-      { success: false, error: error.message || "Error interno del servidor" },
+      { success: false, error: message },
       { status: 500 }
     );
   }

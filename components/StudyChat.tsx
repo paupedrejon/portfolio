@@ -1153,7 +1153,7 @@ export default function StudyChat() {
           [key: string]: unknown;
         }
         const generalChat = (data.chats as ChatItem[]).find((chat: ChatItem) => chat.title === "General");
-        if (generalChat) {
+        if (generalChat && generalChat.chat_id) {
           // Cargar el chat General existente
           await loadChat(generalChat.chat_id);
         } else {
@@ -1538,7 +1538,7 @@ export default function StudyChat() {
             [key: string]: unknown;
           }
           const generalChat = (listData.chats as ChatItem[]).find((chat: ChatItem) => chat.title === "General");
-          if (generalChat) {
+          if (generalChat && generalChat.chat_id) {
             chatIdToUse = generalChat.chat_id;
             setCurrentChatId(generalChat.chat_id);
             currentChatIdRef.current = generalChat.chat_id;
@@ -1637,8 +1637,11 @@ export default function StudyChat() {
         interface WindowWithRefresh extends Window {
           refreshChatSidebar?: () => void;
         }
-        if (typeof window !== "undefined" && (window as WindowWithRefresh).refreshChatSidebar) {
-          (window as WindowWithRefresh).refreshChatSidebar();
+        if (typeof window !== "undefined") {
+          const refreshChatSidebar = (window as WindowWithRefresh).refreshChatSidebar;
+          if (refreshChatSidebar) {
+            refreshChatSidebar();
+          }
         }
       } else {
         console.error("❌ Chat save response indicates failure:", data);
@@ -1676,10 +1679,10 @@ export default function StudyChat() {
         }
         const loadedMessages: Message[] = (data.chat.messages as BackendMessage[]).map((msg: BackendMessage) => ({
           id: Date.now().toString() + Math.random(),
-          role: msg.role,
+          role: msg.role as "user" | "assistant" | "system",
           content: msg.content,
-          type: msg.type || "message",
-          timestamp: new Date(msg.timestamp),
+          type: (msg.type || "message") as Message["type"],
+          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
           topic: msg.topic || undefined, // Preservar el tema si existe (para mensajes de selección de nivel)
         }));
 
@@ -1822,8 +1825,11 @@ export default function StudyChat() {
         interface WindowWithRefresh extends Window {
           refreshChatSidebar?: () => void;
         }
-        if (typeof window !== "undefined" && (window as WindowWithRefresh).refreshChatSidebar) {
-          (window as WindowWithRefresh).refreshChatSidebar();
+        if (typeof window !== "undefined") {
+          const refreshChatSidebar = (window as WindowWithRefresh).refreshChatSidebar;
+          if (refreshChatSidebar) {
+            refreshChatSidebar();
+          }
         }
       }
     } catch (error) {
@@ -1939,7 +1945,7 @@ export default function StudyChat() {
       return;
     }
 
-    const userMessage = input.trim();
+    let userMessage = input.trim();
     setInput("");
     // Resetear altura del textarea
     if (textareaRef.current) {
@@ -2438,7 +2444,7 @@ ${contentPreview}
           userId: userId,
           chatId: currentChatId, // Pasar chatId para obtener el nivel
           conversationHistory: conversationHistory,
-          topic: topic,
+          topic: currentChatLevel?.topic || undefined,
         }),
         signal: controller.signal,
       });
@@ -8263,9 +8269,9 @@ function NotesViewer({
   };
   
   // Procesar bloques de video antes de renderizar
-  const processVideoBlocks = (text: string): (string | JSX.Element)[] => {
+  const processVideoBlocks = (text: string): (string | React.ReactElement)[] => {
     const videoBlockRegex = /<youtube-video\s+([^>]+)\s*\/>/g;
-    const parts: (string | JSX.Element)[] = [];
+    const parts: (string | React.ReactElement)[] = [];
     let lastIndex = 0;
     let match;
     let partIndex = 0;
@@ -12235,7 +12241,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
                 };
               }
             });
-            setWords(prev => [...prev, ...wordsWithShuffledOptions]);
+            setWords(prev => [...prev, ...wordsWithShuffledOptions] as typeof prev);
           }
         } catch (e) {
           console.error("Error parsing words:", e);
@@ -13419,35 +13425,41 @@ export default App;`,
           value={code}
           onChange={(value) => setCode(value)}
           height="300px"
-          theme={colorTheme === "dark" ? oneDark : EditorView.theme({
-            "&": {
-              backgroundColor: codeBgColor,
-              color: textColor,
-            },
-            ".cm-content": {
-              caretColor: textColor,
-            },
-            ".cm-editor": {
-              backgroundColor: codeBgColor,
-            },
-            ".cm-gutters": {
-              backgroundColor: colorTheme === "dark" ? "#1a1a1a" : "#f0f0f0",
-              color: colorTheme === "dark" ? "#858585" : "#6e7681",
-              border: "none",
-            },
+          theme={(() => {
+            if (colorTheme === "dark") {
+              return oneDark;
+            }
+            const isDark = false; // En este bloque sabemos que es "light"
+            return EditorView.theme({
+              "&": {
+                backgroundColor: codeBgColor,
+                color: textColor,
+              },
+              ".cm-content": {
+                caretColor: textColor,
+              },
+              ".cm-editor": {
+                backgroundColor: codeBgColor,
+              },
+              ".cm-gutters": {
+                backgroundColor: isDark ? "#1a1a1a" : "#f0f0f0",
+                color: isDark ? "#858585" : "#6e7681",
+                border: "none",
+              },
             ".cm-lineNumbers .cm-gutterElement": {
-              color: colorTheme === "dark" ? "#858585" : "#6e7681",
+              color: isDark ? "#858585" : "#6e7681",
             },
             ".cm-activeLineGutter": {
-              backgroundColor: colorTheme === "dark" ? "#2a2a2a" : "#e8e8e8",
+              backgroundColor: isDark ? "#2a2a2a" : "#e8e8e8",
             },
             ".cm-activeLine": {
-              backgroundColor: colorTheme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.03)",
+              backgroundColor: isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.03)",
             },
             ".cm-selectionMatch": {
-              backgroundColor: colorTheme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+              backgroundColor: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
             },
-          })}
+          });
+          })()}
           extensions={[
             language.toLowerCase().includes("python") ? python() :
             language.toLowerCase().includes("javascript") || language.toLowerCase().includes("js") ? javascript({ jsx: true }) :

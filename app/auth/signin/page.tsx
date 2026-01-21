@@ -2,11 +2,10 @@
 
 import { signIn } from "next-auth/react";
 import { spaceGrotesk, outfit } from "@/app/fonts";
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
-export default function SignInPage() {
-  const router = useRouter();
+function SignInContent() {
   const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const callbackUrl = searchParams.get("callbackUrl") || "/study-agents";
@@ -154,5 +153,25 @@ export default function SignInPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #1a1a24 0%, #2d2d44 100%)",
+        }}
+      >
+        <div style={{ color: "white" }}>Cargando...</div>
+      </div>
+    }>
+      <SignInContent />
+    </Suspense>
   );
 }

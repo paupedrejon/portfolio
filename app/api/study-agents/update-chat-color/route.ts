@@ -33,6 +33,8 @@ export async function POST(request: NextRequest) {
       user_id: string;
       chat_id: string;
       color?: string;
+      icon?: string;
+      topic?: string | null;
     }
     const requestBody: UpdateChatColorRequestBody = {
       user_id: userId,

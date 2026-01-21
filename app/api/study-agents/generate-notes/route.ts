@@ -31,11 +31,12 @@ export async function POST(request: NextRequest) {
         );
       }
     } catch (healthError: unknown) {
+      const details = healthError instanceof Error ? healthError.message : 'Error desconocido';
       return NextResponse.json(
         { 
           error: `No se pudo conectar al backend FastAPI en ${FASTAPI_URL}`,
           hint: 'Asegúrate de que FastAPI esté corriendo: cd study_agents && python api/main.py',
-          details: healthError.message
+          details: details
         },
         { status: 503 }
       );
@@ -84,8 +85,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error('Error generating notes:', error);
+    const message = error instanceof Error ? error.message : 'Error al generar apuntes';
     return NextResponse.json(
-      { error: error.message || 'Error al generar apuntes' },
+      { error: message },
       { status: 500 }
     );
   }

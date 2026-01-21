@@ -41,8 +41,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error("Error getting learned words:", error);
+    const message = error instanceof Error ? error.message : "Error al obtener palabras aprendidas";
     return NextResponse.json(
-      { error: error.message || "Error al obtener palabras aprendidas" },
+      { error: message },
       { status: 500 }
     );
   }

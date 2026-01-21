@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { spaceGrotesk, outfit } from "../app/fonts";
 // Importar iconos de react-icons y banderas
@@ -462,7 +462,7 @@ export default function ChatSidebar({
             }
             return chatWithMeta;
           });
-          setChats(chatsWithMetadata);
+          setChats(chatsWithMetadata as Chat[]);
         }
       } catch (error) {
         console.error("Error loading chats:", error);
@@ -475,7 +475,7 @@ export default function ChatSidebar({
   }, [userId]);
 
   // Función para refrescar la lista de chats
-  const refreshChats = async () => {
+  const refreshChats = useCallback(async () => {
     if (!userId) return;
     
     try {
@@ -490,8 +490,8 @@ export default function ChatSidebar({
       const data = await response.json();
       if (data.success && data.chats) {
         // Asegurarse de que cada chat tenga metadata y debug
-        const chatsWithMetadata = data.chats.map((chat: any) => {
-          const chatWithMeta = {
+        const chatsWithMetadata = (data.chats as Chat[]).map((chat: Chat) => {
+          const chatWithMeta: Chat = {
             ...chat,
             metadata: chat.metadata || {}
           };
@@ -507,7 +507,7 @@ export default function ChatSidebar({
     } catch (error) {
       console.error("Error refreshing chats:", error);
     }
-  };
+  }, [userId]);
 
   // Exponer refreshChats al componente padre
   useEffect(() => {
@@ -517,7 +517,7 @@ export default function ChatSidebar({
       }
       (window as WindowWithRefresh).refreshChatSidebar = refreshChats;
     }
-  }, [userId]);
+  }, [userId, refreshChats]);
 
   const handleDeleteChat = async (chatId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -608,8 +608,11 @@ export default function ChatSidebar({
           interface WindowWithGeneralRenamed extends Window {
             onGeneralRenamed?: () => void;
           }
-          if (typeof window !== "undefined" && (window as WindowWithGeneralRenamed).onGeneralRenamed) {
-            (window as WindowWithGeneralRenamed).onGeneralRenamed();
+          if (typeof window !== "undefined") {
+            const onGeneralRenamed = (window as WindowWithGeneralRenamed).onGeneralRenamed;
+            if (onGeneralRenamed) {
+              onGeneralRenamed();
+            }
           }
         }
       } else {
@@ -1101,7 +1104,7 @@ export default function ChatSidebar({
                         type="text"
                         value={editingTitle}
                         onChange={(e) => setEditingTitle(e.target.value)}
-                        onBlur={(e) => {
+                        onBlur={() => {
                           // Solo guardar si no se está guardando ya (evitar doble guardado)
                           if (!isSavingRef.current && editingChatId === chat.chat_id) {
                             setTimeout(() => {
@@ -1120,7 +1123,10 @@ export default function ChatSidebar({
                             e.preventDefault();
                             e.stopPropagation();
                             isSavingRef.current = true;
-                            const oldTitle = (window as any).editingChatOriginalTitle || chat.title;
+                            interface WindowWithEditing extends Window {
+                              editingChatOriginalTitle?: string;
+                            }
+                            const oldTitle = (window as WindowWithEditing).editingChatOriginalTitle || chat.title;
                             handleSaveTitle(chat.chat_id, oldTitle).finally(() => {
                               isSavingRef.current = false;
                             });

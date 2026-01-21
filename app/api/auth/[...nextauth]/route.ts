@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import type { NextRequest } from "next/server";
 
 // Verificar que las variables de entorno estén cargadas
 const clientId = process.env.GOOGLE_CLIENT_ID?.trim() || "";
@@ -28,17 +27,19 @@ const authOptions = {
     error: "/auth/error",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn() {
       // Permitir el inicio de sesión
       return true;
     },
-    async session({ session, token }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async session({ session, token }: any) {
       if (session.user) {
         session.user.id = token.sub || "";
       }
       return session;
     },
-    async jwt({ token, account, user }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async jwt({ token, account, user }: any) {
       if (account) {
         token.accessToken = account.access_token;
       }
