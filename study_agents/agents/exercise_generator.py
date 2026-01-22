@@ -126,6 +126,8 @@ class ExerciseGeneratorAgent:
         
         # Construir contexto desde conversación o memoria
         context = ""
+        user_specific_request = ""  # Solicitud específica del usuario
+        
         if conversation_history:
             # Priorizar conversación reciente
             relevant_messages = [msg for msg in conversation_history if msg.get('role') in ['user', 'assistant']]
@@ -138,6 +140,16 @@ class ExerciseGeneratorAgent:
                 ])
                 context = f"Contexto de la conversación reciente:\n{conversation_text}\n\n"
                 print(f"  - Usando {len(recent_messages)} mensajes recientes de la conversación")
+                
+                # Extraer solicitud específica del usuario (último mensaje del usuario)
+                user_messages = [msg for msg in recent_messages if msg.get('role') == 'user']
+                if user_messages:
+                    last_user_message = user_messages[-1].get('content', '')
+                    # Detectar si el usuario está pidiendo algo específico
+                    request_keywords = ['quiero', 'hazme', 'dame', 'genera', 'crea', 'haz', 'necesito', 'sobre', 'de', 'ejercicio']
+                    if any(keyword in last_user_message.lower() for keyword in request_keywords):
+                        user_specific_request = f"\n\n🚨 SOLICITUD ESPECÍFICA DEL USUARIO (DEBES RESPETARLA):\n{last_user_message}\n\nIMPORTANTE: El ejercicio DEBE cumplir con lo que el usuario solicita específicamente. Si el usuario pide un ejercicio sobre una tabla llamada 'Empresas', el ejercicio DEBE usar 'Empresas', no otra tabla. Si el usuario pide algo específico, úsalo exactamente como lo solicita.\n"
+                        print(f"  - Solicitud específica detectada del usuario: {last_user_message[:100]}...")
         
         # Si no hay conversación suficiente, buscar en memoria (solo del chat actual)
         if not context or len(context) < 100:
@@ -208,6 +220,12 @@ RESTRICCIONES Y CONDICIONES OBLIGATORIAS:
 - NO ignores estas restricciones bajo ninguna circunstancia.
 - El ejercicio debe cumplir con todas las restricciones especificadas.
 """
+        
+        # Combinar solicitud del usuario con constraints si ambos existen
+        if user_specific_request and constraints_instruction:
+            constraints_instruction = user_specific_request + "\n\n" + constraints_instruction
+        elif user_specific_request:
+            constraints_instruction = user_specific_request
         
         # Detectar si es un tema de programación
         is_programming = False
@@ -377,6 +395,10 @@ IMPORTANTE:
                       "Temas específicos: {topics}\n"
                       "Tipo de ejercicio sugerido: {exercise_type}\n"
                       "{constraints_instruction}\n\n"
+                      "🚨 CRÍTICO - REQUISITOS ESPECÍFICOS DEL USUARIO:\n"
+                      "Si el usuario ha solicitado algo específico en su mensaje (por ejemplo, 'quiero un ejercicio sobre una tabla llamada Empresas'), DEBES usar exactamente lo que el usuario pidió. NO uses nombres genéricos o diferentes. Si el usuario pide 'Empresas', usa 'Empresas', no 'productos' ni otros nombres.\n"
+                      "Si el usuario especifica requisitos concretos (nombres de tablas, funciones, variables, conceptos específicos), estos tienen PRIORIDAD ABSOLUTA sobre cualquier otro contexto.\n"
+                      "Lee cuidadosamente la solicitud del usuario y asegúrate de que el ejercicio generado cumpla EXACTAMENTE con lo que pidió.\n\n"
                       "Instrucciones de dificultad: {difficulty_instruction}\n\n"
                       "Genera el ejercicio en formato JSON con la siguiente estructura (ejemplo):\n"
                       "{json_example}\n"

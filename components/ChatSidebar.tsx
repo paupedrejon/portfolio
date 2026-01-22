@@ -997,44 +997,45 @@ export default function ChatSidebar({
                   onCollapsedChange(newCollapsed);
                 }
               }}
-            style={{
-              padding: "0.5rem",
-              background: buttonBg,
-              border: `1px solid ${buttonBorder}`,
-              borderRadius: "8px",
-              cursor: "pointer",
-              color: textColor,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = colorTheme === "dark" 
-                ? "rgba(148, 163, 184, 0.1)" 
-                : "rgba(148, 163, 184, 0.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = buttonBg;
-            }}
-            title={isCollapsed ? "Expandir" : "Colapsar"}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+              style={{
+                padding: "0.5rem",
+                background: buttonBg,
+                border: `1px solid ${buttonBorder}`,
+                borderRadius: "8px",
+                cursor: "pointer",
+                color: textColor,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = colorTheme === "dark" 
+                  ? "rgba(148, 163, 184, 0.1)" 
+                  : "rgba(148, 163, 184, 0.1)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = buttonBg;
+              }}
+              title={isCollapsed ? "Expandir" : "Colapsar"}
             >
-              {isCollapsed ? (
-                <path d="M9 18l6-6-6-6" />
-              ) : (
-                <path d="M15 18l-6-6 6-6" />
-              )}
-            </svg>
-          </button>
-        </div>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                {isCollapsed ? (
+                  <path d="M9 18l6-6-6-6" />
+                ) : (
+                  <path d="M15 18l-6-6 6-6" />
+                )}
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Botón Nuevo Chat */}
