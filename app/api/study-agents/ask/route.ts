@@ -36,14 +36,24 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { detail: `Error ${response.status}: ${response.statusText}` };
+      }
+      console.error('Error from FastAPI:', errorData);
       return NextResponse.json(
-        { error: data.detail || 'Error al procesar pregunta' },
+        { 
+          success: false,
+          error: errorData.detail || 'Error al procesar pregunta' 
+        },
         { status: response.status }
       );
     }
+
+    const data = await response.json();
 
     return NextResponse.json({
       success: true,
@@ -56,7 +66,10 @@ export async function POST(request: NextRequest) {
     console.error('Error asking question:', error);
     const message = error instanceof Error ? error.message : 'Error al procesar pregunta';
     return NextResponse.json(
-      { error: message },
+      { 
+        success: false,
+        error: message 
+      },
       { status: 500 }
     );
   }
