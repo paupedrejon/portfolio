@@ -630,16 +630,30 @@ class StudyAgentsSystem:
                 exercise_data = result.get("exercise", {})
                 usage_info = result.get("usage_info", {"inputTokens": 0, "outputTokens": 0})
                 
-                # Validar y asegurar que el statement esté presente
+                # Validar y asegurar que el statement esté presente y sea completo
                 if exercise_data:
-                    if "statement" not in exercise_data or not exercise_data.get("statement") or exercise_data.get("statement", "").strip() == "":
-                        print(f"⚠️ Ejercicio sin statement válido. Campos disponibles: {list(exercise_data.keys())}")
+                    statement = exercise_data.get("statement", "").strip()
+                    # Verificar que el statement no esté vacío y no sea solo un prefijo genérico
+                    is_incomplete = (
+                        not statement or 
+                        statement == "" or
+                        (statement.startswith("Responde la siguiente pregunta sobre") and len(statement) < 100) or
+                        (statement.startswith("Responde la siguiente pregunta") and len(statement) < 80)
+                    )
+                    
+                    if is_incomplete:
+                        print(f"⚠️ Ejercicio con statement incompleto o genérico: '{statement}'")
+                        print(f"⚠️ Campos disponibles: {list(exercise_data.keys())}")
                         if attempt < max_attempts - 1:
-                            print(f"⚠️ Intento {attempt + 1}: ejercicio sin statement. Reintentando...")
+                            print(f"⚠️ Intento {attempt + 1}: ejercicio con statement incompleto. Reintentando...")
                             continue
                         else:
-                            # Si es el último intento, usar un statement por defecto
-                            exercise_data["statement"] = exercise_data.get("statement_text") or exercise_data.get("question") or "Ejercicio generado. Por favor, completa la tarea solicitada."
+                            # Si es el último intento, usar un statement por defecto más específico
+                            if topics:
+                                topic_str = topics[0] if isinstance(topics, list) else str(topics)
+                                exercise_data["statement"] = f"Completa el siguiente ejercicio sobre {topic_str}. Escribe tu solución detallada en el espacio proporcionado."
+                            else:
+                                exercise_data["statement"] = "Completa el siguiente ejercicio. Escribe tu solución detallada en el espacio proporcionado."
                             print(f"⚠️ Usando statement por defecto: {exercise_data['statement']}")
                 
                 # Asegurar que el ejercicio tenga todos los campos necesarios
@@ -651,14 +665,48 @@ class StudyAgentsSystem:
                         raise Exception("No se pudo generar el ejercicio después de múltiples intentos")
                 
                 # Validar campos mínimos
-                if "statement" not in exercise_data:
-                    exercise_data["statement"] = f"Responde la siguiente pregunta sobre {', '.join(topics) if topics else 'el tema'}:"
+                if "statement" not in exercise_data or not exercise_data.get("statement") or exercise_data.get("statement", "").strip() == "":
+                    # Si no hay statement o está vacío, generar uno más específico
+                    if topics:
+                        topic_str = topics[0] if isinstance(topics, list) else str(topics)
+                        exercise_data["statement"] = f"Completa el siguiente ejercicio sobre {topic_str}. Escribe tu solución en el espacio proporcionado."
+                    else:
+                        exercise_data["statement"] = "Completa el siguiente ejercicio. Escribe tu solución en el espacio proporcionado."
+                    print(f"⚠️ Statement vacío o inválido, usando valor por defecto: {exercise_data['statement']}")
+                
+                # Validar que el statement no sea solo un prefijo genérico
+                statement = exercise_data.get("statement", "")
+                if statement and ("Responde la siguiente pregunta sobre" in statement or "Responde la siguiente pregunta" in statement) and len(statement) < 100:
+                    print(f"⚠️ Statement parece incompleto (solo prefijo genérico): {statement}")
+                    # No cambiar automáticamente, pero advertir
+                
                 if "expected_answer" not in exercise_data:
                     exercise_data["expected_answer"] = "Respuesta esperada"
                 if "points" not in exercise_data:
                     exercise_data["points"] = 10
-                if "hints" not in exercise_data:
-                    exercise_data["hints"] = []
+                if "hints" not in exercise_data or not exercise_data.get("hints") or len(exercise_data.get("hints", [])) == 0:
+                    # Generar pistas más específicas si no hay
+                    if topics:
+                        topic_str = topics[0] if isinstance(topics, list) else str(topics)
+                        exercise_data["hints"] = [
+                            f"Revisa los conceptos clave de {topic_str} que has estudiado",
+                            "Analiza el problema paso a paso antes de escribir la solución",
+                            "Verifica que tu respuesta sea completa y correcta"
+                        ]
+                    else:
+                        exercise_data["hints"] = [
+                            "Revisa los conceptos clave que has estudiado",
+                            "Analiza el problema paso a paso",
+                            "Verifica que tu respuesta sea completa"
+                        ]
+                    print(f"⚠️ Pistas vacías o inválidas, usando valores por defecto")
+                else:
+                    # Validar que las pistas no sean genéricas
+                    hints = exercise_data.get("hints", [])
+                    generic_hints = ["Revisa el contenido estudiado", "Piensa paso a paso", "Revisa los conceptos"]
+                    if all(hint in generic_hints or hint.lower() in [g.lower() for g in generic_hints] for hint in hints):
+                        print(f"⚠️ Las pistas son demasiado genéricas: {hints}")
+                        # No cambiar automáticamente, pero advertir
                 if "solution_steps" not in exercise_data:
                     exercise_data["solution_steps"] = []
                 

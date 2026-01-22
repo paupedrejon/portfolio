@@ -308,12 +308,21 @@ Si no sigues este formato EXACTO, el ejercicio será inválido.
         # Construir el JSON de ejemplo como cadena literal para evitar conflictos con el formateo
         # IMPORTANTE: Cuando se inserte en el prompt, todas las llaves deben estar doblemente escapadas
         # para que se conviertan en llaves literales en el template de LangChain
+        # Ejemplo mejorado con statement completo y pistas específicas
+        example_statement = "Escribe una función en Python que reciba una lista de números enteros y devuelva una nueva lista con solo los números pares. La función debe llamarse 'filtrar_pares' y debe manejar listas vacías correctamente."
+        example_hints = [
+            "Recuerda que un número es par si el resto de dividirlo entre 2 es 0 (usa el operador %)",
+            "Puedes usar una lista por comprensión o un bucle for con append()",
+            "No olvides probar tu función con una lista vacía para verificar que funciona correctamente"
+        ]
+        example_hints_json = json.dumps(example_hints)
+        
         json_example = (
             "{{\n"
             f'    "exercise_id": "{exercise_id}",\n'
-            '    "statement": "Enunciado completo y detallado del ejercicio",\n'
+            f'    "statement": "{example_statement}",\n'
             f'    "expected_answer": "{expected_answer_escaped}",\n'
-            '    "hints": ["Pista 1", "Pista 2"],\n'
+            f'    "hints": {example_hints_json},\n'
             '    "points": 10,\n'
             '    "difficulty": "{{{{difficulty}}}}",\n'  # 4 llaves para que quede {{difficulty}} en el template
             f'    "topics": {topics_list_json},\n'
@@ -352,9 +361,24 @@ IMPORTANTE:
                       "Genera el ejercicio en formato JSON con la siguiente estructura (ejemplo):\n"
                       "{json_example}\n"
                       "{programming_expected_answer_instruction}\n"
+                      "\n"
+                      "🚨 CRÍTICO - FORMATO DEL ENUNCIADO (statement):\n"
+                      "- El statement DEBE incluir la pregunta o tarea COMPLETA, NO solo 'Responde la siguiente pregunta sobre X:'\n"
+                      "- El statement DEBE ser específico y detallado, con toda la información necesaria para resolver el ejercicio\n"
+                      "- EJEMPLO MALO: 'Responde la siguiente pregunta sobre Python:' (esto NO es válido)\n"
+                      "- EJEMPLO BUENO: 'Escribe una función en Python que reciba una lista de números y devuelva la suma de todos los elementos. La función debe llamarse sumar_lista y manejar listas vacías.'\n"
+                      "- Si es de programación, el statement DEBE especificar qué código escribir, qué función crear, qué problema resolver\n"
+                      "- Si es teórico, el statement DEBE incluir la pregunta completa con contexto\n"
+                      "\n"
+                      "🚨 CRÍTICO - FORMATO DE LAS PISTAS (hints):\n"
+                      "- Las pistas DEBEN ser específicas y útiles, NO genéricas como 'Revisa el contenido estudiado' o 'Piensa paso a paso'\n"
+                      "- Cada pista DEBE dar una orientación concreta sobre cómo resolver el ejercicio\n"
+                      "- EJEMPLO MALO: ['Revisa el contenido estudiado', 'Piensa paso a paso'] (esto NO es útil)\n"
+                      "- EJEMPLO BUENO: ['Recuerda que en Python puedes usar el operador % para obtener el resto de una división', 'Puedes usar una lista por comprensión para filtrar elementos', 'No olvides manejar el caso de listas vacías']\n"
+                      "- Las pistas DEBEN estar relacionadas directamente con el ejercicio específico, no ser consejos generales\n"
+                      "\n"
                       "El enunciado debe ser claro, completo y proporcionar toda la información necesaria.\n"
                       "La respuesta esperada debe ser detallada y servir como referencia para la corrección.\n"
-                      "Las pistas deben ayudar al estudiante sin dar la respuesta completa.\n"
                       "Los pasos de solución deben mostrar cómo resolver el ejercicio paso a paso.\n\n"
                       "Responde SOLO con el JSON, sin texto adicional antes o después.").format(
                 constraints_instruction=constraints_instruction,

@@ -1980,6 +1980,17 @@ async def execute_code_endpoint(request: ExecuteCodeRequest):
         
         # Python
         if "python" in language_lower:
+            # Detectar si el código usa input() y si hay inputs proporcionados
+            code_uses_input = "input(" in request.code
+            has_inputs = request.inputs and request.inputs.strip()
+            
+            if code_uses_input and not has_inputs:
+                return {
+                    "success": False,
+                    "error": "Este código requiere entrada (usa input()). Por favor, proporciona los valores de entrada en el campo 'Inputs' (uno por línea).",
+                    "output": ""
+                }
+            
             # Crear un archivo temporal para el código con codificación UTF-8
             with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
                 f.write("# -*- coding: utf-8 -*-\n")
@@ -1987,14 +1998,18 @@ async def execute_code_endpoint(request: ExecuteCodeRequest):
                 temp_file = f.name
             
             try:
-                # Preparar inputs si están presentes (ya es string, subprocess.run con text=True lo maneja)
+                # Preparar inputs si están presentes
+                # Si hay múltiples inputs, cada línea debe terminar con \n
                 input_data = None
                 if request.inputs:
-                    input_data = request.inputs  # Ya es string, no necesitamos encode
+                    input_data = request.inputs
+                    # Asegurar que termine con \n si no termina ya
+                    if not input_data.endswith('\n'):
+                        input_data += '\n'
                 
                 # Ejecutar código con timeout de 10 segundos
                 result = subprocess.run(
-                    ["python", temp_file],
+                    ["python3", temp_file] if os.path.exists("/usr/bin/python3") else ["python", temp_file],
                     input=input_data,
                     capture_output=True,
                     text=True,
@@ -2005,6 +2020,14 @@ async def execute_code_endpoint(request: ExecuteCodeRequest):
                 
                 output = result.stdout
                 error_output = result.stderr
+                
+                # Manejar EOFError específicamente
+                if "EOFError" in error_output or "EOF when reading a line" in error_output:
+                    return {
+                        "success": False,
+                        "error": "El código requiere entrada (input()) pero no se proporcionaron valores. Por favor, añade los valores de entrada en el campo 'Inputs' (uno por línea).",
+                        "output": output
+                    }
                 
                 if result.returncode != 0:
                     return {
@@ -2066,47 +2089,147 @@ async def execute_code_endpoint(request: ExecuteCodeRequest):
                 except:
                     pass
         
-        # SQL (usando sqlite3)
+        # SQL (usando sqlite3 o Python sqlite3)
         elif "sql" in language_lower:
-            # SQL se ejecuta de forma diferente, creamos una base de datos temporal
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False, encoding='utf-8') as f:
-                f.write(request.code)
-                temp_file = f.name
-            
+            # Intentar usar sqlite3 como comando, si no está disponible usar Python sqlite3
             try:
-                # Ejecutar SQL usando sqlite3
-                db_file = temp_file.replace('.sql', '.db')
-                result = subprocess.run(
-                    ["sqlite3", db_file],
-                    input=request.code,
+                # Verificar si sqlite3 está disponible
+                check_result = subprocess.run(
+                    ["which", "sqlite3"],
                     capture_output=True,
-                    text=True,
-                    timeout=10,
-                    encoding='utf-8'
+                    text=True
                 )
+                sqlite3_available = check_result.returncode == 0
+            except:
+                sqlite3_available = False
+            
+            if not sqlite3_available:
+                # Usar Python con sqlite3 (viene incluido con Python)
+                # Crear un script Python que ejecute el SQL
+                sql_code = request.code.strip()
+                # Escapar comillas y saltos de línea en el código SQL para el script Python
+                sql_code_escaped = sql_code.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                python_sql_script = f"""# -*- coding: utf-8 -*-
+import sqlite3
+import sys
+import os
+
+# Crear base de datos temporal en memoria
+db_file = ':memory:'
+conn = sqlite3.connect(db_file)
+cursor = conn.cursor()
+
+# Ejecutar cada comando SQL (separados por ;)
+sql_commands = "{sql_code_escaped}".split(';')
+
+output_lines = []
+for cmd in sql_commands:
+    cmd = cmd.strip()
+    if not cmd:
+        continue
+    try:
+        cursor.execute(cmd)
+        # Si es SELECT, mostrar resultados
+        if cmd.strip().upper().startswith('SELECT'):
+            results = cursor.fetchall()
+            if results:
+                # Obtener nombres de columnas
+                columns = [description[0] for description in cursor.description]
+                output_lines.append('|'.join(str(col) for col in columns))
+                for row in results:
+                    output_lines.append('|'.join(str(val) if val is not None else 'NULL' for val in row))
+            else:
+                output_lines.append("(0 filas)")
+        else:
+            # Para otros comandos (INSERT, UPDATE, etc.), mostrar mensaje de éxito
+            cmd_preview = cmd[:50] + "..." if len(cmd) > 50 else cmd
+            output_lines.append(f"Comando ejecutado: {{cmd_preview}}")
+    except Exception as e:
+        output_lines.append(f"Error: {{str(e)}}")
+        conn.rollback()
+
+conn.commit()
+conn.close()
+
+# Imprimir salida
+for line in output_lines:
+    print(line)
+"""
                 
-                output = result.stdout
-                error_output = result.stderr
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+                    f.write(python_sql_script)
+                    temp_file = f.name
                 
-                if result.returncode != 0:
-                    return {
-                        "success": False,
-                        "error": error_output or f"SQL terminó con código de salida {result.returncode}",
-                        "output": output
-                    }
-                
-                return {
-                    "success": True,
-                    "output": output or "SQL ejecutado sin errores.",
-                    "error": ""
-                }
-            finally:
                 try:
-                    os.unlink(temp_file)
-                    if os.path.exists(db_file):
-                        os.unlink(db_file)
-                except:
-                    pass
+                    result = subprocess.run(
+                        ["python3", temp_file] if os.path.exists("/usr/bin/python3") else ["python", temp_file],
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                        encoding='utf-8'
+                    )
+                    
+                    output = result.stdout
+                    error_output = result.stderr
+                    
+                    if result.returncode != 0:
+                        return {
+                            "success": False,
+                            "error": error_output or f"SQL terminó con código de salida {result.returncode}",
+                            "output": output
+                        }
+                    
+                    return {
+                        "success": True,
+                        "output": output or "SQL ejecutado sin errores.",
+                        "error": ""
+                    }
+                finally:
+                    try:
+                        os.unlink(temp_file)
+                    except:
+                        pass
+            else:
+                # Usar sqlite3 como comando (método original)
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False, encoding='utf-8') as f:
+                    f.write(request.code)
+                    temp_file = f.name
+                
+                try:
+                    # Ejecutar SQL usando sqlite3
+                    db_file = temp_file.replace('.sql', '.db')
+                    result = subprocess.run(
+                        ["sqlite3", db_file],
+                        input=request.code,
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                        encoding='utf-8'
+                    )
+                    
+                    output = result.stdout
+                    error_output = result.stderr
+                    
+                    if result.returncode != 0:
+                        return {
+                            "success": False,
+                            "error": error_output or f"SQL terminó con código de salida {result.returncode}",
+                            "output": output
+                        }
+                    
+                    return {
+                        "success": True,
+                        "output": output or "SQL ejecutado sin errores.",
+                        "error": ""
+                    }
+                finally:
+                    try:
+                        os.unlink(temp_file)
+                        db_file = temp_file.replace('.sql', '.db')
+                        if os.path.exists(db_file):
+                            os.unlink(db_file)
+                    except:
+                        pass
         
         # Java
         elif "java" in language_lower:
