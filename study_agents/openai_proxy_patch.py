@@ -94,20 +94,9 @@ def patch_openai_client():
                 
                 @functools.wraps(_base_client.BaseClient._original_init)
                 def patched_base_client_init(self, *args, **kwargs):
-                    # Si proxies está presente, establecerlo a None en lugar de eliminarlo
-                    # porque BaseClient.__init__() lo requiere como argumento obligatorio
-                    if 'proxies' in kwargs:
-                        kwargs['proxies'] = None
-                    # Si no está presente pero es requerido, añadirlo como None
-                    elif 'proxies' not in kwargs:
-                        # Intentar llamar primero para ver si es requerido
-                        try:
-                            return _base_client.BaseClient._original_init(self, *args, **kwargs)
-                        except TypeError as e:
-                            if 'proxies' in str(e):
-                                kwargs['proxies'] = None
-                                return _base_client.BaseClient._original_init(self, *args, **kwargs)
-                            raise
+                    # BaseClient.__init__() requiere 'proxies' como argumento obligatorio
+                    # Establecerlo a None en lugar de eliminarlo
+                    kwargs['proxies'] = None
                     return _base_client.BaseClient._original_init(self, *args, **kwargs)
                 
                 _base_client.BaseClient.__init__ = patched_base_client_init
