@@ -4,7 +4,7 @@ Sistema principal que coordina todos los agentes
 """
 
 import os
-from typing import Optional
+from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 
 # APLICAR PARCHE DE PROXIES ANTES DE CUALQUIER IMPORTACIÓN DE AGENTES
@@ -78,7 +78,7 @@ class StudyAgentsSystem:
             document_paths: Lista de rutas a los documentos
             
         Returns:
-            Información del procesamiento
+            Información del procesamiento con tema detectado
         """
         print("\n📄 Procesando documentos...")
         
@@ -90,7 +90,62 @@ class StudyAgentsSystem:
         
         processed_content = self.content_processor.process_documents(document_paths)
         print("✅ Documentos procesados y almacenados en memoria")
+        
+        # Detectar tema del documento procesado
+        detected_topic = self._detect_topic_from_documents()
+        if detected_topic:
+            print(f"🎯 Tema detectado del documento: {detected_topic}")
+            processed_content["detected_topic"] = detected_topic
+        
         return processed_content
+    
+    def _detect_topic_from_documents(self) -> Optional[str]:
+        """
+        Detecta el tema principal del contenido de los documentos subidos
+        
+        Returns:
+            Tema detectado o None
+        """
+        try:
+            # Obtener contenido de los documentos
+            all_content = self.memory.get_all_documents(limit=10)
+            if not all_content:
+                return None
+            
+            # Combinar contenido para análisis
+            combined_content = "\n\n".join(all_content[:5])  # Primeros 5 documentos
+            content_lower = combined_content.lower()
+            
+            # Detectar temas técnicos PRIMERO (antes de idiomas)
+            # NoSQL debe detectarse ANTES que Japonés para evitar confusión
+            if "nosql" in content_lower or "no-sql" in content_lower or "no sql" in content_lower or ("non-relational" in content_lower and "database" in content_lower):
+                return "NoSQL"
+            elif "mongodb" in content_lower or "cassandra" in content_lower or "redis" in content_lower or "dynamodb" in content_lower:
+                return "NoSQL"
+            elif "sql" in content_lower or ("database" in content_lower and "query" in content_lower) or "relational" in content_lower:
+                return "SQL"
+            elif "python" in content_lower:
+                return "Python"
+            elif "javascript" in content_lower or "js" in content_lower:
+                return "JavaScript"
+            elif "react" in content_lower:
+                return "React"
+            elif "api" in content_lower or "apis" in content_lower:
+                return "APIs"
+            # Detectar idiomas SOLO si hay contexto claro de aprendizaje de idiomas
+            elif ("japonés" in content_lower or "japones" in content_lower) and ("hiragana" in content_lower or "katakana" in content_lower or "kanji" in content_lower or "nihongo" in content_lower or "aprender" in content_lower or "vocabulario" in content_lower):
+                return "Japonés"
+            elif "matemáticas" in content_lower or "matematicas" in content_lower or "math" in content_lower:
+                return "Matemáticas"
+            elif "física" in content_lower or "fisica" in content_lower or "physics" in content_lower:
+                return "Física"
+            elif "química" in content_lower or "quimica" in content_lower or "chemistry" in content_lower:
+                return "Química"
+            
+            return None
+        except Exception as e:
+            print(f"⚠️ Error al detectar tema del documento: {e}")
+            return None
     
     def generate_explanations(self) -> dict:
         """

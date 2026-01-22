@@ -513,20 +513,26 @@ class TestGeneratorAgent:
                 # Detectar el tema principal de los temas extraídos
                 main_topic = ""
                 if unique_topics:
-                    # Priorizar temas técnicos conocidos
+                    # Priorizar temas técnicos conocidos PRIMERO (antes de idiomas)
                     topic_lower = recent_topic_keywords.lower()
-                    if "sql" in topic_lower:
+                    # NoSQL debe detectarse ANTES que Japonés para evitar confusión
+                    if "nosql" in topic_lower or "no-sql" in topic_lower or "no sql" in topic_lower or ("non-relational" in topic_lower and "database" in topic_lower):
+                        main_topic = "NoSQL"
+                    elif "mongodb" in topic_lower or "cassandra" in topic_lower or "redis" in topic_lower or "dynamodb" in topic_lower:
+                        main_topic = "NoSQL"
+                    elif "sql" in topic_lower or "database" in topic_lower or "query" in topic_lower:
                         main_topic = "SQL"
-                    elif "japonés" in topic_lower or "japones" in topic_lower:
-                        main_topic = "Japonés"
-                    elif "react" in topic_lower:
-                        main_topic = "React"
-                    elif "api" in topic_lower or "apis" in topic_lower:
-                        main_topic = "APIs"
                     elif "python" in topic_lower:
                         main_topic = "Python"
                     elif "javascript" in topic_lower:
                         main_topic = "JavaScript"
+                    elif "react" in topic_lower:
+                        main_topic = "React"
+                    elif "api" in topic_lower or "apis" in topic_lower:
+                        main_topic = "APIs"
+                    # Detectar idiomas SOLO si hay contexto claro de aprendizaje de idiomas
+                    elif ("japonés" in topic_lower or "japones" in topic_lower) and ("hiragana" in topic_lower or "katakana" in topic_lower or "kanji" in topic_lower or "nihongo" in topic_lower or "aprender" in topic_lower or "vocabulario" in topic_lower):
+                        main_topic = "Japonés"
                     else:
                         # Tomar el primer tema extraído
                         main_topic = unique_topics[0].capitalize() if unique_topics else ""

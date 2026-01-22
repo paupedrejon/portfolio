@@ -673,8 +673,13 @@ class ProgressTracker:
         recent_messages = messages[-10:] if len(messages) > 10 else messages
         content = " ".join([msg.get("content", "") for msg in recent_messages]).lower()
         
-        # Detectar temas comunes
-        if "sql" in content or "database" in content or "query" in content:
+        # Detectar temas técnicos PRIMERO (antes de idiomas para evitar falsos positivos)
+        # NoSQL debe detectarse ANTES que Japonés para evitar confusión
+        if "nosql" in content or "no-sql" in content or "no sql" in content or ("non-relational" in content and "database" in content):
+            return "NoSQL"
+        elif "mongodb" in content or "cassandra" in content or "redis" in content or "dynamodb" in content:
+            return "NoSQL"
+        elif "sql" in content or "database" in content or "query" in content or "relational" in content:
             return "SQL"
         elif "python" in content:
             return "Python"
@@ -682,10 +687,12 @@ class ProgressTracker:
             return "JavaScript"
         elif "react" in content:
             return "React"
-        elif "japonés" in content or "japones" in content or "hiragana" in content or "katakana" in content or "kanji" in content or "nihongo" in content:
-            return "Japonés"
         elif "api" in content or "apis" in content:
             return "APIs"
+        # Detectar idiomas SOLO si hay contexto claro de aprendizaje de idiomas
+        # Requiere palabras específicas de idiomas para evitar falsos positivos
+        elif ("japonés" in content or "japones" in content) and ("hiragana" in content or "katakana" in content or "kanji" in content or "nihongo" in content or "aprender" in content or "vocabulario" in content):
+            return "Japonés"
         elif "matemáticas" in content or "matematicas" in content or "math" in content:
             return "Matemáticas"
         elif "física" in content or "fisica" in content or "physics" in content:

@@ -462,6 +462,7 @@ async def upload_documents(
         # Procesar documentos
         result = system.upload_documents(saved_paths)
         
+        # El resultado ya incluye detected_topic si se detectó
         return {
             "success": True,
             "message": f"{len(saved_paths)} documentos procesados correctamente",

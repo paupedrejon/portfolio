@@ -1388,12 +1388,33 @@ export default function StudyChat() {
         const fileNames = Array.from(files).map((f) => f.name);
         setUploadedFiles((prev) => [...prev, ...fileNames]);
 
+        // Si se detectó un tema del documento, establecerlo para este chat
+        const detectedTopic = data.data?.detected_topic;
+        if (detectedTopic && currentChatId && userId) {
+          console.log(`🎯 Tema detectado del documento: ${detectedTopic}`);
+          // Establecer el tema del chat basado en el documento subido
+          setCurrentChatLevel({ topic: detectedTopic, level: currentChatLevel?.level || 0 });
+          
+          // Guardar el tema en el backend para este chat
+          fetch("/api/study-agents/set-chat-level", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: userId,
+              chat_id: currentChatId,
+              level: currentChatLevel?.level || 0,
+              topic: detectedTopic,
+            }),
+          }).catch(err => console.error("Error estableciendo tema del documento:", err));
+        }
+
         // Crear mensaje visual mejorado con componente especial
         addMessage({
           role: "assistant",
           content: JSON.stringify({
             type: "success",
             fileNames: fileNames,
+            detectedTopic: detectedTopic, // Incluir tema detectado en el mensaje
           }),
           type: "success",
         });
