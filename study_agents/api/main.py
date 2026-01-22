@@ -2091,19 +2091,11 @@ async def execute_code_endpoint(request: ExecuteCodeRequest):
         
         # SQL (usando sqlite3 o Python sqlite3)
         elif "sql" in language_lower:
-            # Intentar usar sqlite3 como comando, si no está disponible usar Python sqlite3
-            try:
-                # Verificar si sqlite3 está disponible
-                check_result = subprocess.run(
-                    ["which", "sqlite3"],
-                    capture_output=True,
-                    text=True
-                )
-                sqlite3_available = check_result.returncode == 0
-            except:
-                sqlite3_available = False
+            # Usar Python sqlite3 directamente (viene incluido con Python, más confiable en producción)
+            # No intentar usar sqlite3 como comando ya que puede no estar instalado en Railway
+            use_python_sqlite = True  # Siempre usar Python sqlite3 para mayor compatibilidad
             
-            if not sqlite3_available:
+            if use_python_sqlite:
                 # Usar Python con sqlite3 (viene incluido con Python)
                 # Crear un script Python que ejecute el SQL
                 sql_code = request.code.strip()
