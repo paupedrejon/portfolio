@@ -721,15 +721,57 @@ class StudyAgentsSystem:
                 else:
                     # Último intento, generar ejercicio básico
                     print(f"⚠️ Todos los intentos fallaron. Generando ejercicio básico de respaldo...")
+                    # Generar un statement completo y pistas útiles basadas en el tema
+                    if topics:
+                        topic_str = topics[0] if isinstance(topics, list) else str(topics)
+                        topic_lower = topic_str.lower()
+                        
+                        # Generar statement específico según el tema
+                        if "sql" in topic_lower:
+                            statement = f"Escribe una consulta SQL que cree una tabla llamada 'productos' con las siguientes columnas: id (INTEGER PRIMARY KEY), nombre (TEXT), precio (REAL), y stock (INTEGER). Luego, inserta 3 productos de ejemplo y finalmente muestra todos los productos con un precio mayor a 10."
+                            hints = [
+                                "Usa CREATE TABLE para crear la tabla con las columnas especificadas",
+                                "Usa INSERT INTO para añadir los productos de ejemplo",
+                                "Usa SELECT con WHERE para filtrar productos por precio"
+                            ]
+                        elif "python" in topic_lower:
+                            statement = f"Escribe una función en Python llamada 'calcular_promedio' que reciba una lista de números y devuelva el promedio. Luego, crea una lista de ejemplo con al menos 5 números y muestra el resultado de aplicar la función."
+                            hints = [
+                                "Usa sum() para sumar todos los números de la lista",
+                                "Usa len() para obtener la cantidad de elementos",
+                                "Recuerda que el promedio es la suma dividida por la cantidad"
+                            ]
+                        elif "javascript" in topic_lower or "js" in topic_lower:
+                            statement = f"Escribe una función en JavaScript llamada 'filtrarPares' que reciba un array de números y devuelva un nuevo array con solo los números pares. Usa filter() o un bucle for."
+                            hints = [
+                                "Un número es par si el resto de dividirlo entre 2 es 0 (usa el operador %)",
+                                "Puedes usar el método filter() con una función arrow",
+                                "O puedes usar un bucle for con push() para añadir elementos al nuevo array"
+                            ]
+                        else:
+                            statement = f"Completa el siguiente ejercicio sobre {topic_str}. Escribe una solución detallada que demuestre tu comprensión del tema."
+                            hints = [
+                                f"Revisa los conceptos fundamentales de {topic_str}",
+                                "Analiza el problema paso a paso antes de escribir la solución",
+                                "Verifica que tu respuesta sea completa y correcta"
+                            ]
+                    else:
+                        statement = "Completa el siguiente ejercicio. Escribe una solución detallada en el espacio proporcionado."
+                        hints = [
+                            "Revisa los conceptos fundamentales del tema",
+                            "Analiza el problema paso a paso",
+                            "Verifica que tu respuesta sea completa"
+                        ]
+                    
                     exercise_data = {
                         "exercise_id": f"backup_{attempt}",
-                        "statement": f"Responde la siguiente pregunta sobre {', '.join(topics) if topics else 'el tema'}:",
-                        "expected_answer": "Respuesta esperada",
-                        "hints": ["Revisa el contenido estudiado", "Piensa paso a paso"],
+                        "statement": statement,
+                        "expected_answer": "Respuesta esperada - completa tu solución para ver la respuesta correcta",
+                        "hints": hints,
                         "points": 10,
                         "difficulty": difficulty,
                         "topics": topics or [],
-                        "solution_steps": ["Paso 1: Analiza la pregunta", "Paso 2: Identifica los conceptos clave", "Paso 3: Formula tu respuesta"]
+                        "solution_steps": ["Paso 1: Analiza el problema", "Paso 2: Identifica los conceptos clave", "Paso 3: Implementa la solución", "Paso 4: Verifica tu respuesta"]
                     }
                     usage_info = {"inputTokens": 0, "outputTokens": 0}
                     print("✅ Ejercicio de respaldo generado")

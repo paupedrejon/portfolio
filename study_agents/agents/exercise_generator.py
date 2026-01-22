@@ -149,7 +149,12 @@ class ExerciseGeneratorAgent:
                 context += "\n\n".join(relevant_content[:3])
                 print(f"  - Usando {len(relevant_content[:3])} fragmentos de memoria del chat {chat_id}")
         
-        if not context:
+        # Si no hay contexto pero hay temas, generar ejercicio basado solo en el tema
+        if not context and topics:
+            topics_str = ", ".join(topics) if isinstance(topics, list) else str(topics)
+            context = f"Tema del ejercicio: {topics_str}\n\nGenera un ejercicio práctico sobre {topics_str}. El ejercicio debe ser educativo y apropiado para el nivel de dificultad '{difficulty}'."
+            print(f"  - No hay contenido disponible, generando ejercicio basado solo en el tema: {topics_str}")
+        elif not context:
             return {
                 "error": "No hay contenido disponible para generar el ejercicio. Por favor, sube documentos primero o especifica un tema.",
                 "exercise_id": exercise_id,
@@ -336,7 +341,7 @@ Si no sigues este formato EXACTO, el ejercicio será inválido.
 {level_adjustment_note}
 {programming_instruction}
 Tu tarea es generar un ejercicio que:
-1. Tenga un enunciado claro y detallado
+1. Tenga un enunciado claro y detallado que incluya TODA la información necesaria
 2. Requiera una respuesta que puede ser:
    - Una respuesta larga y explicativa
    - Un valor numérico con cálculos
@@ -347,9 +352,24 @@ Tu tarea es generar un ejercicio que:
 El ejercicio debe ser educativo, desafiante pero alcanzable, y debe evaluar comprensión real del tema.
 El ejercicio DEBE estar relacionado con los temas especificados: {topics_str}.
 
+🚨 CRÍTICO - ENUNCIADO COMPLETO:
+- El statement DEBE incluir la pregunta o tarea COMPLETA, NO solo "Responde la siguiente pregunta sobre X:"
+- El statement DEBE ser específico y detallado, con toda la información necesaria para resolver el ejercicio
+- EJEMPLO MALO: "Responde la siguiente pregunta sobre SQL:" (esto NO es válido, falta la pregunta)
+- EJEMPLO BUENO: "Escribe una consulta SQL que cree una tabla 'usuarios' con columnas id, nombre y email. Luego inserta 3 usuarios de ejemplo y muestra todos los usuarios ordenados por nombre."
+- Si es de programación, el statement DEBE especificar qué código escribir, qué función crear, qué problema resolver
+- Si es teórico, el statement DEBE incluir la pregunta completa con contexto
+
+🚨 CRÍTICO - PISTAS ÚTILES:
+- Las pistas DEBEN ser específicas y útiles, NO genéricas como "Revisa el contenido estudiado" o "Piensa paso a paso"
+- Cada pista DEBE dar una orientación concreta sobre cómo resolver el ejercicio
+- EJEMPLO MALO: ["Revisa el contenido estudiado", "Piensa paso a paso"] (esto NO es útil)
+- EJEMPLO BUENO: ["Usa CREATE TABLE para crear la tabla con las columnas especificadas", "Usa INSERT INTO para añadir los datos de ejemplo", "Usa SELECT con ORDER BY para ordenar los resultados"]
+- Las pistas DEBEN estar relacionadas directamente con el ejercicio específico, no ser consejos generales
+
 IMPORTANTE: 
 - El ejercicio NO debe ser de opción múltiple. Debe requerir que el estudiante escriba su propia respuesta.
-- El ejercicio DEBE estar directamente relacionado con el tema de la conversación: {topics_str}
+- El ejercicio DEBE estar directamente relacionado con el tema: {topics_str}
 - NO generes ejercicios sobre temas no relacionados con el tema especificado.
 - Si el tema es de programación, el ejercicio DEBE ser de código ejecutable."""),
             ("human", ("Genera un ejercicio {difficulty} sobre el siguiente contenido:\n\n"
