@@ -242,14 +242,20 @@ def get_or_create_system(api_key: Optional[str] = None, mode: str = "auto") -> S
         # Verificar de nuevo por si otro thread lo creó
         if cache_key not in systems_cache:
             try:
+                print(f"[FastAPI] Inicializando StudyAgentsSystem con api_key={'***' + api_key[-4:] if api_key and api_key != 'default' else 'None'}, mode={mode}")
                 system = StudyAgentsSystem(
                     api_key=api_key if api_key != "default" else None,
                     mode=mode
                 )
                 systems_cache[cache_key] = system
+                print(f"[FastAPI] ✅ StudyAgentsSystem inicializado correctamente")
                 return system
             except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Error al inicializar el sistema: {str(e)}")
+                error_msg = str(e)
+                print(f"[FastAPI] ❌ Error al inicializar el sistema: {error_msg}")
+                import traceback
+                traceback.print_exc()
+                raise HTTPException(status_code=500, detail=f"Error al inicializar el sistema: {error_msg}")
     
     return systems_cache[cache_key]
 

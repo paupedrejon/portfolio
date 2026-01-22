@@ -3029,15 +3029,16 @@ ${contentPreview}
           });
         }, 1500);
       }
-    } catch {
-      // Fallback a simulación
-      setTimeout(() => {
-        addMessage({
-          role: "assistant",
-          content: `Esta es una respuesta simulada a tu pregunta: "${question}".\n\nEn la versión completa, aquí obtendría información relevante de los documentos procesados.`,
-          type: "message",
-        });
-      }, 1500);
+    } catch (error: unknown) {
+      // Mostrar el error real en lugar de simulación
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido al procesar la pregunta';
+      console.error('Error asking question:', error);
+      
+      addMessage({
+        role: "assistant",
+        content: `❌ Error de conexión:\n\n${errorMessage}\n\nVerifica que:\n- El backend FastAPI esté corriendo\n- La variable FASTAPI_URL esté configurada correctamente en Vercel\n- No haya problemas de red`,
+        type: "message",
+      });
     }
   };
 
