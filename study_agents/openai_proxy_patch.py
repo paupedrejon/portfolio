@@ -23,16 +23,16 @@ def patch_openai_client():
         
         @functools.wraps(openai.OpenAI._original_init)
         def patched_openai_init(self, *args, **kwargs):
-            # Establecer proxies a None (no eliminarlo, porque BaseClient lo requiere)
-            kwargs['proxies'] = None
+            # ELIMINAR proxies si está presente (OpenAI.__init__() no lo acepta)
+            kwargs.pop('proxies', None)
             # Llamar al __init__ original
             return openai.OpenAI._original_init(self, *args, **kwargs)
         
         if hasattr(openai, 'AsyncOpenAI'):
             @functools.wraps(openai.AsyncOpenAI._original_init)
             def patched_async_openai_init(self, *args, **kwargs):
-                # Establecer proxies a None
-                kwargs['proxies'] = None
+                # ELIMINAR proxies si está presente
+                kwargs.pop('proxies', None)
                 # Llamar al __init__ original
                 return openai.AsyncOpenAI._original_init(self, *args, **kwargs)
             
@@ -92,7 +92,8 @@ def patch_openai_client():
                     
                     @functools.wraps(_client.Client._original_init)
                     def patched_client_init(self, *args, **kwargs):
-                        kwargs['proxies'] = None
+                        # ELIMINAR proxies si está presente
+                        kwargs.pop('proxies', None)
                         return _client.Client._original_init(self, *args, **kwargs)
                     
                     _client.Client.__init__ = patched_client_init
@@ -177,8 +178,8 @@ def patch_langchain_openai():
             
             @functools.wraps(ChatOpenAI._original_init)
             def patched_chatopenai_init(self, *args, **kwargs):
-                # Establecer proxies a None
-                kwargs['proxies'] = None
+                # ELIMINAR proxies si está presente
+                kwargs.pop('proxies', None)
                 
                 # También parchear el cliente interno ANTES de inicializar
                 # LangChain puede crear el cliente internamente y pasar proxies
@@ -209,7 +210,8 @@ def patch_langchain_openai():
                         
                         @functools.wraps(_client.Client._original_init)
                         def patched_client_init(self, *args, **kwargs):
-                            kwargs['proxies'] = None
+                            # ELIMINAR proxies si está presente
+                            kwargs.pop('proxies', None)
                             return _client.Client._original_init(self, *args, **kwargs)
                         
                         _client.Client.__init__ = patched_client_init
