@@ -49,6 +49,18 @@ def patch_openai_client():
                 _client.OpenAI._original_init = _client.OpenAI.__init__
                 _client.OpenAI.__init__ = patched_openai_init
                 _client.OpenAI._patched = True
+            
+            # Parchear Client.init() si existe (usado internamente por OpenAI)
+            if hasattr(_client, 'Client') and not hasattr(_client.Client, '_patched'):
+                _client.Client._original_init = _client.Client.__init__
+                
+                @functools.wraps(_client.Client._original_init)
+                def patched_client_init(self, *args, **kwargs):
+                    kwargs.pop('proxies', None)
+                    return _client.Client._original_init(self, *args, **kwargs)
+                
+                _client.Client.__init__ = patched_client_init
+                _client.Client._patched = True
         except:
             pass
         
@@ -70,18 +82,44 @@ def patch_langchain_openai():
             def patched_chatopenai_init(self, *args, **kwargs):
                 # Eliminar 'proxies' si está presente
                 kwargs.pop('proxies', None)
+                
+                # También parchear el cliente interno ANTES de inicializar
+                # LangChain puede crear el cliente internamente y pasar proxies
+                try:
+                    import openai
+                    # Asegurar que el parche de OpenAI esté aplicado
+                    if not hasattr(openai.OpenAI, '_original_init'):
+                        patch_openai_client()
+                except:
+                    pass
+                
                 # Llamar al __init__ original
                 result = ChatOpenAI._original_init(self, *args, **kwargs)
-                
-                # También parchear el cliente interno si existe
-                if hasattr(self, '_client') and self._client is not None:
-                    # El cliente ya debería estar parcheado, pero por si acaso
-                    pass
                 
                 return result
             
             ChatOpenAI.__init__ = patched_chatopenai_init
             ChatOpenAI._patched = True
+            
+            # También parchear el módulo _client de OpenAI si LangChain lo usa
+            try:
+                import openai
+                # Intentar parchear _client.Client si existe
+                if hasattr(openai, '_client'):
+                    from openai import _client
+                    if hasattr(_client, 'Client') and not hasattr(_client.Client, '_patched'):
+                        _client.Client._original_init = _client.Client.__init__
+                        
+                        @functools.wraps(_client.Client._original_init)
+                        def patched_client_init(self, *args, **kwargs):
+                            kwargs.pop('proxies', None)
+                            return _client.Client._original_init(self, *args, **kwargs)
+                        
+                        _client.Client.__init__ = patched_client_init
+                        _client.Client._patched = True
+            except:
+                pass
+            
             print("✅ Parche de ChatOpenAI aplicado (proxies eliminado)")
     except Exception as e:
         print(f"⚠️ Warning: No se pudo aplicar parche de ChatOpenAI: {e}")
