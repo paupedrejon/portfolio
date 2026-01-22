@@ -77,9 +77,10 @@ def patch_openai_client():
                             self._original = original
                         
                         def __get__(self, obj, objtype=None):
-                            # Retornar una función que elimine proxies
+                            # Retornar una función que ELIMINE proxies (no lo establezca a None)
                             def wrapper(*args, **kwargs):
-                                kwargs['proxies'] = None
+                                # ELIMINAR proxies si está presente (Client.init() no lo acepta)
+                                kwargs.pop('proxies', None)
                                 # Intentar llamar al método original
                                 if objtype is not None:
                                     # Llamada como método de clase
@@ -90,7 +91,8 @@ def patch_openai_client():
                             return wrapper
                         
                         def __call__(self, *args, **kwargs):
-                            kwargs['proxies'] = None
+                            # ELIMINAR proxies si está presente
+                            kwargs.pop('proxies', None)
                             return self._original(*args, **kwargs)
                     
                     _client.Client.init = PatchedInitMethod(_client.Client._original_init_method)
