@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
+import { getFastAPIUrl } from '../utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Llamar al backend FastAPI
-    const response = await fetch(`${FASTAPI_URL}/api/get-progress`, {
+    const response = await fetch(getFastAPIUrl('/api/get-progress'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
