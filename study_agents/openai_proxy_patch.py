@@ -67,30 +67,35 @@ def patch_openai_client():
                 
                 # CRÍTICO: Parchear Client.init() que es un método de clase
                 # Este es el que está causando el error "Client.init() got an unexpected keyword argument 'proxies'"
+                # Usar un descriptor para interceptar TODAS las llamadas
                 if hasattr(_client.Client, 'init') and not hasattr(_client.Client, '_patched_init_method'):
                     _client.Client._original_init_method = _client.Client.init
                     
-                    # Intentar como classmethod primero
-                    try:
-                        @functools.wraps(_client.Client._original_init_method)
-                        @classmethod
-                        def patched_client_init_method_class(cls, *args, **kwargs):
-                            kwargs['proxies'] = None
-                            return _client.Client._original_init_method(*args, **kwargs)
+                    # Crear un descriptor que intercepte todas las llamadas
+                    class PatchedInitMethod:
+                        def __init__(self, original):
+                            self._original = original
                         
-                        _client.Client.init = patched_client_init_method_class
-                        _client.Client._patched_init_method = True
-                        print("✅ Parche de Client.init() aplicado como classmethod (proxies establecido a None)")
-                    except:
-                        # Si falla como classmethod, intentar como función normal
-                        @functools.wraps(_client.Client._original_init_method)
-                        def patched_client_init_method_func(*args, **kwargs):
-                            kwargs['proxies'] = None
-                            return _client.Client._original_init_method(*args, **kwargs)
+                        def __get__(self, obj, objtype=None):
+                            # Retornar una función que elimine proxies
+                            def wrapper(*args, **kwargs):
+                                kwargs['proxies'] = None
+                                # Intentar llamar al método original
+                                if objtype is not None:
+                                    # Llamada como método de clase
+                                    return self._original(*args, **kwargs)
+                                else:
+                                    # Llamada como método de instancia
+                                    return self._original(*args, **kwargs)
+                            return wrapper
                         
-                        _client.Client.init = patched_client_init_method_func
-                        _client.Client._patched_init_method = True
-                        print("✅ Parche de Client.init() aplicado como función (proxies establecido a None)")
+                        def __call__(self, *args, **kwargs):
+                            kwargs['proxies'] = None
+                            return self._original(*args, **kwargs)
+                    
+                    _client.Client.init = PatchedInitMethod(_client.Client._original_init_method)
+                    _client.Client._patched_init_method = True
+                    print("✅ Parche de Client.init() aplicado con descriptor (proxies establecido a None)")
         except Exception as e:
             print(f"⚠️ Warning al parchear _client: {e}")
             import traceback
