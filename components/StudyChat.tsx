@@ -3999,8 +3999,8 @@ ${contentPreview}
 
       <div
         style={{
-          marginLeft: sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0",
-          transition: "margin-left 0.3s ease",
+          marginLeft: isMobile ? "0" : (sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0"),
+          transition: isMobile ? "none" : "margin-left 0.3s ease",
           minHeight: "calc(100vh - 50vh)",
           background: colorTheme === "light" 
             ? "linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)" 

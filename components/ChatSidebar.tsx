@@ -185,6 +185,8 @@ export default function ChatSidebar({
   const [chats, setChats] = useState<Chat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<string>("");
   const [editingColorChatId, setEditingColorChatId] = useState<string | null>(null);
@@ -192,6 +194,28 @@ export default function ChatSidebar({
   const [deleteConfirmChatId, setDeleteConfirmChatId] = useState<string | null>(null);
   const [deleteConfirmChatTitle, setDeleteConfirmChatTitle] = useState<string>("");
   const isSavingRef = useRef<boolean>(false);
+
+  // Detectar tamaño de pantalla
+  useEffect(() => {
+    const checkWidth = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 640);
+      setIsTablet(width >= 640 && width < 1024);
+    };
+    checkWidth();
+    window.addEventListener("resize", checkWidth);
+    return () => window.removeEventListener("resize", checkWidth);
+  }, []);
+
+  // En móvil, desactivar collapsed automáticamente
+  useEffect(() => {
+    if (isMobile && isCollapsed) {
+      setIsCollapsed(false);
+      if (onCollapsedChange) {
+        onCollapsedChange(false);
+      }
+    }
+  }, [isMobile, isCollapsed, onCollapsedChange]);
 
   // Colores disponibles para los chats
   const chatColors = [
@@ -648,7 +672,49 @@ export default function ChatSidebar({
     }
   };
 
+  // En móvil, mostrar botón flotante cuando está cerrado
   if (!isOpen) {
+    if (isMobile) {
+      return (
+        <button
+          onClick={onToggle}
+          style={{
+            position: "fixed",
+            left: "0.75rem",
+            top: "50%",
+            transform: "translateY(-50%)",
+            zIndex: 1000,
+            padding: "0.75rem",
+            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            border: "none",
+            borderRadius: "50%",
+            width: "48px",
+            height: "48px",
+            cursor: "pointer",
+            color: "white",
+            boxShadow: colorTheme === "dark" 
+              ? "0 4px 12px rgba(0, 0, 0, 0.3)" 
+              : "0 4px 12px rgba(99, 102, 241, 0.3)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          title="Mostrar conversaciones"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M3 12h18M3 6h18M3 18h18" />
+          </svg>
+        </button>
+      );
+    }
+    // En desktop, mostrar botón lateral
     return (
       <button
         onClick={onToggle}
@@ -829,19 +895,36 @@ export default function ChatSidebar({
         </div>
       )}
 
+      {/* Backdrop para móvil */}
+      {isMobile && (
+        <div
+          onClick={onToggle}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            backdropFilter: "blur(4px)",
+            zIndex: 999,
+            transition: "opacity 0.3s ease",
+          }}
+        />
+      )}
+
       <div
         style={{
           position: "fixed",
           left: 0,
           top: 0,
           bottom: 0,
-          width: isCollapsed ? "60px" : "280px",
+          width: isMobile ? "280px" : (isCollapsed ? "60px" : "280px"),
+          maxWidth: isMobile ? "85vw" : "none",
           background: bgColor,
           borderRight: `1px solid ${borderColor}`,
           zIndex: 1000,
           display: "flex",
           flexDirection: "column",
-          transition: "width 0.3s ease",
+          transition: isMobile ? "transform 0.3s ease" : "width 0.3s ease",
+          transform: isMobile && !isOpen ? "translateX(-100%)" : "translateX(0)",
           backdropFilter: "blur(10px)",
           boxShadow: colorTheme === "dark" 
             ? "4px 0 15px rgba(0, 0, 0, 0.2)" 
@@ -859,28 +942,61 @@ export default function ChatSidebar({
           gap: "0.5rem",
         }}
       >
-        {!isCollapsed && (
-          <h2
-            className={spaceGrotesk.className}
-            style={{
-              fontSize: "1.125rem",
-              fontWeight: 600,
-              color: textColor,
-              margin: 0,
-            }}
-          >
-            Conversaciones
-          </h2>
-        )}
-        <div style={{ display: "flex", gap: "0.5rem", marginLeft: isCollapsed ? "0" : "auto", justifyContent: isCollapsed ? "center" : "flex-end" }}>
-          <button
-            onClick={() => {
-              const newCollapsed = !isCollapsed;
-              setIsCollapsed(newCollapsed);
-              if (onCollapsedChange) {
-                onCollapsedChange(newCollapsed);
-              }
-            }}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", flex: 1 }}>
+          {!isCollapsed && (
+            <h2
+              className={spaceGrotesk.className}
+              style={{
+                fontSize: "1.125rem",
+                fontWeight: 600,
+                color: textColor,
+                margin: 0,
+              }}
+            >
+              Conversaciones
+            </h2>
+          )}
+          {isMobile && (
+            <button
+              onClick={onToggle}
+              style={{
+                padding: "0.5rem",
+                background: "transparent",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                color: textColor,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
+                marginLeft: "auto",
+              }}
+              title="Cerrar"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+        {!isMobile && (
+          <div style={{ display: "flex", gap: "0.5rem", marginLeft: isCollapsed ? "0" : "auto", justifyContent: isCollapsed ? "center" : "flex-end" }}>
+            <button
+              onClick={() => {
+                const newCollapsed = !isCollapsed;
+                setIsCollapsed(newCollapsed);
+                if (onCollapsedChange) {
+                  onCollapsedChange(newCollapsed);
+                }
+              }}
             style={{
               padding: "0.5rem",
               background: buttonBg,

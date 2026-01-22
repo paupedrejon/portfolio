@@ -831,7 +831,11 @@ async def correct_exercise(request: CorrectExerciseRequest):
         system = get_or_create_system(request.apiKey, mode="auto")
         
         # Si hay imagen, incluirla en la respuesta del estudiante
-        student_answer_text = request.student_answer
+        # Asegurar que student_answer sea un string
+        student_answer_text = str(request.student_answer) if request.student_answer else ""
+        if isinstance(request.student_answer, list):
+            # Si es una lista, unir los elementos
+            student_answer_text = "\n".join(str(item) for item in request.student_answer)
         if request.student_answer_image:
             student_answer_text += f"\n\n[Imagen adjunta: {request.student_answer_image[:100]}...]"
         

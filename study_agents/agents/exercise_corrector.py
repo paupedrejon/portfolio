@@ -171,10 +171,24 @@ IMPORTANTE:
 Responde SOLO con el JSON, sin texto adicional antes o después.""")
         ])
         
-        statement = exercise.get("statement", "")
-        expected_answer = exercise.get("expected_answer", "")
+        # Asegurar que todos los valores sean del tipo correcto
+        statement = str(exercise.get("statement", "")) if exercise.get("statement") else ""
+        expected_answer = str(exercise.get("expected_answer", "")) if exercise.get("expected_answer") else ""
         solution_steps = exercise.get("solution_steps", [])
+        if not isinstance(solution_steps, list):
+            solution_steps = [str(solution_steps)] if solution_steps else []
         points = exercise.get("points", 10)
+        try:
+            points = float(points)
+        except (ValueError, TypeError):
+            points = 10.0
+        
+        # Asegurar que student_answer sea un string
+        if not isinstance(student_answer, str):
+            if isinstance(student_answer, list):
+                student_answer = "\n".join(str(item) for item in student_answer)
+            else:
+                student_answer = str(student_answer) if student_answer else ""
         
         try:
             messages = prompt.format_messages(
@@ -205,6 +219,10 @@ Responde SOLO con el JSON, sin texto adicional antes o después.""")
             elif hasattr(response, 'usage_metadata') and response.usage_metadata:
                 usage_info["inputTokens"] = response.usage_metadata.get('input_tokens', 0)
                 usage_info["outputTokens"] = response.usage_metadata.get('output_tokens', 0)
+            
+            # Asegurar que response_text sea un string
+            if not isinstance(response_text, str):
+                response_text = str(response_text) if response_text else ""
             
             # Intentar extraer JSON de la respuesta
             json_match = None

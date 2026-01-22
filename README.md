@@ -526,10 +526,15 @@ portfolio/
 ---
 
 ## Próximamente...
-Mi objetivo és continuar este proyecto, ya que lo que hay ahora solo és una pequeña parte de lo que podría ser. 
+Este proyecto lo he tenido que hacer con un tiempo bastante limitado porque me ha coincidido con los examenes de la universidad y las prácticas en empresa que estoy haciendo, por lo que no he podido alcanzar todos los objetivos que tenía pensado alcanzar.
+
+Pero mi idea es continuar este proyecto, ya que lo que hay ahora solo és una pequeña parte de lo que podría ser. 
 
 En un futuro no muy lejano me gustaría hacer lo siguiente:
-  - **Root Directory**: `study_agents`
+  - **Mejorar los agentes**: Mejorar los promts, revisar más a profundidad cada agente y añadir más si es necesario.
+  - **Flexibilidad**: Actualmente estos agentes son buenos en ciertos campos, pero no se acaban de adaptar bien en temas específicos tal como lo podría hacer ChatGPT o Gemini.
+  - **Añadir herramientas**: Que puedas usar más herramientas a parte de las ya disponibles para más temas.
+  - **Gamificación**: Quiero intentar hacer que aprender sea más como un juego, para motivar a aprender, tengo pensado hacer varios juegos como pueda ser un parchís que para avanzar de casilla necesites .
 ---
 
 
