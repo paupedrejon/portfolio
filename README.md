@@ -525,6 +525,14 @@ portfolio/
 
 ---
 
+## Próximamente...
+Mi objetivo és continuar este proyecto, ya que lo que hay ahora solo és una pequeña parte de lo que podría ser. 
+
+En un futuro no muy lejano me gustaría hacer lo siguiente:
+  - **Root Directory**: `study_agents`
+---
+
+
 ## Contacto
 
 **Pau Pedrejón**

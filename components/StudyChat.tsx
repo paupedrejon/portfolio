@@ -506,8 +506,11 @@ export default function StudyChat() {
         }
         
         // Actualizar herramientas disponibles basándose en el tema
+        // NO activar automáticamente flashcards al cargar nivel (solo si se solicita explícitamente)
         if (isLanguageTopic(topic)) {
-          setShowLanguageTool(true);
+          // Solo mostrar el botón, pero NO activar el componente automáticamente
+          // El usuario debe hacer clic explícitamente en el botón de flashcards
+          // setShowLanguageTool(true); // COMENTADO: No activar automáticamente
         } else if (isProgrammingLanguage(topic)) {
           setShowCodeTool(true);
         } else {
@@ -737,21 +740,25 @@ export default function StudyChat() {
     
     const explicitFlashcardRequest = flashcardKeywords.some(keyword => combinedText.includes(keyword));
     
-    // Detectar idiomas - SOLO si hay contexto claro de aprendizaje de idiomas
-    // Requiere múltiples indicadores para evitar falsos positivos
+    // Detectar idiomas - SOLO si hay contexto MUY claro de aprendizaje de idiomas
+    // Requiere múltiples indicadores específicos para evitar falsos positivos
     const languageKeywords = [
       "inglés", "english", "francés", "francais", "alemán", "deutsch", "italiano", "italian",
       "portugués", "portuguese", "chino", "chinese", "japonés", "japanese", "coreano", "korean",
     ];
     
+    // Palabras clave MÁS ESPECÍFICAS para evitar activaciones accidentales
+    // Solo palabras directamente relacionadas con vocabulario y flashcards
     const languageContextKeywords = [
-      "vocabulario", "vocabulary", "palabra", "word", "frase", "phrase", "traducción", "translation",
-      "aprender", "learn", "idioma", "language", "lengua", "estudiar", "study", "flashcard", "tarjeta"
+      "vocabulario", "vocabulary", "palabra", "word", "frase", "phrase", 
+      "traducción", "translation", "traducir", "translate"
     ];
     
-    // Solo activar si hay un idioma específico Y contexto de aprendizaje
+    // Solo activar si hay un idioma específico Y contexto muy específico de vocabulario
+    // O si hay una solicitud explícita de flashcards
     const hasSpecificLanguage = languageKeywords.some(keyword => combinedText.includes(keyword));
     const hasLanguageContext = languageContextKeywords.some(keyword => combinedText.includes(keyword));
+    // Hacer más estricto: requiere idioma + contexto específico + NO palabras genéricas que causan falsos positivos
     const hasLanguage = (hasSpecificLanguage && hasLanguageContext) || explicitFlashcardRequest;
     
     // Intentar detectar el idioma específico mencionado
@@ -2504,11 +2511,16 @@ ${contentPreview}
       return;
     }
 
+    // Asegurar que flashcards NO se active cuando se genera un test
+    setShowLanguageTool(false);
+
     // Cargar el nivel del usuario ANTES de generar el test
     let currentLevel = 0;
     if (currentChatId && userId) {
       currentLevel = await loadChatLevel(currentChatId) ?? 0;
       console.log(`📊 [Frontend] Nivel cargado para generar test: ${currentLevel}/10`);
+      // Asegurar que flashcards NO se active después de cargar el nivel (si el tema es idioma)
+      setShowLanguageTool(false);
     }
 
     // Usar el número de preguntas proporcionado o generar uno aleatorio entre 5 y 10
@@ -5913,7 +5925,11 @@ ${contentPreview}
           )}
 
           {/* Herramienta de flashcards para idiomas y temas generales - al final de los mensajes */}
-          {showLanguageTool && (currentChatLevel?.topic || detectContextualTools.hasLanguage || detectContextualTools.explicitFlashcardRequest) && (
+          {/* Solo mostrar si está explícitamente activada Y (el tema es un idioma O hay solicitud explícita) */}
+          {showLanguageTool && (
+            (currentChatLevel && isLanguageTopic(currentChatLevel.topic)) || 
+            detectContextualTools.explicitFlashcardRequest
+          ) && (
             <div 
               className="component-enter"
               style={{ 
@@ -6396,8 +6412,9 @@ ${contentPreview}
               }}>{isGeneratingExercise ? "Generando ejercicio..." : "Ejercicio"}</span>
             </button>
             
-            {/* Botón de herramienta de idioma (flashcards) - disponible si el tema es un idioma O si se detecta en el contexto O si se solicita explícitamente */}
-            {((currentChatLevel && isLanguageTopic(currentChatLevel.topic)) || detectContextualTools.hasLanguage || detectContextualTools.explicitFlashcardRequest) && (
+            {/* Botón de herramienta de idioma (flashcards) - disponible SOLO si el tema es un idioma O si se solicita explícitamente */}
+            {/* Eliminada la detección automática por contexto para evitar activaciones accidentales */}
+            {((currentChatLevel && isLanguageTopic(currentChatLevel.topic)) || detectContextualTools.explicitFlashcardRequest) && (
             <button
                 onClick={() => setShowLanguageTool(!showLanguageTool)}
                 title="Flashcards de vocabulario"
@@ -7618,6 +7635,28 @@ ${contentPreview}
           20%, 40%, 60%, 80% {
             transform: translateX(4px);
           }
+        }
+        
+        @keyframes flashcard-flip {
+          0% {
+            transform: rotateY(0deg) scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: rotateY(90deg) scale(0.95);
+            opacity: 0.8;
+          }
+          100% {
+            transform: rotateY(0deg) scale(1);
+            opacity: 1;
+          }
+        }
+        
+        .flashcard-flip {
+          animation: flashcard-flip 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+          transform-style: preserve-3d;
+          backface-visibility: hidden;
+          perspective: 1000px;
         }
         
         @keyframes fadeInScale {
@@ -12673,7 +12712,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
 
       {/* Card de palabra */}
       <div 
-        className={showAnswer ? (isCorrect ? "flashcard-flip" : "") : ""}
+        className={showAnswer && isCorrect ? "flashcard-flip" : ""}
         style={{
           background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
           borderRadius: "16px",
@@ -12688,7 +12727,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
           alignItems: "center",
           position: "relative",
           transform: showAnswer && isCorrect ? "scale(1.02)" : showAnswer && isCorrect === false ? "scale(0.98)" : "scale(1)",
-          animation: showAnswer && isCorrect ? "bounceIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)" : showAnswer && isCorrect === false ? "pulse 0.3s ease" : "fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+          animation: showAnswer && isCorrect ? "flashcardSuccess 0.6s cubic-bezier(0.16, 1, 0.3, 1)" : showAnswer && isCorrect === false ? "flashcardError 0.5s ease-in-out" : "fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
         {/* Botón de audio en esquina superior derecha */}

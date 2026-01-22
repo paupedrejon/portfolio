@@ -209,12 +209,14 @@ class StudyAgentsSystem:
                 if correction_analysis.get('force_regeneration'):
                     print("🔄 Regenerando apuntes completamente diferentes...")
                     # Regenerar con instrucciones explícitas de variación
-                    notes = self.explanation_agent.generate_notes(
+                    notes, _ = self.explanation_agent.generate_notes(
                         topics=topics, 
                         model=model, 
                         user_level=user_level, 
                         conversation_history=conversation_history, 
-                        topic=topic
+                        topic=topic,
+                        chat_id=chat_id,
+                        user_id=user_id
                     )
                     # Usar nivel ajustado si está disponible
                     nivel_a_usar = nivel_ajustado if nivel_ajustado is not None else user_level
