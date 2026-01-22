@@ -238,6 +238,9 @@ interface Test {
 interface Exercise {
   exercise_id: string;
   statement: string;
+  statement_text?: string; // Campo alternativo para statement
+  question?: string; // Campo alternativo para statement
+  enunciado?: string; // Campo alternativo para statement
   expected_answer: string;
   hints: string[];
   points: number;
@@ -791,12 +794,16 @@ export default function StudyChat() {
   const [showLanguageTool, setShowLanguageTool] = useState(false);
   const [showCodeTool, setShowCodeTool] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const [isSmallDesktop, setIsSmallDesktop] = useState(false);
 
-  // Detectar tamaño de pantalla
+  // Detectar tamaño de pantalla con múltiples breakpoints
   useEffect(() => {
     const checkWidth = () => {
       const width = window.innerWidth;
-      setIsMobile(width < 640);
+      setIsMobile(width < 640);      // móvil: < 640px
+      setIsTablet(width >= 640 && width < 1024);  // tablet: 640px - 1023px
+      setIsSmallDesktop(width >= 1024 && width < 1280);  // desktop pequeño: 1024px - 1279px
     };
     checkWidth();
     window.addEventListener("resize", checkWidth);
@@ -2768,9 +2775,25 @@ ${contentPreview}
           ? exerciseTopics 
           : (exerciseTopic ? [exerciseTopic] : []);
         
+        // Intentar obtener el statement de múltiples campos posibles
+        const statementValue = data.exercise.statement || 
+                              data.exercise.statement_text || 
+                              data.exercise.question ||
+                              data.exercise.enunciado ||
+                              "";
+        
+        console.log("📝 [generateExercise] Statement extraído:", statementValue);
+        console.log("📝 [generateExercise] Campos del ejercicio:", Object.keys(data.exercise));
+        
+        if (!statementValue || statementValue.trim() === "") {
+          console.error("❌ [generateExercise] ERROR: El ejercicio no tiene statement válido!");
+          console.error("❌ [generateExercise] Ejercicio completo:", JSON.stringify(data.exercise, null, 2));
+        }
+        
         const exerciseData = {
           ...data.exercise,
-          statement: data.exercise.statement || data.exercise.statement_text || "",
+          statement: statementValue || "Ejercicio generado. Por favor, completa la tarea solicitada.",
+          statement_text: statementValue || "Ejercicio generado. Por favor, completa la tarea solicitada.",
           hints: data.exercise.hints || [],
           points: data.exercise.points || 10,
           difficulty: data.exercise.difficulty || difficulty,
@@ -2780,8 +2803,9 @@ ${contentPreview}
           exercise_id: data.exercise.exercise_id || data.exerciseId || "",
         };
         
-        console.log("Ejercicio procesado con topics:", finalTopics);
-        console.log("Ejercicio procesado:", JSON.stringify(exerciseData, null, 2));
+        console.log("📝 [generateExercise] Ejercicio procesado con topics:", finalTopics);
+        console.log("📝 [generateExercise] Ejercicio procesado completo:", JSON.stringify(exerciseData, null, 2));
+        console.log("📝 [generateExercise] Statement final en exerciseData:", exerciseData.statement);
         setCurrentExercise(exerciseData);
         setExerciseAnswer("");
         setExerciseAnswerImage(null);
@@ -3401,7 +3425,7 @@ ${contentPreview}
       style={{
             position: "fixed",
             top: 0,
-            left: sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0",
+            left: isMobile ? "0" : (sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0"),
             right: 0,
             bottom: 0,
             background: "rgba(0, 0, 0, 0.8)",
@@ -3410,10 +3434,10 @@ ${contentPreview}
             alignItems: "center",
             justifyContent: "center",
             zIndex: 1000,
-            padding: "3rem",
-            paddingLeft: "6rem",
-            paddingRight: "3rem",
-            transition: "left 0.3s ease",
+            padding: isMobile ? "1rem" : isTablet ? "2rem" : "3rem",
+            paddingLeft: isMobile ? "1rem" : (sidebarOpen && !sidebarCollapsed ? "6rem" : "3rem"),
+            paddingRight: isMobile ? "1rem" : "3rem",
+            transition: isMobile ? "none" : "left 0.3s ease",
             overflow: "auto",
             boxSizing: "border-box",
           }}
@@ -3428,29 +3452,27 @@ ${contentPreview}
             style={{
               background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.98)" : "rgba(255, 255, 255, 0.98)",
               border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.3)" : "rgba(148, 163, 184, 0.4)"}`,
-              borderRadius: "28px",
-              padding: "3rem",
-              paddingLeft: "3.5rem",
-              width: "calc(100% - 4rem)",
+              borderRadius: isMobile ? "16px" : "28px",
+              padding: isMobile ? "1.5rem" : isTablet ? "2rem" : "3rem",
+              paddingLeft: isMobile ? "1.5rem" : (sidebarOpen && !sidebarCollapsed ? "3.5rem" : "3rem"),
+              width: isMobile ? "calc(100% - 2rem)" : "calc(100% - 4rem)",
               maxWidth: "1400px",
               boxSizing: "border-box",
-              maxHeight: "calc(100vh - 6rem)",
+              maxHeight: isMobile ? "calc(100vh - 2rem)" : "calc(100vh - 6rem)",
               display: "flex",
               flexDirection: "column",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
               overflow: "hidden",
-              margin: "0",
-              marginLeft: "4rem",
-              marginRight: "auto",
+              margin: "0 auto",
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div style={{ marginBottom: "2.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "2rem", borderBottom: `2px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.2)"}` }}>
+            <div style={{ marginBottom: isMobile ? "1.5rem" : "2.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: isMobile ? "1rem" : "2rem", borderBottom: `2px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.2)"}` }}>
               <h2
                 className={spaceGrotesk.className}
                 style={{
-                  fontSize: "2.25rem",
+                  fontSize: isMobile ? "1.5rem" : isTablet ? "1.875rem" : "2.25rem",
                   fontWeight: 700,
                   letterSpacing: "-0.02em",
                   color: colorTheme === "dark" ? "#f1f5f9" : "#0f172a",
@@ -3882,12 +3904,12 @@ ${contentPreview}
         style={{
           position: 'fixed',
           top: 0,
-          left: sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0",
+          left: isMobile ? "0" : (sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0"),
           right: 0,
           bottom: 0,
           pointerEvents: 'none',
           zIndex: 0,
-          transition: "left 0.3s ease",
+          transition: isMobile ? "none" : "left 0.3s ease",
           overflow: 'visible',
         }}
       >
@@ -4321,7 +4343,7 @@ ${contentPreview}
           maxWidth: "1200px",
           width: "100%",
           margin: "0 auto",
-          padding: "2rem 1rem",
+          padding: isMobile ? "0.75rem 0.5rem" : isTablet ? "1.5rem 1rem" : "2rem 1rem",
           position: "relative",
           zIndex: 1,
         }}
@@ -4333,9 +4355,9 @@ ${contentPreview}
           style={{
             flex: 1,
             overflowY: "auto",
-            marginBottom: "1rem",
-            padding: "1rem",
-            paddingBottom: "2rem",
+            marginBottom: isMobile ? "0.5rem" : "1rem",
+            padding: isMobile ? "0.5rem" : "1rem",
+            paddingBottom: isMobile ? "1rem" : "2rem",
             position: "relative",
             zIndex: 1,
             scrollbarWidth: "thin",
@@ -4346,12 +4368,12 @@ ${contentPreview}
             <div
               style={{
                 maxWidth: "600px",
-                margin: "1.5rem auto",
-                padding: "1.75rem",
+                margin: isMobile ? "1rem auto" : "1.5rem auto",
+                padding: isMobile ? "1.25rem" : "1.75rem",
                 background: colorTheme === "dark" 
                   ? "rgba(26, 26, 36, 0.95)"
                   : "#ffffff",
-                borderRadius: "12px",
+                borderRadius: isMobile ? "8px" : "12px",
                 border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
                 boxShadow: colorTheme === "dark" 
                   ? "0 4px 16px rgba(0, 0, 0, 0.2)"
@@ -4359,12 +4381,12 @@ ${contentPreview}
               }}
             >
               {/* Header */}
-              <div style={{ marginBottom: "1.5rem" }}>
+              <div style={{ marginBottom: isMobile ? "1rem" : "1.5rem" }}>
                 <h2 style={{
-                  fontSize: "1.3rem",
+                  fontSize: isMobile ? "1.125rem" : "1.3rem",
                   fontWeight: 600,
                   margin: 0,
-                  marginBottom: "0.5rem",
+                  marginBottom: isMobile ? "0.375rem" : "0.5rem",
                   color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
                   lineHeight: 1.4,
                 }}>
@@ -4648,18 +4670,18 @@ ${contentPreview}
             <div
               style={{
                 textAlign: "center",
-                padding: "4rem 1rem 3rem",
+                padding: isMobile ? "2rem 0.75rem 1.5rem" : isTablet ? "3rem 1rem 2rem" : "4rem 1rem 3rem",
                 color: "var(--text-secondary)",
                 maxWidth: "1000px",
                 margin: "0 auto",
               }}
             >
-              <div style={{ marginBottom: "2.5rem" }}>
+              <div style={{ marginBottom: isMobile ? "1.5rem" : "2.5rem" }}>
                 <h3
                   className={spaceGrotesk.className}
                   style={{
-                    fontSize: "clamp(2rem, 5vw, 2.75rem)",
-                    marginBottom: "1rem",
+                    fontSize: isMobile ? "clamp(1.5rem, 6vw, 2rem)" : "clamp(2rem, 5vw, 2.75rem)",
+                    marginBottom: isMobile ? "0.75rem" : "1rem",
                     fontWeight: 700,
                     background: colorTheme === "dark"
                       ? "linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%)"
@@ -4676,11 +4698,12 @@ ${contentPreview}
                 <p 
                   className={outfit.className} 
                   style={{ 
-                    fontSize: "1.125rem",
+                    fontSize: isMobile ? "0.9375rem" : "1.125rem",
                     color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                     maxWidth: "600px",
                     margin: "0 auto",
                     lineHeight: 1.6,
+                    padding: isMobile ? "0 0.5rem" : "0",
                   }}
                 >
                   Te ayudo a aprender de manera eficiente. Sube documentos, genera apuntes, haz preguntas y evalúa tu conocimiento.
@@ -4690,21 +4713,22 @@ ${contentPreview}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                  gap: "1.5rem",
+                  gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(240px, 1fr))",
+                  gap: isMobile ? "1rem" : "1.5rem",
                   maxWidth: "1100px",
                   margin: "0 auto",
+                  padding: isMobile ? "0 0.5rem" : "0",
                 }}
               >
                 {/* Tarjeta 1: Sube documentos - Premium Design */}
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   style={{
-                    padding: "2rem 1.5rem",
+                    padding: isMobile ? "1.25rem 1rem" : isTablet ? "1.5rem 1.25rem" : "2rem 1.5rem",
                     background: colorTheme === "dark"
                       ? "linear-gradient(135deg, rgba(26, 26, 36, 0.8), rgba(30, 30, 45, 0.6))"
                       : "linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9))",
-                    borderRadius: "20px",
+                    borderRadius: isMobile ? "16px" : isTablet ? "18px" : "20px",
                     border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.25)" : "rgba(99, 102, 241, 0.2)"}`,
                     boxShadow: colorTheme === "dark"
                       ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
@@ -4790,11 +4814,11 @@ ${contentPreview}
                     await generateNotes();
                   }}
                   style={{
-                    padding: "2rem 1.5rem",
+                    padding: isMobile ? "1.25rem 1rem" : isTablet ? "1.5rem 1.25rem" : "2rem 1.5rem",
                     background: colorTheme === "dark"
                       ? "linear-gradient(135deg, rgba(26, 26, 36, 0.8), rgba(30, 30, 45, 0.6))"
                       : "linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9))",
-                    borderRadius: "20px",
+                    borderRadius: isMobile ? "16px" : isTablet ? "18px" : "20px",
                     border: `1px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.25)" : "rgba(16, 185, 129, 0.2)"}`,
                     boxShadow: colorTheme === "dark"
                       ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
@@ -4881,11 +4905,11 @@ ${contentPreview}
                     scrollToBottom();
                   }}
                   style={{
-                    padding: "2rem 1.5rem",
+                    padding: isMobile ? "1.25rem 1rem" : isTablet ? "1.5rem 1.25rem" : "2rem 1.5rem",
                     background: colorTheme === "dark"
                       ? "linear-gradient(135deg, rgba(26, 26, 36, 0.8), rgba(30, 30, 45, 0.6))"
                       : "linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9))",
-                    borderRadius: "20px",
+                    borderRadius: isMobile ? "16px" : isTablet ? "18px" : "20px",
                     border: `1px solid ${colorTheme === "dark" ? "rgba(245, 158, 11, 0.25)" : "rgba(245, 158, 11, 0.2)"}`,
                     boxShadow: colorTheme === "dark"
                       ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
@@ -4971,11 +4995,11 @@ ${contentPreview}
                     await generateTest();
                   }}
                   style={{
-                    padding: "2rem 1.5rem",
+                    padding: isMobile ? "1.25rem 1rem" : isTablet ? "1.5rem 1.25rem" : "2rem 1.5rem",
                     background: colorTheme === "dark"
                       ? "linear-gradient(135deg, rgba(26, 26, 36, 0.8), rgba(30, 30, 45, 0.6))"
                       : "linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9))",
-                    borderRadius: "20px",
+                    borderRadius: isMobile ? "16px" : isTablet ? "18px" : "20px",
                     border: `1px solid ${colorTheme === "dark" ? "rgba(236, 72, 153, 0.25)" : "rgba(236, 72, 153, 0.2)"}`,
                     boxShadow: colorTheme === "dark"
                       ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(236, 72, 153, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
@@ -6241,10 +6265,10 @@ ${contentPreview}
             bottom: 0,
             display: "flex",
             flexDirection: "column",
-            gap: isMobile ? "0.5rem" : "0.75rem",
-            padding: isMobile ? "0.75rem" : "1rem",
+            gap: isMobile ? "0.5rem" : isTablet ? "0.625rem" : "0.75rem",
+            padding: isMobile ? "0.625rem" : isTablet ? "0.875rem" : "1rem",
             background: colorTheme === "light" ? "#ffffff" : "rgba(26, 26, 36, 0.95)",
-            borderRadius: isMobile ? "8px" : "12px",
+            borderRadius: isMobile ? "8px" : isTablet ? "10px" : "12px",
             border: colorTheme === "light" 
               ? "1px solid rgba(148, 163, 184, 0.3)" 
               : "1px solid rgba(148, 163, 184, 0.2)",
@@ -6256,7 +6280,16 @@ ${contentPreview}
           }}
         >
           {/* File Upload and Settings */}
-          <div style={{ display: "flex", gap: isMobile ? "0.5rem" : "0.75rem", flexWrap: "wrap", alignItems: "center", overflowX: isMobile ? "auto" : "visible" }}>
+          <div style={{ 
+            display: "flex", 
+            gap: isMobile ? "0.375rem" : isTablet ? "0.5rem" : "0.75rem", 
+            flexWrap: isMobile ? "nowrap" : "wrap", 
+            alignItems: "center", 
+            overflowX: isMobile ? "auto" : "visible",
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}>
             <input
               ref={fileInputRef}
               type="file"
@@ -11251,7 +11284,15 @@ function ExerciseComponent({
           }}>
             {(() => {
               // Procesar el enunciado para destacar palabras clave
-              const statement = exercise.statement || "Cargando enunciado...";
+              // Intentar obtener el statement de diferentes campos posibles
+              const statement = exercise.statement || 
+                               exercise.statement_text || 
+                               exercise.question || 
+                               exercise.enunciado ||
+                               (typeof exercise === 'string' ? exercise : "Cargando enunciado...");
+              
+              console.log("[ExerciseComponent] Exercise object:", exercise);
+              console.log("[ExerciseComponent] Statement found:", statement);
               
               // Palabras clave comunes a destacar
               const keywords = [

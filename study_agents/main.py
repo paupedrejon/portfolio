@@ -630,6 +630,18 @@ class StudyAgentsSystem:
                 exercise_data = result.get("exercise", {})
                 usage_info = result.get("usage_info", {"inputTokens": 0, "outputTokens": 0})
                 
+                # Validar y asegurar que el statement esté presente
+                if exercise_data:
+                    if "statement" not in exercise_data or not exercise_data.get("statement") or exercise_data.get("statement", "").strip() == "":
+                        print(f"⚠️ Ejercicio sin statement válido. Campos disponibles: {list(exercise_data.keys())}")
+                        if attempt < max_attempts - 1:
+                            print(f"⚠️ Intento {attempt + 1}: ejercicio sin statement. Reintentando...")
+                            continue
+                        else:
+                            # Si es el último intento, usar un statement por defecto
+                            exercise_data["statement"] = exercise_data.get("statement_text") or exercise_data.get("question") or "Ejercicio generado. Por favor, completa la tarea solicitada."
+                            print(f"⚠️ Usando statement por defecto: {exercise_data['statement']}")
+                
                 # Asegurar que el ejercicio tenga todos los campos necesarios
                 if not exercise_data:
                     if attempt < max_attempts - 1:
