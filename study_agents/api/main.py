@@ -832,10 +832,18 @@ async def correct_exercise(request: CorrectExerciseRequest):
         
         # Si hay imagen, incluirla en la respuesta del estudiante
         # Asegurar que student_answer sea un string
-        student_answer_text = str(request.student_answer) if request.student_answer else ""
+        # IMPORTANTE: Verificar si es lista ANTES de convertir a string
         if isinstance(request.student_answer, list):
             # Si es una lista, unir los elementos
             student_answer_text = "\n".join(str(item) for item in request.student_answer)
+        else:
+            # Si no es lista, convertir a string
+            student_answer_text = str(request.student_answer) if request.student_answer else ""
+        
+        # Asegurar que student_answer_text sea definitivamente un string
+        if not isinstance(student_answer_text, str):
+            student_answer_text = str(student_answer_text) if student_answer_text else ""
+        
         if request.student_answer_image:
             student_answer_text += f"\n\n[Imagen adjunta: {request.student_answer_image[:100]}...]"
         
@@ -874,11 +882,16 @@ async def correct_exercise(request: CorrectExerciseRequest):
             # Intentar extraer código de la respuesta del estudiante
             # Buscar bloques de código entre ``` o en el texto
             import re
+            
+            # Asegurar que student_answer_text sea un string antes de usar re.findall
+            if not isinstance(student_answer_text, str):
+                student_answer_text = str(student_answer_text) if student_answer_text else ""
+            
             code_pattern = r'```(?:\w+)?\n?(.*?)```|```(.*?)```'
             code_matches = re.findall(code_pattern, student_answer_text, re.DOTALL)
             
             # Si no hay bloques de código, usar toda la respuesta como código
-            student_code = student_answer_text.strip()
+            student_code = student_answer_text.strip() if isinstance(student_answer_text, str) else ""
             if code_matches:
                 # Usar el primer bloque de código encontrado
                 student_code = code_matches[0][0] if code_matches[0][0] else code_matches[0][1]
@@ -888,7 +901,15 @@ async def correct_exercise(request: CorrectExerciseRequest):
             
             # Obtener la respuesta esperada del ejercicio
             expected_answer_full = exercise.get("expected_answer", "")
+            if not isinstance(expected_answer_full, str):
+                expected_answer_full = str(expected_answer_full) if expected_answer_full else ""
+            
             solution_steps = exercise.get("solution_steps", "")
+            if not isinstance(solution_steps, str):
+                if isinstance(solution_steps, list):
+                    solution_steps = "\n".join(str(step) for step in solution_steps)
+                else:
+                    solution_steps = str(solution_steps) if solution_steps else ""
             
             # Extraer código y salida esperada de expected_answer
             # Formato esperado: código entre ``` y luego "Salida esperada: ..."
