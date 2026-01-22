@@ -23,17 +23,16 @@ def patch_openai_client():
         
         @functools.wraps(openai.OpenAI._original_init)
         def patched_openai_init(self, *args, **kwargs):
-            # Eliminar 'proxies' si está presente
-            kwargs.pop('proxies', None)
-            # También eliminar cualquier referencia a proxies en args
+            # Establecer proxies a None (no eliminarlo, porque BaseClient lo requiere)
+            kwargs['proxies'] = None
             # Llamar al __init__ original
             return openai.OpenAI._original_init(self, *args, **kwargs)
         
         if hasattr(openai, 'AsyncOpenAI'):
             @functools.wraps(openai.AsyncOpenAI._original_init)
             def patched_async_openai_init(self, *args, **kwargs):
-                # Eliminar 'proxies' si está presente
-                kwargs.pop('proxies', None)
+                # Establecer proxies a None
+                kwargs['proxies'] = None
                 # Llamar al __init__ original
                 return openai.AsyncOpenAI._original_init(self, *args, **kwargs)
             
@@ -60,23 +59,38 @@ def patch_openai_client():
                     
                     @functools.wraps(_client.Client._original_init)
                     def patched_client_init(self, *args, **kwargs):
-                        kwargs.pop('proxies', None)
+                        kwargs['proxies'] = None
                         return _client.Client._original_init(self, *args, **kwargs)
                     
                     _client.Client.__init__ = patched_client_init
                     _client.Client._patched_init = True
                 
-                # También parchear Client.init() si es un método de clase
+                # CRÍTICO: Parchear Client.init() que es un método de clase
+                # Este es el que está causando el error "Client.init() got an unexpected keyword argument 'proxies'"
                 if hasattr(_client.Client, 'init') and not hasattr(_client.Client, '_patched_init_method'):
                     _client.Client._original_init_method = _client.Client.init
                     
-                    @functools.wraps(_client.Client._original_init_method)
-                    def patched_client_init_method(*args, **kwargs):
-                        kwargs.pop('proxies', None)
-                        return _client.Client._original_init_method(*args, **kwargs)
-                    
-                    _client.Client.init = patched_client_init_method
-                    _client.Client._patched_init_method = True
+                    # Intentar como classmethod primero
+                    try:
+                        @functools.wraps(_client.Client._original_init_method)
+                        @classmethod
+                        def patched_client_init_method_class(cls, *args, **kwargs):
+                            kwargs['proxies'] = None
+                            return _client.Client._original_init_method(*args, **kwargs)
+                        
+                        _client.Client.init = patched_client_init_method_class
+                        _client.Client._patched_init_method = True
+                        print("✅ Parche de Client.init() aplicado como classmethod (proxies establecido a None)")
+                    except:
+                        # Si falla como classmethod, intentar como función normal
+                        @functools.wraps(_client.Client._original_init_method)
+                        def patched_client_init_method_func(*args, **kwargs):
+                            kwargs['proxies'] = None
+                            return _client.Client._original_init_method(*args, **kwargs)
+                        
+                        _client.Client.init = patched_client_init_method_func
+                        _client.Client._patched_init_method = True
+                        print("✅ Parche de Client.init() aplicado como función (proxies establecido a None)")
         except Exception as e:
             print(f"⚠️ Warning al parchear _client: {e}")
             import traceback
@@ -123,8 +137,8 @@ def patch_langchain_openai():
             
             @functools.wraps(ChatOpenAI._original_init)
             def patched_chatopenai_init(self, *args, **kwargs):
-                # Eliminar 'proxies' si está presente
-                kwargs.pop('proxies', None)
+                # Establecer proxies a None
+                kwargs['proxies'] = None
                 
                 # También parchear el cliente interno ANTES de inicializar
                 # LangChain puede crear el cliente internamente y pasar proxies
@@ -155,7 +169,7 @@ def patch_langchain_openai():
                         
                         @functools.wraps(_client.Client._original_init)
                         def patched_client_init(self, *args, **kwargs):
-                            kwargs.pop('proxies', None)
+                            kwargs['proxies'] = None
                             return _client.Client._original_init(self, *args, **kwargs)
                         
                         _client.Client.__init__ = patched_client_init
