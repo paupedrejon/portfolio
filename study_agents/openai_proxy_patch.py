@@ -41,6 +41,39 @@ def patch_openai_client():
         # Aplicar los parches
         openai.OpenAI.__init__ = patched_openai_init
         
+        # CRÍTICO: Parchear OpenAI.init() si existe (método de clase)
+        # Este es el que está causando el error "OpenAI.init() got an unexpected keyword argument 'proxies'"
+        if hasattr(openai.OpenAI, 'init') and not hasattr(openai.OpenAI, '_patched_init_method'):
+            openai.OpenAI._original_init_method = openai.OpenAI.init
+            
+            # Crear un descriptor que intercepte todas las llamadas
+            class PatchedOpenAIInitMethod:
+                def __init__(self, original):
+                    self._original = original
+                
+                def __get__(self, obj, objtype=None):
+                    # Retornar una función que ELIMINE proxies
+                    def wrapper(*args, **kwargs):
+                        # ELIMINAR proxies si está presente (OpenAI.init() no lo acepta)
+                        kwargs.pop('proxies', None)
+                        # Intentar llamar al método original
+                        if objtype is not None:
+                            # Llamada como método de clase
+                            return self._original(*args, **kwargs)
+                        else:
+                            # Llamada como método de instancia
+                            return self._original(*args, **kwargs)
+                    return wrapper
+                
+                def __call__(self, *args, **kwargs):
+                    # ELIMINAR proxies si está presente
+                    kwargs.pop('proxies', None)
+                    return self._original(*args, **kwargs)
+            
+            openai.OpenAI.init = PatchedOpenAIInitMethod(openai.OpenAI._original_init_method)
+            openai.OpenAI._patched_init_method = True
+            print("✅ Parche de OpenAI.init() aplicado con descriptor (proxies eliminado)")
+        
         # También parchear el módulo _client si existe (donde se crea el cliente internamente)
         try:
             from openai import _client
