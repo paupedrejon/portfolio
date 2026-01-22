@@ -4,10 +4,38 @@ Parche global para eliminar el argumento 'proxies' de todas las inicializaciones
 Este parche intercepta openai.OpenAI.__init__ y openai.AsyncOpenAI.__init__
 para eliminar el argumento 'proxies' que no es compatible con openai>=1.x.
 También parchea langchain_openai.ChatOpenAI para evitar que pase proxies.
+También parchea httpx.Client para evitar que reciba proxies.
 """
 
 import functools
 import sys
+
+# Parchear httpx.Client ANTES de que se importe openai
+def patch_httpx_client():
+    """Parchea httpx.Client para eliminar 'proxies'"""
+    try:
+        import httpx
+        
+        if not hasattr(httpx.Client, '_patched_proxies'):
+            httpx.Client._original_init = httpx.Client.__init__
+            
+            @functools.wraps(httpx.Client._original_init)
+            def patched_httpx_client_init(self, *args, **kwargs):
+                # ELIMINAR proxies si está presente
+                kwargs.pop('proxies', None)
+                return httpx.Client._original_init(self, *args, **kwargs)
+            
+            httpx.Client.__init__ = patched_httpx_client_init
+            httpx.Client._patched_proxies = True
+            print("✅ Parche de httpx.Client aplicado (proxies eliminado)")
+    except Exception as e:
+        print(f"⚠️ Warning: No se pudo aplicar parche de httpx: {e}")
+
+# Aplicar parche de httpx inmediatamente
+try:
+    patch_httpx_client()
+except:
+    pass
 
 # Aplicar el parche ANTES de que cualquier cosa importe openai
 def patch_openai_client():
@@ -226,6 +254,12 @@ def patch_langchain_openai():
         traceback.print_exc()
 
 # Aplicar parches inmediatamente
+# Asegurar que httpx esté parcheado primero
+try:
+    patch_httpx_client()
+except:
+    pass
+
 patch_openai_client()
 
 # Intentar parchear LangChain ahora (puede que aún no esté importado)
