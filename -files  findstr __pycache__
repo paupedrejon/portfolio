@@ -1,0 +1,37 @@
+warning: in the working copy of 'study_agents/agents/correction_agent.py', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/study_agents/agents/correction_agent.py b/study_agents/agents/correction_agent.py[m
+[1mindex d2f5263..71b0b9f 100644[m
+[1m--- a/study_agents/agents/correction_agent.py[m
+[1m+++ b/study_agents/agents/correction_agent.py[m
+[36m@@ -167,12 +167,6 @@[m [mclass CorrectionAgent:[m
+         if context:[m
+             context_str = f"\nContexto del temario disponible:\n{context[:2000]}"  # Limitar tamaño[m
+         [m
+[31m-        # Preparar texto de apuntes anteriores (fuera del f-string para evitar problemas con backslashes)[m
+[31m-        previous_notes_text = ""[m
+[31m-        if is_notes:[m
+[31m-            notes_content = previous_notes[:1500] if previous_notes else 'No hay apuntes anteriores para comparar.'[m
+[31m-            previous_notes_text = f"\nAPUNTES ANTERIORES (para comparar variación):\n{notes_content}"[m
+[31m-        [m
+         # Prompt para revisar y corregir[m
+         review_prompt = f"""Eres un revisor experto de respuestas educativas. Tu tarea es analizar si una respuesta tiene sentido en el contexto de la conversación y corregirla si es necesario.[m
+ [m
+[36m@@ -188,7 +182,8 @@[m [mHISTORIAL DE CONVERSACIÓN:[m
+ [m
+ RESPUESTA GENERADA A REVISAR:[m
+ {response}[m
+[31m-{previous_notes_text}[m
+[32m+[m
+[32m+[m[32m{f"APUNTES ANTERIORES (para comparar variación):\n{previous_notes[:1500] if previous_notes else 'No hay apuntes anteriores para comparar.'}" if is_notes else ""}[m
+ [m
+ ---[m
+ [m
+[36m@@ -288,7 +283,7 @@[m [mResponde SOLO con un JSON válido en este formato exacto:[m
+ - Si hay contexto del temario, ÚSALO en la corrección[m
+ - Adapta el lenguaje y complejidad al nivel del estudiante[m
+ - **CRÍTICO**: El JSON debe ser válido. Escapa correctamente las comillas y caracteres especiales en el campo "respuesta_corregida"[m
+[31m-- Si "respuesta_corregida" contiene comillas, saltos de línea o caracteres especiales, escápalos usando la notación estándar de escape JSON (nueva línea como secuencia n y comillas como comilla invertida)"""[m
+[32m+[m[32m- Si "respuesta_corregida" contiene comillas, saltos de línea o caracteres especiales, escápalos correctamente (\\n para saltos de línea, \\" para comillas)"""[m
+ [m
+         try:[m
+             from langchain_core.messages import HumanMessage, SystemMessage[m

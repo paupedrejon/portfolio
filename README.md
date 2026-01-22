@@ -3,12 +3,12 @@
     <img src="public/StudyAgentsLogo.png" alt="Study Agents Logo" width="80" height="80">
   </a>
 
-  <h1 align="center">🎓 Study Agents - Portfolio & Capstone Project</h1>
+  <h1 align="center">Study Agents - Portfolio & Capstone Project</h1>
 
   <p align="center">
     Sistema Multi-Agente de IA para Autoaprendizaje Personalizado
     <br />
-    <a href="#-cómo-probar"><strong>Explorar los docs »</strong></a>
+    <a href="#cómo-probar"><strong>Explorar los docs »</strong></a>
     <br />
     <br />
     <a href="https://github.com/paupedrejon/portfolio/issues">Reportar Bug</a>
@@ -24,66 +24,71 @@
 ![Next.js](https://img.shields.io/badge/Next.js-15.5.9-black?style=for-the-badge&logo=next.js&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green?style=for-the-badge&logo=fastapi&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 </div>
 
-<details>
-  <summary><strong>📝 Tabla de Contenidos</strong> (Haz click para expandir)</summary>
-  <ol>
-    <li><a href="#-introducción">Introducción</a></li>
-    <li><a href="#-cómo-probar">Cómo Probar</a></li>
-    <li><a href="#-agentes">Agentes</a></li>
-    <li><a href="#-características">Características</a></li>
-    <li><a href="#-estructura-del-proyecto">Estructura del Proyecto</a></li>
-    <li><a href="#-herramientas-utilizadas">Herramientas Utilizadas</a></li>
-    <li><a href="#-despliegue">Despliegue</a></li>
-    <li><a href="#-contacto">Contacto</a></li>
-  </ol>
-</details>
+## Tabla de Contenidos
+
+- [Introducción](#introducción)
+- [Qué es Study Agents](#qué-es-study-agents)
+- [Cómo Probar](#cómo-probar)
+- [Agentes del Sistema](#agentes-del-sistema)
+- [Características Detalladas](#características-detalladas)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Herramientas Utilizadas](#herramientas-utilizadas)
+- [Despliegue](#despliegue)
+- [Contacto](#contacto)
 
 ---
 
-## ⚡ INTRODUCCIÓN
+## Introducción
 
-Bienvenidos a mi Capstone Project **StudyAgents**.
+Bienvenidos a mi **Capstone Project: Study Agents**.
 
-Primero de todo me gustaría presentarme, me llamo Pau, tengo 20 años y soy estudiante de informática en la UPC (Universidad Politécnica de Barcelona).
+**Sobre mí:** Me llamo Pau, tengo 20 años y soy estudiante de ingeniería informática en la UPC (Universitat Politècnica de Barcelona).
 
-Como estudiante empezé a usar herramientas de IA ya hace tiempo para ayudarme con el estudio (empecé a usar el OpenAI Playground por 2022) ya que muchas veces 
-me salían dudas mientras me tenia que preparar algun examen o al realizar algun ejercicio, y no había ningun profesor que me pudiese estar todo el rato ayudando.
+### El Problema que Resuelve Study Agents
 
-He visto evolucionar estos LLMs y he visto la gran mejora que han tenido (al principio me daban todas las respuestas mal), pero hay algo que no he visto mejora
-hasta hace muy poco con Gemini, que es la parte interactiva. Cuando me quería preparar un examen y le pedía a ChatGPT que me hiciese preguntas me daba un texto
-largo con muchas preguntas y tenia que ir pregunta por pregunta respondiendole, o cuando le pedía apuntes para descargarme para antes del exámen, me daba textos
-largos y tenía que hacer captura de pantalla para poderlo tener mas accesible y no tener que ir al momento del chat donde le pedí estos apuntes, total un rollo.
+Como estudiante, empecé a usar herramientas de inteligencia artificial hace ya unos años para ayudarme a estudiar cuando estaba en bachillerato (por 2022 descubrí el OpenAI Playground). Muchas veces me salían dudas mientras me tenía que preparar algún examen o al realizar algún ejercicio, y **no siempre había un profesor disponible para ayudarme en ese momento**.
 
-Mi objetivo en este proyecto ha sido facilitar el aprendizaje, he buscado las herramientas que mejores resulados dan en el aprendizaje (hacer resumenes, flashcards, tests...) y unirlos con agentes especializados en enseñar, corregir y dar feedback al estudiante.
+Durante este tiempo he visto evolucionar los modelos de lenguaje. Recuerdo cuando usaba el Playground de OpenAI e intentar corregir algún test, este hacía muchos errores y alucinaba mucho, pero con los años han ido mejorando de forma espectacular en cuanto a la calidad de las respuestas. Sin embargo, **había algo que echaba en falta** y que hasta hace poco con herramientas como Gemini no han empezado a conseguir, y es **la parte interactiva del lenguaje**.
 
+**Ejemplos concretos del problema:**
 
+- Cuando le pedía a ChatGPT que me ayudara a preparar un examen, solía devolver un texto larguísimo lleno de preguntas, y tenías que ir copiando y pegando una por una para responderle.
+- Cuando le pedía apuntes para estudiar antes de un examen, me generaba textos largos que tenía que guardar a base de capturas de pantalla si me lo quería estudiar antes del examen.
 
+**En resumen:** Actualmente usar ChatGPT o Gemini para estudiar es una buena herramienta pero es **poco práctico y bastante pesado**.
 
+---
 
+## Qué es Study Agents
 
-Study Agents es una orquestación de **múltiples agentes especializados de IA** que trabajan en conjunto para facilitar el proceso de aprendizaje autónomo. Utiliza tecnologías avanzadas de procesamiento de lenguaje natural (LLMs), RAG (Retrieval-Augmented Generation) y ChromaDB para crear una experiencia de aprendizaje personalizada e interactiva.
+**Study Agents** es un sistema multi-agente de inteligencia artificial diseñado para facilitar el aprendizaje personalizado. El objetivo de este proyecto es precisamente **facilitar el aprendizaje** combinando las herramientas que mejor funcionan a la hora de estudiar (resúmenes, flashcards, tests, etc.) con un sistema de agentes especializados en enseñar de manera que no se haga una carga estudiar, que sean capaces de enseñar, corregir y dar feedback al estudiante, buscando que el proceso sea **mucho más interactivo, útil y accesible**.
 
-### 🎯 Características Principales
+Este proyecto está construido sobre mi portfolio personal (hecho con React/Next.js), integrando Study Agents como una aplicación completa dentro del mismo.
 
-- **📚 Procesamiento Inteligente**: Sube PDFs y documentos que se procesan automáticamente usando RAG
-- **💬 Chat Interactivo**: Asistente de preguntas y respuestas contextualizado con tu material de estudio
-- **📝 Generación de Apuntes**: Convierte documentos densos en apuntes claros y estructurados
-- **📊 Tests Personalizados**: Genera evaluaciones adaptadas a tu nivel de conocimiento (0-10)
-- **🎯 Sistema de Progreso**: Rastrea tu aprendizaje y ajusta la dificultad automáticamente
-- **🃏 Flashcards**: Sistema de tarjetas para aprendizaje de vocabulario en idiomas
-- **💻 Intérprete de Código**: Ejecuta código Python, JavaScript, Java, C++, SQL directamente en el navegador
+### Características Principales
+
+- **Procesamiento Inteligente**: Sube PDFs y documentos que se procesan automáticamente usando RAG (Retrieval-Augmented Generation)
+- **Chat Interactivo**: Asistente de preguntas y respuestas contextualizado con tu material de estudio
+- **Generación de Apuntes**: Convierte documentos densos en apuntes claros y estructurados
+- **Tests Personalizados**: Genera evaluaciones adaptadas a tu nivel de conocimiento (escala 0-10)
+- **Sistema de Progreso**: Rastrea tu aprendizaje y ajusta la dificultad automáticamente
+- **Flashcards**: Sistema de tarjetas para aprendizaje de vocabulario en idiomas
+- **Intérprete de Código**: Ejecuta código Python, JavaScript, Java, C++, SQL directamente en el navegador
 
 > **Nota:** Este proyecto requiere una API Key de OpenAI para funcionar. Los usuarios pueden configurar su propia API key desde la interfaz web.
 
 ---
 
-## 🛠️ Cómo Probar
+## Cómo Probar
 
 Sigue estos pasos para poner en marcha Study Agents en tu máquina local.
+
+<a href="https://www.paupedrejon.com/study-agents" target="_blank">
+  <img src="https://cdn.vectorstock.com/i/500p/63/72/try-now-sticker-sign-on-transparent-vector-52026372.jpg" alt="Probar">
+</a>
 
 ### Prerrequisitos
 
@@ -186,105 +191,191 @@ npm run dev
 
 ---
 
-## 🤖 Agentes
+## Agentes del Sistema
 
-El sistema está compuesto por **5 agentes especializados** que trabajan en conjunto:
+El sistema está compuesto por **8 agentes especializados** que trabajan en conjunto para proporcionar una experiencia de aprendizaje completa y personalizada. Cada agente tiene una función específica y utiliza técnicas avanzadas de IA para optimizar su rendimiento.
 
-### 1. 📚 **Content Processor Agent**
-- **Función**: Procesa y estructura documentos subidos (PDFs, textos)
-- **Tecnología**: RAG (Retrieval-Augmented Generation) con ChromaDB
-- **Características**: 
-  - Extracción de texto de PDFs
-  - Segmentación inteligente de contenido
-  - Indexación vectorial para búsqueda semántica
-  - Almacenamiento persistente de documentos
+### 1. Content Processor Agent
 
-### 2. 💡 **Explanation Agent**
-- **Función**: Transforma información compleja en explicaciones claras y estructuradas
-- **Características**:
-  - Adapta el nivel de explicación según el conocimiento del usuario (0-10)
-  - Genera apuntes en formato Markdown
-  - Incluye ejemplos, tablas comparativas y diagramas
-  - Integra contenido multimedia (videos de YouTube, imágenes)
+**Función Principal:** Procesa y estructura documentos subidos (PDFs, textos) para que sean accesibles por el resto del sistema.
 
-### 3. 💬 **Q&A Assistant Agent**
-- **Función**: Responde preguntas del estudiante de forma contextualizada
-- **Características**:
-  - Utiliza el contexto de los documentos subidos
-  - Mantiene historial de conversación
-  - Personaliza respuestas según el nivel del usuario
-  - Soporte para múltiples idiomas y temas
+**Tecnología:** Utiliza RAG (Retrieval-Augmented Generation) con ChromaDB como base de datos vectorial.
 
-### 4. 📊 **Test Generator Agent**
-- **Función**: Crea tests y evaluaciones personalizadas
-- **Características**:
-  - Genera preguntas de opción múltiple y verdadero/falso
-  - Adapta la dificultad al nivel del estudiante
-  - Crea tests temáticos según el contenido estudiado
-  - Genera feedback automático
+**Características Técnicas:**
+- Extracción de texto de PDFs usando PyPDF
+- Segmentación inteligente de contenido en chunks semánticos
+- Generación de embeddings vectoriales para búsqueda semántica
+- Indexación vectorial en ChromaDB para recuperación rápida
+- Almacenamiento persistente de documentos por usuario
+- Gestión de memoria por tema y usuario
 
-### 5. ✅ **Feedback & Correction Agent**
-- **Función**: Corrige ejercicios y proporciona retroalimentación detallada
-- **Características**:
-  - Corrección automática de respuestas
-  - Explicaciones detalladas de cada respuesta
-  - Sugerencias de mejora
-  - Análisis del rendimiento del estudiante
+**Cuándo se usa:** Automáticamente cuando un usuario sube un documento PDF o texto. Prepara el contenido para que los demás agentes puedan acceder a información relevante de forma contextualizada.
 
-### 6. 🎯 **Exercise Generator Agent** (Bonus)
-- **Función**: Genera ejercicios prácticos personalizados
-- **Características**:
-  - Ejercicios adaptados al nivel del usuario
-  - Diferentes tipos de ejercicios según el tema
-  - Corrección automática con feedback
-  - Sistema de progreso y estadísticas
+### 2. Explanation Agent
+
+**Función Principal:** Transforma información compleja en explicaciones claras y estructuradas adaptadas al nivel del usuario.
+
+**Características Técnicas:**
+- Adapta el nivel de explicación según el conocimiento del usuario (escala 0-10)
+- Genera apuntes en formato Markdown con estructura jerárquica
+- Incluye ejemplos prácticos, tablas comparativas y diagramas conceptuales
+- Integra contenido multimedia (videos de YouTube, imágenes de Unsplash)
+- Utiliza el contexto de documentos subidos para generar explicaciones relevantes
+- Optimización de costes mediante selección automática de modelos (GPT-3.5 vs GPT-4)
+
+**Cuándo se usa:** Cuando el usuario solicita generar apuntes de un tema o cuando necesita una explicación detallada de un concepto. El agente analiza el nivel del usuario y ajusta la complejidad del contenido generado.
+
+### 3. Q&A Assistant Agent
+
+**Función Principal:** Responde preguntas del estudiante de forma contextualizada utilizando el material de estudio subido.
+
+**Características Técnicas:**
+- Utiliza RAG para buscar información relevante en los documentos subidos
+- Mantiene historial de conversación para contexto continuo
+- Personaliza respuestas según el nivel del usuario (0-10)
+- Soporte para múltiples idiomas y temas
+- Integración con búsqueda de imágenes de Unsplash cuando es relevante
+- Optimización de modelos según la complejidad de la pregunta
+
+**Cuándo se usa:** En cada interacción del chat cuando el usuario hace una pregunta. El agente busca información relevante en los documentos procesados y genera una respuesta contextualizada.
+
+### 4. Test Generator Agent
+
+**Función Principal:** Crea tests y evaluaciones personalizadas adaptadas al nivel y contenido estudiado por el usuario.
+
+**Características Técnicas:**
+- Genera preguntas de opción múltiple y verdadero/falso
+- Adapta la dificultad al nivel del estudiante (0-10)
+- Crea tests temáticos según el contenido estudiado
+- Genera feedback automático para cada respuesta
+- Evalúa expresiones matemáticas en respuestas numéricas
+- Utiliza el contexto de documentos para generar preguntas relevantes
+- Optimización de costes mediante selección inteligente de modelos
+
+**Cuándo se usa:** Cuando el usuario solicita generar un test sobre un tema específico. El agente analiza el contenido disponible y el nivel del usuario para crear preguntas apropiadas.
+
+### 5. Feedback Agent
+
+**Función Principal:** Proporciona retroalimentación detallada sobre el rendimiento del estudiante en tests y ejercicios.
+
+**Características Técnicas:**
+- Analiza respuestas del estudiante en tests generados
+- Proporciona explicaciones detalladas de cada respuesta (correcta o incorrecta)
+- Sugerencias de mejora personalizadas
+- Análisis del rendimiento general del estudiante
+- Identificación de áreas de mejora
+- Actualización del sistema de progreso basado en resultados
+
+**Cuándo se usa:** Después de que un usuario completa un test. El agente analiza todas las respuestas y genera un reporte detallado con feedback constructivo.
+
+### 6. Exercise Corrector Agent
+
+**Función Principal:** Corrige ejercicios prácticos y proporciona retroalimentación educativa detallada.
+
+**Características Técnicas:**
+- Corrección automática de ejercicios prácticos
+- Evaluación de respuestas con asignación de notas
+- Explicaciones detalladas de cada corrección
+- Sugerencias de mejora específicas
+- Análisis del rendimiento del estudiante
+- Integración con el sistema de progreso
+
+**Cuándo se usa:** Cuando el usuario completa un ejercicio práctico generado por el Exercise Generator Agent. Evalúa la respuesta y proporciona feedback educativo.
+
+### 7. Exercise Generator Agent
+
+**Función Principal:** Genera ejercicios prácticos personalizados adaptados al nivel y tema de estudio del usuario.
+
+**Características Técnicas:**
+- Genera ejercicios adaptados al nivel del usuario (0-10)
+- Diferentes tipos de ejercicios según el tema (matemáticas, programación, ciencias, etc.)
+- Integración con el sistema de corrección automática
+- Feedback inmediato tras la corrección
+- Sistema de progreso y estadísticas por ejercicio
+- Utiliza el contexto de documentos para generar ejercicios relevantes
+
+**Cuándo se usa:** Cuando el usuario solicita generar un ejercicio práctico sobre un tema específico. El agente crea un ejercicio apropiado para el nivel del usuario.
+
+### 8. Correction Agent
+
+**Función Principal:** Revisa y corrige respuestas del chat para asegurar coherencia y calidad educativa.
+
+**Características Técnicas:**
+- Analiza si las respuestas tienen sentido en el contexto de la conversación
+- Detecta y corrige alucinaciones o información incorrecta
+- Asegura que las respuestas sean apropiadas para el nivel del usuario
+- Mantiene coherencia en el historial de conversación
+- Optimización de costes mediante uso selectivo de modelos más potentes
+
+**Cuándo se usa:** Opcionalmente después de que el Q&A Assistant Agent genera una respuesta. El Correction Agent revisa la respuesta y la corrige si es necesario antes de mostrarla al usuario.
+
+### Arquitectura de los Agentes
+
+Todos los agentes comparten:
+- **Sistema de Memoria Compartido**: Utilizan el mismo MemoryManager para acceder a documentos procesados
+- **Optimización de Costes**: Sistema de selección automática de modelos (ModelManager) que elige entre GPT-3.5 y GPT-4 según la complejidad de la tarea
+- **Personalización por Usuario**: Cada agente adapta su comportamiento según el nivel y preferencias del usuario
+- **API Keys Personales**: Cada usuario puede configurar su propia API key de OpenAI
 
 ---
 
-## ✨ Características Detalladas
+## Características Detalladas
 
-### 📖 **Generación de Apuntes**
-- Convierte documentos PDF en apuntes estructurados
-- Formato Markdown con soporte para tablas, listas y código
-- Descarga en PDF con formato profesional
-- Integración de videos de YouTube automática
-- Diagramas y esquemas visuales
+### Generación de Apuntes
 
-### 🎯 **Sistema de Niveles Inteligente**
-- Rastrea tu nivel de conocimiento por tema (escala 0-10)
-- Ajusta automáticamente la dificultad del contenido
-- Sistema de experiencia y progreso visual
-- Recomendaciones personalizadas de estudio
+- Convierte documentos PDF en apuntes estructurados y legibles
+- Formato Markdown con soporte completo para tablas, listas, código y fórmulas
+- Descarga en PDF con formato profesional usando jsPDF
+- Integración automática de videos de YouTube cuando son relevantes al tema
+- Diagramas y esquemas visuales generados mediante texto estructurado
+- Personalización del nivel de detalle según el conocimiento del usuario
 
-### 🃏 **Flashcards para Idiomas**
+### Sistema de Niveles Inteligente
+
+- Rastrea tu nivel de conocimiento por tema en una escala de 0 a 10
+- Ajusta automáticamente la dificultad del contenido generado
+- Sistema de experiencia y progreso visual con gráficas
+- Recomendaciones personalizadas de estudio basadas en tu progreso
+- Actualización dinámica del nivel según tu rendimiento en tests y ejercicios
+
+### Flashcards para Idiomas
+
 - Sistema de tarjetas interactivas para aprendizaje de vocabulario
 - Soporte para múltiples idiomas (Inglés, Francés, Alemán, Italiano, Portugués, Chino, Japonés, Coreano, etc.)
-- Sistema de repetición espaciada
-- Seguimiento de palabras aprendidas
-- Generación automática de ejercicios tipo test
+- Sistema de repetición espaciada para optimizar el aprendizaje
+- Seguimiento de palabras aprendidas por usuario
+- Generación automática de ejercicios tipo test basados en las flashcards
+- Integración con el sistema de progreso general
 
-### 💻 **Intérprete de Código Integrado**
-- Ejecuta código directamente en el navegador
-- Soporte para: Python, JavaScript, Java, C++, SQL
-- Resaltado de sintaxis con CodeMirror
-- Entrada y salida interactivas
-- Ideal para aprender programación
+### Intérprete de Código Integrado
 
-### 📊 **Dashboard de Progreso**
-- Visualización de tu progreso por temas
-- Estadísticas de uso (tokens, costes, solicitudes)
-- Desglose por modelo de IA utilizado
-- Gráficas de nivel y experiencia
+- Ejecuta código directamente en el navegador sin necesidad de servidor externo
+- Soporte para múltiples lenguajes: Python, JavaScript, Java, C++, SQL
+- Resaltado de sintaxis con CodeMirror para mejor legibilidad
+- Entrada y salida interactivas para programas que requieren input del usuario
+- Ideal para aprender programación y probar conceptos en tiempo real
+- Ejecución segura en un entorno controlado
 
-### 🔐 **Autenticación y Multi-usuario**
-- Autenticación con Google (NextAuth)
-- Sistema multi-usuario con datos privados
-- Cada usuario tiene su propio progreso y chats
-- API keys personales (cada usuario usa su propia clave)
+### Dashboard de Progreso
+
+- Visualización completa de tu progreso por temas
+- Estadísticas detalladas de uso: tokens consumidos, costes estimados, número de solicitudes
+- Desglose por modelo de IA utilizado (GPT-3.5 vs GPT-4)
+- Gráficas interactivas de nivel y experiencia a lo largo del tiempo
+- Análisis de áreas de fortaleza y mejora
+- Historial de conversaciones y documentos procesados
+
+### Autenticación y Multi-usuario
+
+- Autenticación segura con Google OAuth mediante NextAuth.js
+- Sistema multi-usuario con datos completamente privados
+- Cada usuario tiene su propio progreso, chats y documentos
+- API keys personales: cada usuario configura y usa su propia clave de OpenAI
+- Gestión de sesiones y seguridad de datos
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 portfolio/
@@ -311,7 +402,9 @@ portfolio/
 │   │   ├── qa_assistant.py
 │   │   ├── test_generator.py
 │   │   ├── feedback_agent.py
-│   │   └── exercise_generator.py
+│   │   ├── exercise_generator.py
+│   │   ├── exercise_corrector.py
+│   │   └── correction_agent.py
 │   ├── memory/                   # Sistema de memoria (RAG)
 │   ├── chroma_db/               # Base de datos vectorial
 │   ├── documents/               # Documentos procesados
@@ -330,103 +423,114 @@ portfolio/
 
 ---
 
-## 🛠️ Herramientas Utilizadas
+## Herramientas Utilizadas
 
 ### Frontend
-- **Next.js 15.5.9** - Framework React con App Router
-- **TypeScript** - Tipado estático
-- **React 19** - Biblioteca de UI
-- **Tailwind CSS 4** - Framework de estilos
-- **NextAuth.js** - Autenticación
-- **React Markdown** - Renderizado de Markdown
-- **CodeMirror** - Editor de código
-- **jsPDF** - Generación de PDFs
-- **html2canvas** - Captura de pantalla
+
+- **Next.js 15.5.9**: Framework React con App Router para renderizado del lado del servidor y routing optimizado
+- **TypeScript 5**: Tipado estático para mayor seguridad y productividad en el desarrollo
+- **React 19**: Biblioteca de UI para construir interfaces de usuario interactivas y reactivas
+- **Tailwind CSS 4**: Framework de estilos utility-first para diseño rápido y consistente
+- **NextAuth.js**: Sistema de autenticación completo con soporte para múltiples proveedores OAuth
+- **React Markdown**: Librería para renderizar contenido Markdown de forma segura y estilizada
+- **CodeMirror**: Editor de código con resaltado de sintaxis para múltiples lenguajes
+- **jsPDF**: Generación de documentos PDF desde el navegador
+- **html2canvas**: Captura de elementos HTML como imágenes para exportación
 
 ### Backend
-- **FastAPI 0.109** - Framework web de Python
-- **Uvicorn** - Servidor ASGI
-- **LangChain 0.1.20** - Framework para aplicaciones LLM
-- **LangChain OpenAI** - Integración con OpenAI
-- **ChromaDB 0.4.22** - Base de datos vectorial
-- **PyPDF** - Procesamiento de PDFs
-- **TikToken** - Tokenización y cálculo de costes
 
-### IA y Machine Learning
-- **OpenAI GPT-4 / GPT-3.5** - Modelos de lenguaje
-- **RAG (Retrieval-Augmented Generation)** - Técnica de recuperación aumentada
-- **Embeddings** - Vectorización de texto
+- **FastAPI 0.109**: Framework web moderno y rápido de Python con documentación automática
+- **Uvicorn**: Servidor ASGI de alto rendimiento para aplicaciones Python asíncronas
+- **LangChain 0.1.20**: Framework completo para construir aplicaciones con modelos de lenguaje
+- **LangChain OpenAI**: Integración oficial de LangChain con los modelos de OpenAI
+- **ChromaDB 0.4.22**: Base de datos vectorial open-source para almacenamiento y búsqueda de embeddings
+- **PyPDF**: Librería para extracción y procesamiento de texto desde archivos PDF
+- **TikToken**: Tokenización eficiente y cálculo preciso de costes de tokens para modelos de OpenAI
 
-### Almacenamiento
-- **ChromaDB** - Base de datos vectorial para RAG
-- **JSON Files** - Almacenamiento de chats y progreso
-- **File System** - Almacenamiento de documentos
+### Inteligencia Artificial y Machine Learning
+
+- **OpenAI GPT-4**: Modelo de lenguaje más avanzado para tareas complejas que requieren razonamiento profundo
+- **OpenAI GPT-3.5-turbo**: Modelo optimizado para tareas generales con mejor relación coste-rendimiento
+- **RAG (Retrieval-Augmented Generation)**: Técnica que combina recuperación de información con generación de texto para respuestas contextualizadas
+- **Embeddings**: Vectorización de texto para búsqueda semántica y recuperación de información relevante
+
+### Almacenamiento y Base de Datos
+
+- **ChromaDB**: Base de datos vectorial persistente para almacenar embeddings y realizar búsquedas semánticas
+- **JSON Files**: Sistema de almacenamiento ligero para chats, progreso de usuarios y configuración
+- **File System**: Almacenamiento directo de documentos PDF y archivos subidos por usuarios
 
 ### DevOps y Despliegue
-- **Vercel** - Hosting del frontend
-- **Railway / Render** - Hosting del backend
-- **GitHub** - Control de versiones
+
+- **Vercel**: Plataforma de hosting optimizada para aplicaciones Next.js con despliegue automático desde GitHub
+- **Railway**: Plataforma de hosting para aplicaciones backend con soporte nativo para Python y despliegue continuo
+- **Render**: Alternativa de hosting para backend con soporte para múltiples lenguajes y bases de datos
+- **GitHub**: Control de versiones y repositorio de código con integración CI/CD
+
+### Herramientas de Desarrollo
+
+- **Cursor**: IDE avanzado con capacidades de IA para asistencia en código, autocompletado inteligente y generación de código
+- **Git**: Sistema de control de versiones distribuido para gestión de código
+- **Node.js / npm**: Entorno de ejecución y gestor de paquetes para JavaScript/TypeScript
+- **Python / pip**: Entorno de ejecución y gestor de paquetes para Python
+- **ESLint / TypeScript Compiler**: Herramientas de linting y compilación para mantener calidad de código
+
+### APIs y Servicios Externos
+
+- **OpenAI API**: API para acceder a modelos GPT-3.5 y GPT-4 para generación de texto y embeddings
+- **Google OAuth 2.0**: Sistema de autenticación mediante cuentas de Google
+- **Unsplash API**: Búsqueda y obtención de imágenes de alta calidad para enriquecer contenido educativo (opcional)
 
 ---
 
-## 🚀 Despliegue
+## Despliegue
 
 ### Frontend en Vercel
 
-1. Conecta tu repositorio a Vercel
-2. Vercel detectará automáticamente Next.js
-3. Configura las variables de entorno:
-   - `NEXTAUTH_URL`
-   - `NEXTAUTH_SECRET`
-   - `GOOGLE_CLIENT_ID`
-   - `GOOGLE_CLIENT_SECRET`
-   - `FASTAPI_URL` (URL de tu backend desplegado)
-4. Haz deploy - Vercel desplegará automáticamente
+1. Conecta tu repositorio a Vercel desde el dashboard
+2. Vercel detectará automáticamente Next.js y configurará el build
+3. Configura las variables de entorno necesarias:
+   - `NEXTAUTH_URL`: URL de producción de tu aplicación
+   - `NEXTAUTH_SECRET`: Secret aleatorio para firmar cookies (genera uno con `openssl rand -base64 32`)
+   - `GOOGLE_CLIENT_ID`: ID de cliente de Google OAuth
+   - `GOOGLE_CLIENT_SECRET`: Secret de cliente de Google OAuth
+   - `FASTAPI_URL`: URL pública de tu backend desplegado (Railway o Render)
+4. Haz deploy - Vercel desplegará automáticamente en cada push a la rama principal
 
 ### Backend en Railway o Render
 
 **Railway (Recomendado):**
-1. Crea un proyecto en Railway
-2. Conecta tu repositorio GitHub
-3. Configura el **Root Directory** a `study_agents`
-4. Railway detectará Python automáticamente
-5. Obtén la URL del backend
+
+1. Crea un nuevo proyecto en Railway
+2. Conecta tu repositorio GitHub desde el dashboard
+3. Configura el **Root Directory** a `study_agents` en la configuración del servicio
+4. Railway detectará Python automáticamente y usará `requirements.txt`
+5. Configura las variables de entorno si es necesario (OPENAI_API_KEY es opcional, los usuarios pueden configurarla desde la web)
+6. Railway generará automáticamente una URL pública para tu backend
+7. Copia esta URL y configúrala como `FASTAPI_URL` en Vercel
 
 **Render (Alternativa):**
-1. Crea un Web Service en Render
-2. Conecta tu repositorio
-3. Configura:
-   - Root Directory: `study_agents`
-   - Build Command: `pip install -r requirements.txt`
-   - Start Command: `cd api && uvicorn main:app --host 0.0.0.0 --port $PORT`
-4. Añade variable: `PYTHON_VERSION = 3.11.9`
 
-📖 **Guía detallada**: Ver [GUIA_DESPLIEGUE_BACKEND.md](./GUIA_DESPLIEGUE_BACKEND.md)
+1. Crea un nuevo Web Service en Render
+2. Conecta tu repositorio GitHub
+3. Configura los siguientes parámetros:
+   - **Root Directory**: `study_agents`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `cd api && uvicorn main:app --host 0.0.0.0 --port $PORT`
+4. Añade variable de entorno: `PYTHON_VERSION = 3.11.9`
+5. Render generará una URL pública para tu backend
+6. Copia esta URL y configúrala como `FASTAPI_URL` en Vercel
+
+**Guía detallada**: Ver [GUIA_DESPLIEGUE_BACKEND.md](./GUIA_DESPLIEGUE_BACKEND.md)
 
 ---
 
-## 📞 Contacto
+## Contacto
 
 **Pau Pedrejón**
 
-- 🌐 **Portfolio Web**: [Ver en producción](https://tu-url.vercel.app)
-- 📧 **Email**: [Tu email]
-- 💼 **LinkedIn**: [Tu LinkedIn]
-- 🐙 **GitHub**: [@paupedrejon](https://github.com/paupedrejon)
-- 🎓 **Universidad**: UPC (Universidad Politécnica de Barcelona)
+- **Portfolio Web**: [www.paupedrejon.com](https://www.paupedrejon.com)
+- **GitHub**: [@paupedrejon](https://github.com/paupedrejon)
+- **Mail**: [pau.pedrejon@gmail.com](mailto:pau.pedrejon@gmail.com)
 
 ---
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
----
-
-<div align="center">
-
-**Hecho con ❤️ por Pau Pedrejón**
-
-⭐ Si te gusta este proyecto, ¡dale una estrella!
-
-</div>

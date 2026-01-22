@@ -167,12 +167,13 @@ class CorrectionAgent:
         if context:
             context_str = f"\nContexto del temario disponible:\n{context[:2000]}"  # Limitar tamaño
         
-        # Preparar texto de apuntes anteriores (fuera del f-string para evitar problemas con backslashes)
+        # Preparar texto de apuntes anteriores SIN f-strings anidados
+        # (evita: SyntaxError: f-string expression part cannot include a backslash)
         previous_notes_text = ""
         if is_notes:
-            notes_content = previous_notes[:1500] if previous_notes else 'No hay apuntes anteriores para comparar.'
-            previous_notes_text = f"\nAPUNTES ANTERIORES (para comparar variación):\n{notes_content}"
-        
+            notes_content = previous_notes[:1500] if previous_notes else "No hay apuntes anteriores para comparar."
+            previous_notes_text = "\nAPUNTES ANTERIORES (para comparar variación):\n" + notes_content
+
         # Prompt para revisar y corregir
         review_prompt = f"""Eres un revisor experto de respuestas educativas. Tu tarea es analizar si una respuesta tiene sentido en el contexto de la conversación y corregirla si es necesario.
 
@@ -188,6 +189,7 @@ HISTORIAL DE CONVERSACIÓN:
 
 RESPUESTA GENERADA A REVISAR:
 {response}
+
 {previous_notes_text}
 
 ---
@@ -288,7 +290,7 @@ Responde SOLO con un JSON válido en este formato exacto:
 - Si hay contexto del temario, ÚSALO en la corrección
 - Adapta el lenguaje y complejidad al nivel del estudiante
 - **CRÍTICO**: El JSON debe ser válido. Escapa correctamente las comillas y caracteres especiales en el campo "respuesta_corregida"
-- Si "respuesta_corregida" contiene comillas, saltos de línea o caracteres especiales, escápalos usando la notación estándar de escape JSON (nueva línea como secuencia n y comillas como comilla invertida)"""
+- Si "respuesta_corregida" contiene comillas, saltos de línea o caracteres especiales, escápalos correctamente (\\n para saltos de línea, \\" para comillas)"""
 
         try:
             from langchain_core.messages import HumanMessage, SystemMessage
