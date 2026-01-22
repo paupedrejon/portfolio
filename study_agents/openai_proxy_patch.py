@@ -10,12 +10,13 @@ También parchea httpx.Client para evitar que reciba proxies.
 import functools
 import sys
 
-# Parchear httpx.Client ANTES de que se importe openai
+# Parchear httpx.Client y AsyncClient ANTES de que se importe openai
 def patch_httpx_client():
-    """Parchea httpx.Client para eliminar 'proxies'"""
+    """Parchea httpx.Client y AsyncClient para eliminar 'proxies'"""
     try:
         import httpx
         
+        # Parchear httpx.Client
         if not hasattr(httpx.Client, '_patched_proxies'):
             httpx.Client._original_init = httpx.Client.__init__
             
@@ -28,6 +29,20 @@ def patch_httpx_client():
             httpx.Client.__init__ = patched_httpx_client_init
             httpx.Client._patched_proxies = True
             print("✅ Parche de httpx.Client aplicado (proxies eliminado)")
+        
+        # Parchear httpx.AsyncClient
+        if hasattr(httpx, 'AsyncClient') and not hasattr(httpx.AsyncClient, '_patched_proxies'):
+            httpx.AsyncClient._original_init = httpx.AsyncClient.__init__
+            
+            @functools.wraps(httpx.AsyncClient._original_init)
+            def patched_httpx_async_client_init(self, *args, **kwargs):
+                # ELIMINAR proxies si está presente
+                kwargs.pop('proxies', None)
+                return httpx.AsyncClient._original_init(self, *args, **kwargs)
+            
+            httpx.AsyncClient.__init__ = patched_httpx_async_client_init
+            httpx.AsyncClient._patched_proxies = True
+            print("✅ Parche de httpx.AsyncClient aplicado (proxies eliminado)")
     except Exception as e:
         print(f"⚠️ Warning: No se pudo aplicar parche de httpx: {e}")
 
@@ -204,11 +219,12 @@ def patch_openai_client():
             import traceback
             traceback.print_exc()
         
-        # CRÍTICO: Parchear SyncHttpxClientWrapper si existe
-        # Este es el que está causando el error "Client.__init__() got an unexpected keyword argument 'proxies'"
+        # CRÍTICO: Parchear SyncHttpxClientWrapper y AsyncHttpxClientWrapper si existen
+        # Estos son los que están causando los errores de proxies
         try:
             from openai import _base_client
             
+            # Parchear SyncHttpxClientWrapper
             if hasattr(_base_client, 'SyncHttpxClientWrapper') and not hasattr(_base_client.SyncHttpxClientWrapper, '_patched'):
                 _base_client.SyncHttpxClientWrapper._original_init = _base_client.SyncHttpxClientWrapper.__init__
                 
@@ -221,8 +237,22 @@ def patch_openai_client():
                 _base_client.SyncHttpxClientWrapper.__init__ = patched_sync_httpx_wrapper_init
                 _base_client.SyncHttpxClientWrapper._patched = True
                 print("✅ Parche de SyncHttpxClientWrapper aplicado (proxies eliminado)")
+            
+            # Parchear AsyncHttpxClientWrapper
+            if hasattr(_base_client, 'AsyncHttpxClientWrapper') and not hasattr(_base_client.AsyncHttpxClientWrapper, '_patched'):
+                _base_client.AsyncHttpxClientWrapper._original_init = _base_client.AsyncHttpxClientWrapper.__init__
+                
+                @functools.wraps(_base_client.AsyncHttpxClientWrapper._original_init)
+                def patched_async_httpx_wrapper_init(self, *args, **kwargs):
+                    # ELIMINAR proxies antes de pasarlo a httpx.AsyncClient
+                    kwargs.pop('proxies', None)
+                    return _base_client.AsyncHttpxClientWrapper._original_init(self, *args, **kwargs)
+                
+                _base_client.AsyncHttpxClientWrapper.__init__ = patched_async_httpx_wrapper_init
+                _base_client.AsyncHttpxClientWrapper._patched = True
+                print("✅ Parche de AsyncHttpxClientWrapper aplicado (proxies eliminado)")
         except Exception as e:
-            print(f"⚠️ Warning al parchear SyncHttpxClientWrapper: {e}")
+            print(f"⚠️ Warning al parchear HttpxClientWrapper: {e}")
             import traceback
             traceback.print_exc()
         
