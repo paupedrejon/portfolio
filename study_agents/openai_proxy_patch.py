@@ -177,16 +177,38 @@ def patch_openai_client():
                 
                 @functools.wraps(_base_client.BaseClient._original_init)
                 def patched_base_client_init(self, *args, **kwargs):
-                    # BaseClient.__init__() requiere 'proxies' como argumento obligatorio
-                    # Establecerlo a None en lugar de eliminarlo
-                    kwargs['proxies'] = None
+                    # ELIMINAR proxies antes de pasarlo a BaseClient
+                    # BaseClient intenta pasarlo a SyncHttpxClientWrapper que no lo acepta
+                    kwargs.pop('proxies', None)
                     return _base_client.BaseClient._original_init(self, *args, **kwargs)
                 
                 _base_client.BaseClient.__init__ = patched_base_client_init
                 _base_client.BaseClient._patched = True
-                print("✅ Parche de BaseClient aplicado (proxies establecido a None)")
+                print("✅ Parche de BaseClient aplicado (proxies eliminado)")
         except Exception as e:
             print(f"⚠️ Warning al parchear _base_client: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        # CRÍTICO: Parchear SyncHttpxClientWrapper si existe
+        # Este es el que está causando el error "Client.__init__() got an unexpected keyword argument 'proxies'"
+        try:
+            from openai import _base_client
+            
+            if hasattr(_base_client, 'SyncHttpxClientWrapper') and not hasattr(_base_client.SyncHttpxClientWrapper, '_patched'):
+                _base_client.SyncHttpxClientWrapper._original_init = _base_client.SyncHttpxClientWrapper.__init__
+                
+                @functools.wraps(_base_client.SyncHttpxClientWrapper._original_init)
+                def patched_sync_httpx_wrapper_init(self, *args, **kwargs):
+                    # ELIMINAR proxies antes de pasarlo a httpx.Client
+                    kwargs.pop('proxies', None)
+                    return _base_client.SyncHttpxClientWrapper._original_init(self, *args, **kwargs)
+                
+                _base_client.SyncHttpxClientWrapper.__init__ = patched_sync_httpx_wrapper_init
+                _base_client.SyncHttpxClientWrapper._patched = True
+                print("✅ Parche de SyncHttpxClientWrapper aplicado (proxies eliminado)")
+        except Exception as e:
+            print(f"⚠️ Warning al parchear SyncHttpxClientWrapper: {e}")
             import traceback
             traceback.print_exc()
         
