@@ -84,6 +84,8 @@ def patch_openai_client():
         
         # CRÍTICO: Parchear _base_client.BaseClient.__init__ que es la clase base
         # Este es el que realmente está fallando según el traceback
+        # IMPORTANTE: BaseClient.__init__() requiere 'proxies' como argumento obligatorio,
+        # así que debemos pasarlo como None en lugar de eliminarlo
         try:
             from openai import _base_client
             
@@ -92,13 +94,25 @@ def patch_openai_client():
                 
                 @functools.wraps(_base_client.BaseClient._original_init)
                 def patched_base_client_init(self, *args, **kwargs):
-                    # Eliminar proxies antes de llamar al __init__ original
-                    kwargs.pop('proxies', None)
+                    # Si proxies está presente, establecerlo a None en lugar de eliminarlo
+                    # porque BaseClient.__init__() lo requiere como argumento obligatorio
+                    if 'proxies' in kwargs:
+                        kwargs['proxies'] = None
+                    # Si no está presente pero es requerido, añadirlo como None
+                    elif 'proxies' not in kwargs:
+                        # Intentar llamar primero para ver si es requerido
+                        try:
+                            return _base_client.BaseClient._original_init(self, *args, **kwargs)
+                        except TypeError as e:
+                            if 'proxies' in str(e):
+                                kwargs['proxies'] = None
+                                return _base_client.BaseClient._original_init(self, *args, **kwargs)
+                            raise
                     return _base_client.BaseClient._original_init(self, *args, **kwargs)
                 
                 _base_client.BaseClient.__init__ = patched_base_client_init
                 _base_client.BaseClient._patched = True
-                print("✅ Parche de BaseClient aplicado (proxies eliminado)")
+                print("✅ Parche de BaseClient aplicado (proxies establecido a None)")
         except Exception as e:
             print(f"⚠️ Warning al parchear _base_client: {e}")
             import traceback
