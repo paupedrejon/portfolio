@@ -45,24 +45,42 @@ def patch_openai_client():
         # También parchear el módulo _client si existe (donde se crea el cliente internamente)
         try:
             from openai import _client
+            
+            # Parchear OpenAI en _client
             if hasattr(_client, 'OpenAI') and not hasattr(_client.OpenAI, '_patched'):
                 _client.OpenAI._original_init = _client.OpenAI.__init__
                 _client.OpenAI.__init__ = patched_openai_init
                 _client.OpenAI._patched = True
             
-            # Parchear Client.init() si existe (usado internamente por OpenAI)
-            if hasattr(_client, 'Client') and not hasattr(_client.Client, '_patched'):
-                _client.Client._original_init = _client.Client.__init__
+            # Parchear Client si existe (usado internamente por OpenAI)
+            if hasattr(_client, 'Client'):
+                # Parchear Client.__init__ si existe
+                if hasattr(_client.Client, '__init__') and not hasattr(_client.Client, '_patched_init'):
+                    _client.Client._original_init = _client.Client.__init__
+                    
+                    @functools.wraps(_client.Client._original_init)
+                    def patched_client_init(self, *args, **kwargs):
+                        kwargs.pop('proxies', None)
+                        return _client.Client._original_init(self, *args, **kwargs)
+                    
+                    _client.Client.__init__ = patched_client_init
+                    _client.Client._patched_init = True
                 
-                @functools.wraps(_client.Client._original_init)
-                def patched_client_init(self, *args, **kwargs):
-                    kwargs.pop('proxies', None)
-                    return _client.Client._original_init(self, *args, **kwargs)
-                
-                _client.Client.__init__ = patched_client_init
-                _client.Client._patched = True
-        except:
-            pass
+                # También parchear Client.init() si es un método de clase
+                if hasattr(_client.Client, 'init') and not hasattr(_client.Client, '_patched_init_method'):
+                    _client.Client._original_init_method = _client.Client.init
+                    
+                    @functools.wraps(_client.Client._original_init_method)
+                    def patched_client_init_method(*args, **kwargs):
+                        kwargs.pop('proxies', None)
+                        return _client.Client._original_init_method(*args, **kwargs)
+                    
+                    _client.Client.init = patched_client_init_method
+                    _client.Client._patched_init_method = True
+        except Exception as e:
+            print(f"⚠️ Warning al parchear _client: {e}")
+            import traceback
+            traceback.print_exc()
         
         print("✅ Parche de OpenAI aplicado (proxies eliminado)")
     except Exception as e:
