@@ -27,6 +27,18 @@
 
 </div>
 
+<div align="center">
+  <h3>DEMO DEL PROYECTO</h3>
+  <a href="https://www.youtube.com/watch?v=iKMCLjwfik0" target="_blank">
+    <img src="https://img.youtube.com/vi/iKMCLjwfik0/maxresdefault.jpg" 
+         alt="Ver Video Demo" 
+         style="width: 80%; border-radius: 10px; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+  </a>
+  <p align="center">
+    <i>👆 Haz clic en la imagen para ver la demo en YouTube</i>
+  </p>
+</div>
+
 ## Tabla de Contenidos
 
 - [Introducción](#introducción)
@@ -84,11 +96,11 @@ Este proyecto está construido sobre mi portfolio personal (hecho con React/Next
 
 ## Cómo Probar
 
-### 🚀 Versión en Producción (Recomendado)
+### Versión en Producción
 
 **Study Agents está disponible en producción y listo para usar:**
 
-👉 **[Acceder a Study Agents](https://www.paupedrejon.com/study-agents)**
+**[Acceder a Study Agents](https://www.paupedrejon.com/study-agents)**
 
 **Pasos para empezar:**
 
