@@ -84,20 +84,47 @@ Este proyecto está construido sobre mi portfolio personal (hecho con React/Next
 
 ## Cómo Probar
 
-Sigue estos pasos para poner en marcha Study Agents en tu máquina local.
+### 🚀 Versión en Producción (Recomendado)
 
-<a href="https://www.paupedrejon.com/study-agents" target="_blank">
-  <img src="https://cdn.vectorstock.com/i/500p/63/72/try-now-sticker-sign-on-transparent-vector-52026372.jpg" alt="Probar">
-</a>
+**Study Agents está disponible en producción y listo para usar:**
 
-### Prerrequisitos
+👉 **[Acceder a Study Agents](https://www.paupedrejon.com/study-agents)**
+
+**Pasos para empezar:**
+
+1. **Accede a la aplicación** usando el enlace de arriba
+2. **Inicia sesión** con tu cuenta de Google (autenticación segura con NextAuth.js)
+3. **Configura tu API Key de OpenAI**:
+   - Obtén tu API key en [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+   - La aplicación te pedirá configurarla al iniciar sesión por primera vez
+   - Tu API key se guarda solo en tu navegador (localStorage) y nunca se comparte
+4. **¡Empieza a usar Study Agents!**:
+   - Sube documentos PDF con contenido de estudio
+   - Haz preguntas sobre el material
+   - Genera apuntes estructurados
+   - Crea tests personalizados
+   - Practica con flashcards de idiomas
+
+> **Nota sobre costes:** Study Agents utiliza tu propia API key de OpenAI, por lo que los costes corren por tu cuenta. Los costes aproximados son:
+> - GPT-4: ~$0.03 por 1000 tokens de entrada, ~$0.06 por 1000 tokens de salida
+> - GPT-3.5-turbo: ~$0.0015 por 1000 tokens (mucho más barato)
+> - Una pregunta típica puede usar 500-2000 tokens
+> - El sistema optimiza automáticamente el uso de modelos para minimizar costes
+
+---
+
+### 💻 Ejecutar en Local (Para Desarrolladores)
+
+Si quieres ejecutar Study Agents en tu máquina local para desarrollo o contribuir al proyecto:
+
+#### Prerrequisitos
 
 * **Python 3.11+** (recomendado 3.11.9)
 * **Node.js 18+** y npm
 * **Pip** (gestor de paquetes de Python)
 * **API Key de OpenAI** (puedes obtenerla en https://platform.openai.com/api-keys)
 
-### Instalación del Backend (FastAPI)
+#### Instalación del Backend (FastAPI)
 
 1. **Clona el repositorio**
     ```bash
@@ -133,7 +160,7 @@ Sigue estos pasos para poner en marcha Study Agents en tu máquina local.
     FASTAPI_URL=http://localhost:8000
     ```
 
-### Instalación del Frontend (Next.js)
+#### Instalación del Frontend (Next.js)
 
 1. **Desde la raíz del proyecto, instala las dependencias de Node.js**
     ```bash
@@ -150,7 +177,7 @@ Sigue estos pasos para poner en marcha Study Agents en tu máquina local.
     FASTAPI_URL=http://localhost:8000
     ```
 
-### Ejecución
+#### Ejecución
 
 **Opción 1: Ejecutar manualmente**
 
@@ -182,7 +209,7 @@ cd study_agents
 npm run dev
 ```
 
-### Uso Rápido
+#### Uso Rápido en Local
 
 1. Accede a http://localhost:3000/study-agents
 2. Configura tu API Key de OpenAI (si no la configuraste en el .env)
