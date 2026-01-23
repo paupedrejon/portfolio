@@ -39,6 +39,9 @@
   </p>
 </div>
 
+**[Ver vídeo](https://www.youtube.com/watch?v=iKMCLjwfik0)**
+**[Acceder a Study Agents](https://www.paupedrejon.com/study-agents)**
+
 ## Tabla de Contenidos
 
 - [Introducción](#introducción)
