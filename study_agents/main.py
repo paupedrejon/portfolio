@@ -369,6 +369,7 @@ class StudyAgentsSystem:
             model: Modelo preferido (opcional, si no se especifica usa modo automático)
             chat_id: ID de la conversación (para obtener el nivel)
             topic: Tema del chat (para contextualizar las respuestas)
+            initial_form_data: Datos del formulario inicial (nivel, objetivo, tiempo disponible)
             
         Returns:
             Tupla con (respuesta contextualizada, información de tokens)
@@ -390,7 +391,8 @@ class StudyAgentsSystem:
             model=model, 
             chat_id=chat_id, 
             topic=topic,
-            force_premium=needs_premium  # Forzar premium si se detectó feedback negativo
+            force_premium=needs_premium,  # Forzar premium si se detectó feedback negativo
+            initial_form_data=initial_form_data  # Pasar datos del formulario inicial
         )
         print(f"💡 Respuesta generada ({len(answer)} caracteres)")
         
