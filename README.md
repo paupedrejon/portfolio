@@ -38,9 +38,15 @@
     <i>👆 Haz clic en la imagen para ver la demo en YouTube</i>
   </p>
 </div>
+<div align="center">
 
 **[Ver vídeo](https://www.youtube.com/watch?v=iKMCLjwfik0)**
+</div>
+
+<div align="center">
+
 **[Acceder a Study Agents](https://www.paupedrejon.com/study-agents)**
+</div>
 
 ## Tabla de Contenidos
 
