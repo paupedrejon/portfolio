@@ -475,59 +475,87 @@ portfolio/
 
 ### Frontend
 
-- **Next.js 15.5.9**: Framework React con App Router para renderizado del lado del servidor y routing optimizado
-- **TypeScript 5**: Tipado estático para mayor seguridad y productividad en el desarrollo
-- **React 19**: Biblioteca de UI para construir interfaces de usuario interactivas y reactivas
-- **Tailwind CSS 4**: Framework de estilos utility-first para diseño rápido y consistente
-- **NextAuth.js**: Sistema de autenticación completo con soporte para múltiples proveedores OAuth
-- **React Markdown**: Librería para renderizar contenido Markdown de forma segura y estilizada
-- **CodeMirror**: Editor de código con resaltado de sintaxis para múltiples lenguajes
-- **jsPDF**: Generación de documentos PDF desde el navegador
-- **html2canvas**: Captura de elementos HTML como imágenes para exportación
+- **Next.js 15.5.9**: Framework React con App Router para renderizado del lado del servidor y routing optimizado. **Uso en Study Agents**: Estructura principal de la aplicación web, manejo de rutas para `/study-agents`, integración con el portfolio personal, y renderizado del lado del servidor para mejor rendimiento.
+
+- **TypeScript 5**: Tipado estático para mayor seguridad y productividad en el desarrollo. **Uso en Study Agents**: Tipado completo de todos los componentes React, interfaces para mensajes, ejercicios, tests y datos del usuario, previniendo errores en tiempo de compilación.
+
+- **React 19**: Biblioteca de UI para construir interfaces de usuario interactivas y reactivas. **Uso en Study Agents**: Componentes principales como `StudyChat.tsx` (interfaz de chat), `ChatSidebar.tsx` (barra lateral de conversaciones), `ProfileView.tsx` (dashboard de progreso), y gestión de estado para mensajes, tests y ejercicios.
+
+- **Tailwind CSS 4**: Framework de estilos utility-first para diseño rápido y consistente. **Uso en Study Agents**: Estilos inline y clases utility para toda la interfaz, diseño responsive para móviles y tablets, y temas claro/oscuro personalizables.
+
+- **NextAuth.js**: Sistema de autenticación completo con soporte para múltiples proveedores OAuth. **Uso en Study Agents**: Autenticación con Google OAuth, gestión de sesiones de usuario, y protección de rutas para que cada usuario solo acceda a sus propios datos.
+
+- **React Markdown**: Librería para renderizar contenido Markdown de forma segura y estilizada. **Uso en Study Agents**: Renderizado de apuntes generados por el Explanation Agent, soporte para tablas, listas, código y fórmulas matemáticas en los apuntes.
+
+- **CodeMirror**: Editor de código con resaltado de sintaxis para múltiples lenguajes. **Uso en Study Agents**: Editor integrado en el intérprete de código para escribir y ejecutar Python, JavaScript, Java, C++, SQL directamente en el navegador.
+
+- **jsPDF**: Generación de documentos PDF desde el navegador. **Uso en Study Agents**: Exportación de apuntes generados a formato PDF para que los usuarios puedan descargarlos y estudiarlos offline.
+
+- **html2canvas**: Captura de elementos HTML como imágenes para exportación. **Uso en Study Agents**: Conversión de apuntes con formato complejo (tablas, diagramas) a imágenes para incluirlas en los PDFs exportados.
 
 ### Backend
 
-- **FastAPI 0.109**: Framework web moderno y rápido de Python con documentación automática
-- **Uvicorn**: Servidor ASGI de alto rendimiento para aplicaciones Python asíncronas
-- **LangChain 0.1.20**: Framework completo para construir aplicaciones con modelos de lenguaje
-- **LangChain OpenAI**: Integración oficial de LangChain con los modelos de OpenAI
-- **ChromaDB 0.4.22**: Base de datos vectorial open-source para almacenamiento y búsqueda de embeddings
-- **PyPDF**: Librería para extracción y procesamiento de texto desde archivos PDF
-- **TikToken**: Tokenización eficiente y cálculo preciso de costes de tokens para modelos de OpenAI
+- **FastAPI 0.109**: Framework web moderno y rápido de Python con documentación automática. **Uso en Study Agents**: API REST principal en `api/main.py`, endpoints para subir documentos, hacer preguntas, generar apuntes/tests/ejercicios, y ejecutar código. Documentación automática en `/docs`.
+
+- **Uvicorn**: Servidor ASGI de alto rendimiento para aplicaciones Python asíncronas. **Uso en Study Agents**: Servidor de producción para la API FastAPI, manejo de múltiples peticiones concurrentes de usuarios.
+
+- **LangChain 0.1.20**: Framework completo para construir aplicaciones con modelos de lenguaje. **Uso en Study Agents**: Orquestación de los 8 agentes especializados, gestión de prompts, templates para diferentes tipos de tareas (apuntes, tests, ejercicios), y manejo de historial de conversación.
+
+- **LangChain OpenAI**: Integración oficial de LangChain con los modelos de OpenAI. **Uso en Study Agents**: Conexión con GPT-3.5 y GPT-4, manejo de API keys por usuario, y cálculo de tokens para optimización de costes.
+
+- **ChromaDB 0.4.22**: Base de datos vectorial open-source para almacenamiento y búsqueda de embeddings. **Uso en Study Agents**: Almacenamiento de embeddings de documentos subidos por usuarios, búsqueda semántica para RAG (Retrieval-Augmented Generation), y recuperación de contexto relevante para respuestas del Q&A Assistant.
+
+- **PyPDF**: Librería para extracción y procesamiento de texto desde archivos PDF. **Uso en Study Agents**: Extracción de texto de documentos PDF subidos por usuarios, procesamiento por el Content Processor Agent para crear la base de conocimiento.
+
+- **TikToken**: Tokenización eficiente y cálculo preciso de costes de tokens para modelos de OpenAI. **Uso en Study Agents**: Cálculo de tokens consumidos por cada petición, estimación de costes para el usuario, y optimización automática de modelos según complejidad (GPT-3.5 vs GPT-4).
 
 ### Inteligencia Artificial y Machine Learning
 
-- **OpenAI GPT-4**: Modelo de lenguaje más avanzado para tareas complejas que requieren razonamiento profundo
-- **OpenAI GPT-3.5-turbo**: Modelo optimizado para tareas generales con mejor relación coste-rendimiento
-- **RAG (Retrieval-Augmented Generation)**: Técnica que combina recuperación de información con generación de texto para respuestas contextualizadas
-- **Embeddings**: Vectorización de texto para búsqueda semántica y recuperación de información relevante
+- **OpenAI GPT-4**: Modelo de lenguaje más avanzado para tareas complejas que requieren razonamiento profundo. **Uso en Study Agents**: Generación de apuntes complejos, corrección detallada de ejercicios, y tareas que requieren razonamiento avanzado. Se usa selectivamente para optimizar costes.
+
+- **OpenAI GPT-3.5-turbo**: Modelo optimizado para tareas generales con mejor relación coste-rendimiento. **Uso en Study Agents**: Respuestas a preguntas generales, generación de tests básicos, y tareas que no requieren razonamiento profundo. Modelo por defecto para minimizar costes.
+
+- **RAG (Retrieval-Augmented Generation)**: Técnica que combina recuperación de información con generación de texto para respuestas contextualizadas. **Uso en Study Agents**: Sistema core que permite al Q&A Assistant responder preguntas basándose en documentos subidos, generación de apuntes contextualizados, y creación de tests relevantes al material estudiado.
+
+- **Embeddings**: Vectorización de texto para búsqueda semántica y recuperación de información relevante. **Uso en Study Agents**: Conversión de chunks de documentos a vectores, almacenamiento en ChromaDB, y búsqueda semántica para encontrar información relevante cuando el usuario hace preguntas.
 
 ### Almacenamiento y Base de Datos
 
-- **ChromaDB**: Base de datos vectorial persistente para almacenar embeddings y realizar búsquedas semánticas
-- **JSON Files**: Sistema de almacenamiento ligero para chats, progreso de usuarios y configuración
-- **File System**: Almacenamiento directo de documentos PDF y archivos subidos por usuarios
+- **ChromaDB**: Base de datos vectorial persistente para almacenar embeddings y realizar búsquedas semánticas. **Uso en Study Agents**: Almacenamiento persistente de embeddings por usuario y tema, colecciones separadas para cada usuario, y búsqueda rápida de información relevante para RAG.
+
+- **JSON Files**: Sistema de almacenamiento ligero para chats, progreso de usuarios y configuración. **Uso en Study Agents**: Almacenamiento de conversaciones (`chats/`), progreso de usuarios (`user_progress.json`), y estadísticas de uso. Sistema simple y eficiente para datos estructurados.
+
+- **File System**: Almacenamiento directo de documentos PDF y archivos subidos por usuarios. **Uso en Study Agents**: Guardado de documentos PDF subidos en `documents/`, organización por usuario y tema, y acceso directo para reprocesamiento si es necesario.
 
 ### DevOps y Despliegue
 
-- **Vercel**: Plataforma de hosting optimizada para aplicaciones Next.js con despliegue automático desde GitHub
-- **Railway**: Plataforma de hosting para aplicaciones backend con soporte nativo para Python y despliegue continuo
-- **Render**: Alternativa de hosting para backend con soporte para múltiples lenguajes y bases de datos
-- **GitHub**: Control de versiones y repositorio de código con integración CI/CD
+- **Vercel**: Plataforma de hosting optimizada para aplicaciones Next.js con despliegue automático desde GitHub. **Uso en Study Agents**: Hosting del frontend en producción, despliegue automático en cada push a GitHub, y CDN global para mejor rendimiento.
+
+- **Railway**: Plataforma de hosting para aplicaciones backend con soporte nativo para Python y despliegue continuo. **Uso en Study Agents**: Hosting del backend FastAPI en producción, detección automática de Python y `requirements.txt`, y generación de URL pública para la API.
+
+- **Render**: Alternativa de hosting para backend con soporte para múltiples lenguajes y bases de datos. **Uso en Study Agents**: Opción alternativa para hosting del backend, útil como respaldo o para diferentes entornos.
+
+- **GitHub**: Control de versiones y repositorio de código con integración CI/CD. **Uso en Study Agents**: Repositorio principal del código, control de versiones, y triggers automáticos para despliegue en Vercel y Railway.
 
 ### Herramientas de Desarrollo
 
-- **Cursor**: IDE avanzado con capacidades de IA para asistencia en código, autocompletado inteligente y generación de código
-- **Git**: Sistema de control de versiones distribuido para gestión de código
-- **Node.js / npm**: Entorno de ejecución y gestor de paquetes para JavaScript/TypeScript
-- **Python / pip**: Entorno de ejecución y gestor de paquetes para Python
-- **ESLint / TypeScript Compiler**: Herramientas de linting y compilación para mantener calidad de código
+- **Cursor**: IDE avanzado con capacidades de IA para asistencia en código, autocompletado inteligente y generación de código. **Uso en Study Agents**: Desarrollo principal del proyecto, generación de código con IA, refactorización, y debugging asistido.
+
+- **Git**: Sistema de control de versiones distribuido para gestión de código. **Uso en Study Agents**: Control de versiones del proyecto, ramas para features, y commits organizados por funcionalidades.
+
+- **Node.js / npm**: Entorno de ejecución y gestor de paquetes para JavaScript/TypeScript. **Uso en Study Agents**: Ejecución del frontend Next.js, instalación de dependencias del frontend, y scripts de desarrollo (`npm run dev`).
+
+- **Python / pip**: Entorno de ejecución y gestor de paquetes para Python. **Uso en Study Agents**: Ejecución del backend FastAPI, instalación de dependencias del backend (`pip install -r requirements.txt`), y entorno virtual para aislamiento.
+
+- **ESLint / TypeScript Compiler**: Herramientas de linting y compilación para mantener calidad de código. **Uso en Study Agents**: Validación de código TypeScript, detección de errores antes de compilación, y mantenimiento de estándares de código.
 
 ### APIs y Servicios Externos
 
-- **OpenAI API**: API para acceder a modelos GPT-3.5 y GPT-4 para generación de texto y embeddings
-- **Google OAuth 2.0**: Sistema de autenticación mediante cuentas de Google
-- **Unsplash API**: Búsqueda y obtención de imágenes de alta calidad para enriquecer contenido educativo (opcional)
+- **OpenAI API**: API para acceder a modelos GPT-3.5 y GPT-4 para generación de texto y embeddings. **Uso en Study Agents**: Motor principal de IA para todos los agentes, generación de embeddings para RAG, y procesamiento de lenguaje natural. Cada usuario configura su propia API key.
+
+- **Google OAuth 2.0**: Sistema de autenticación mediante cuentas de Google. **Uso en Study Agents**: Autenticación de usuarios mediante NextAuth.js, login seguro sin necesidad de crear cuentas, y identificación única por usuario.
+
+- **Unsplash API**: Búsqueda y obtención de imágenes de alta calidad para enriquecer contenido educativo (opcional). **Uso en Study Agents**: Integración de imágenes relevantes en apuntes generados cuando el tema lo requiere, mejora visual del contenido educativo.
 
 ---
 
