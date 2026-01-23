@@ -134,9 +134,9 @@ Este proyecto está construido sobre mi portfolio personal (hecho con React/Next
 
 ---
 
-### 💻 Ejecutar en Local (Para Desarrolladores)
+### Ejecutar en Local 
 
-Si quieres ejecutar Study Agents en tu máquina local para desarrollo o contribuir al proyecto:
+Si quieres ejecutar Study Agents en tu máquina local:
 
 #### Prerrequisitos
 
