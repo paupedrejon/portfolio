@@ -4401,7 +4401,7 @@ ${contentPreview}
                   color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
                   lineHeight: 1.4,
                 }}>
-                  Cuéntanos sobre ti
+                  Configura tu experiencia de aprendizaje
                 </h2>
                 <p style={{
                   fontSize: isMobile ? "0.9rem" : "1rem",
@@ -4409,7 +4409,7 @@ ${contentPreview}
                   margin: 0,
                   lineHeight: 1.5,
                 }}>
-                  Esta información nos ayuda a adaptar el contenido a tu nivel y objetivos. Todos los campos son opcionales.
+                  Cuéntanos sobre tu nivel y objetivos para que podamos personalizar el contenido, ejercicios y explicaciones especialmente para ti. Todos los campos son opcionales y puedes cambiarlos más tarde.
                 </p>
               </div>
               
@@ -4431,16 +4431,38 @@ ${contentPreview}
                     lineHeight: 1.5,
                   }}>
                     <TargetIcon size={20} color={colorTheme === "dark" ? "#6366f1" : "#6366f1"} />
-                    ¿Cuál es tu nivel actual?
+                    ¿Cuál es tu nivel actual en {currentChatLevel?.topic || "este tema"}?
                   </label>
+                  <p style={{
+                    fontSize: "0.875rem",
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    margin: "0 0 0.5rem 0",
+                    lineHeight: 1.5,
+                    paddingLeft: "2rem",
+                  }}>
+                    El nivel indica qué tan avanzado estás en este tema. Usamos una escala del 0 al 10:
+                  </p>
+                  <div style={{
+                    fontSize: "0.8rem",
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    margin: "0 0 0.75rem 0",
+                    paddingLeft: "2rem",
+                    lineHeight: 1.6,
+                  }}>
+                    <div style={{ marginBottom: "0.25rem" }}><strong>0-2:</strong> Principiante (estás empezando)</div>
+                    <div style={{ marginBottom: "0.25rem" }}><strong>3-5:</strong> Intermedio (tienes conocimientos básicos)</div>
+                    <div style={{ marginBottom: "0.25rem" }}><strong>6-8:</strong> Avanzado (tienes buen dominio)</div>
+                    <div><strong>9-10:</strong> Experto (dominas el tema completamente)</div>
+                  </div>
                   <p style={{
                     fontSize: "0.875rem",
                     color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                     margin: "0 0 0.75rem 0",
                     lineHeight: 1.4,
                     paddingLeft: "2rem",
+                    fontStyle: "italic",
                   }}>
-                    Indica un número del 0 (principiante) al 10 (experto). Si no estás seguro, puedes dejarlo en blanco y lo ajustaremos según tu progreso.
+                    Si no estás seguro, déjalo en blanco. El sistema ajustará tu nivel automáticamente según tu rendimiento en tests y ejercicios.
                   </p>
                   <input
                     type="number"
@@ -4451,7 +4473,7 @@ ${contentPreview}
                       ...initialFormData,
                       level: e.target.value ? parseInt(e.target.value) : null,
                     })}
-                    placeholder="Ej: 3 (intermedio)"
+                    placeholder="Ej: 3"
                     style={{
                       width: "100%",
                       padding: "0.875rem 1rem",
@@ -4473,6 +4495,15 @@ ${contentPreview}
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   />
+                  <p style={{
+                    fontSize: "0.75rem",
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    margin: "0.5rem 0 0 0",
+                    lineHeight: 1.4,
+                    fontStyle: "italic",
+                  }}>
+                    ¿Para qué sirve? Con tu nivel, adaptamos la dificultad de los ejercicios, la complejidad de las explicaciones y el vocabulario usado en los tests.
+                  </p>
                 </div>
 
                 {/* Pregunta 2: Objetivo */}
@@ -4488,24 +4519,37 @@ ${contentPreview}
                     lineHeight: 1.5,
                   }}>
                     <LightbulbIcon size={20} color={colorTheme === "dark" ? "#6366f1" : "#6366f1"} />
-                    ¿Cuál es tu objetivo al aprender {currentChatLevel?.topic || "este tema"}?
+                    ¿Por qué quieres aprender {currentChatLevel?.topic || "este tema"}?
                   </label>
                   <p style={{
                     fontSize: "0.875rem",
                     color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
-                    margin: "0 0 0.75rem 0",
-                    lineHeight: 1.4,
+                    margin: "0 0 0.5rem 0",
+                    lineHeight: 1.5,
                     paddingLeft: "2rem",
                   }}>
-                    Comparte por qué quieres aprender esto. Por ejemplo: para un trabajo, un viaje, un examen, o simplemente por interés personal.
+                    Cuéntanos tu objetivo o motivación. Esto nos ayuda a enfocar el contenido en lo que realmente necesitas:
                   </p>
+                  <div style={{
+                    fontSize: "0.8rem",
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    margin: "0 0 0.75rem 0",
+                    paddingLeft: "2rem",
+                    lineHeight: 1.6,
+                  }}>
+                    <div style={{ marginBottom: "0.25rem" }}>• Para un examen o prueba específica</div>
+                    <div style={{ marginBottom: "0.25rem" }}>• Para un trabajo o proyecto profesional</div>
+                    <div style={{ marginBottom: "0.25rem" }}>• Para un viaje o experiencia personal</div>
+                    <div style={{ marginBottom: "0.25rem" }}>• Por interés personal o curiosidad</div>
+                    <div>• Para mejorar en un área específica</div>
+                  </div>
                   <textarea
                     value={initialFormData.learningGoal}
                     onChange={(e) => setInitialFormData({
                       ...initialFormData,
                       learningGoal: e.target.value,
                     })}
-                    placeholder="Ejemplo: Voy a vivir en Japón en un año y necesito aprender japonés para comunicarme en el día a día. Quiero poder tener conversaciones básicas y leer señales."
+                    placeholder="Ejemplo: Tengo un examen de SQL en 2 semanas y necesito dominar las consultas JOIN. Quiero poder resolver ejercicios prácticos y entender bien cómo funcionan las relaciones entre tablas."
                     rows={4}
                     style={{
                       width: "100%",
@@ -4530,6 +4574,15 @@ ${contentPreview}
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   />
+                  <p style={{
+                    fontSize: "0.75rem",
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    margin: "0.5rem 0 0 0",
+                    lineHeight: 1.4,
+                    fontStyle: "italic",
+                  }}>
+                    ¿Para qué sirve? Con tu objetivo, generamos ejercicios y explicaciones más relevantes. Por ejemplo, si es para un examen, nos enfocamos en ese tipo de preguntas.
+                  </p>
                 </div>
 
                 {/* Pregunta 3: Tiempo disponible */}
@@ -4545,17 +4598,29 @@ ${contentPreview}
                     lineHeight: 1.5,
                   }}>
                     <HiClock size={20} color={colorTheme === "dark" ? "#6366f1" : "#6366f1"} />
-                    ¿Cuánto tiempo tienes disponible para estudiar?
+                    ¿Cuánto tiempo tienes para alcanzar tu objetivo?
                   </label>
                   <p style={{
                     fontSize: "0.875rem",
                     color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
-                    margin: "0 0 0.75rem 0",
-                    lineHeight: 1.4,
+                    margin: "0 0 0.5rem 0",
+                    lineHeight: 1.5,
                     paddingLeft: "2rem",
                   }}>
-                    Indica el plazo que tienes. Esto nos ayuda a ajustar el ritmo de aprendizaje y la cantidad de contenido.
+                    Indica el plazo que tienes disponible. Esto nos ayuda a planificar mejor tu aprendizaje:
                   </p>
+                  <div style={{
+                    fontSize: "0.8rem",
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    margin: "0 0 0.75rem 0",
+                    paddingLeft: "2rem",
+                    lineHeight: 1.6,
+                  }}>
+                    <div style={{ marginBottom: "0.25rem" }}>• <strong>Urgente (1-2 semanas):</strong> Nos enfocamos en lo esencial y más importante</div>
+                    <div style={{ marginBottom: "0.25rem" }}>• <strong>Corto plazo (1-3 meses):</strong> Ritmo más intenso, más contenido por sesión</div>
+                    <div style={{ marginBottom: "0.25rem" }}>• <strong>Medio plazo (3-6 meses):</strong> Ritmo moderado, aprendizaje más profundo</div>
+                    <div>• <strong>Largo plazo (6+ meses) o sin prisa:</strong> Ritmo relajado, aprendizaje completo y detallado</div>
+                  </div>
                   <input
                     type="text"
                     value={initialFormData.timeAvailable}
@@ -4563,7 +4628,7 @@ ${contentPreview}
                       ...initialFormData,
                       timeAvailable: e.target.value,
                     })}
-                    placeholder="Ej: 1 mes, 3 meses, 6 meses, 1 año, sin prisa..."
+                    placeholder="Ej: 2 semanas, 1 mes, 3 meses, 6 meses, 1 año, sin prisa..."
                     style={{
                       width: "100%",
                       padding: "0.875rem 1rem",
@@ -4585,6 +4650,15 @@ ${contentPreview}
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   />
+                  <p style={{
+                    fontSize: "0.75rem",
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    margin: "0.5rem 0 0 0",
+                    lineHeight: 1.4,
+                    fontStyle: "italic",
+                  }}>
+                    ¿Para qué sirve? Con tu plazo, ajustamos la cantidad de contenido por sesión y la profundidad de las explicaciones. Si tienes poco tiempo, priorizamos lo más importante.
+                  </p>
                 </div>
 
                 {/* Botones */}
