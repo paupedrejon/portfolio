@@ -1176,6 +1176,8 @@ export default function StudyChat() {
           setCurrentChatId(newChatId);
           currentChatIdRef.current = newChatId;
           setMessages([]);
+          // Establecer el tema como "General"
+          setCurrentChatLevel({ topic: "General", level: 0 });
         }
       }
     } catch (error) {
@@ -1746,7 +1748,13 @@ export default function StudyChat() {
             console.log(`[loadChat] Tema encontrado en metadata: ${data.chat.metadata.topic}`);
             setCurrentChatLevel({ topic: data.chat.metadata.topic, level: 0 }); // Nivel temporal, se actualizará con loadChatLevel
           } else {
-            console.log("[loadChat] No hay tema en metadata");
+            // Si no hay tema en metadata, verificar si el título del chat es "General"
+            const chatTitle = data.chat.title || "";
+            if (chatTitle === "General") {
+              setCurrentChatLevel({ topic: "General", level: 0 });
+            } else {
+              console.log("[loadChat] No hay tema en metadata");
+            }
           }
           
           // Verificar si hay información del formulario inicial
@@ -1754,14 +1762,24 @@ export default function StudyChat() {
             setInitialFormData(data.chat.metadata.initialForm);
             setShowInitialForm(false); // Ya tiene datos, no mostrar formulario
           } else if (data.chat.messages.length === 0) {
-            // Si no hay mensajes y no hay datos del formulario, mostrar formulario
-            setShowInitialForm(true);
+            // Si no hay mensajes y no hay datos del formulario, mostrar formulario SOLO si el tema NO es "General"
+            const currentTopic = data.chat.metadata?.topic || currentChatLevel?.topic || "General";
+            if (currentTopic !== "General") {
+              setShowInitialForm(true);
+            } else {
+              setShowInitialForm(false); // No mostrar formulario para tema "General"
+            }
           }
         } else {
           console.log("[loadChat] No hay metadata en el chat");
-          // Si no hay metadata y no hay mensajes, mostrar formulario
+          // Si no hay metadata y no hay mensajes, mostrar formulario SOLO si el tema NO es "General"
           if (data.chat.messages.length === 0) {
-            setShowInitialForm(true);
+            const currentTopic = currentChatLevel?.topic || "General";
+            if (currentTopic !== "General") {
+              setShowInitialForm(true);
+            } else {
+              setShowInitialForm(false); // No mostrar formulario para tema "General"
+            }
           }
         }
 
@@ -1849,13 +1867,18 @@ export default function StudyChat() {
         setNewChatColor("#6366f1");
         setNewChatIcon("chat");
         
-        // Mostrar formulario inicial para recopilar información del usuario
-        setShowInitialForm(true);
-        setInitialFormData({
-          level: null,
-          learningGoal: "",
-          timeAvailable: "",
-        });
+        // Mostrar formulario inicial para recopilar información del usuario SOLO si el tema NO es "General"
+        const newChatTopic = newChatName || "General";
+        if (newChatTopic !== "General") {
+          setShowInitialForm(true);
+          setInitialFormData({
+            level: null,
+            learningGoal: "",
+            timeAvailable: "",
+          });
+        } else {
+          setShowInitialForm(false); // No mostrar formulario para tema "General"
+        }
         
         // Si se seleccionó un tema sugerido (predefinedName existe), establecer el tema
         if (predefinedName) {
@@ -4375,7 +4398,7 @@ ${contentPreview}
             scrollbarColor: `${colorTheme === "dark" ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.5)"} ${colorTheme === "dark" ? "rgba(26, 26, 36, 0.3)" : "rgba(255, 255, 255, 0.3)"}`,
           }}
         >
-          {showInitialForm && (
+          {showInitialForm && currentChatLevel?.topic !== "General" && (
             <div
               style={{
                 maxWidth: "600px",
@@ -4805,7 +4828,9 @@ ${contentPreview}
                     lineHeight: 1.2,
                   }}
                 >
-                  ¡Hola! Soy tu asistente de estudio
+                  {currentChatLevel?.topic === "General" 
+                    ? "¡Bienvenido a Study Agents!" 
+                    : "¡Hola! Soy tu asistente de estudio"}
                 </h3>
                 <p 
                   className={outfit.className} 
@@ -4818,10 +4843,14 @@ ${contentPreview}
                     padding: isMobile ? "0 0.5rem" : "0",
                   }}
                 >
-                  Te ayudo a aprender de manera eficiente. Sube documentos, genera apuntes, haz preguntas y evalúa tu conocimiento.
+                  {currentChatLevel?.topic === "General" 
+                    ? "Este es el chat de ayuda. Aquí puedes preguntarme cómo usar Study Agents. Cada chat que crees representa un tema de estudio diferente. Hazme cualquier pregunta sobre cómo funciona la aplicación."
+                    : "Te ayudo a aprender de manera eficiente. Sube documentos, genera apuntes, haz preguntas y evalúa tu conocimiento."}
                 </p>
               </div>
               
+              {/* Solo mostrar las tarjetas de herramientas si el tema NO es "General" */}
+              {currentChatLevel?.topic !== "General" && (
               <div
                 style={{
                   display: "grid",
@@ -5339,6 +5368,7 @@ ${contentPreview}
                   </p>
                 </div>
               </div>
+              )}
             </div>
           )}
 

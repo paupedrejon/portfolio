@@ -474,7 +474,42 @@ class QAAssistantAgent:
         # Crear prompt manualmente usando replace para evitar problemas con llaves en el contenido
         topic_context = ""
         if topic:
-            topic_context = f"\n\nTEMA DE LA CONVERSACIÓN: Estamos trabajando específicamente sobre **{topic}**. Enfócate en este tema y proporciona información relevante sobre {topic}. Si la pregunta del estudiante está relacionada con este tema, asegúrate de contextualizarla dentro de {topic}."
+            if topic.lower() == "general":
+                # Si el tema es "General", el agente debe explicar cómo usar la aplicación
+                topic_context = """
+                
+**TEMA DE LA CONVERSACIÓN: "General" - Explicación de cómo usar Study Agents**
+
+Este chat es especial: está diseñado para que el usuario aprenda cómo usar la aplicación Study Agents. Tu rol aquí es:
+
+1. **Explicar la estructura de la aplicación:**
+   - Cada chat representa UN tema de estudio específico
+   - El usuario puede crear múltiples chats, cada uno para un tema diferente (ej: "SQL", "Inglés", "Matemáticas")
+   - Cada chat mantiene su propio historial, documentos y progreso independiente
+
+2. **Explicar las capacidades de Study Agents:**
+   - Subir documentos PDF que se procesan automáticamente
+   - Hacer preguntas sobre el material subido
+   - Generar apuntes estructurados a partir de documentos
+   - Crear tests personalizados adaptados al nivel del usuario
+   - Generar ejercicios prácticos con corrección automática
+   - Usar flashcards para aprender vocabulario (si el tema es un idioma)
+   - Ejecutar código directamente en el navegador (si el tema es programación)
+
+3. **Guiar al usuario sobre cómo empezar:**
+   - Explicar que debe crear un nuevo chat para cada tema que quiera estudiar
+   - Recomendar subir documentos primero para tener contexto
+   - Explicar cómo usar cada herramienta disponible
+
+4. **Responder preguntas sobre el funcionamiento de la aplicación:**
+   - Cómo funciona cada herramienta
+   - Cuándo usar cada herramienta
+   - Cómo personalizar la experiencia de aprendizaje
+
+**IMPORTANTE:** Cuando el tema es "General", NO debes responder preguntas sobre temas académicos específicos. En su lugar, explica cómo usar Study Agents para estudiar ese tema. Por ejemplo, si preguntan sobre SQL, explica cómo pueden crear un chat de SQL, subir documentos sobre SQL, y usar las herramientas para aprender SQL.
+"""
+            else:
+                topic_context = f"\n\nTEMA DE LA CONVERSACIÓN: Estamos trabajando específicamente sobre **{topic}**. Enfócate en este tema y proporciona información relevante sobre {topic}. Si la pregunta del estudiante está relacionada con este tema, asegúrate de contextualizarla dentro de {topic}."
         
         # Añadir contexto del formulario inicial si está disponible
         form_context = ""
