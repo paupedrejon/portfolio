@@ -4390,15 +4390,15 @@ ${contentPreview}
                   color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
                   lineHeight: 1.4,
                 }}>
-                  Información inicial
+                  Cuéntanos sobre ti
                 </h2>
                 <p style={{
-                  fontSize: "1.05rem",
+                  fontSize: isMobile ? "0.9rem" : "1rem",
                   color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                   margin: 0,
                   lineHeight: 1.5,
                 }}>
-                  Opcional • Ayuda a personalizar tus respuestas
+                  Esta información nos ayuda a adaptar el contenido a tu nivel y objetivos. Todos los campos son opcionales.
                 </p>
               </div>
               
@@ -4415,13 +4415,22 @@ ${contentPreview}
                     gap: "0.75rem",
                     fontSize: "1.05rem",
                     fontWeight: 500,
-                    marginBottom: "0.75rem",
+                    marginBottom: "0.5rem",
                     color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
                     lineHeight: 1.5,
                   }}>
                     <TargetIcon size={20} color={colorTheme === "dark" ? "#6366f1" : "#6366f1"} />
-                    Nivel (0-10)
+                    ¿Cuál es tu nivel actual?
                   </label>
+                  <p style={{
+                    fontSize: "0.875rem",
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    margin: "0 0 0.75rem 0",
+                    lineHeight: 1.4,
+                    paddingLeft: "2rem",
+                  }}>
+                    Indica un número del 0 (principiante) al 10 (experto). Si no estás seguro, puedes dejarlo en blanco y lo ajustaremos según tu progreso.
+                  </p>
                   <input
                     type="number"
                     min="0"
@@ -4431,7 +4440,7 @@ ${contentPreview}
                       ...initialFormData,
                       level: e.target.value ? parseInt(e.target.value) : null,
                     })}
-                    placeholder="Ej: 3"
+                    placeholder="Ej: 3 (intermedio)"
                     style={{
                       width: "100%",
                       padding: "0.875rem 1rem",
@@ -4463,21 +4472,30 @@ ${contentPreview}
                     gap: "0.75rem",
                     fontSize: "1.05rem",
                     fontWeight: 500,
-                    marginBottom: "0.75rem",
+                    marginBottom: "0.5rem",
                     color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
                     lineHeight: 1.5,
                   }}>
                     <LightbulbIcon size={20} color={colorTheme === "dark" ? "#6366f1" : "#6366f1"} />
-                    ¿Para qué quieres aprender {currentChatLevel?.topic || "este tema"}?
+                    ¿Cuál es tu objetivo al aprender {currentChatLevel?.topic || "este tema"}?
                   </label>
+                  <p style={{
+                    fontSize: "0.875rem",
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    margin: "0 0 0.75rem 0",
+                    lineHeight: 1.4,
+                    paddingLeft: "2rem",
+                  }}>
+                    Comparte por qué quieres aprender esto. Por ejemplo: para un trabajo, un viaje, un examen, o simplemente por interés personal.
+                  </p>
                   <textarea
                     value={initialFormData.learningGoal}
                     onChange={(e) => setInitialFormData({
                       ...initialFormData,
                       learningGoal: e.target.value,
                     })}
-                    placeholder="Ej: Voy a vivir en Japón en un año y quiero aprender japonés para comunicarme"
-                    rows={3}
+                    placeholder="Ejemplo: Voy a vivir en Japón en un año y necesito aprender japonés para comunicarme en el día a día. Quiero poder tener conversaciones básicas y leer señales."
+                    rows={4}
                     style={{
                       width: "100%",
                       padding: "0.875rem 1rem",
@@ -4485,7 +4503,7 @@ ${contentPreview}
                       border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
                       background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.5)" : "#ffffff",
                       color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                      fontSize: "1.1rem",
+                      fontSize: "1rem",
                       resize: "vertical",
                       fontFamily: "inherit",
                       transition: "all 0.2s ease",
@@ -4511,13 +4529,22 @@ ${contentPreview}
                     gap: "0.75rem",
                     fontSize: "1.05rem",
                     fontWeight: 500,
-                    marginBottom: "0.75rem",
+                    marginBottom: "0.5rem",
                     color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
                     lineHeight: 1.5,
                   }}>
                     <HiClock size={20} color={colorTheme === "dark" ? "#6366f1" : "#6366f1"} />
-                    ¿Cuánto tiempo tienes?
+                    ¿Cuánto tiempo tienes disponible para estudiar?
                   </label>
+                  <p style={{
+                    fontSize: "0.875rem",
+                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
+                    margin: "0 0 0.75rem 0",
+                    lineHeight: 1.4,
+                    paddingLeft: "2rem",
+                  }}>
+                    Indica el plazo que tienes. Esto nos ayuda a ajustar el ritmo de aprendizaje y la cantidad de contenido.
+                  </p>
                   <input
                     type="text"
                     value={initialFormData.timeAvailable}
@@ -4525,7 +4552,7 @@ ${contentPreview}
                       ...initialFormData,
                       timeAvailable: e.target.value,
                     })}
-                    placeholder="Ej: 1 semana, 1 mes, 1 año"
+                    placeholder="Ej: 1 mes, 3 meses, 6 meses, 1 año, sin prisa..."
                     style={{
                       width: "100%",
                       padding: "0.875rem 1rem",
@@ -4533,7 +4560,7 @@ ${contentPreview}
                       border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
                       background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.5)" : "#ffffff",
                       color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                      fontSize: "1.1rem",
+                      fontSize: "1rem",
                       transition: "all 0.2s ease",
                       outline: "none",
                       fontFamily: "inherit",
@@ -4580,7 +4607,7 @@ ${contentPreview}
                       e.currentTarget.style.background = "transparent";
                     }}
                   >
-                    Omitir
+                    Saltar este paso
                   </button>
                   <button
                     onClick={async () => {
@@ -4804,7 +4831,7 @@ ${contentPreview}
                     color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                     lineHeight: 1.6,
                   }}>
-                    Arrastra PDFs para procesarlos y crear tu base de conocimiento
+                    Sube documentos PDF, texto o imágenes. Los procesaremos y crearán tu base de conocimiento personalizada para que puedas hacer preguntas y generar contenido basado en ellos.
                   </p>
                 </div>
 
@@ -4894,7 +4921,7 @@ ${contentPreview}
                     color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                     lineHeight: 1.6,
                   }}>
-                    Crea apuntes estructurados con esquemas y diagramas interactivos
+                    Genera apuntes estructurados y organizados a partir de los documentos que hayas subido. Los apuntes se adaptan a tu nivel y objetivo de aprendizaje, e incluyen esquemas y diagramas interactivos cuando es apropiado.
                   </p>
                 </div>
 
@@ -4985,7 +5012,7 @@ ${contentPreview}
                     color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                     lineHeight: 1.6,
                   }}>
-                    Pregunta sobre cualquier tema y obtén respuestas precisas con RAG
+                    Haz cualquier pregunta sobre el tema que estás estudiando. Obtendrás respuestas precisas basadas en los documentos que hayas subido y el contexto de la conversación.
                   </p>
                 </div>
 
@@ -5075,7 +5102,7 @@ ${contentPreview}
                     color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                     lineHeight: 1.6,
                   }}>
-                    Crea tests personalizados con corrección automática y feedback
+                    Genera tests completos con múltiples preguntas adaptadas a tu nivel. Recibe una calificación y feedback detallado al finalizar.
                   </p>
                 </div>
 
@@ -5148,7 +5175,7 @@ ${contentPreview}
                     color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                     lineHeight: 1.6,
                   }}>
-                    Crea ejercicios prácticos adaptados a tu nivel para reforzar el aprendizaje
+                    Genera ejercicios personalizados adaptados a tu nivel actual. Resuélvelos y recibe feedback detallado para mejorar.
                   </p>
                 </div>
 
@@ -5223,7 +5250,7 @@ ${contentPreview}
                     color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                     lineHeight: 1.6,
                   }}>
-                    Obtén explicaciones detalladas y claras sobre cualquier concepto
+                    Solicita explicaciones detalladas sobre cualquier concepto. El asistente te explicará de forma clara y adaptada a tu nivel, con ejemplos prácticos cuando sea necesario.
                   </p>
                 </div>
               </div>
@@ -10835,7 +10862,7 @@ function SuccessMessage({
                 color: secondaryTextColor,
                 lineHeight: 1.5,
               }}>
-                Crea un test de evaluación para practicar y evaluar tu conocimiento
+                Genera un test completo con múltiples preguntas para evaluar tu nivel. Recibe una calificación y feedback detallado al finalizar.
               </div>
             </div>
           </div>
@@ -11407,17 +11434,29 @@ function ExerciseComponent({
       <div style={{ marginBottom: "1rem" }}>
         <label style={{
           display: "block",
-          fontSize: "0.875rem",
+          fontSize: "0.95rem",
           fontWeight: 600,
           color: textColor,
           marginBottom: "0.5rem",
         }}>
           Tu respuesta:
         </label>
+        <p style={{
+          fontSize: "0.8rem",
+          color: secondaryTextColor,
+          margin: "0 0 0.75rem 0",
+          lineHeight: 1.4,
+        }}>
+          {isProgramming 
+            ? "Escribe tu código aquí. Puedes probarlo antes de enviar usando el intérprete de código de arriba."
+            : "Escribe tu respuesta completa aquí. Sé específico y detallado para obtener mejor feedback."}
+        </p>
         <textarea
           value={answer}
           onChange={(e) => onAnswerChange(e.target.value)}
-          placeholder="Escribe tu respuesta aquí..."
+          placeholder={isProgramming 
+            ? "Escribe tu código aquí... (puedes probarlo arriba antes de enviar)"
+            : "Escribe tu respuesta completa aquí. Por ejemplo: explica paso a paso, muestra tus cálculos, o describe tu razonamiento..."}
           style={{
             width: "100%",
             minHeight: "120px",
@@ -11427,7 +11466,7 @@ function ExerciseComponent({
             borderRadius: "8px",
             color: textColor,
             fontSize: "0.95rem",
-            fontFamily: "inherit",
+            fontFamily: isProgramming ? "monospace" : "inherit",
             resize: "vertical",
             boxSizing: "border-box",
             marginBottom: "0.75rem",
@@ -13619,7 +13658,7 @@ export default App;`,
               lineHeight: 1.6,
               resize: "vertical",
             }}
-            placeholder="Ejemplo para Python:&#10;Juan&#10;25"
+            placeholder="Escribe una entrada por línea. Ejemplo para Python:&#10;Juan&#10;25&#10;&#10;Esto corresponde a:&#10;nombre = input()  # Juan&#10;edad = input()   # 25"
           />
         </div>
       )}
