@@ -10,9 +10,22 @@ export default function StudyAgentsPage() {
   const [mounted, setMounted] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [showAPIKeyModal, setShowAPIKeyModal] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Escuchar eventos de cuando se abre/cierra el modal de API keys
+  useEffect(() => {
+    const handleAPIKeyModalChange = (e: CustomEvent) => {
+      setShowAPIKeyModal(e.detail.isOpen);
+    };
+
+    window.addEventListener('apiKeyModalChange', handleAPIKeyModalChange as EventListener);
+    return () => {
+      window.removeEventListener('apiKeyModalChange', handleAPIKeyModalChange as EventListener);
+    };
   }, []);
 
   // Redirigir a login si no está autenticado
@@ -66,7 +79,16 @@ export default function StudyAgentsPage() {
   return (
     <>
       {/* Hero Section - Premium Design */}
-      <section className="hero-section" style={{ minHeight: '50vh', position: 'relative', overflow: 'hidden' }}>
+      <section 
+        className="hero-section" 
+        style={{ 
+          minHeight: '50vh', 
+          position: 'relative', 
+          overflow: 'hidden',
+          display: showAPIKeyModal ? 'none' : 'block',
+          zIndex: 1,
+        }}
+      >
         <div className="hero-grid" />
         
         {/* Animated Background Orbs - Premium Multi-layer */}

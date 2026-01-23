@@ -1311,6 +1311,13 @@ export default function StudyChat() {
     }
   }, []);
 
+  // Notificar cuando se abre/cierra el modal de API keys
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("apiKeyModalChange", { detail: { isOpen: showAPIKeyConfig } }));
+    }
+  }, [showAPIKeyConfig]);
+
   // Escuchar cambios en las API keys (cuando se actualizan desde el Header)
   useEffect(() => {
     const handleApiKeysUpdate = () => {
@@ -4018,6 +4025,10 @@ ${contentPreview}
           onClose={() => {
             if (apiKeys?.openai) {
               setShowAPIKeyConfig(false);
+            }
+            // Notificar que el modal se cerró
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("apiKeyModalChange", { detail: { isOpen: false } }));
             }
           }}
         />
