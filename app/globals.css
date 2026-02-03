@@ -30,8 +30,64 @@
   --glow-accent: 0 0 60px rgba(99, 102, 241, 0.15);
   --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   
+  /* Background overlays */
+  --bg-overlay-05: rgba(255, 255, 255, 0.05);
+  --bg-overlay-08: rgba(255, 255, 255, 0.08);
+  --bg-overlay-02: rgba(255, 255, 255, 0.02);
+  --bg-overlay-04: rgba(255, 255, 255, 0.04);
+  
+  /* Border overlays */
+  --border-overlay-05: rgba(255, 255, 255, 0.05);
+  --border-overlay-1: rgba(255, 255, 255, 0.1);
+  --border-overlay-2: rgba(255, 255, 255, 0.2);
+  
   /* Spacing */
   --section-padding: clamp(3rem, 8vw, 6rem);
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  /* Color Palette - Light Theme */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.9);
+  
+  /* Accent Colors (same) */
+  --accent-primary: #6366f1;
+  --accent-secondary: #8b5cf6;
+  --accent-tertiary: #a855f7;
+  --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+  
+  /* Neutral Colors */
+  --text-primary: #1a1a24;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  /* Text colors for buttons/overlays (always white for contrast) */
+  --text-on-accent: #ffffff;
+  
+  /* Borders & Shadows */
+  --border-subtle: rgba(148, 163, 184, 0.2);
+  --border-accent: rgba(99, 102, 241, 0.4);
+  --glow-accent: 0 0 60px rgba(99, 102, 241, 0.1);
+  --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+  
+  /* Background overlays - dark overlays for light theme */
+  --bg-overlay-05: rgba(0, 0, 0, 0.03);
+  --bg-overlay-08: rgba(0, 0, 0, 0.05);
+  --bg-overlay-02: rgba(0, 0, 0, 0.02);
+  --bg-overlay-04: rgba(0, 0, 0, 0.03);
+  
+  /* Border overlays - dark borders for light theme */
+  --border-overlay-05: rgba(0, 0, 0, 0.08);
+  --border-overlay-1: rgba(0, 0, 0, 0.12);
+  --border-overlay-2: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] body::before {
+  background: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(139, 92, 246, 0.05), transparent);
 }
 
 /* Global Reset & Base */

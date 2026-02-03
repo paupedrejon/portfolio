@@ -1,0 +1,89 @@
+{
+  "total_earned": 26.0,
+  "transactions": [
+    {
+      "type": "course_sale",
+      "amount": 1.0,
+      "course_id": "course_20260131_110300_468144",
+      "course_title": "DBD Parical 2",
+      "timestamp": "2026-02-01T01:40:47.119273"
+    },
+    {
+      "type": "course_sale",
+      "amount": 1.0,
+      "course_id": "course_20260131_110300_468144",
+      "course_title": "DBD Parical 2",
+      "timestamp": "2026-02-01T01:53:44.915942"
+    },
+    {
+      "type": "course_sale",
+      "amount": 1.0,
+      "course_id": "course_20260131_110300_468144",
+      "course_title": "DBD Parical 2",
+      "timestamp": "2026-02-01T01:58:29.472485"
+    },
+    {
+      "type": "course_sale",
+      "amount": 1.0,
+      "course_id": "course_20260131_110300_468144",
+      "course_title": "DBD Parical 2",
+      "timestamp": "2026-02-01T02:06:55.316483"
+    },
+    {
+      "type": "course_sale",
+      "amount": 1.0,
+      "course_id": "course_20260131_110300_468144",
+      "course_title": "DBD Parical 2",
+      "timestamp": "2026-02-01T11:43:22.596860"
+    },
+    {
+      "type": "course_sale",
+      "amount": 6.0,
+      "course_id": "course_20260201_115919_181305",
+      "course_title": "ENGLISH B2 Preparation",
+      "timestamp": "2026-02-01T11:59:35.575325"
+    },
+    {
+      "type": "course_sale",
+      "amount": 2.0,
+      "course_id": "course_20260201_141346_650815",
+      "course_title": "DBD Parchis ",
+      "timestamp": "2026-02-01T14:14:30.464207"
+    },
+    {
+      "type": "course_sale",
+      "amount": 2.0,
+      "course_id": "course_20260201_141346_650815",
+      "course_title": "DBD Parchis ",
+      "timestamp": "2026-02-01T14:18:49.531850"
+    },
+    {
+      "type": "course_sale",
+      "amount": 2.0,
+      "course_id": "course_20260201_141346_650815",
+      "course_title": "DBD Parchis ",
+      "timestamp": "2026-02-01T16:21:43.059159"
+    },
+    {
+      "type": "course_sale",
+      "amount": 2.0,
+      "course_id": "course_20260201_141346_650815",
+      "course_title": "DBD Parchis ",
+      "timestamp": "2026-02-01T16:21:47.863378"
+    },
+    {
+      "type": "course_sale",
+      "amount": 1.0,
+      "course_id": "course_20260203_204206_234904",
+      "course_title": "AC",
+      "timestamp": "2026-02-03T20:43:04.996260"
+    },
+    {
+      "type": "course_sale",
+      "amount": 6.0,
+      "course_id": "course_20260203_210929_810132",
+      "course_title": "PRUEBA IDI",
+      "timestamp": "2026-02-03T21:09:55.092047"
+    }
+  ]
+}

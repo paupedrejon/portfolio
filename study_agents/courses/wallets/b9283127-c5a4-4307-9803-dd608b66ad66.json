@@ -1,0 +1,42 @@
+{
+  "balance": 4.0,
+  "total_deposited": 24.0,
+  "total_spent": 20.0,
+  "transactions": [
+    {
+      "type": "deposit",
+      "amount": 20.0,
+      "timestamp": "2026-02-03T21:08:24.415863",
+      "metadata": {
+        "stripe_session_id": "cs_test_a1EAkRqpIN9EckwK1icPMRneyNFcEo2r7ZC2teAO8Ep0Y7us1xTBhXECr7",
+        "payment_intent": "pi_3SwptWIKH1butBFz0VxZw2Nc",
+        "verified_via": "direct_check"
+      }
+    },
+    {
+      "type": "course_purchase",
+      "amount": -20.0,
+      "timestamp": "2026-02-03T21:09:55.081773",
+      "metadata": {
+        "course_id": "course_20260203_210929_810132",
+        "course_title": "PRUEBA IDI",
+        "distribution": {
+          "ai_usage": 10.0,
+          "platform": 6.0,
+          "creator": 4.0
+        }
+      }
+    },
+    {
+      "type": "course_sale",
+      "amount": 4.0,
+      "timestamp": "2026-02-03T21:09:55.091025",
+      "metadata": {
+        "course_id": "course_20260203_210929_810132",
+        "course_title": "PRUEBA IDI",
+        "buyer_id": "b9283127-c5a4-4307-9803-dd608b66ad66",
+        "amount": 4.0
+      }
+    }
+  ]
+}

@@ -16,7 +16,14 @@ function SignInContent() {
   }, []);
 
   const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl });
+    // Normalizar callbackUrl para evitar loops
+    const normalizedCallbackUrl = callbackUrl && callbackUrl !== "/auth/signin" 
+      ? callbackUrl 
+      : "/study-agents";
+    
+    signIn("google", { 
+      callbackUrl: normalizedCallbackUrl,
+    });
   };
 
   if (!mounted) {

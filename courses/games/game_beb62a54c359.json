@@ -1,0 +1,55 @@
+{
+  "game_id": "game_beb62a54c359",
+  "course_id": "course_20260201_141346_650815",
+  "creator_id": "3cb04694-90fb-45bd-9e38-c88dbc54ef5f",
+  "max_players": 4,
+  "topic_filter": null,
+  "invite_code": "A58098",
+  "status": "playing",
+  "players": [
+    {
+      "user_id": "3cb04694-90fb-45bd-9e38-c88dbc54ef5f",
+      "color": "red",
+      "position": 0,
+      "pieces": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "score": 1,
+      "joined_at": "2026-02-01T22:44:14.795604"
+    },
+    {
+      "user_id": "58f79e94-99a3-471d-8126-429b46dab9d1",
+      "username": "Pau Pedrejon Sobrino",
+      "color": "blue",
+      "position": 0,
+      "pieces": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "score": 0,
+      "joined_at": "2026-02-01T22:44:23.444059"
+    }
+  ],
+  "current_turn": 0,
+  "last_dice": 5,
+  "current_question": null,
+  "question_history": [
+    {
+      "player_id": "3cb04694-90fb-45bd-9e38-c88dbc54ef5f",
+      "question": "¿Estás listo para continuar?",
+      "answer_index": 0,
+      "correct": true,
+      "timestamp": "2026-02-01T22:45:04.890069"
+    }
+  ],
+  "preloaded_questions": [],
+  "question_index": 0,
+  "created_at": "2026-02-01T22:44:14.795615",
+  "updated_at": "2026-02-01T22:45:04.890079",
+  "winner": null
+}

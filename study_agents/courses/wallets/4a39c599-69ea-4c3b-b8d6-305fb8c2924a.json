@@ -1,0 +1,18 @@
+{
+  "balance": 1.0,
+  "total_deposited": 1.0,
+  "total_spent": 0.0,
+  "transactions": [
+    {
+      "type": "course_sale",
+      "amount": 1.0,
+      "timestamp": "2026-02-01T11:43:22.595819",
+      "metadata": {
+        "course_id": "course_20260131_110300_468144",
+        "course_title": "DBD Parical 2",
+        "buyer_id": "78dc77e1-0fa1-4825-aa70-b63ac0b09e26",
+        "amount": 1.0
+      }
+    }
+  ]
+}

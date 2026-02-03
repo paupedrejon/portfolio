@@ -20,6 +20,13 @@ const authOptions = {
     GoogleProvider({
       clientId,
       clientSecret,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
     }),
   ],
   pages: {
@@ -27,9 +34,34 @@ const authOptions = {
     error: "/auth/error",
   },
   callbacks: {
-    async signIn() {
+    async signIn({ user, account, profile }) {
       // Permitir el inicio de sesión
       return true;
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async redirect({ url, baseUrl }: any) {
+      // Evitar loops: si la URL es la página de signin, redirigir a /study-agents
+      if (url.includes("/auth/signin")) {
+        return `${baseUrl}/study-agents`;
+      }
+      
+      // Si la URL es relativa, construir la URL completa
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      
+      // Si la URL es absoluta y del mismo origen, permitirla
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.origin === baseUrl) {
+          return url;
+        }
+      } catch {
+        // Si no es una URL válida, usar la base URL
+      }
+      
+      // Por defecto, redirigir a /study-agents
+      return `${baseUrl}/study-agents`;
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async session({ session, token }: any) {
@@ -51,6 +83,14 @@ const authOptions = {
   },
   secret: secret || undefined,
   debug: process.env.NODE_ENV === "development",
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 días
+    updateAge: 24 * 60 * 60, // Actualizar cada 24 horas
+  },
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30 días
+  },
 };
 
 const { handlers } = NextAuth(authOptions);

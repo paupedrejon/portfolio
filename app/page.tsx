@@ -423,7 +423,7 @@ export default function HomePage() {
                 marginBottom: '0.5rem',
               }}
             >
-              What&apos;s New
+              What's New
             </h2>
             <p
               className={outfit.className}

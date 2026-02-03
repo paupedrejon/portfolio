@@ -1,0 +1,31 @@
+{
+  "balance": 5.0,
+  "total_deposited": 10.0,
+  "total_spent": 5.0,
+  "transactions": [
+    {
+      "type": "deposit",
+      "amount": 10.0,
+      "timestamp": "2026-02-01T01:40:35.825718",
+      "metadata": {
+        "stripe_session_id": "cs_test_a1wQECrnmVwRA87unOE4HVJoMRNq4vCTLiqcirmUDdTKLD8A2V6qHrFhy3",
+        "payment_intent": "pi_3SvoiKIKH1butBFz09Kk5pP7",
+        "verified_via": "direct_check"
+      }
+    },
+    {
+      "type": "course_purchase",
+      "amount": -5.0,
+      "timestamp": "2026-02-01T01:40:47.118243",
+      "metadata": {
+        "course_id": "course_20260131_110300_468144",
+        "course_title": "DBD Parical 2",
+        "distribution": {
+          "ai_usage": 3.0,
+          "platform": 1.0,
+          "creator": 1.0
+        }
+      }
+    }
+  ]
+}

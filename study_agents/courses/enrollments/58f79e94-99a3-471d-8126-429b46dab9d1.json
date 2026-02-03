@@ -1,0 +1,75 @@
+{
+  "course_20260201_141346_650815": {
+    "user_id": "58f79e94-99a3-471d-8126-429b46dab9d1",
+    "course_id": "course_20260201_141346_650815",
+    "enrolled_at": "2026-02-01T16:21:43.059726",
+    "credits_remaining": 262,
+    "credits_used": 0,
+    "max_credits": 500,
+    "initial_credits": 250,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-01",
+    "credits_from_streak": 12,
+    "streak_calendar": {
+      "2026-02-01": {
+        "claimed": true,
+        "credits": 12,
+        "streak_day": 1,
+        "claimed_at": "2026-02-01T22:30:58.186276"
+      }
+    },
+    "pending_credits": 0,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0,
+      "Optimization": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "Physical Design": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">Physical Design</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li>\n        <strong style=\"color: #6366f1;\">Definición de Physical Design:</strong>\n        <p style=\"margin: 0;\">Proceso de transformar un diseño lógico en un diseño físico, considerando la implementación en hardware.</p>\n      </li>\n      <li>\n        <strong style=\"color: #6366f1;\">Elementos Clave:</strong>\n        <ul>\n          <li style=\"margin: 0.5rem 0;\"><strong style=\"color: #10b981;\">Entradas:</strong> Especificaciones del diseño lógico.</li>\n          <li style=\"margin: 0.5rem 0;\"><strong style=\"color: #10b981;\">Salidas:</strong> Layout de circuitos, asignación de pines y bloques funcionales.</li>\n          <li style=\"margin: 0.5rem 0;\"><strong style=\"color: #10b981;\">Optimización:</strong> Minimizar área, maximizar rendimiento y minimizar consumo energético.</li>\n        </ul>\n      </li>\n      <li>\n        <strong style=\"color: #6366f1;\">Pasos en el Physical Design:</strong>\n        <ol>\n          <li style=\"margin: 0.5rem 0;\"><strong style=\"color: #10b981;\">Floorplanning:</strong> Asignación de espacio físico a bloques funcionales.</li>\n          <li style=\"margin: 0.5rem 0;\"><strong style=\"color: #10b981;\">Placement:</strong> Colocación exacta de componentes en el chip.</li>\n          <li style=\"margin: 0.5rem 0;\"><strong style=\"color: #10b981;\">Routing:</strong> Conexión de componentes a través de capas de metal.</li>\n        </ol>\n      </li>\n      <li>\n        <strong style=\"color: #6366f1;\">Herramientas Usuales:</strong>\n        <ul>\n          <li style=\"margin: 0.5rem 0;\"><code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">Cadence</code> - Para diseño de circuitos integrados.</li>\n          <li style=\"margin: 0.5rem 0;\"><code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">Synopsys</code> - Herramientas de síntesis y diseño.</li>\n        </ul>\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Ignorar restricciones de área en el <strong style=\"color: #6366f1;\">floorplanning</strong>, lo que lleva a un diseño poco eficiente.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        No realizar un análisis adecuado de señal, causando problemas de rendimiento en el enrutamiento.\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      Supón que diseñamos un amplificador operacional. Se requiere hacer un <code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">floorplan</code> eficiente, asegurando que los componentes se coloquen cercanos para reducir la longitud del <code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">routing</code> y minimizando el riesgo de interferencia.\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": [],
+      "Optimization": []
+    },
+    "updated_at": "2026-02-01T16:22:53.963013"
+  },
+  "course_20260203_204206_234904": {
+    "user_id": "58f79e94-99a3-471d-8126-429b46dab9d1",
+    "course_id": "course_20260203_204206_234904",
+    "enrolled_at": "2026-02-03T20:43:04.996850",
+    "credits_remaining": 130,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-03",
+    "credits_from_streak": 5,
+    "streak_calendar": {
+      "2026-02-03": {
+        "claimed": true,
+        "credits": 5,
+        "streak_day": 1,
+        "claimed_at": "2026-02-03T20:43:11.743277"
+      }
+    },
+    "pending_credits": 0,
+    "xp": 0,
+    "topic_progress": {
+      "PARCIAL 2": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "PARCIAL 2": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">PARCIAL 2</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 1rem;\">\n        <strong style=\"color: #6366f1;\">Concepto 1:</strong> <span style=\"color: #4b5563;\">Descripción clara del primer concepto clave.</span>\n      </li>\n      <li style=\"margin-bottom: 1rem;\">\n        <strong style=\"color: #6366f1;\">Concepto 2:</strong> <span style=\"color: #4b5563;\">Descripción clara del segundo concepto clave.</span>\n      </li>\n      <li style=\"margin-bottom: 1rem;\">\n        <strong style=\"color: #6366f1;\">Concepto 3:</strong> <span style=\"color: #4b5563;\">Descripción clara del tercer concepto clave.</span>\n      </li>\n      <li style=\"margin-bottom: 1rem;\">\n        <strong style=\"color: #6366f1;\">Concepto 4:</strong> <span style=\"color: #4b5563;\">Descripción clara del cuarto concepto clave.</span>\n      </li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Confundir el concepto X con el concepto Y.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        No considerar las implicaciones de la teoría Z.\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      Ejemplo de aplicación del concepto 1 en una situación real, ilustrando su uso efectivo.\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "PARCIAL 2": []
+    },
+    "exam_date": "2026-02-12",
+    "updated_at": "2026-02-03T20:43:33.792456"
+  }
+}

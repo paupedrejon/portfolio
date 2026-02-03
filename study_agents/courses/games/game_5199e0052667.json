@@ -1,0 +1,58 @@
+{
+  "game_id": "game_5199e0052667",
+  "course_id": "course_20260201_141346_650815",
+  "creator_id": "58f79e94-99a3-471d-8126-429b46dab9d1",
+  "max_players": 2,
+  "topic_filter": null,
+  "status": "playing",
+  "players": [
+    {
+      "user_id": "58f79e94-99a3-471d-8126-429b46dab9d1",
+      "color": "red",
+      "position": 0,
+      "pieces": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "score": 1,
+      "joined_at": "2026-02-01T14:18:42.255650"
+    },
+    {
+      "user_id": "3cb04694-90fb-45bd-9e38-c88dbc54ef5f",
+      "color": "blue",
+      "position": 0,
+      "pieces": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "score": 1,
+      "joined_at": "2026-02-01T14:19:28.804223"
+    }
+  ],
+  "current_turn": 1,
+  "last_dice": 1,
+  "current_question": null,
+  "question_history": [
+    {
+      "player_id": "58f79e94-99a3-471d-8126-429b46dab9d1",
+      "question": "¿Estás listo para continuar?",
+      "answer_index": 0,
+      "correct": true,
+      "timestamp": "2026-02-01T15:55:29.901866"
+    },
+    {
+      "player_id": "3cb04694-90fb-45bd-9e38-c88dbc54ef5f",
+      "question": "¿Estás listo para continuar?",
+      "answer_index": 0,
+      "correct": true,
+      "timestamp": "2026-02-01T15:55:46.981568"
+    }
+  ],
+  "created_at": "2026-02-01T14:18:42.255657",
+  "updated_at": "2026-02-01T15:55:46.981575",
+  "winner": null
+}

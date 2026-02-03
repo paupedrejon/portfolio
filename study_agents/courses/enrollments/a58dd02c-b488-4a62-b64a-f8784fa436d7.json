@@ -1,0 +1,26 @@
+{
+  "course_20260131_110300_468144": {
+    "user_id": "a58dd02c-b488-4a62-b64a-f8784fa436d7",
+    "course_id": "course_20260131_110300_468144",
+    "enrolled_at": "2026-01-31T12:02:55.079877",
+    "credits_remaining": 488.0,
+    "credits_used": 12,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0,
+      "Optimization": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "Physical Design": "# Physical Design\n\n## ⚡ Conceptos Blitz (Lo esencial)\n- **Physical Design**: Proceso de optimización de la estructura física de un circuito integrado.\n- **Layout**: Distribución física de componentes y conexiones en un chip.\n- **Cell**: Unidad funcional en el diseño físico, puede ser estándar o personalizada.\n- **Routing**: Proceso de establecer conexiones eléctricas entre componentes.\n- **DRC (Design Rule Check)**: Verificación automática de reglas de diseño para asegurar que cumplen con normas específicas.\n\n## 📚 Núcleo del Conocimiento\n\n### 1. **Introducción al Physical Design**\n- **Definición**: El diseño físico implica la creación de un layout para circuitos integrados que maximiza el rendimiento y minimiza el área y el consumo de energía.\n- **Fases del Physical Design**:\n  - **Floorplanning**: Distribución inicial de bloques funcionales.\n  - **Placement**: Asignación precisa de celdas en el chip.\n  - **Routing**: Establecimiento de conexiones entre celdas.\n  - **Finalización**: Verificación de DRC y LVS (Layout versus Schematic).\n\n### 2. **Floorplanning**\n- **Objetivo**: Organizar los bloques de diseño en un área determinada.\n- **Consideraciones**:\n  - Minimizar la longitud de las conexiones.\n  - Balancear la ocupación del chip.\n  - Asegurar espacio para el routing.\n\n### 3. **Placement**\n- **Descripción**: Asignación de componentes a ubicaciones específicas en el layout.\n- **Metodologías**:\n  - **Standard Cell Placement**: Uso de celdas estándar en lugares predefinidos.\n  - **Custom Placement**: Diseño de ubicaciones específicas para necesidades particulares.\n- **Herramientas**: Software de CAD (Computer-Aided Design) que automatiza el proceso.\n\n### 4. **Routing**\n- **Definición**: Proceso de conectar eléctricamente los componentes dentro del chip.\n- **Tipos de Routing**:\n  - **Global Routing**: Planificación de rutas generales sin detalles precisos.\n  - **Detailed Routing**: Establecimiento de rutas específicas y optimizadas.\n- **Importancia**: Un routing eficiente minimiza el retardo y el consumo de energía.\n\n### 5. **Verificación de Diseño**\n- **DRC (Design Rule Check)**:\n  - **Objetivo**: Asegurar que el diseño cumpla con las reglas de fabricación.\n  - **Errores comunes**: Espaciados inadecuados, capas mal utilizadas.\n  \n- **LVS (Layout versus Schematic)**:\n  - **Propósito**: Comparar el diseño físico con el esquema original para detectar discrepancias.\n  \n### 6. **Optimización Post-Layout**\n- **Objetivos**: Mejorar el rendimiento y reducir el consumo de energía después de completar el layout.\n- **Técnicas**:\n  - Reducción de capacitancia.\n  - Ajuste de la distribución de celdas.\n\n### 7. **Tendencias Futuras**\n- **Tecnologías emergentes**: Integración de inteligencia artificial en procesos de diseño.\n- **3D ICs (Circuitos Integrados en 3D)**: Nuevas metodologías que permiten apilar chips para mejorar el rendimiento y la densidad.\n\n## ⚠️ Errores Comunes / Trampas\n- **No cumplir con DRC**: Falta de atención a las reglas de diseño puede causar fallos en la fabricación.\n- **Subestimar el espacio del chip**: Colocar celdas sin considerar el espacio necesario para el routing conduce a diseños ineficientes.\n- **Ignorar la optimización de energía**: Descuido de las técnicas de optimización puede resultar en un alto consumo energético.\n\n## 💎 Ejemplo Práctico\n- **Caso**: Diseño de un controlador de memoria.\n  - **Floorplanning**: Organizar bloques de memoria y lógica de control.\n  - **Placement**: Colocar celdas de acceso a memoria cerca de las celdas de lógica.\n  - **Routing**: Conectar las celdas de lógica a las celdas de memoria minimizando la longitud de las rutas.\n\nEste enfoque sistemático asegura un diseño físico eficiente y funcional, clave para el éxito en el desarrollo de circuitos integrados."
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": [],
+      "Optimization": []
+    },
+    "exam_date": "2026-02-14",
+    "updated_at": "2026-01-31T12:07:17.087834"
+  }
+}

@@ -1,0 +1,329 @@
+{
+  "course_20260131_110300_468144": {
+    "course_id": "course_20260131_110300_468144",
+    "creator_id": "4a39c599-69ea-4c3b-b8d6-305fb8c2924a",
+    "title": "DBD Parical 2",
+    "description": "Esto es una prueba",
+    "price": 5.0,
+    "max_duration_days": 2,
+    "cover_image": "http://localhost:8000/api/files/istockphoto-2162878522-612x612.jpg",
+    "topics": [
+      {
+        "name": "Physical Design",
+        "pdfs": [
+          "http://localhost:8000/api/files/07-PhysicalDesign.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": [
+          {
+            "question": "El disseny f´ısic tracta d’adaptar l’esquema l`ogic a les particularitats d’un SGBD i una c`arrega de treball (workload) concretes.",
+            "correct_answer_index": 0,
+            "options": [
+              "Cert",
+              "False"
+            ]
+          },
+          {
+            "question": " ¿Quina NO ´es una de les tasques b`asiques del disseny f´ısic?",
+            "correct_answer_index": 0,
+            "options": [
+              "A. Reconsiderar els requisits",
+              "B. Escollir les estructures de dades",
+              "C. Adaptar l’esquema l`ogic al SGBD",
+              "D. Reconsiderar l’esquema relacional"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Optimization",
+        "pdfs": [],
+        "subtopics": [
+          {
+            "name": "Optimization 1",
+            "pdfs": [
+              "http://localhost:8000/api/files/08-Optimization-1.pdf"
+            ]
+          },
+          {
+            "name": "Optimization 2",
+            "pdfs": [
+              "http://localhost:8000/api/files/09-Optimization-2.pdf"
+            ]
+          },
+          {
+            "name": "Optimization 3",
+            "pdfs": [
+              "http://localhost:8000/api/files/10-Optimization-3.pdf"
+            ]
+          }
+        ],
+        "flashcards": [
+          {
+            "question": "311. ¿En quina posici´o se situa l’optimitzaci´o dins del proc´es de processament de consultes que du a terme el gestor de consultes?",
+            "correct_answer_index": 0,
+            "options": [
+              "A. Primera",
+              "B. Segona",
+              "C. Tercera",
+              "D. Ultima"
+            ]
+          }
+        ]
+      }
+    ],
+    "exam_examples": [
+      "http://localhost:8000/api/files/2425Q1-F.pdf",
+      "http://localhost:8000/api/files/2425Q2-F.pdf"
+    ],
+    "available_tools": {
+      "flashcards": true,
+      "code_interpreter": true,
+      "notes": true,
+      "tests": true,
+      "exercises": true
+    },
+    "flashcard_questions": [],
+    "revenue_split": {
+      "ai_usage": 3.0,
+      "platform": 1.0,
+      "creator": 1.0
+    },
+    "is_exam": true,
+    "created_at": "2026-01-31T11:03:00.468192",
+    "updated_at": "2026-01-31T11:03:00.468197",
+    "enrollment_count": 6,
+    "satisfaction_rating": null,
+    "satisfaction_count": 0,
+    "is_active": true
+  },
+  "course_20260201_115919_181305": {
+    "course_id": "course_20260201_115919_181305",
+    "creator_id": "78dc77e1-0fa1-4825-aa70-b63ac0b09e26",
+    "title": "ENGLISH B2 Preparation",
+    "description": "This is a Test",
+    "price": 20.0,
+    "max_duration_days": null,
+    "cover_image": "http://localhost:8000/api/files/english-f8vjihyp7sdzendc.jpg",
+    "topics": [
+      {
+        "name": "Listening",
+        "pdfs": [
+          "http://localhost:8000/api/files/620557-b2-first-for-schools-teacher-guide-for-listening.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": []
+      },
+      {
+        "name": "Writing",
+        "pdfs": [
+          "http://localhost:8000/api/files/581163-b2-first-for-schools-preparing-for-exam-success-self-study-writing-activities-part-1.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": []
+      },
+      {
+        "name": "Speaking",
+        "pdfs": [
+          "http://localhost:8000/api/files/581164-b2-first-for-schools-preparing-for-exam-success-self-study-speaking-activities-part-1.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": []
+      },
+      {
+        "name": "Reading",
+        "pdfs": [
+          "http://localhost:8000/api/files/167791-b2-first-handbook.pdf"
+        ],
+        "subtopics": [
+          {
+            "name": "Phrasal Verbs",
+            "pdfs": []
+          }
+        ],
+        "flashcards": []
+      }
+    ],
+    "exam_examples": [
+      "http://localhost:8000/api/files/FCE Listening Test 1 Printable (2024 edition).pdf"
+    ],
+    "available_tools": {
+      "flashcards": true,
+      "code_interpreter": false,
+      "notes": true,
+      "tests": true,
+      "exercises": true
+    },
+    "flashcard_questions": [],
+    "revenue_split": {
+      "ai_usage": 10.0,
+      "platform": 6.0,
+      "creator": 4.0
+    },
+    "is_exam": false,
+    "created_at": "2026-02-01T11:59:19.181335",
+    "updated_at": "2026-02-01T11:59:19.181339",
+    "enrollment_count": 1,
+    "satisfaction_rating": null,
+    "satisfaction_count": 0,
+    "is_active": true
+  },
+  "course_20260201_141346_650815": {
+    "course_id": "course_20260201_141346_650815",
+    "creator_id": "58f79e94-99a3-471d-8126-429b46dab9d1",
+    "title": "DBD Parchis ",
+    "description": "Holaaa",
+    "price": 10.0,
+    "max_duration_days": null,
+    "cover_image": "http://localhost:8000/api/files/istockphoto-2162878522-612x612.jpg",
+    "topics": [
+      {
+        "name": "Physical Design",
+        "pdfs": [
+          "http://localhost:8000/api/files/07-PhysicalDesign.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": []
+      },
+      {
+        "name": "Optimization",
+        "pdfs": [
+          "http://localhost:8000/api/files/08-Optimization-1.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": []
+      }
+    ],
+    "exam_examples": [
+      "http://localhost:8000/api/files/2425Q1-F.pdf",
+      "http://localhost:8000/api/files/2425Q2-F.pdf"
+    ],
+    "available_tools": {
+      "flashcards": true,
+      "code_interpreter": false,
+      "notes": true,
+      "tests": true,
+      "exercises": true,
+      "games": true
+    },
+    "flashcard_questions": [],
+    "revenue_split": {
+      "ai_usage": 6.0,
+      "platform": 2.0,
+      "creator": 2.0
+    },
+    "is_exam": false,
+    "created_at": "2026-02-01T14:13:46.650841",
+    "updated_at": "2026-02-01T14:13:46.650845",
+    "enrollment_count": 2,
+    "satisfaction_rating": null,
+    "satisfaction_count": 0,
+    "is_active": true
+  },
+  "course_20260203_204206_234904": {
+    "course_id": "course_20260203_204206_234904",
+    "creator_id": "58f79e94-99a3-471d-8126-429b46dab9d1",
+    "title": "AC",
+    "description": "PRUEBA APUNTES",
+    "price": 5.0,
+    "max_duration_days": 1,
+    "cover_image": "http://localhost:8000/api/files/1.jpg",
+    "topics": [
+      {
+        "name": "PARCIAL 2",
+        "pdfs": [
+          "http://localhost:8000/api/files/Apuntes IDI ejemplo.pdf",
+          "http://localhost:8000/api/files/Apuntes IDI ejemplo2.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": []
+      }
+    ],
+    "exam_examples": [
+      "http://localhost:8000/api/files/Exmane IDI ejemplo.pdf"
+    ],
+    "available_tools": {
+      "flashcards": false,
+      "code_interpreter": false,
+      "notes": true,
+      "tests": true,
+      "exercises": true,
+      "games": false
+    },
+    "flashcard_questions": [],
+    "revenue_split": {
+      "ai_usage": 3.0,
+      "platform": 1.0,
+      "creator": 1.0
+    },
+    "is_exam": true,
+    "created_at": "2026-02-03T20:42:06.234937",
+    "updated_at": "2026-02-03T20:42:06.234941",
+    "enrollment_count": 1,
+    "satisfaction_rating": null,
+    "satisfaction_count": 0,
+    "is_active": true
+  },
+  "course_20260203_210929_810132": {
+    "course_id": "course_20260203_210929_810132",
+    "creator_id": "b9283127-c5a4-4307-9803-dd608b66ad66",
+    "title": "PRUEBA IDI",
+    "description": "hola q ase",
+    "price": 20.0,
+    "max_duration_days": 132,
+    "cover_image": "http://localhost:8000/api/files/wallpaper-anime-train-station-scenic-stars-clouds.jpeg",
+    "topics": [
+      {
+        "name": "TEMA 1",
+        "pdfs": [
+          "http://localhost:8000/api/files/Apuntes IDI ejemplo.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": []
+      },
+      {
+        "name": "TEMA 2",
+        "pdfs": [
+          "http://localhost:8000/api/files/Apuntes IDI ejemplo2.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": []
+      }
+    ],
+    "exam_examples": [
+      "http://localhost:8000/api/files/Exmane IDI ejemplo.pdf"
+    ],
+    "available_tools": {
+      "flashcards": false,
+      "code_interpreter": false,
+      "notes": true,
+      "tests": true,
+      "exercises": true,
+      "games": false
+    },
+    "flashcard_questions": [],
+    "revenue_split": {
+      "ai_usage": 10.0,
+      "platform": 6.0,
+      "creator": 4.0
+    },
+    "is_exam": true,
+    "created_at": "2026-02-03T21:09:29.810155",
+    "updated_at": "2026-02-03T21:09:29.810159",
+    "enrollment_count": 1,
+    "satisfaction_rating": null,
+    "satisfaction_count": 0,
+    "is_active": true,
+    "summaries": {
+      "TEMA 1": {
+        "summary": null,
+        "subtopics": {}
+      },
+      "TEMA 2": {
+        "summary": null,
+        "subtopics": {}
+      }
+    },
+    "summaries_generated_at": "2026-02-03T21:09:29.826705"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "course_20260131_110300_468144": {
+    "user_id": "935158c4-8e19-4e6b-b29f-a4accdc2bfaf",
+    "course_id": "course_20260131_110300_468144",
+    "enrolled_at": "2026-01-31T12:10:42.619830",
+    "credits_remaining": 390.0,
+    "credits_used": 110,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0,
+      "Optimization": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "Physical Design": "# Physical Design\n\n## ⚡ Conceptos Blitz (Lo esencial)\n- **Physical Design**: Proceso de definir la implementación de un sistema a nivel de componentes físicos.\n- **Componentes**: Elementos de hardware utilizados en la implementación del diseño, como CPU, memoria y dispositivos de almacenamiento.\n- **Interconexiones**: Métodos para conectar componentes, incluyendo buses y redes.\n- **Temas de Optimización**: Estrategias para asegurar el uso eficiente de recursos, como la minimización de costos y el aumento de rendimiento.\n- **Sostenibilidad**: Consideraciones medioambientales en el diseño físico.\n\n## 📚 Núcleo del Conocimiento\n\n### 1. **Definición de Physical Design**\n- Fase de diseño que se enfoca en la realización física de un sistema.\n- Incluye la selección de componentes, disposición física y conexiones.\n  \n### 2. **Componentes del Sistema**\n| **Componente**  | **Descripción**                                           | **Ejemplo**                      |\n|------------------|---------------------------------------------------------|----------------------------------|\n| **CPU**          | Unidad central de procesamiento, ejecuta instrucciones. | Intel i9, AMD Ryzen 9           |\n| **Memoria**      | Almacena datos y programas en uso.                     | RAM DDR4, SSD                    |\n| **Almacenamiento**| Guarda información a largo plazo.                       | HDD, SSD, NVM Express             |\n| **Periféricos**  | Dispositivos externos para entrada/salida.              | Teclado, ratón, impresora       |\n\n### 3. **Interconexiones**\n- **Buses**: Canales de comunicación que transportan datos.\n  - **Tipos**: Datos, direcciones, control.\n- **Redes**: Sistemas de interconexión de múltiples computadoras, utilizando protocolos como TCP/IP.\n\n### 4. **Optimización del Diseño**\n- **Minimización de Costos**: Evaluar relaciones costo-beneficio de los componentes seleccionados.\n- **Rendimiento**: Aumentar la eficiencia operativa del sistema.\n  - **Ejemplo**: Uso de RAID para mejorar tiempos de acceso en almacenamiento.\n  \n### 5. **Consideraciones de Sostenibilidad**\n- **Eficiencia Energética**: Selección de componentes que reduzcan el consumo energético.\n- **Reciclabilidad**: Diseño de hardware que facilite el reciclaje al final de su vida útil.\n\n## ⚠️ Errores Comunes / Trampas\n- **Sobredimensionamiento**: Elegir componentes que superan las necesidades del proyecto, aumentando costos.\n- **Subestimación del Tiempo de Diseño**: No prever el tiempo necesario para la integración y pruebas.\n- **Descuido de la Sostenibilidad**: Ignorar la eficiencia energética y el impacto ambiental en la selección de hardware.\n\n## 💎 Ejemplo Práctico\n- Crear un diseño físico para un servidor de datos que incluya:\n  - **CPU**: AMD EPYC para alto rendimiento.\n  - **Memoria**: 128 GB de RAM DDR4 para manejar múltiples solicitudes simultáneas.\n  - **Almacenamiento**: Un RAID 10 con cuatro SSD para mejorar velocidad y redundancia.\n  - **Interconexiones**: Buses de alta velocidad y configuración de red redundante para asegurar disponibilidad."
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": [],
+      "Optimization": []
+    },
+    "exam_date": "2026-02-21",
+    "updated_at": "2026-01-31T12:18:10.337127"
+  }
+}

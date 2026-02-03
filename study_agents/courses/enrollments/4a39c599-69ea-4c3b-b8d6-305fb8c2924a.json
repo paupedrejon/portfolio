@@ -1,0 +1,26 @@
+{
+  "course_20260131_110300_468144": {
+    "user_id": "4a39c599-69ea-4c3b-b8d6-305fb8c2924a",
+    "course_id": "course_20260131_110300_468144",
+    "enrolled_at": "2026-01-31T11:47:30.132573",
+    "credits_remaining": 498.0,
+    "credits_used": 2,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0,
+      "Optimization": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "Physical Design": "# Physical Design\n\n## ⚡ Conceptos Clave\n- **Physical Design**: Es el proceso de traducir un diseño lógico (abstracto) en un diseño físico (concreto) que se puede implementar en un chip de silicio.\n- **Silicio**: Material semiconductor fundamental en la fabricación de circuitos integrados, utilizado por su capacidad para controlar el flujo de electricidad.\n- **Transistor**: Elemento básico en circuitos electrónicos, que actúa como un interruptor o amplificador de señales.\n- **Layout**: Representación gráfica que muestra cómo se disponen físicamente los componentes en un chip.\n\n## 📚 Fundamentos del Physical Design\n\n### 1. ¿Qué es el Physical Design?\n- **Propósito**: Mejorar el rendimiento del circuito, optimizando la velocidad y el consumo de energía.\n- **Fases del proceso**:  \n  - **Síntesis**: Conversión del modelo lógico en un diseño físico inicial.  \n  - **Place and Route**: Colocación de componentes y establecimiento de conexiones entre ellos.\n\n### 2. Principios Clave en el Diseño\n- **Maximización del área**: Utilizar eficientemente el espacio del chip para colocar componentes.  \n- **Minimización de interconexiones**: Reducir la longitud de las conexiones para disminuir el retardo y mejorar el rendimiento.  \n- **Distribución de energía**: Asegurar que todos los componentes reciban energía adecuada sin caídas de voltaje.\n\n### 3. Herramientas Utilizadas\n- **EDA (Electronic Design Automation)**: Software que ayuda en el diseño y verificación de circuitos integrados.  \n- **Editores de Layout**: Herramientas para crear y modificar el diseño físico de los circuitos.  \n- **Simuladores**: Programas que permiten prever el comportamiento del circuito bajo diferentes condiciones.\n\n### 4. Colocación y Ruteo\n- **Colocación (Placement)**: Asignación de componentes en el chip.  \n  - **Colocación Estática**: Componentes fijos que no se pueden mover.  \n  - **Colocación Dinámica**: Componentes que pueden ser ajustados para optimizar el diseño.  \n- **Ruteo (Routing)**: Establecimiento de conexiones eléctricas entre los componentes.  \n  - **Ruteo Global**: Define las rutas generales del chip.  \n  - **Ruteo Local**: Conexiones específicas optimizadas para el rendimiento.\n\n### 5. Verificación del Diseño\n- **DRC (Design Rule Check)**: Verifica que el diseño cumpla con las reglas de fabricación.  \n- **LVS (Layout vs. Schematic)**: Compara el diseño físico con el esquema lógico para asegurar que sean equivalentes.\n\n## ⚠️ Errores Comunes\n- **Desatender las reglas de diseño**: Puede resultar en un chip que no funcione correctamente.  \n- **Ignorar la gestión térmica**: La temperatura puede afectar el rendimiento de los componentes.  \n- **Planificación deficiente de rutas**: Aumenta la longitud de las conexiones y puede causar retardos significativos.\n\n## 💎 Ejemplo Práctico\n- **Caso**: Diseño de un amplificador de audio.  \n  - **Colocación de transistores**: Se deben agrupar para minimizar la longitud de las conexiones y mejorar la eficiencia.  \n  - **Ruteo de señales**: Utilizar diferentes capas para las señales de entrada y salida, evitando interferencias y mejorando la calidad del audio."
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": [],
+      "Optimization": []
+    },
+    "exam_date": "2026-02-07",
+    "updated_at": "2026-01-31T11:56:15.917272"
+  }
+}

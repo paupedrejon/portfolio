@@ -1,0 +1,40 @@
+{
+  "course_20260203_210929_810132": {
+    "user_id": "b9283127-c5a4-4307-9803-dd608b66ad66",
+    "course_id": "course_20260203_210929_810132",
+    "enrolled_at": "2026-02-03T21:09:55.092669",
+    "credits_remaining": 533,
+    "credits_used": 0,
+    "max_credits": 1000,
+    "initial_credits": 500,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-03",
+    "credits_from_streak": 33,
+    "streak_calendar": {
+      "2026-02-03": {
+        "claimed": true,
+        "credits": 33,
+        "streak_day": 1,
+        "claimed_at": "2026-02-03T21:10:01.311876"
+      }
+    },
+    "pending_credits": 0,
+    "xp": 0,
+    "topic_progress": {
+      "TEMA 1": 0,
+      "TEMA 2": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "TEMA 1": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">TEMA 1</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <p style=\"margin-bottom: 1rem; color: #4b5563;\">Presentación del TEMA 1, donde se abordarán los conceptos fundamentales que el estudiante debe dominar para el examen. La comprensión de estos elementos es clave para un desempeño exitoso.</p>\n  \n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 1rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #6366f1;\">\n        <strong style=\"color: #6366f1;\">Concepto 1:</strong> Descripción completa del primer concepto clave que se evaluará. Este concepto es fundamental para entender el contexto del examen y su aplicación práctica.\n      </li>\n      <li style=\"margin-bottom: 1rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #6366f1;\">\n        <strong style=\"color: #6366f1;\">Concepto 2:</strong> Explicación del segundo concepto esencial. Aquí se incluirán ejemplos aplicados y se destacarán los errores comunes que deben evitarse.\n      </li>\n      <li style=\"margin-bottom: 1rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #6366f1;\">\n        <strong style=\"color: #6366f1;\">Concepto 3:</strong> Detalles del tercer concepto, cubriendo su importancia y relevancia en el contexto del examen. Se pueden incluir comparaciones con otros conceptos para mayor claridad.\n      </li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Confundir conceptos similares, como <strong style=\"color: #6366f1;\">Concepto 1</strong> y <strong style=\"color: #6366f1;\">Concepto 2</strong>. Es crucial diferenciarlos claramente.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        No aplicar ejemplos prácticos al estudiar. Esto podría llevar a dificultades durante el examen.\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      Un caso de uso real del <strong style=\"color: #6366f1;\">Concepto 1</strong>: por ejemplo, cómo aplicar este concepto en un test o una situación real que podrías enfrentar en el examen.\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "TEMA 1": [],
+      "TEMA 2": []
+    },
+    "exam_date": "2026-02-20",
+    "updated_at": "2026-02-03T21:10:36.912744"
+  }
+}

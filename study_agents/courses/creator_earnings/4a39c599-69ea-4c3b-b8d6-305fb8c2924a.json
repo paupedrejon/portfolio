@@ -1,0 +1,36 @@
+{
+  "total_earned": 4.0,
+  "available_to_withdraw": 0.0,
+  "pending": 3.0,
+  "withdrawn": 0.0,
+  "transactions": [
+    {
+      "type": "course_sale",
+      "amount": 1.0,
+      "course_id": "course_20260131_110300_468144",
+      "course_title": "DBD Parical 2",
+      "timestamp": "2026-02-01T01:40:47.118740"
+    },
+    {
+      "type": "course_sale",
+      "amount": 1.0,
+      "course_id": "course_20260131_110300_468144",
+      "course_title": "DBD Parical 2",
+      "timestamp": "2026-02-01T01:53:44.915174"
+    },
+    {
+      "type": "course_sale",
+      "amount": 1.0,
+      "course_id": "course_20260131_110300_468144",
+      "course_title": "DBD Parical 2",
+      "timestamp": "2026-02-01T01:58:29.471716"
+    },
+    {
+      "type": "course_sale",
+      "amount": 1.0,
+      "course_id": "course_20260131_110300_468144",
+      "course_title": "DBD Parical 2",
+      "timestamp": "2026-02-01T02:06:55.315637"
+    }
+  ]
+}

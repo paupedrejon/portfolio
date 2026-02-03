@@ -1,0 +1,45 @@
+{
+  "balance": 0.0,
+  "total_deposited": 20.0,
+  "total_spent": 20.0,
+  "transactions": [
+    {
+      "type": "deposit",
+      "amount": 20.0,
+      "timestamp": "2026-02-01T14:18:16.257389",
+      "metadata": {
+        "stripe_session_id": "cs_test_a12eQp4INegW79aen6EswZUCDrHkJ0C5PrNBlGkndGBOK7gzuLU0kNv7g5",
+        "payment_intent": "pi_3Sw0XSIKH1butBFz1YtxmFS2",
+        "verified_via": "direct_check"
+      }
+    },
+    {
+      "type": "course_purchase",
+      "amount": -10.0,
+      "timestamp": "2026-02-01T14:18:49.529455",
+      "metadata": {
+        "course_id": "course_20260201_141346_650815",
+        "course_title": "DBD Parchis ",
+        "distribution": {
+          "ai_usage": 6.0,
+          "platform": 2.0,
+          "creator": 2.0
+        }
+      }
+    },
+    {
+      "type": "course_purchase",
+      "amount": -10.0,
+      "timestamp": "2026-02-01T16:21:47.848221",
+      "metadata": {
+        "course_id": "course_20260201_141346_650815",
+        "course_title": "DBD Parchis ",
+        "distribution": {
+          "ai_usage": 6.0,
+          "platform": 2.0,
+          "creator": 2.0
+        }
+      }
+    }
+  ]
+}

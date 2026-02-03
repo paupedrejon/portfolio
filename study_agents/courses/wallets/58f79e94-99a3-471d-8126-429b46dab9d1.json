@@ -1,0 +1,124 @@
+{
+  "balance": 14.0,
+  "total_deposited": 39.0,
+  "total_spent": 25.0,
+  "transactions": [
+    {
+      "type": "deposit",
+      "amount": 10.0,
+      "timestamp": "2026-02-01T14:14:24.826405",
+      "metadata": {
+        "stripe_session_id": "cs_test_a1275Lcwm6LJcZJ22yk56iyZxYbXpFSIJB66HDLFP64Wa5MXUg8XS8eCcz",
+        "payment_intent": "pi_3Sw0TiIKH1butBFz1MXkmiUj",
+        "verified_via": "direct_check"
+      }
+    },
+    {
+      "type": "course_purchase",
+      "amount": -10.0,
+      "timestamp": "2026-02-01T14:14:30.452553",
+      "metadata": {
+        "course_id": "course_20260201_141346_650815",
+        "course_title": "DBD Parchis ",
+        "distribution": {
+          "ai_usage": 6.0,
+          "platform": 2.0,
+          "creator": 2.0
+        }
+      }
+    },
+    {
+      "type": "course_sale",
+      "amount": 2.0,
+      "timestamp": "2026-02-01T14:14:30.463043",
+      "metadata": {
+        "course_id": "course_20260201_141346_650815",
+        "course_title": "DBD Parchis ",
+        "buyer_id": "58f79e94-99a3-471d-8126-429b46dab9d1",
+        "amount": 2.0
+      }
+    },
+    {
+      "type": "course_sale",
+      "amount": 2.0,
+      "timestamp": "2026-02-01T14:18:49.530625",
+      "metadata": {
+        "course_id": "course_20260201_141346_650815",
+        "course_title": "DBD Parchis ",
+        "buyer_id": "3cb04694-90fb-45bd-9e38-c88dbc54ef5f",
+        "amount": 2.0
+      }
+    },
+    {
+      "type": "deposit",
+      "amount": 20.0,
+      "timestamp": "2026-02-01T16:21:37.259767",
+      "metadata": {
+        "stripe_session_id": "cs_test_a1W5rTK6lieXgrbZ30lFIZPv8a4cnlnZRSehT1BFXQMvmt5cF7uykPCgQQ",
+        "payment_intent": "pi_3Sw2StIKH1butBFz19OKbvnV",
+        "verified_via": "direct_check"
+      }
+    },
+    {
+      "type": "course_purchase",
+      "amount": -10.0,
+      "timestamp": "2026-02-01T16:21:43.048308",
+      "metadata": {
+        "course_id": "course_20260201_141346_650815",
+        "course_title": "DBD Parchis ",
+        "distribution": {
+          "ai_usage": 6.0,
+          "platform": 2.0,
+          "creator": 2.0
+        }
+      }
+    },
+    {
+      "type": "course_sale",
+      "amount": 2.0,
+      "timestamp": "2026-02-01T16:21:43.058156",
+      "metadata": {
+        "course_id": "course_20260201_141346_650815",
+        "course_title": "DBD Parchis ",
+        "buyer_id": "58f79e94-99a3-471d-8126-429b46dab9d1",
+        "amount": 2.0
+      }
+    },
+    {
+      "type": "course_sale",
+      "amount": 2.0,
+      "timestamp": "2026-02-01T16:21:47.850414",
+      "metadata": {
+        "course_id": "course_20260201_141346_650815",
+        "course_title": "DBD Parchis ",
+        "buyer_id": "3cb04694-90fb-45bd-9e38-c88dbc54ef5f",
+        "amount": 2.0
+      }
+    },
+    {
+      "type": "course_purchase",
+      "amount": -5.0,
+      "timestamp": "2026-02-03T20:43:04.981544",
+      "metadata": {
+        "course_id": "course_20260203_204206_234904",
+        "course_title": "AC",
+        "distribution": {
+          "ai_usage": 3.0,
+          "platform": 1.0,
+          "creator": 1.0
+        }
+      }
+    },
+    {
+      "type": "course_sale",
+      "amount": 1.0,
+      "timestamp": "2026-02-03T20:43:04.994573",
+      "metadata": {
+        "course_id": "course_20260203_204206_234904",
+        "course_title": "AC",
+        "buyer_id": "58f79e94-99a3-471d-8126-429b46dab9d1",
+        "amount": 1.0
+      }
+    }
+  ]
+}

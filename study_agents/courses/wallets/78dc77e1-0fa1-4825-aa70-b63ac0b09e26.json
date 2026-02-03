@@ -1,0 +1,108 @@
+{
+  "balance": 24.0,
+  "total_deposited": 64.0,
+  "total_spent": 40.0,
+  "transactions": [
+    {
+      "type": "deposit",
+      "amount": 10.0,
+      "timestamp": "2026-02-01T01:53:35.791292",
+      "metadata": {
+        "stripe_session_id": "cs_test_a1DHI6KepsdRDvT1wceizffHyL7GnYk30BEPUb5dFpvyf5eWWmFx8PUt7w",
+        "payment_intent": "pi_3SvourIKH1butBFz1hYz17TY",
+        "verified_via": "direct_check"
+      }
+    },
+    {
+      "type": "course_purchase",
+      "amount": -5.0,
+      "timestamp": "2026-02-01T01:53:44.914178",
+      "metadata": {
+        "course_id": "course_20260131_110300_468144",
+        "course_title": "DBD Parical 2",
+        "distribution": {
+          "ai_usage": 3.0,
+          "platform": 1.0,
+          "creator": 1.0
+        }
+      }
+    },
+    {
+      "type": "course_purchase",
+      "amount": -5.0,
+      "timestamp": "2026-02-01T01:58:29.470978",
+      "metadata": {
+        "course_id": "course_20260131_110300_468144",
+        "course_title": "DBD Parical 2",
+        "distribution": {
+          "ai_usage": 3.0,
+          "platform": 1.0,
+          "creator": 1.0
+        }
+      }
+    },
+    {
+      "type": "deposit",
+      "amount": 50.0,
+      "timestamp": "2026-02-01T02:06:48.417020",
+      "metadata": {
+        "stripe_session_id": "cs_test_a1LeO7NTCdTEQUls0nLbPZ4gyDpnOum4WXgWZAO0b6GAw5pKWuzFV4lF0j",
+        "payment_intent": "pi_3Svp7dIKH1butBFz0PGVrzOs",
+        "verified_via": "direct_check"
+      }
+    },
+    {
+      "type": "course_purchase",
+      "amount": -5.0,
+      "timestamp": "2026-02-01T02:06:55.313995",
+      "metadata": {
+        "course_id": "course_20260131_110300_468144",
+        "course_title": "DBD Parical 2",
+        "distribution": {
+          "ai_usage": 3.0,
+          "platform": 1.0,
+          "creator": 1.0
+        }
+      }
+    },
+    {
+      "type": "course_purchase",
+      "amount": -5.0,
+      "timestamp": "2026-02-01T11:43:22.595147",
+      "metadata": {
+        "course_id": "course_20260131_110300_468144",
+        "course_title": "DBD Parical 2",
+        "distribution": {
+          "ai_usage": 3.0,
+          "platform": 1.0,
+          "creator": 1.0
+        }
+      }
+    },
+    {
+      "type": "course_purchase",
+      "amount": -20.0,
+      "timestamp": "2026-02-01T11:59:35.563850",
+      "metadata": {
+        "course_id": "course_20260201_115919_181305",
+        "course_title": "ENGLISH B2 Preparation",
+        "distribution": {
+          "ai_usage": 10.0,
+          "platform": 6.0,
+          "creator": 4.0
+        }
+      }
+    },
+    {
+      "type": "course_sale",
+      "amount": 4.0,
+      "timestamp": "2026-02-01T11:59:35.573910",
+      "metadata": {
+        "course_id": "course_20260201_115919_181305",
+        "course_title": "ENGLISH B2 Preparation",
+        "buyer_id": "78dc77e1-0fa1-4825-aa70-b63ac0b09e26",
+        "amount": 4.0
+      }
+    }
+  ]
+}

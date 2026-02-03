@@ -3,6 +3,7 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { Providers } from "./providers";
 import Header from "@/components/Header";
+import ConditionalHeader from "@/components/ConditionalHeader";
 import { spaceGrotesk, outfit, jetbrainsMono } from "./fonts";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { AiOutlineMail } from "react-icons/ai";
@@ -33,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="overflow-x-hidden w-full">
         <Providers>
-        <Header />
+        <ConditionalHeader />
         
         <main className="pt-0 w-full">
           {children}

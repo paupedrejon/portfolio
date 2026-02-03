@@ -1,0 +1,39 @@
+{
+  "course_20260201_141346_650815": {
+    "user_id": "3cb04694-90fb-45bd-9e38-c88dbc54ef5f",
+    "course_id": "course_20260201_141346_650815",
+    "enrolled_at": "2026-02-01T16:21:47.863877",
+    "credits_remaining": 262,
+    "credits_used": 0,
+    "max_credits": 500,
+    "initial_credits": 250,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-01",
+    "credits_from_streak": 12,
+    "streak_calendar": {
+      "2026-02-01": {
+        "claimed": true,
+        "credits": 12,
+        "streak_day": 1,
+        "claimed_at": "2026-02-01T22:31:16.155793"
+      }
+    },
+    "pending_credits": 0,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0,
+      "Optimization": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "Physical Design": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">Physical Design</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul>\n      <li><strong style=\"color: #6366f1;\">Definición:</strong> El <code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">Physical Design</code> se refiere a la implementación física de un diseño lógico en circuitos integrados y sistemas de electrónica, optimizando el rendimiento y la eficiencia.</li>\n      <li><strong style=\"color: #6366f1;\">Objetivos:</strong>\n        <ul>\n          <li>Maximizar la eficiencia energética.</li>\n          <li>Minimizar el área del chip.</li>\n          <li>Maximizar la velocidad de operación.</li>\n        </ul>\n      </li>\n      <li><strong style=\"color: #6366f1;\">Etapas del Physical Design:</strong>\n        <ul>\n          <li><strong style=\"color: #10b981;\">Floorplanning:</strong> Disposición de los bloques funcionales en el chip.</li>\n          <li><strong style=\"color: #10b981;\">Placement:</strong> Ubicación de los componentes dentro de la superficie del chip.</li>\n          <li><strong style=\"color: #10b981;\">Routing:</strong> Conexión de los componentes de manera eficiente.</li>\n          <li><strong style=\"color: #10b981;\">Timing Optimization:</strong> Ajuste del tiempo de señal para cumplir requisitos de rendimiento.</li>\n        </ul>\n      </li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Ignorar restricciones de diseño, lo cual puede llevar a fallas en el rendimiento del circuito.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        No considerar la variabilidad en el proceso de fabricación, que puede afectar el rendimiento real del circuito.\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      Un diseño de una unidad central de procesamiento (CPU) que utiliza las etapas de <code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">Floorplanning</code> y <code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">Routing</code> para optimizar su rendimiento y eficiencia.\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": [],
+      "Optimization": []
+    },
+    "updated_at": "2026-02-01T16:23:30.633235"
+  }
+}

@@ -310,7 +310,7 @@ export default function DiagramRenderer({ data, colorTheme }: DiagramRendererPro
       const words = node.label.split(' ');
       const maxCharsPerLine = 18;
       let currentLine = '';
-      const lines: string[] = [];
+      let lines: string[] = [];
       
       words.forEach(word => {
         if ((currentLine + ' ' + word).length <= maxCharsPerLine) {

@@ -18,12 +18,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Si no hay API key del frontend, el backend usará la de .env.local
+    // Solo mostrar warning, no error
     if (!apiKey) {
-      console.error('[Upload] ERROR: API key no recibida del frontend');
-      return NextResponse.json(
-        { error: 'API key requerida. Por favor, configura tu API key de OpenAI en el modal.' },
-        { status: 400 }
-      );
+      console.log('[Upload] INFO: No se recibió API key del frontend, el backend usará la de .env.local');
     }
 
     // Verificar que FastAPI esté disponible primero
@@ -42,13 +40,12 @@ export async function POST(request: NextRequest) {
           { status: 503 }
         );
       }
-    } catch (healthError: unknown) {
-      const details = healthError instanceof Error ? healthError.message : 'Error desconocido';
+    } catch (healthError: any) {
       return NextResponse.json(
         { 
           error: `No se pudo conectar al backend FastAPI en ${FASTAPI_URL}`,
           hint: 'Asegúrate de que FastAPI esté corriendo: cd study_agents && python api/main.py',
-          details
+          details: healthError.message
         },
         { status: 503 }
       );
@@ -59,32 +56,32 @@ export async function POST(request: NextRequest) {
     
     // Procesar cada archivo
     for (const file of files) {
-      if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      const isImage = file.type.startsWith('image/') || 
+        ['.jpg', '.jpeg', '.png', '.gif', '.webp'].some(ext => file.name.toLowerCase().endsWith(ext));
+      
+      if (!isPdf && !isImage) {
         return NextResponse.json(
-          { error: `El archivo ${file.name} no es un PDF` },
+          { error: `El archivo ${file.name} debe ser un PDF o una imagen` },
           { status: 400 }
         );
       }
       
       // Convertir File a Blob/ArrayBuffer para reenvío
       const arrayBuffer = await file.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: file.type || 'application/pdf' });
+      const blob = new Blob([arrayBuffer], { type: file.type || (isPdf ? 'application/pdf' : 'image/jpeg') });
       
       // Añadir al FormData con el nombre del archivo
       fastApiFormData.append('files', blob, file.name);
     }
     
-    // Añadir API key (asegurarse de que se añade correctamente)
-    if (!apiKey || apiKey.trim() === '') {
-      console.error('[Upload] ERROR: API key está vacía antes de enviar a FastAPI');
-      return NextResponse.json(
-        { error: 'API key no válida. Por favor, configura tu API key de OpenAI.' },
-        { status: 400 }
-      );
+    // Añadir API key solo si existe (el backend puede usar la de .env.local)
+    if (apiKey && apiKey.trim() !== '') {
+      fastApiFormData.append('apiKey', apiKey.trim());
+      console.log('[Upload] Enviando a FastAPI con API key del frontend:', apiKey.substring(0, 10) + '...');
+    } else {
+      console.log('[Upload] No se envió API key del frontend, el backend usará la de .env.local');
     }
-    
-    fastApiFormData.append('apiKey', apiKey.trim());
-    console.log('[Upload] Enviando a FastAPI con API key:', apiKey.substring(0, 10) + '...');
 
     // Llamar al backend FastAPI
     const response = await fetch(`${FASTAPI_URL}/api/upload-documents`, {
@@ -111,20 +108,37 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
     console.log('[Upload] Éxito:', data.message);
+    console.log('[Upload] Data recibida:', JSON.stringify(data, null, 2));
+
+    // Convertir rutas relativas a URLs completas
+    const saved_paths = (data.data?.saved_paths || []).map((path: string) => {
+      if (path.startsWith('http')) {
+        return path;
+      }
+      // Si es una ruta relativa como /api/files/filename, construir URL completa
+      if (path.startsWith('/')) {
+        return `${FASTAPI_URL}${path}`;
+      }
+      // Si es una ruta relativa sin /, añadir el prefijo
+      return `${FASTAPI_URL}/api/files/${path}`;
+    });
 
     return NextResponse.json({
       success: true,
       message: data.message || `${files.length} archivo(s) procesado(s) correctamente`,
       files: data.data?.processed_files || files.map(f => f.name),
-      data: data.data,
+      data: {
+        ...data.data,
+        saved_paths,
+      },
     });
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('[Upload] Error general:', error);
     
     // Mensajes de error más descriptivos
     let errorMessage = 'Error al subir archivos';
     
-    if (error instanceof Error && error.message) {
+    if (error.message) {
       if (error.message.includes('fetch failed') || 
           error.message.includes('ECONNREFUSED') ||
           error.message.includes('network')) {
@@ -144,3 +158,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+
+
