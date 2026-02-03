@@ -1695,7 +1695,7 @@ class CreateCourseRequest(BaseModel):
     generate_summaries: bool = False  # Si True, genera resúmenes al crear el curso
     additional_comments: Optional[str] = None  # Comentarios adicionales para la IA antes de generar resúmenes
     gemini_api_key: Optional[str] = None  # API key de Google Gemini para generar resúmenes
-    gemini_model: str = "gemini-3-pro"  # Modelo de Gemini a usar: gemini-3-pro, gemini-3-flash, gemini-2.5-pro, etc.
+    gemini_model: str = "gemini-1.5-pro"  # Modelo de Gemini a usar: gemini-1.5-pro, gemini-1.5-flash, gemini-1.5-flash-8b
 
 
 class EnrollCourseRequest(BaseModel):
@@ -3077,7 +3077,7 @@ async def generate_course_summaries_background(
     course_description: str,
     topics: List[Dict],
     additional_comments: Optional[str] = None,
-    model: str = "gemini-3-pro",
+    model: str = "gemini-1.5-pro",
     exam_examples_pdfs: Optional[List[str]] = None
 ):
     """
@@ -3098,18 +3098,33 @@ async def generate_course_summaries_background(
             exam_examples_pdfs=exam_examples_pdfs
         )
         
-        # Guardar resúmenes en el curso
+        # Guardar resúmenes en el curso (incluso si algunos fallaron)
         course = course_storage.get_course(course_id)
         if course:
-            course["summaries"] = summaries
-            course["summaries_generated_at"] = datetime.now().isoformat()
+            # Verificar que haya al menos un resumen generado
+            has_summaries = False
+            for topic_name, topic_data in summaries.items():
+                if isinstance(topic_data, dict):
+                    if topic_data.get("summary") or topic_data.get("subtopics"):
+                        has_summaries = True
+                        break
+                elif isinstance(topic_data, str) and topic_data:
+                    has_summaries = True
+                    break
             
-            # Actualizar el curso usando los métodos del módulo
-            all_courses = course_storage.load_all_courses()
-            all_courses[course_id] = course
-            course_storage.save_all_courses(all_courses)
-            
-            print(f"✅ Resúmenes guardados en el curso {course_id}")
+            if has_summaries:
+                course["summaries"] = summaries
+                course["summaries_generated_at"] = datetime.now().isoformat()
+                
+                # Actualizar el curso usando los métodos del módulo
+                all_courses = course_storage.load_all_courses()
+                all_courses[course_id] = course
+                course_storage.save_all_courses(all_courses)
+                
+                print(f"✅ Resúmenes guardados en el curso {course_id}")
+                print(f"   Resúmenes generados para {len([k for k, v in summaries.items() if (isinstance(v, dict) and (v.get('summary') or v.get('subtopics'))) or (isinstance(v, str) and v)])} apartados")
+            else:
+                print(f"⚠️ No se generaron resúmenes válidos para el curso {course_id}")
         else:
             print(f"⚠️ No se encontró el curso {course_id} para guardar resúmenes")
             
@@ -4121,10 +4136,48 @@ async def generate_course_notes_endpoint(request: GenerateCourseNotesRequest):
         if not topic:
             raise HTTPException(status_code=404, detail=f"Tema '{request.topic_name}' no encontrado en el curso")
         
+        # Verificar si ya existen resúmenes generados automáticamente con Gemini
+        course_summaries = course.get("summaries", {})
+        if course_summaries and request.topic_name in course_summaries:
+            topic_summary_data = course_summaries[request.topic_name]
+            # Obtener el resumen principal del apartado
+            if isinstance(topic_summary_data, dict) and "summary" in topic_summary_data:
+                existing_summary = topic_summary_data["summary"]
+                if existing_summary:
+                    print(f"[FastAPI] Usando resumen generado automáticamente para tema '{request.topic_name}'")
+                    # Guardar también en generated_notes para compatibilidad
+                    current_notes = enrollment.get("generated_notes", {})
+                    current_notes[request.topic_name] = existing_summary
+                    course_storage.update_enrollment(
+                        user_id=request.user_id,
+                        course_id=request.course_id,
+                        updates={"generated_notes": current_notes}
+                    )
+                    return {
+                        "success": True,
+                        "notes": existing_summary,
+                        "from_auto_generated": True
+                    }
+            elif isinstance(topic_summary_data, str) and topic_summary_data:
+                # Si es un string directo
+                print(f"[FastAPI] Usando resumen generado automáticamente (formato string) para tema '{request.topic_name}'")
+                current_notes = enrollment.get("generated_notes", {})
+                current_notes[request.topic_name] = topic_summary_data
+                course_storage.update_enrollment(
+                    user_id=request.user_id,
+                    course_id=request.course_id,
+                    updates={"generated_notes": current_notes}
+                )
+                return {
+                    "success": True,
+                    "notes": topic_summary_data,
+                    "from_auto_generated": True
+                }
+        
         if not pdf_paths:
             raise HTTPException(status_code=400, detail=f"No hay PDFs disponibles para el tema '{request.topic_name}'")
         
-        print(f"[FastAPI] Generando apuntes para tema '{request.topic_name}' con {len(pdf_paths)} PDFs")
+        print(f"[FastAPI] Generando apuntes para tema '{request.topic_name}' con {len(pdf_paths)} PDFs (no hay resúmenes automáticos disponibles)")
         
         # Obtener información del examen si está disponible
         exam_info = None

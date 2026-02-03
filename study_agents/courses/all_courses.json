@@ -325,5 +325,234 @@
       }
     },
     "summaries_generated_at": "2026-02-03T21:09:29.826705"
+  },
+  "course_20260203_220814_991266": {
+    "course_id": "course_20260203_220814_991266",
+    "creator_id": "b9283127-c5a4-4307-9803-dd608b66ad66",
+    "title": "IDI PRUEBA 3",
+    "description": "lalalala",
+    "price": 0.0,
+    "max_duration_days": null,
+    "cover_image": "http://localhost:8000/api/files/Captura de pantalla 2026-01-21 224604.png",
+    "topics": [
+      {
+        "name": "PARTE 1",
+        "pdfs": [
+          "http://localhost:8000/api/files/Apuntes IDI ejemplo.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": []
+      }
+    ],
+    "exam_examples": [
+      "http://localhost:8000/api/files/Exmane IDI ejemplo.pdf"
+    ],
+    "available_tools": {
+      "flashcards": false,
+      "code_interpreter": false,
+      "notes": true,
+      "tests": true,
+      "exercises": true,
+      "games": false
+    },
+    "flashcard_questions": [],
+    "revenue_split": {
+      "ai_usage": 0,
+      "platform": 0,
+      "creator": 0
+    },
+    "is_exam": false,
+    "created_at": "2026-02-03T22:08:14.991293",
+    "updated_at": "2026-02-03T22:08:14.991297",
+    "enrollment_count": 1,
+    "satisfaction_rating": null,
+    "satisfaction_count": 0,
+    "is_active": true,
+    "summaries": {
+      "PARTE 1": {
+        "summary": null,
+        "subtopics": {}
+      }
+    },
+    "summaries_generated_at": "2026-02-03T22:08:16.872784"
+  },
+  "course_20260203_221504_540041": {
+    "course_id": "course_20260203_221504_540041",
+    "creator_id": "b9283127-c5a4-4307-9803-dd608b66ad66",
+    "title": "IDI PARTE 4",
+    "description": "adasdas",
+    "price": 10.0,
+    "max_duration_days": null,
+    "cover_image": "http://localhost:8000/api/files/Presentación Diapositivas Portfolio Fotografía Minimalista Aesthetic Blanco y Negro (9).jpg",
+    "topics": [
+      {
+        "name": "TEMA 1",
+        "pdfs": [
+          "http://localhost:8000/api/files/Apuntes IDI ejemplo.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": []
+      }
+    ],
+    "exam_examples": [
+      "http://localhost:8000/api/files/Exmane IDI ejemplo.pdf"
+    ],
+    "available_tools": {
+      "flashcards": false,
+      "code_interpreter": false,
+      "notes": true,
+      "tests": true,
+      "exercises": true,
+      "games": false
+    },
+    "flashcard_questions": [],
+    "revenue_split": {
+      "ai_usage": 6.0,
+      "platform": 2.0,
+      "creator": 2.0
+    },
+    "is_exam": false,
+    "created_at": "2026-02-03T22:15:04.540067",
+    "updated_at": "2026-02-03T22:15:04.540070",
+    "enrollment_count": 1,
+    "satisfaction_rating": null,
+    "satisfaction_count": 0,
+    "is_active": true
+  },
+  "course_20260203_221639_326590": {
+    "course_id": "course_20260203_221639_326590",
+    "creator_id": "d68d22ae-a833-4b1e-8869-b4e36b551151",
+    "title": "IDI PARTE 5",
+    "description": "aaa",
+    "price": 10.0,
+    "max_duration_days": null,
+    "cover_image": "http://localhost:8000/api/files/wallpaper-anime-train-station-scenic-stars-clouds.jpeg",
+    "topics": [
+      {
+        "name": "PARTE 1",
+        "pdfs": [
+          "http://localhost:8000/api/files/Apuntes IDI ejemplo.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": []
+      }
+    ],
+    "exam_examples": [
+      "http://localhost:8000/api/files/Exmane IDI ejemplo.pdf"
+    ],
+    "available_tools": {
+      "flashcards": false,
+      "code_interpreter": false,
+      "notes": true,
+      "tests": true,
+      "exercises": true,
+      "games": false
+    },
+    "flashcard_questions": [],
+    "revenue_split": {
+      "ai_usage": 6.0,
+      "platform": 2.0,
+      "creator": 2.0
+    },
+    "is_exam": false,
+    "created_at": "2026-02-03T22:16:39.326614",
+    "updated_at": "2026-02-03T22:16:39.326617",
+    "enrollment_count": 1,
+    "satisfaction_rating": null,
+    "satisfaction_count": 0,
+    "is_active": true,
+    "summaries": {
+      "PARTE 1": {
+        "summary": null,
+        "subtopics": {}
+      }
+    },
+    "summaries_generated_at": "2026-02-03T22:16:41.283844"
+  },
+  "course_20260203_222053_430427": {
+    "course_id": "course_20260203_222053_430427",
+    "creator_id": "d68d22ae-a833-4b1e-8869-b4e36b551151",
+    "title": "IDI PARTE 7",
+    "description": "me aburro",
+    "price": 20.0,
+    "max_duration_days": null,
+    "cover_image": "http://localhost:8000/api/files/Turandot-Liceu-A-Bofill-Opera-Actual-5002-507©A-Bofill.jpg",
+    "topics": [
+      {
+        "name": "TEMA 1",
+        "pdfs": [
+          "http://localhost:8000/api/files/Apuntes IDI ejemplo.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": []
+      }
+    ],
+    "exam_examples": [
+      "http://localhost:8000/api/files/Exmane IDI ejemplo.pdf"
+    ],
+    "available_tools": {
+      "flashcards": false,
+      "code_interpreter": false,
+      "notes": true,
+      "tests": true,
+      "exercises": true,
+      "games": false
+    },
+    "flashcard_questions": [],
+    "revenue_split": {
+      "ai_usage": 10.0,
+      "platform": 6.0,
+      "creator": 4.0
+    },
+    "is_exam": true,
+    "created_at": "2026-02-03T22:20:53.430456",
+    "updated_at": "2026-02-03T22:20:53.430460",
+    "enrollment_count": 1,
+    "satisfaction_rating": null,
+    "satisfaction_count": 0,
+    "is_active": true
+  },
+  "course_20260203_222519_180224": {
+    "course_id": "course_20260203_222519_180224",
+    "creator_id": "d68d22ae-a833-4b1e-8869-b4e36b551151",
+    "title": "IDI P8",
+    "description": "aaa",
+    "price": 10.0,
+    "max_duration_days": 12,
+    "cover_image": "http://localhost:8000/api/files/Captura de pantalla 2026-01-03 231423.png",
+    "topics": [
+      {
+        "name": "PRUEBA",
+        "pdfs": [
+          "http://localhost:8000/api/files/Apuntes IDI ejemplo.pdf"
+        ],
+        "subtopics": [],
+        "flashcards": []
+      }
+    ],
+    "exam_examples": [
+      "http://localhost:8000/api/files/Exmane IDI ejemplo.pdf"
+    ],
+    "available_tools": {
+      "flashcards": true,
+      "code_interpreter": false,
+      "notes": true,
+      "tests": true,
+      "exercises": true,
+      "games": false
+    },
+    "flashcard_questions": [],
+    "revenue_split": {
+      "ai_usage": 6.0,
+      "platform": 2.0,
+      "creator": 2.0
+    },
+    "is_exam": false,
+    "created_at": "2026-02-03T22:25:19.180248",
+    "updated_at": "2026-02-03T22:25:19.180252",
+    "enrollment_count": 1,
+    "satisfaction_rating": null,
+    "satisfaction_count": 0,
+    "is_active": true
   }
 }

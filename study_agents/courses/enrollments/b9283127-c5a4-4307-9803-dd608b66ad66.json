@@ -36,5 +36,58 @@
     },
     "exam_date": "2026-02-20",
     "updated_at": "2026-02-03T21:10:36.912744"
+  },
+  "course_20260203_220814_991266": {
+    "user_id": "b9283127-c5a4-4307-9803-dd608b66ad66",
+    "course_id": "course_20260203_220814_991266",
+    "enrolled_at": "2026-02-03T22:08:15.005868",
+    "credits_remaining": 0,
+    "credits_used": 0,
+    "max_credits": 0,
+    "initial_credits": 0,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-03",
+    "credits_from_streak": 0,
+    "streak_calendar": {},
+    "pending_credits": 0,
+    "xp": 0,
+    "topic_progress": {
+      "PARTE 1": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "PARTE 1": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">PARTE 1</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul>\n      <li style=\"margin-bottom: 0.75rem;\">Concepto 1: <strong style=\"color: #6366f1;\">Definición y explicación.</strong></li>\n      <li style=\"margin-bottom: 0.75rem;\">Concepto 2: <strong style=\"color: #6366f1;\">Definición y explicación.</strong></li>\n      <li style=\"margin-bottom: 0.75rem;\">Concepto 3: <strong style=\"color: #6366f1;\">Definición y explicación.</strong></li>\n      <li style=\"margin-bottom: 0.75rem;\">Concepto 4: <strong style=\"color: #6366f1;\">Definición y explicación.</strong></li>\n      <li style=\"margin-bottom: 0.75rem;\">Concepto 5: <strong style=\"color: #6366f1;\">Definición y explicación.</strong></li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Error común 1: <strong style=\"color: #6366f1;\">Descripción del error.</strong>\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Error común 2: <strong style=\"color: #6366f1;\">Descripción del error.</strong>\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      Ejemplo práctico sobre el concepto 1: <strong style=\"color: #6366f1;\">Descripción detallada del ejemplo.</strong>\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "PARTE 1": []
+    },
+    "updated_at": "2026-02-03T22:08:47.864087"
+  },
+  "course_20260203_221504_540041": {
+    "user_id": "b9283127-c5a4-4307-9803-dd608b66ad66",
+    "course_id": "course_20260203_221504_540041",
+    "enrolled_at": "2026-02-03T22:15:04.557165",
+    "credits_remaining": 250,
+    "credits_used": 0,
+    "max_credits": 500,
+    "initial_credits": 250,
+    "streak_days": 0,
+    "last_connection_date": null,
+    "credits_from_streak": 0,
+    "streak_calendar": {},
+    "pending_credits": 0,
+    "xp": 0,
+    "topic_progress": {
+      "TEMA 1": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "TEMA 1": []
+    }
   }
 }

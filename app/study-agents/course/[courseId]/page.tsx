@@ -201,19 +201,48 @@ export default function CoursePage() {
           const savedMessages = finalEnrollment.messages || [];
           setMessages(savedMessages);
           
-          // Cargar resúmenes existentes en topicSummary
-          const notes = finalEnrollment.generated_notes || {};
+          // Cargar resúmenes: primero usar course.summaries (generados automáticamente con Gemini)
+          // Si no existen, usar enrollment.generated_notes (generados manualmente)
           const summaries: Record<string, string> = {};
+          
+          // 1. Intentar usar resúmenes generados automáticamente (course.summaries)
+          if (loadedCourse && loadedCourse.summaries) {
+            Object.keys(loadedCourse.summaries).forEach((topicName) => {
+              const topicSummaryData = loadedCourse.summaries[topicName];
+              if (topicSummaryData) {
+                // Puede ser un objeto con {summary, subtopics} o un string directo
+                let summaryText = "";
+                if (typeof topicSummaryData === "string") {
+                  summaryText = topicSummaryData;
+                } else if (topicSummaryData && typeof topicSummaryData === "object" && "summary" in topicSummaryData) {
+                  summaryText = topicSummaryData.summary || "";
+                }
+                
+                if (summaryText && summaryText.trim().length > 0) {
+                  summaries[topicName] = summaryText;
+                  console.log(`✅ Resumen automático cargado para tema: ${topicName}`);
+                }
+              }
+            });
+          }
+          
+          // 2. Si no hay resúmenes automáticos para algún tema, usar los generados manualmente
+          const notes = finalEnrollment.generated_notes || {};
           Object.keys(notes).forEach((topicName) => {
-            const topicNotes = notes[topicName];
-            if (topicNotes) {
-              // Manejar tanto string como array
-              const summary = Array.isArray(topicNotes) ? topicNotes.join("\n\n") : topicNotes;
-              if (summary && summary.trim().length > 0) {
-                summaries[topicName] = summary;
+            // Solo usar si no hay resumen automático ya cargado
+            if (!summaries[topicName]) {
+              const topicNotes = notes[topicName];
+              if (topicNotes) {
+                // Manejar tanto string como array
+                const summary = Array.isArray(topicNotes) ? topicNotes.join("\n\n") : topicNotes;
+                if (summary && summary.trim().length > 0) {
+                  summaries[topicName] = summary;
+                  console.log(`✅ Resumen manual cargado para tema: ${topicName}`);
+                }
               }
             }
           });
+          
           setTopicSummary(summaries);
           
           // No enviar mensaje automático - el usuario debe seleccionar su nivel primero

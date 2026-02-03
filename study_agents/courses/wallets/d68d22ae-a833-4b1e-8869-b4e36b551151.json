@@ -1,0 +1,45 @@
+{
+  "balance": 19.972975,
+  "total_deposited": 20.0,
+  "total_spent": 0.027025,
+  "transactions": [
+    {
+      "type": "deposit",
+      "amount": 20.0,
+      "timestamp": "2026-02-03T22:24:11.630067",
+      "metadata": {
+        "stripe_session_id": "cs_test_a1dQOzQVn2S74WRKaljhoY0K5OyVCljvFAGTJQ3UML5EXSPaXbqIcfkGwJ",
+        "payment_intent": "pi_3Swr4rIKH1butBFz0DO0aZLO",
+        "verified_via": "direct_check"
+      }
+    },
+    {
+      "type": "summary_generation",
+      "amount": -0.027025,
+      "timestamp": "2026-02-03T22:25:19.196746",
+      "metadata": {
+        "course_id": "course_20260203_222519_180224",
+        "course_title": "IDI P8",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    }
+  ]
+}

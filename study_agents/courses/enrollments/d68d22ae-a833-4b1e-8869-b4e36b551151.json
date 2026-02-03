@@ -1,0 +1,106 @@
+{
+  "course_20260203_221639_326590": {
+    "user_id": "d68d22ae-a833-4b1e-8869-b4e36b551151",
+    "course_id": "course_20260203_221639_326590",
+    "enrolled_at": "2026-02-03T22:16:39.341118",
+    "credits_remaining": 250,
+    "credits_used": 0,
+    "max_credits": 500,
+    "initial_credits": 250,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-03",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-03": {
+        "claimed": false,
+        "credits": 12,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 12,
+    "xp": 0,
+    "topic_progress": {
+      "PARTE 1": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "PARTE 1": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">PARTE 1</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem;\">\n        <strong style=\"color: #6366f1;\">Vocabulario Esencial:</strong>\n        <ul style=\"list-style: disc; margin-left: 20px;\">\n          <li>Saludos: \"Hola\", \"Adiós\", \"Gracias\", \"¿Cómo estás?\"</li>\n          <li>Números: 1-10</li>\n          <li>Colores básicos: \"Rojo\", \"Verde\", \"Azul\", \"Amarillo\"</li>\n        </ul>\n      </li>\n      <li style=\"margin-bottom: 0.75rem;\">\n        <strong style=\"color: #6366f1;\">Frases de Supervivencia:</strong>\n        <ul style=\"list-style: disc; margin-left: 20px;\">\n          <li>\"Me llamo...\"</li>\n          <li>\"Tengo hambre\"</li>\n          <li>\"¿Cuánto cuesta?\"</li>\n        </ul>\n      </li>\n      <li style=\"margin-bottom: 0.75rem;\">\n        <strong style=\"color: #6366f1;\">Pronunciación Básica:</strong>\n        <p style=\"margin: 0;\">Ejemplo: \"Hola\" se pronuncia como <code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">o-la</code>.</p>\n      </li>\n      <li style=\"margin-bottom: 0.75rem;\">\n        <strong style=\"color: #6366f1;\">Gramática Básica:</strong>\n        <ul style=\"list-style: disc; margin-left: 20px;\">\n          <li>Uso de artículos: \"El\", \"La\"</li>\n          <li>Presente simple: \"Yo como\", \"Tú estudias\"</li>\n        </ul>\n      </li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Confundir \"¿Cómo estás?\" con \"¿Qué tal?\" en situaciones formales.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Olvidar los artículos cuando se habla en plural.\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      Frase de uso diario: \"<strong style='color: #10b981;'>Hola, ¿cómo estás?</strong>\" se utiliza al saludar a alguien.\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "PARTE 1": []
+    },
+    "updated_at": "2026-02-03T22:17:15.197474"
+  },
+  "course_20260203_222053_430427": {
+    "user_id": "d68d22ae-a833-4b1e-8869-b4e36b551151",
+    "course_id": "course_20260203_222053_430427",
+    "enrolled_at": "2026-02-03T22:20:53.443698",
+    "credits_remaining": 533,
+    "credits_used": 0,
+    "max_credits": 1000,
+    "initial_credits": 500,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-03",
+    "credits_from_streak": 33,
+    "streak_calendar": {
+      "2026-02-03": {
+        "claimed": true,
+        "credits": 33,
+        "streak_day": 1,
+        "claimed_at": "2026-02-03T22:21:58.191370"
+      }
+    },
+    "pending_credits": 0,
+    "xp": 0,
+    "topic_progress": {
+      "TEMA 1": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "TEMA 1": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">TEMA 1</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul>\n      <li style=\"margin-bottom: 0.5rem;\">Definición de conceptos clave del tema.</li>\n      <li style=\"margin-bottom: 0.5rem;\">Importancia y aplicaciones en la vida diaria.</li>\n      <li style=\"margin-bottom: 0.5rem;\">Ejemplos prácticos relacionados con el tema.</li>\n      <li style=\"margin-bottom: 0.5rem;\">Diferencias y similitudes con otros conceptos relevantes.</li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Confundir términos similares que pueden llevar a errores en la interpretación de preguntas.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Ignorar ejemplos prácticos que ayudan a entender mejor los conceptos.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        No aplicar los conocimientos en situaciones cotidianas, haciendo más difícil la memorización.\n      </li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      Un caso que ilustra la aplicación de un concepto clave: el uso de estadísticas para analizar tendencias de consumo en el mercado.\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "TEMA 1": []
+    },
+    "updated_at": "2026-02-03T22:21:21.180138"
+  },
+  "course_20260203_222519_180224": {
+    "user_id": "d68d22ae-a833-4b1e-8869-b4e36b551151",
+    "course_id": "course_20260203_222519_180224",
+    "enrolled_at": "2026-02-03T22:25:19.194314",
+    "credits_remaining": 262,
+    "credits_used": 0,
+    "max_credits": 500,
+    "initial_credits": 250,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-03",
+    "credits_from_streak": 12,
+    "streak_calendar": {
+      "2026-02-03": {
+        "claimed": true,
+        "credits": 12,
+        "streak_day": 1,
+        "claimed_at": "2026-02-03T22:25:59.181791"
+      }
+    },
+    "pending_credits": 0,
+    "xp": 0,
+    "topic_progress": {
+      "PRUEBA": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "PRUEBA": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">PRUEBA</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul>\n      <li>Definición de <strong style=\"color: #6366f1;\">Prueba</strong>: Evaluación que permite medir conocimientos, habilidades o competencias.</li>\n      <li>Tipos de <strong style=\"color: #6366f1;\">Pruebas</strong>:\n        <ul>\n          <li><strong style=\"color: #10b981;\">Pruebas Formativas</strong>: Se utilizan para apoyar el aprendizaje durante el proceso educativo.</li>\n          <li><strong style=\"color: #10b981;\">Pruebas Sumativas</strong>: Se aplican al final de un periodo para evaluar lo aprendido.</li>\n          <li><strong style=\"color: #10b981;\">Pruebas Diagnósticas</strong>: Permiten identificar debilidades y fortalezas antes de iniciar un proceso educativo.</li>\n        </ul>\n      </li>\n      <li>Elementos clave de una <strong style=\"color: #6366f1;\">Prueba</strong>:\n        <ul>\n          <li><strong style=\"color: #f59e0b;\">Objetivos</strong>: Qué se espera que el estudiante demuestre.</li>\n          <li><strong style=\"color: #f59e0b;\">Contenido</strong>: Temas que se evaluarán.</li>\n          <li><strong style=\"color: #f59e0b;\">Formato</strong>: Tipo de preguntas (selección múltiple, ensayo, verdadero/falso, etc.).</li>\n          <li><strong style=\"color: #f59e0b;\">Criterios de Evaluación</strong>: Cómo se calificará la prueba.</li>\n        </ul>\n      </li>\n      <li>Preparación para la <strong style=\"color: #6366f1;\">Prueba</strong>:\n        <ul>\n          <li>Estudio de <strong style=\"color: #10b981;\">Contenido Relevante</strong>: Revisar todos los temas y subtemas.</li>\n          <li>Práctica con <strong style=\"color: #10b981;\">Ejercicios</strong>: Realizar ejercicios de práctica bajo condiciones de examen.</li>\n          <li>Gestión del <strong style=\"color: #10b981;\">Tiempo</strong>: Simular el tiempo de la prueba para practicar la administración del tiempo.</li>\n        </ul>\n      </li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        No leer las instrucciones con atención.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        No administrar correctamente el tiempo.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Estudiar el día antes sin repasar adecuadamente.\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      Supón que hay una prueba de matemáticas en la que debes resolver problemas de álgebra. Un ejemplo de pregunta podría ser: \"Resuelve la ecuación 2x + 3 = 11\". Para resolverlo:\n      <ol>\n        <li>Resta 3 de ambos lados: 2x = 8.</li>\n        <li>Divide entre 2: x = 4.</li>\n      </ol>\n      De este modo, practicas cómo resolver ecuaciones en la prueba.\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "PRUEBA": []
+    },
+    "updated_at": "2026-02-03T22:25:59.167501"
+  }
+}

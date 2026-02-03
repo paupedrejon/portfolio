@@ -1,6 +1,6 @@
 {
-  "balance": 4.0,
-  "total_deposited": 24.0,
+  "balance": 54.0,
+  "total_deposited": 74.0,
   "total_spent": 20.0,
   "transactions": [
     {
@@ -36,6 +36,16 @@
         "course_title": "PRUEBA IDI",
         "buyer_id": "b9283127-c5a4-4307-9803-dd608b66ad66",
         "amount": 4.0
+      }
+    },
+    {
+      "type": "deposit",
+      "amount": 50.0,
+      "timestamp": "2026-02-03T22:06:50.085386",
+      "metadata": {
+        "stripe_session_id": "cs_test_a1VN0I9ol3UxTdZ6wtllf49l1PsqvDogQnjoBT5IiklLLSXnOqjNJiUJLt",
+        "payment_intent": "pi_3Swqo4IKH1butBFz0ZAMlSsK",
+        "verified_via": "direct_check"
       }
     }
   ]

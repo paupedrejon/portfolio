@@ -73,7 +73,7 @@ def summarize_content_for_context(
     gemini_api_key: str,
     content_text: str,
     content_type: str,  # "teorico" o "examenes"
-    model: str = "gemini-3-pro"
+    model: str = "gemini-1.5-pro"
 ) -> Optional[str]:
     """
     Hace un resumen inteligente del contenido para usarlo como contexto
@@ -119,7 +119,23 @@ MATERIAL TEÓRICO:
 
 Extrae y estructura la información relevante:"""
         
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_api_key}"
+        # Mapear nombres antiguos a nombres correctos de Gemini
+        # Los modelos disponibles son: gemini-pro, gemini-1.5-pro, gemini-1.5-flash
+        model_mapping = {
+            "gemini-3-pro": "gemini-1.5-pro",
+            "gemini-3-flash": "gemini-1.5-flash",
+            "gemini-2.5-pro": "gemini-1.5-pro",
+            "gemini-2.5-flash": "gemini-1.5-flash",
+            "gemini-2.5-flash-lite": "gemini-1.5-flash",
+            "gemini-1.5-pro": "gemini-1.5-pro",
+            "gemini-1.5-flash": "gemini-1.5-flash",
+            "gemini-1.5-flash-8b": "gemini-1.5-flash"
+        }
+        actual_model = model_mapping.get(model, model)
+        
+        # Intentar primero con v1beta, si falla usar v1
+        # Algunos modelos pueden requerir v1 en lugar de v1beta
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{actual_model}:generateContent?key={gemini_api_key}"
         
         payload = {
             "contents": [{
@@ -136,6 +152,38 @@ Extrae y estructura la información relevante:"""
         }
         
         response = requests.post(url, json=payload, timeout=180)
+        
+        # Si falla con 404, intentar con v1 en lugar de v1beta
+        if response.status_code == 404:
+            print(f"⚠️ Modelo {actual_model} no encontrado en v1beta, intentando con v1...")
+            url_v1 = f"https://generativelanguage.googleapis.com/v1/models/{actual_model}:generateContent?key={gemini_api_key}"
+            response = requests.post(url_v1, json=payload, timeout=180)
+        
+        # Si aún falla, intentar con gemini-pro como fallback (v1)
+        if response.status_code == 404:
+            print(f"⚠️ Modelo {actual_model} no encontrado, usando gemini-pro como fallback (v1)...")
+            url_fallback = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={gemini_api_key}"
+            response = requests.post(url_fallback, json=payload, timeout=180)
+        
+        # Si aún falla, verificar el error real
+        if response.status_code != 200:
+            try:
+                error_detail = response.json()
+                error_message = error_detail.get("error", {}).get("message", str(error_detail))
+            except:
+                error_message = response.text[:500]
+            
+            print(f"❌ Error de API de Gemini (status {response.status_code}): {error_message}")
+            print(f"⚠️ URL intentada: {url_fallback if 'url_fallback' in locals() else (url_v1 if 'url_v1' in locals() else url)}")
+            print(f"⚠️ API Key configurada: {'Sí' if gemini_api_key else 'No'} (primeros 10 chars: {gemini_api_key[:10] if gemini_api_key else 'N/A'}...)")
+            
+            # Si es 401 o 403, el problema es la API key
+            if response.status_code in [401, 403]:
+                raise Exception(f"API key de Gemini inválida o sin permisos. Obtén una nueva en https://aistudio.google.com/app/apikey. Error: {error_message}")
+            # Si es 404, puede ser modelo o URL incorrecta
+            elif response.status_code == 404:
+                raise Exception(f"No se pudo conectar con la API de Gemini. Verifica:\n1. Que tu API key sea válida (obtén una en https://aistudio.google.com/app/apikey)\n2. Que tengas acceso a la API de Gemini\n3. Que la API key tenga los permisos necesarios\nError: {error_message}")
+        
         response.raise_for_status()
         
         result = response.json()
@@ -170,7 +218,7 @@ def generate_summary_with_gemini(
     course_description: str,
     additional_comments: Optional[str] = None,
     is_subtopic: bool = False,
-    model: str = "gemini-3-pro",  # Modelo por defecto: Gemini 3 Pro (mejor calidad)
+    model: str = "gemini-1.5-pro",  # Modelo por defecto: Gemini 1.5 Pro (mejor calidad)
     exam_examples_pdfs: Optional[List[str]] = None  # PDFs de exámenes para priorizar contenido
 ) -> Optional[str]:
     """
@@ -389,13 +437,25 @@ $$F = m \\cdot a$$
 ¡Comienza la generación ahora!"""
         
         # Llamar a la API de Gemini
-        # Modelos disponibles:
-        # - gemini-3-pro: Mejor calidad para apuntes detallados
-        # - gemini-3-flash: Más rápido y económico
-        # - gemini-2.5-pro: Versión anterior, buena calidad
-        # - gemini-2.5-flash: Versión anterior, más económica
-        # - gemini-2.5-flash-lite: Versión más ligera
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_api_key}"
+        # Modelos disponibles (nombres correctos):
+        # - gemini-1.5-pro: Mejor calidad para apuntes detallados
+        # - gemini-1.5-flash: Más rápido y económico
+        # - gemini-1.5-flash-8b: Versión más ligera
+        # Mapear nombres antiguos a nombres correctos de Gemini
+        model_mapping = {
+            "gemini-3-pro": "gemini-1.5-pro",
+            "gemini-3-flash": "gemini-1.5-flash",
+            "gemini-2.5-pro": "gemini-1.5-pro",
+            "gemini-2.5-flash": "gemini-1.5-flash",
+            "gemini-2.5-flash-lite": "gemini-1.5-flash",
+            "gemini-1.5-pro": "gemini-1.5-pro",
+            "gemini-1.5-flash": "gemini-1.5-flash",
+            "gemini-1.5-flash-8b": "gemini-1.5-flash"
+        }
+        actual_model = model_mapping.get(model, model)  # Usar el modelo original si no está en el mapeo
+        
+        # Intentar primero con v1beta, si falla usar v1
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{actual_model}:generateContent?key={gemini_api_key}"
         
         payload = {
             "contents": [{
@@ -412,6 +472,38 @@ $$F = m \\cdot a$$
         }
         
         response = requests.post(url, json=payload, timeout=120)
+        
+        # Si falla con 404, intentar con v1 en lugar de v1beta
+        if response.status_code == 404:
+            print(f"⚠️ Modelo {actual_model} no encontrado en v1beta, intentando con v1...")
+            url_v1 = f"https://generativelanguage.googleapis.com/v1/models/{actual_model}:generateContent?key={gemini_api_key}"
+            response = requests.post(url_v1, json=payload, timeout=120)
+        
+        # Si aún falla, intentar con gemini-pro como fallback (v1)
+        if response.status_code == 404:
+            print(f"⚠️ Modelo {actual_model} no encontrado, usando gemini-pro como fallback (v1)...")
+            url_fallback = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={gemini_api_key}"
+            response = requests.post(url_fallback, json=payload, timeout=120)
+        
+        # Si aún falla, verificar el error real
+        if response.status_code != 200:
+            try:
+                error_detail = response.json()
+                error_message = error_detail.get("error", {}).get("message", str(error_detail))
+            except:
+                error_message = response.text[:500]
+            
+            print(f"❌ Error de API de Gemini (status {response.status_code}): {error_message}")
+            print(f"⚠️ URL intentada: {url_fallback if 'url_fallback' in locals() else (url_v1 if 'url_v1' in locals() else url)}")
+            print(f"⚠️ API Key configurada: {'Sí' if gemini_api_key else 'No'} (primeros 10 chars: {gemini_api_key[:10] if gemini_api_key else 'N/A'}...)")
+            
+            # Si es 401 o 403, el problema es la API key
+            if response.status_code in [401, 403]:
+                raise Exception(f"API key de Gemini inválida o sin permisos. Obtén una nueva en https://aistudio.google.com/app/apikey. Error: {error_message}")
+            # Si es 404, puede ser modelo o URL incorrecta
+            elif response.status_code == 404:
+                raise Exception(f"No se pudo conectar con la API de Gemini. Verifica:\n1. Que tu API key sea válida (obtén una en https://aistudio.google.com/app/apikey)\n2. Que tengas acceso a la API de Gemini\n3. Que la API key tenga los permisos necesarios\nError: {error_message}")
+        
         response.raise_for_status()
         
         result = response.json()
@@ -450,7 +542,7 @@ def estimate_gemini_cost(
     num_topics: int, 
     num_subtopics: int, 
     avg_pdf_pages: int = 20,
-    model: str = "gemini-3-pro"
+    model: str = "gemini-1.5-pro"
 ) -> Dict[str, float]:
     """
     Estima el costo de generar resúmenes con Gemini
@@ -468,31 +560,33 @@ def estimate_gemini_cost(
     # NOTA: Estos precios son aproximados y deben actualizarse con los precios oficiales
     # cuando estén disponibles públicamente
     
+    # Mapear nombres antiguos a nombres correctos para precios
+    model_mapping = {
+        "gemini-3-pro": "gemini-1.5-pro",
+        "gemini-3-flash": "gemini-1.5-flash",
+        "gemini-2.5-pro": "gemini-1.5-pro",
+        "gemini-2.5-flash": "gemini-1.5-flash",
+        "gemini-2.5-flash-lite": "gemini-1.5-flash-8b"
+    }
+    actual_model = model_mapping.get(model, model)
+    
     pricing = {
-        "gemini-3-pro": {
-            "input": 2.50,   # Estimado - VERIFICAR precio oficial
-            "output": 10.00  # Estimado - VERIFICAR precio oficial
-        },
-        "gemini-3-flash": {
-            "input": 0.10,   # Estimado - VERIFICAR precio oficial
-            "output": 0.40   # Estimado - VERIFICAR precio oficial
-        },
-        "gemini-2.5-pro": {
-            "input": 1.25,   # Estimado basado en versiones anteriores
+        "gemini-1.5-pro": {
+            "input": 1.25,   # Precio oficial aproximado
             "output": 5.00
         },
-        "gemini-2.5-flash": {
-            "input": 0.075,
+        "gemini-1.5-flash": {
+            "input": 0.075,   # Precio oficial aproximado
             "output": 0.30
         },
-        "gemini-2.5-flash-lite": {
+        "gemini-1.5-flash-8b": {
             "input": 0.0375,
             "output": 0.15
         }
     }
     
     # Obtener precios del modelo seleccionado
-    model_pricing = pricing.get(model, pricing["gemini-3-pro"])
+    model_pricing = pricing.get(actual_model, pricing["gemini-1.5-pro"])
     input_price = model_pricing["input"]
     output_price = model_pricing["output"]
     
@@ -573,7 +667,7 @@ def generate_all_course_summaries(
     course_description: str,
     topics: List[Dict],
     additional_comments: Optional[str] = None,
-    model: str = "gemini-3-pro",  # Modelo por defecto: Gemini 3 Pro
+    model: str = "gemini-1.5-pro",  # Modelo por defecto: Gemini 1.5 Pro
     exam_examples_pdfs: Optional[List[str]] = None  # PDFs de exámenes para priorizar contenido
 ) -> Dict[str, Dict]:
     """

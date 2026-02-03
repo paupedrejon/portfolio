@@ -43,7 +43,7 @@ export default function CreateCoursePage() {
     },
     generateSummaries: false,
     additionalComments: "",
-    geminiModel: "gemini-3-pro",
+    geminiModel: "gemini-1.5-pro",
   });
   
   const [showProgress, setShowProgress] = useState(false);
@@ -2413,11 +2413,9 @@ export default function CreateCoursePage() {
                       cursor: "pointer",
                     }}
                   >
-                    <option value="gemini-3-pro">Gemini 3 Pro (Mejor calidad)</option>
-                    <option value="gemini-3-flash">Gemini 3 Flash (Rápido y económico)</option>
-                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Mejor calidad)</option>
+                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (Rápido y económico)</option>
+                    <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash 8B (Más ligero)</option>
                   </select>
                 </div>
 
