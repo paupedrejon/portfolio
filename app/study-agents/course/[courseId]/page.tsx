@@ -79,9 +79,58 @@ export default function CoursePage() {
   const [hasReviewed, setHasReviewed] = useState(false);
   const [regeneratingSummaries, setRegeneratingSummaries] = useState(false);
   const notesContentRef = useRef<HTMLDivElement>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   // Usar useRef para evitar múltiples llamadas
   const hasLoadedRef = useRef(false);
+  
+  // Inicializar reconocimiento de voz
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'es-ES';
+        
+        recognition.onstart = () => {
+          setIsRecording(true);
+        };
+        
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setInputMessage(prev => prev + (prev ? ' ' : '') + transcript);
+          setIsRecording(false);
+        };
+        
+        recognition.onerror = () => {
+          setIsRecording(false);
+        };
+        
+        recognition.onend = () => {
+          setIsRecording(false);
+        };
+        
+        recognitionRef.current = recognition;
+      }
+    }
+  }, []);
+  
+  const toggleRecording = () => {
+    if (!recognitionRef.current) {
+      alert('El reconocimiento de voz no está disponible en tu navegador');
+      return;
+    }
+    
+    if (isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    } else {
+      recognitionRef.current.start();
+    }
+  };
   
   // Función para procesar fórmulas matemáticas LaTeX ($...$)
   const processMathFormulas = (content: string): string => {
