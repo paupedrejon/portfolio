@@ -106,7 +106,7 @@ export default function CourseRanking({ courseId, currentUserId }: CourseRanking
   }
 
   return (
-    <div style={{ padding: "1.5rem" }}>
+    <div style={{ padding: "2rem" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         {ranking.map((entry, index) => {
           const position = index + 1;
@@ -119,98 +119,157 @@ export default function CourseRanking({ courseId, currentUserId }: CourseRanking
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "1rem",
-                padding: "1rem 1.25rem",
+                gap: "1.25rem",
+                padding: "1.25rem 1.75rem",
                 background: isCurrentUser 
-                  ? "rgba(99, 102, 241, 0.1)" 
+                  ? "linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%)" 
                   : "var(--bg-card)",
-                borderRadius: "12px",
+                borderRadius: "16px",
                 border: isCurrentUser 
-                  ? "1px solid rgba(99, 102, 241, 0.3)" 
+                  ? "2px solid rgba(99, 102, 241, 0.4)" 
                   : "1px solid var(--border-overlay-1)",
-                transition: "all 0.2s ease",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 cursor: "pointer",
+                boxShadow: isCurrentUser 
+                  ? "0 4px 20px rgba(99, 102, 241, 0.2)" 
+                  : "0 2px 8px rgba(0, 0, 0, 0.05)",
               }}
               onMouseEnter={(e) => {
                 if (!isCurrentUser) {
                   e.currentTarget.style.background = "var(--bg-overlay-04)";
-                  e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.2)";
+                  e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.3)";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.1)";
+                } else {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 24px rgba(99, 102, 241, 0.3)";
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isCurrentUser) {
                   e.currentTarget.style.background = "var(--bg-card)";
                   e.currentTarget.style.borderColor = "var(--border-overlay-1)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.05)";
+                } else {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 20px rgba(99, 102, 241, 0.2)";
                 }
               }}
             >
               <div
                 style={{
-                  width: "44px",
-                  height: "44px",
+                  width: "56px",
+                  height: "56px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   background: position <= 3 
-                    ? "#6366f1" 
+                    ? "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" 
                     : "rgba(99, 102, 241, 0.1)",
-                  color: position <= 3 ? "white" : "var(--text-primary)",
-                  borderRadius: "12px",
+                  color: position <= 3 ? "white" : "#6366f1",
+                  borderRadius: "14px",
                   fontWeight: "700",
-                  fontSize: position <= 3 ? "1.25rem" : "1rem",
-                  boxShadow: position <= 3 ? "0 4px 20px rgba(99, 102, 241, 0.3)" : "none",
+                  fontSize: position <= 3 ? "1.5rem" : "1.25rem",
+                  boxShadow: position <= 3 ? "0 4px 16px rgba(99, 102, 241, 0.4)" : "none",
                   flexShrink: 0,
                   border: position <= 3 ? "none" : "1px solid rgba(99, 102, 241, 0.2)",
+                  transition: "all 0.2s ease",
                 }}
               >
                 {medal || position}
               </div>
 
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <div style={{ 
                   display: "flex", 
                   justifyContent: "space-between", 
                   alignItems: "center",
                   gap: "1rem"
                 }}>
-                  <span style={{ 
-                    fontWeight: isCurrentUser ? "600" : "500", 
-                    fontSize: "0.95rem",
-                    color: isCurrentUser ? "#6366f1" : "var(--text-primary)",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap"
-                  }}>
-                    {isCurrentUser ? "Tú" : `Usuario ${entry.user_id.substring(0, 8)}...`}
-                  </span>
-                  <span style={{ 
-                    fontSize: "0.8rem", 
-                    color: "var(--text-secondary)",
-                    whiteSpace: "nowrap"
-                  }}>
-                    {formatDate(entry.enrolled_at)}
-                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, minWidth: 0 }}>
+                    <span style={{ 
+                      fontWeight: isCurrentUser ? "700" : "600", 
+                      fontSize: "1.05rem",
+                      color: isCurrentUser ? "#6366f1" : "var(--text-primary)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap"
+                    }}>
+                      {isCurrentUser ? "Tú" : `Usuario ${entry.user_id.substring(0, 8)}...`}
+                    </span>
+                    {isCurrentUser && (
+                      <span style={{
+                        padding: "0.25rem 0.75rem",
+                        background: "#6366f1",
+                        color: "white",
+                        borderRadius: "6px",
+                        fontSize: "0.75rem",
+                        fontWeight: "700",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px"
+                      }}>
+                        Tú
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                    <div style={{ 
+                      display: "flex", 
+                      flexDirection: "column", 
+                      alignItems: "flex-end",
+                      gap: "0.25rem"
+                    }}>
+                      <span style={{ 
+                        fontSize: "0.875rem", 
+                        color: "var(--text-secondary)",
+                        whiteSpace: "nowrap",
+                        fontWeight: "500"
+                      }}>
+                        {formatDate(entry.enrolled_at)}
+                      </span>
+                      <span style={{ 
+                        fontSize: "0.75rem", 
+                        color: "var(--text-muted)",
+                        whiteSpace: "nowrap"
+                      }}>
+                        Inscrito
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <div
-                style={{
-                  padding: "0.5rem 1rem",
-                  background: isCurrentUser 
-                    ? "#6366f1" 
-                    : "rgba(99, 102, 241, 0.15)",
-                  color: "white",
-                  borderRadius: "10px",
-                  fontSize: "0.875rem",
-                  fontWeight: "700",
-                  minWidth: "70px",
-                  textAlign: "center",
-                  boxShadow: isCurrentUser ? "0 4px 15px rgba(99, 102, 241, 0.3)" : "none",
-                  flexShrink: 0,
-                  border: isCurrentUser ? "none" : "1px solid rgba(99, 102, 241, 0.2)",
-                }}
-              >
-                {entry.xp} XP
+                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    padding: "0.5rem 1rem",
+                    background: isCurrentUser 
+                      ? "rgba(99, 102, 241, 0.2)" 
+                      : "rgba(99, 102, 241, 0.1)",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(99, 102, 241, 0.2)",
+                  }}>
+                    <TbTrophy size={16} color="#6366f1" />
+                    <span style={{
+                      color: "#6366f1",
+                      fontSize: "0.9rem",
+                      fontWeight: "700",
+                    }}>
+                      {entry.xp} XP
+                    </span>
+                  </div>
+                  <div style={{
+                    padding: "0.5rem 1rem",
+                    background: "var(--bg-overlay-02)",
+                    borderRadius: "10px",
+                    fontSize: "0.85rem",
+                    color: "var(--text-secondary)",
+                    fontWeight: "500",
+                  }}>
+                    Posición #{position}
+                  </div>
+                </div>
               </div>
             </div>
           );

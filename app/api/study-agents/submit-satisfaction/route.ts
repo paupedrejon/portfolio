@@ -4,7 +4,7 @@ import { getFastAPIUrl } from '../utils';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, courseId, rating } = body;
+    const { userId, courseId, rating, comment } = body;
 
     if (!userId || !courseId || !rating) {
       return NextResponse.json(
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
         user_id: userId,
         course_id: courseId,
         rating,
+        comment: comment || null,
       }),
     });
 

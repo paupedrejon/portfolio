@@ -192,18 +192,61 @@ class CourseGuideAgent:
         
         topics_str = "\n".join(topics_info) if topics_info else "No hay temas definidos"
         
-        # Construir historial de conversación
+        # Construir historial de conversación (con resumen si es largo)
         history_str = ""
         if conversation_history:
-            history_parts = []
-            for msg in conversation_history[-10:]:  # Últimos 10 mensajes
-                role = msg.get("role", "user")
-                content = msg.get("content", "")
-                if role == "user":
-                    history_parts.append(f"ESTUDIANTE: {content}")
-                else:
-                    history_parts.append(f"ASISTENTE: {content}")
-            history_str = "\n".join(history_parts)
+            # Si el historial es largo (>15 mensajes), resumirlo
+            if len(conversation_history) > 15:
+                try:
+                    from conversation_summarizer import summarize_conversation_history, format_summarized_history
+                    
+                    # Resumir historial largo
+                    summary_data = summarize_conversation_history(
+                        history=conversation_history,
+                        api_key=self.api_key if hasattr(self, 'api_key') else None,
+                        model=None,  # Usar modo automático
+                        max_messages=10,  # Mantener últimos 10 sin resumir
+                        use_llm=bool(self.api_key)  # Usar LLM si hay API key
+                    )
+                    
+                    # Formatear resumen
+                    summary_text = format_summarized_history(summary_data)
+                    
+                    # Construir historial: resumen + mensajes recientes
+                    recent_parts = []
+                    for msg in summary_data.get("recent_messages", []):
+                        role = msg.get("role", "user")
+                        content = msg.get("content", "")
+                        if role == "user":
+                            recent_parts.append(f"ESTUDIANTE: {content}")
+                        else:
+                            recent_parts.append(f"ASISTENTE: {content}")
+                    
+                    history_str = f"{summary_text}\n\n--- MENSAJES RECIENTES ---\n" + "\n".join(recent_parts)
+                    print(f"📝 Historial resumido: {len(conversation_history)} mensajes → resumen + {len(summary_data.get('recent_messages', []))} recientes")
+                except Exception as e:
+                    print(f"⚠️ Error resumiendo historial, usando últimos 10 mensajes: {e}")
+                    # Fallback: usar últimos 10 mensajes
+                    history_parts = []
+                    for msg in conversation_history[-10:]:
+                        role = msg.get("role", "user")
+                        content = msg.get("content", "")
+                        if role == "user":
+                            history_parts.append(f"ESTUDIANTE: {content}")
+                        else:
+                            history_parts.append(f"ASISTENTE: {content}")
+                    history_str = "\n".join(history_parts)
+            else:
+                # Historial corto: usar todos los mensajes
+                history_parts = []
+                for msg in conversation_history:
+                    role = msg.get("role", "user")
+                    content = msg.get("content", "")
+                    if role == "user":
+                        history_parts.append(f"ESTUDIANTE: {content}")
+                    else:
+                        history_parts.append(f"ASISTENTE: {content}")
+                history_str = "\n".join(history_parts)
         
         # Herramientas disponibles
         tools_str = ""

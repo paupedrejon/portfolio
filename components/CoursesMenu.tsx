@@ -60,6 +60,9 @@ export default function CoursesMenu() {
   const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
+  const [selectedCourseDetails, setSelectedCourseDetails] = useState<Course | null>(null);
+  const [courseReviews, setCourseReviews] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -790,20 +793,66 @@ export default function CoursesMenu() {
                         e.currentTarget.style.background = "var(--bg-card)";
                       }}
                     >
-                      {/* Icono */}
-                      <div style={{
-                        marginBottom: "1.5rem",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "64px",
-                        height: "64px",
-                        borderRadius: "12px",
-                        background: "rgba(99, 102, 241, 0.1)",
-                        border: "1px solid rgba(99, 102, 241, 0.2)",
-                      }}>
-                        <HiAcademicCap size={32} color="#6366f1" />
-                      </div>
+                      {/* Portada del Curso */}
+                      {course.cover_image ? (
+                        <div style={{
+                          width: "100%",
+                          height: "200px",
+                          marginBottom: "1.5rem",
+                          borderRadius: "12px",
+                          overflow: "hidden",
+                          position: "relative",
+                          background: "var(--bg-overlay-02)",
+                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                        }}>
+                          <img
+                            src={course.cover_image}
+                            alt={course.title}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = "none";
+                              const parent = target.parentElement;
+                              if (parent) {
+                                parent.innerHTML = `
+                                  <div style="
+                                    width: 100%;
+                                    height: 100%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+                                  ">
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                      <path d="M2 17L12 22L22 17" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                      <path d="M2 12L12 17L22 12" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                  </div>
+                                `;
+                              }
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div style={{
+                          marginBottom: "1.5rem",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "64px",
+                          height: "64px",
+                          borderRadius: "12px",
+                          background: "rgba(99, 102, 241, 0.1)",
+                          border: "1px solid rgba(99, 102, 241, 0.2)",
+                        }}>
+                          <HiAcademicCap size={32} color="#6366f1" />
+                        </div>
+                      )}
 
                       {/* Título */}
                       <h3 style={{ 
@@ -872,7 +921,8 @@ export default function CoursesMenu() {
                         marginBottom: "1.5rem",
                         paddingTop: "1.5rem",
                         borderTop: "1px solid var(--border-overlay-05)",
-                        fontSize: "0.85rem"
+                        fontSize: "0.85rem",
+                        flexWrap: "wrap"
                       }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-secondary)" }}>
                           <TbTrophy size={16} color="#6366f1" />
@@ -882,6 +932,19 @@ export default function CoursesMenu() {
                           <TbCoins size={16} color="#6366f1" />
                           <span>{enrollment.credits_remaining}</span>
                         </div>
+                        {course.satisfaction_rating && (
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-secondary)" }}>
+                            <HiStar size={16} color="#FFD700" style={{ fill: "#FFD700" }} />
+                            <span style={{ color: "#FFD700", fontWeight: "600" }}>
+                              {course.satisfaction_rating.toFixed(1)}
+                            </span>
+                            {course.satisfaction_count > 0 && (
+                              <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                                ({course.satisfaction_count})
+                              </span>
+                            )}
+                          </div>
+                        )}
                         {daysUntil !== null && (
                           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-secondary)" }}>
                             <HiClock size={16} color={daysUntil < 7 ? "#ef4444" : daysUntil < 30 ? "#f59e0b" : "#10b981"} />
@@ -892,19 +955,82 @@ export default function CoursesMenu() {
                         )}
                       </div>
 
-                      {/* Link */}
-                      <div style={{ 
-                        display: "flex", 
-                        alignItems: "center", 
-                        gap: "0.5rem",
-                        color: "#6366f1",
-                        fontSize: "0.95rem",
-                        fontWeight: "500",
-                        transition: "all 0.3s ease",
-                        marginTop: "0.5rem",
-                      }}>
-                        <span>Explorar</span>
-                        <HiArrowRight size={18} style={{ transition: "transform 0.3s ease" }} />
+                      {/* Botones */}
+                      <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
+                        <button
+                          onClick={async () => {
+                            setSelectedCourseDetails(course);
+                            setLoadingReviews(true);
+                            try {
+                              const response = await fetch("/api/study-agents/get-course-reviews", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ courseId: course.course_id }),
+                              });
+                              if (response.ok) {
+                                const data = await response.json();
+                                setCourseReviews(data.reviews || []);
+                              }
+                            } catch (error) {
+                              console.error("Error cargando reviews:", error);
+                            } finally {
+                              setLoadingReviews(false);
+                            }
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: "0.875rem",
+                            background: "transparent",
+                            color: "#6366f1",
+                            border: "2px solid #6366f1",
+                            borderRadius: "10px",
+                            fontWeight: "600",
+                            cursor: "pointer",
+                            fontSize: "0.95rem",
+                            transition: "all 0.3s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(99, 102, 241, 0.1)";
+                            e.currentTarget.style.transform = "translateY(-2px)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "transparent";
+                            e.currentTarget.style.transform = "translateY(0)";
+                          }}
+                        >
+                          Ver Detalles
+                        </button>
+                        <Link
+                          href={`/study-agents/course/${course.course_id}`}
+                          style={{
+                            flex: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "0.5rem",
+                            padding: "0.875rem",
+                            background: "#6366f1",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "10px",
+                            textDecoration: "none",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            fontSize: "0.95rem",
+                            transition: "all 0.3s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "#7c3aed";
+                            e.currentTarget.style.transform = "translateY(-2px)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "#6366f1";
+                            e.currentTarget.style.transform = "translateY(0)";
+                          }}
+                        >
+                          Entrar
+                          <HiArrowRight size={18} />
+                        </Link>
                       </div>
                     </Link>
                   );
@@ -970,16 +1096,17 @@ export default function CoursesMenu() {
                         e.currentTarget.style.background = "var(--bg-card)";
                       }}
                     >
-                      {/* Imagen de portada o Icono */}
+                      {/* Portada del Curso */}
                       {course.cover_image ? (
                         <div style={{
-                          marginBottom: "1.5rem",
                           width: "100%",
                           height: "200px",
+                          marginBottom: "1.5rem",
                           borderRadius: "12px",
                           overflow: "hidden",
                           position: "relative",
                           background: "var(--bg-overlay-02)",
+                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
                         }}>
                           <img
                             src={course.cover_image}
@@ -988,6 +1115,29 @@ export default function CoursesMenu() {
                               width: "100%",
                               height: "100%",
                               objectFit: "cover",
+                            }}
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = "none";
+                              const parent = target.parentElement;
+                              if (parent) {
+                                parent.innerHTML = `
+                                  <div style="
+                                    width: 100%;
+                                    height: 100%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+                                  ">
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                      <path d="M2 17L12 22L22 17" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                      <path d="M2 12L12 17L22 12" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                  </div>
+                                `;
+                              }
                             }}
                           />
                         </div>
@@ -1047,10 +1197,15 @@ export default function CoursesMenu() {
                         </div>
                         {course.satisfaction_rating && (
                           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-secondary)" }}>
-                            <HiStar size={16} color="#10b981" />
-                            <span style={{ color: "#10b981", fontWeight: "600" }}>
+                            <HiStar size={16} color="#FFD700" style={{ fill: "#FFD700" }} />
+                            <span style={{ color: "#FFD700", fontWeight: "600" }}>
                               {course.satisfaction_rating.toFixed(1)}
                             </span>
+                            {course.satisfaction_count > 0 && (
+                              <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                                ({course.satisfaction_count})
+                              </span>
+                            )}
                           </div>
                         )}
                         <div style={{ 
@@ -1066,109 +1221,360 @@ export default function CoursesMenu() {
                         </div>
                       </div>
 
-                      {isEnrolled ? (
-                        <Link
-                          href={`/study-agents/course/${course.course_id}`}
+                      <div style={{ display: "flex", gap: "0.75rem" }}>
+                        <button
+                          onClick={async () => {
+                            setSelectedCourseDetails(course);
+                            setLoadingReviews(true);
+                            try {
+                              const response = await fetch("/api/study-agents/get-course-reviews", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ courseId: course.course_id }),
+                              });
+                              if (response.ok) {
+                                const data = await response.json();
+                                setCourseReviews(data.reviews || []);
+                              }
+                            } catch (error) {
+                              console.error("Error cargando reviews:", error);
+                            } finally {
+                              setLoadingReviews(false);
+                            }
+                          }}
                           style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "0.5rem",
-                            width: "100%",
+                            flex: 1,
                             padding: "0.875rem",
-                            background: "#6366f1",
-                            color: "white",
-                            border: "none",
+                            background: "transparent",
+                            color: "#6366f1",
+                            border: "2px solid #6366f1",
                             borderRadius: "10px",
-                            textDecoration: "none",
-                            fontWeight: "700",
+                            fontWeight: "600",
                             cursor: "pointer",
                             fontSize: "0.95rem",
-                            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "#7c3aed";
-                            e.currentTarget.style.transform = "translateY(-3px) scale(1.02)";
-                            e.currentTarget.style.boxShadow = "0 8px 25px rgba(99, 102, 241, 0.4)";
-                            const arrow = e.currentTarget.querySelector('svg');
-                            if (arrow) arrow.style.transform = "translateX(4px)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "#6366f1";
-                            e.currentTarget.style.transform = "translateY(0) scale(1)";
-                            e.currentTarget.style.boxShadow = "none";
-                            const arrow = e.currentTarget.querySelector('svg');
-                            if (arrow) arrow.style.transform = "translateX(0)";
-                          }}
-                          onMouseDown={(e) => {
-                            e.currentTarget.style.transform = "translateY(-1px) scale(1)";
-                          }}
-                          onMouseUp={(e) => {
-                            e.currentTarget.style.transform = "translateY(-3px) scale(1.02)";
-                          }}
-                        >
-                          Continuar Estudiando
-                          <HiArrowRight size={18} style={{ transition: "transform 0.3s ease" }} />
-                        </Link>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            // Verificar saldo antes de proceder
-                            const coursePrice = course.price || 0;
-                            
-                            if (coursePrice > 0 && walletBalance < coursePrice) {
-                              // No hay saldo suficiente, mostrar modal de wallet
-                              setShowWalletModal(true);
-                              setNotification({
-                                message: `Saldo insuficiente. Necesitas ${coursePrice.toFixed(2)}€. Tu saldo actual: ${walletBalance.toFixed(2)}€.`,
-                                type: "error"
-                              });
-                              return;
-                            }
-                            
-                            // Si hay saldo suficiente o es gratis, proceder
-                            if (course.is_exam) {
-                              setSelectedCourseForEnrollment(course.course_id);
-                              setShowExamDateModal(true);
-                            } else {
-                              // Si es curso normal, inscribir directamente
-                              handleEnroll(course.course_id, null);
-                            }
-                          }}
-                          style={{
-                            width: "100%",
-                            padding: "0.875rem 1.5rem",
-                            background: course.price === 0 
-                              ? "#10b981" 
-                              : "#6366f1",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "50px",
-                            fontWeight: "700",
-                            cursor: "pointer",
-                            fontSize: "1.15rem",
                             transition: "all 0.3s ease",
-                            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = course.price === 0 ? "#059669" : "#7c3aed";
-                            e.currentTarget.style.boxShadow = course.price === 0 
-                              ? "0 6px 20px rgba(16, 185, 129, 0.4)" 
-                              : "0 6px 20px rgba(99, 102, 241, 0.4)";
+                            e.currentTarget.style.background = "rgba(99, 102, 241, 0.1)";
                             e.currentTarget.style.transform = "translateY(-2px)";
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.background = course.price === 0 ? "#10b981" : "#6366f1";
-                            e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.08)";
+                            e.currentTarget.style.background = "transparent";
                             e.currentTarget.style.transform = "translateY(0)";
                           }}
                         >
-                          {course.price === 0 ? "Inscribirse Gratis" : `Inscribirse por ${formatPrice(course.price)}`}
+                          Ver Detalles
                         </button>
-                      )}
+                        {isEnrolled ? (
+                          <Link
+                            href={`/study-agents/course/${course.course_id}`}
+                            style={{
+                              flex: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "0.5rem",
+                              padding: "0.875rem",
+                              background: "#6366f1",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "10px",
+                              textDecoration: "none",
+                              fontWeight: "700",
+                              cursor: "pointer",
+                              fontSize: "0.95rem",
+                              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "#7c3aed";
+                              e.currentTarget.style.transform = "translateY(-3px) scale(1.02)";
+                              e.currentTarget.style.boxShadow = "0 8px 25px rgba(99, 102, 241, 0.4)";
+                              const arrow = e.currentTarget.querySelector('svg');
+                              if (arrow) arrow.style.transform = "translateX(4px)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "#6366f1";
+                              e.currentTarget.style.transform = "translateY(0) scale(1)";
+                              e.currentTarget.style.boxShadow = "none";
+                              const arrow = e.currentTarget.querySelector('svg');
+                              if (arrow) arrow.style.transform = "translateX(0)";
+                            }}
+                          >
+                            Entrar
+                            <HiArrowRight size={18} style={{ transition: "transform 0.3s ease" }} />
+                          </Link>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              const coursePrice = course.price || 0;
+                              
+                              if (coursePrice > 0 && walletBalance < coursePrice) {
+                                setShowWalletModal(true);
+                                setNotification({
+                                  message: `Saldo insuficiente. Necesitas ${coursePrice.toFixed(2)}€. Tu saldo actual: ${walletBalance.toFixed(2)}€.`,
+                                  type: "error"
+                                });
+                                return;
+                              }
+                              
+                              if (course.is_exam) {
+                                setSelectedCourseForEnrollment(course.course_id);
+                                setShowExamDateModal(true);
+                              } else {
+                                handleEnroll(course.course_id, null);
+                              }
+                            }}
+                            style={{
+                              flex: 1,
+                              padding: "0.875rem",
+                              background: course.price === 0 
+                                ? "#10b981" 
+                                : "#6366f1",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "10px",
+                              fontWeight: "700",
+                              cursor: "pointer",
+                              fontSize: "0.95rem",
+                              transition: "all 0.3s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = course.price === 0 ? "#059669" : "#7c3aed";
+                              e.currentTarget.style.transform = "translateY(-2px)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = course.price === 0 ? "#10b981" : "#6366f1";
+                              e.currentTarget.style.transform = "translateY(0)";
+                            }}
+                          >
+                            {course.price === 0 ? "Gratis" : formatPrice(course.price)}
+                          </button>
+                        )}
+      </div>
+
+      {/* Modal de Detalles del Curso */}
+      {selectedCourseDetails && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(8px)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "2rem",
+            overflow: "auto",
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setSelectedCourseDetails(null);
+              setCourseReviews([]);
+            }
+          }}
+        >
+          <div
+            style={{
+              maxWidth: "900px",
+              width: "100%",
+              maxHeight: "90vh",
+              background: "var(--bg-card)",
+              borderRadius: "24px",
+              border: "1px solid var(--border-overlay-1)",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
+              overflow: "auto",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{
+              padding: "2rem",
+              borderBottom: "1px solid var(--border-overlay-1)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              background: "linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)"
+            }}>
+              <h2 style={{ fontSize: "1.75rem", fontWeight: "600", color: "var(--text-primary)", margin: 0 }}>
+                {selectedCourseDetails.title}
+              </h2>
+              <button
+                onClick={() => {
+                  setSelectedCourseDetails(null);
+                  setCourseReviews([]);
+                }}
+                style={{
+                  padding: "0.5rem",
+                  background: "var(--bg-overlay-05)",
+                  border: "none",
+                  fontSize: "1.5rem",
+                  cursor: "pointer",
+                  color: "var(--text-secondary)",
+                  borderRadius: "8px",
+                  width: "40px",
+                  height: "40px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)";
+                  e.currentTarget.style.color = "#ef4444";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "var(--bg-overlay-05)";
+                  e.currentTarget.style.color = "var(--text-secondary)";
+                }}
+              >
+                <HiXMark size={24} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: "2rem" }}>
+              {/* Portada */}
+              {selectedCourseDetails.cover_image && (
+                <div style={{
+                  width: "100%",
+                  height: "300px",
+                  marginBottom: "2rem",
+                  borderRadius: "16px",
+                  overflow: "hidden",
+                  background: "var(--bg-overlay-02)",
+                }}>
+                  <img
+                    src={selectedCourseDetails.cover_image}
+                    alt={selectedCourseDetails.title}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Descripción */}
+              <div style={{ marginBottom: "2rem" }}>
+                <h3 style={{ fontSize: "1.25rem", fontWeight: "600", marginBottom: "1rem", color: "var(--text-primary)" }}>
+                  Descripción
+                </h3>
+                <p style={{ color: "var(--text-secondary)", lineHeight: "1.7", fontSize: "1rem" }}>
+                  {selectedCourseDetails.description}
+                </p>
+              </div>
+
+              {/* Temas */}
+              <div style={{ marginBottom: "2rem" }}>
+                <h3 style={{ fontSize: "1.25rem", fontWeight: "600", marginBottom: "1rem", color: "var(--text-primary)" }}>
+                  Temas ({selectedCourseDetails.topics?.length || 0})
+                </h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  {selectedCourseDetails.topics?.map((topic, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        padding: "1rem 1.25rem",
+                        background: "var(--bg-overlay-02)",
+                        borderRadius: "12px",
+                        border: "1px solid var(--border-overlay-1)",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        <div style={{
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "8px",
+                          background: "rgba(99, 102, 241, 0.1)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}>
+                          <HiBookOpen size={18} color="#6366f1" />
+                        </div>
+                        <span style={{ fontWeight: "600", color: "var(--text-primary)" }}>
+                          {topic.name}
+                        </span>
+                        {topic.subtopics && topic.subtopics.length > 0 && (
+                          <span style={{ marginLeft: "auto", fontSize: "0.875rem", color: "var(--text-secondary)" }}>
+                            {topic.subtopics.length} subtemas
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+              </div>
+
+              {/* Reviews */}
+              <div>
+                <h3 style={{ fontSize: "1.25rem", fontWeight: "600", marginBottom: "1rem", color: "var(--text-primary)" }}>
+                  Reviews
+                  {selectedCourseDetails.satisfaction_rating && (
+                    <span style={{ marginLeft: "0.75rem", fontSize: "1rem", fontWeight: "500", color: "var(--text-secondary)" }}>
+                      ({selectedCourseDetails.satisfaction_rating.toFixed(1)} ⭐ - {selectedCourseDetails.satisfaction_count} {selectedCourseDetails.satisfaction_count === 1 ? "review" : "reviews"})
+                    </span>
+                  )}
+                </h3>
+                {loadingReviews ? (
+                  <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-secondary)" }}>
+                    Cargando reviews...
+                  </div>
+                ) : courseReviews.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-secondary)" }}>
+                    <HiStar size={48} style={{ margin: "0 auto 1rem", opacity: 0.3 }} />
+                    <p style={{ margin: 0 }}>Aún no hay reviews para este curso</p>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem", maxHeight: "400px", overflow: "auto" }}>
+                    {courseReviews.map((review, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          padding: "1.25rem",
+                          background: "var(--bg-overlay-02)",
+                          borderRadius: "12px",
+                          border: "1px solid var(--border-overlay-1)",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                          <div style={{ display: "flex", gap: "0.25rem" }}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <HiStar
+                                key={star}
+                                size={18}
+                                color={star <= review.rating ? "#FFD700" : "var(--text-muted)"}
+                                style={{ fill: star <= review.rating ? "#FFD700" : "transparent" }}
+                              />
+                            ))}
+                          </div>
+                          <span style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
+                            {new Date(review.created_at).toLocaleDateString("es-ES")}
+                          </span>
+                        </div>
+                        {review.comment && (
+                          <p style={{ margin: 0, color: "var(--text-secondary)", lineHeight: "1.6", fontSize: "0.95rem" }}>
+                            {review.comment}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+})}
               </div>
             )}
           </div>

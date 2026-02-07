@@ -8,9 +8,12 @@ import DOMPurify from "dompurify";
 import ReactMarkdown from "react-markdown";
 import CourseRanking from "@/components/CourseRanking";
 import GamesView from "@/components/CourseGame";
-import { HiArrowLeft, HiAcademicCap, HiClock, HiTrophy, HiXMark, HiDocumentText, HiSparkles, HiClipboardDocumentCheck, HiPencilSquare, HiCheckCircle } from "react-icons/hi2";
+import SatisfactionFeedback from "@/components/SatisfactionFeedback";
+import { HiArrowLeft, HiAcademicCap, HiClock, HiTrophy, HiXMark, HiDocumentText, HiSparkles, HiClipboardDocumentCheck, HiPencilSquare, HiCheckCircle, HiArrowDownTray, HiMicrophone, HiPaperAirplane } from "react-icons/hi2";
 import { TbTrophy, TbCoins, TbFlame } from "react-icons/tb";
 import { HiChatBubbleLeftRight } from "react-icons/hi2";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface Message {
   role: "user" | "assistant";
@@ -26,6 +29,7 @@ interface Course {
   max_duration_days?: number;
   cover_image?: string;
   is_exam?: boolean;
+  creator_id?: string;
   topics: Array<{ 
     name: string; 
     pdfs: string[]; 
@@ -71,9 +75,95 @@ export default function CoursePage() {
   const [showStreakModal, setShowStreakModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [regeneratingSummaries, setRegeneratingSummaries] = useState(false);
+  const notesContentRef = useRef<HTMLDivElement>(null);
 
   // Usar useRef para evitar múltiples llamadas
   const hasLoadedRef = useRef(false);
+  
+  // Función para procesar fórmulas matemáticas LaTeX ($...$)
+  const processMathFormulas = (content: string): string => {
+    if (!content) return "";
+    // Convertir $...$ a <span class="math-inline">...</span> para renderizado
+    // También manejar $$...$$ para bloques
+    let processed = content;
+    
+    // Primero procesar bloques de matemáticas $$...$$ (más específico primero)
+    // Usar un marcador temporal para evitar procesar el contenido interno
+    const blockPlaceholders: string[] = [];
+    processed = processed.replace(/\$\$([^$]+)\$\$/g, (match, formula) => {
+      const placeholder = `__MATH_BLOCK_${blockPlaceholders.length}__`;
+      blockPlaceholders.push(formula.trim());
+      return placeholder;
+    });
+    
+    // Luego procesar fórmulas inline $...$ (evitar los que ya fueron procesados como $$)
+    const inlinePlaceholders: string[] = [];
+    processed = processed.replace(/\$([^$\n]+?)\$/g, (match, formula) => {
+      const placeholder = `__MATH_INLINE_${inlinePlaceholders.length}__`;
+      inlinePlaceholders.push(formula.trim());
+      return placeholder;
+    });
+    
+    // Reemplazar placeholders de bloques
+    blockPlaceholders.forEach((formula, index) => {
+      processed = processed.replace(
+        `__MATH_BLOCK_${index}__`,
+        `<div class="math-block" style="text-align: center; margin: 1.5rem 0; padding: 1rem; background: rgba(99, 102, 241, 0.1); border-radius: 8px; font-family: 'Courier New', monospace; font-size: 1.1em; white-space: pre-wrap;">$${formula}$</div>`
+      );
+    });
+    
+    // Reemplazar placeholders inline
+    inlinePlaceholders.forEach((formula, index) => {
+      processed = processed.replace(
+        `__MATH_INLINE_${index}__`,
+        `<span class="math-inline" style="font-family: 'Courier New', monospace; background: rgba(99, 102, 241, 0.15); padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.95em;">$${formula}$</span>`
+      );
+    });
+    
+    return processed;
+  };
+  
+  // Función para descargar PDF
+  const downloadPDF = async () => {
+    if (!notesContentRef.current || !selectedTopic) return;
+    
+    try {
+      const element = notesContentRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+      
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      const safeTopicName = selectedTopic.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+      pdf.save(`${course?.title || "curso"}_${safeTopicName}.pdf`);
+    } catch (error) {
+      console.error("Error generando PDF:", error);
+      alert("Error al generar el PDF. Por favor, intenta de nuevo.");
+    }
+  };
   
   // Detectar tamaño de pantalla
   useEffect(() => {
@@ -551,6 +641,44 @@ export default function CoursePage() {
   // No mostrar pantalla en blanco durante la carga inicial
   // Solo mostrar contenido básico mientras carga
 
+  // Mostrar modal de valoración si el curso ha finalizado y no se ha valorado
+  // Este useEffect debe estar ANTES del return temprano para mantener el orden de hooks
+  useEffect(() => {
+    // Solo ejecutar si tenemos todos los datos necesarios
+    if (!enrollment || !session?.user?.id || !courseId) {
+      return;
+    }
+    
+    const daysUntil = enrollment.exam_date 
+      ? getDaysUntil(enrollment.exam_date) 
+      : enrollment.end_date 
+      ? getDaysUntil(enrollment.end_date) 
+      : null;
+    
+    const isCourseFinished = daysUntil !== null && daysUntil <= 0;
+    
+    if (isCourseFinished && !hasReviewed) {
+      // Verificar si ya tiene una review
+      fetch("/api/study-agents/get-course-reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            const userReview = data.reviews.find((r: any) => r.user_id === session.user.id);
+            if (!userReview) {
+              setShowReviewModal(true);
+            } else {
+              setHasReviewed(true);
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  }, [enrollment, hasReviewed, session?.user?.id, courseId]);
+
   if (!course || !enrollment) {
     return (
       <div style={{ 
@@ -578,6 +706,9 @@ export default function CoursePage() {
     : enrollment.end_date 
     ? getDaysUntil(enrollment.end_date) 
     : null;
+  
+  const isCourseFinished = daysUntil !== null && daysUntil <= 0;
+  
   const currentTopicProgress = selectedTopic ? enrollment.topic_progress[selectedTopic] || 0 : 0;
   // Asegurar que topicNotes siempre sea un array
   const topicNotesRaw = selectedTopic ? enrollment.generated_notes[selectedTopic] : null;
@@ -652,167 +783,85 @@ export default function CoursePage() {
             )}
           </div>
           
-          {/* Botones de acción */}
-          <div style={{ 
-            display: "flex", 
-            flexDirection: "column", 
-            gap: "0.75rem", 
-            marginTop: "1.5rem" 
-          }}>
+          {/* Botón para regenerar resúmenes (solo para creador) */}
+          {course.creator_id && session?.user?.id === course.creator_id && (
             <button
               onClick={async () => {
-                // Cargar datos de racha actualizados
-                if (session?.user?.id) {
-                  try {
-                    const streakResponse = await fetch("/api/study-agents/update-streak-credits", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        user_id: session.user.id,
-                        course_id: courseId,
-                      }),
-                    });
-                    
-                    if (streakResponse.ok) {
-                      const streakDataResult = await streakResponse.json();
-                      if (streakDataResult.success) {
-                        setStreakData(streakDataResult);
-                        setShowStreakModal(true);
-                      }
-                    }
-                  } catch (error) {
-                    console.error("Error cargando racha:", error);
-                  }
-                }
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.5rem",
-                padding: "0.875rem 1.75rem",
-                background: "linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%)",
-                border: "3px solid rgba(251, 191, 36, 0.3)",
-                borderRadius: "50px",
-                color: "var(--text-primary)",
-                cursor: "pointer",
-                fontSize: "1rem",
-                fontWeight: "700",
-                transition: "all 0.3s ease",
-                boxShadow: "0 4px 12px rgba(251, 191, 36, 0.2)",
-                marginBottom: "0.75rem",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#fbbf24";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(251, 191, 36, 0.3)";
-                e.currentTarget.style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(251, 191, 36, 0.3)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(251, 191, 36, 0.2)";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-                      <TbCoins size={18} color="#fbbf24" />
-                      Calendario de Racha
-            </button>
-            
-            <button
-              onClick={() => {
-                const rankingView = document.getElementById("ranking-view");
-                if (rankingView) rankingView.style.display = "flex";
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.5rem",
-                padding: "0.875rem 1.75rem",
-                background: "var(--bg-card)",
-                border: "3px solid var(--border-overlay-1)",
-                borderRadius: "50px",
-                color: "var(--text-primary)",
-                cursor: "pointer",
-                fontSize: "1rem",
-                fontWeight: "700",
-                transition: "all 0.3s ease",
-                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#6366f1";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(99, 102, 241, 0.25)";
-                e.currentTarget.style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--border-overlay-1)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.08)";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              <HiTrophy size={18} />
-              Ver Ranking
-            </button>
-            
-            <button
-              onClick={async () => {
-                if (!confirm("¿Estás seguro de que quieres desapuntarte de este curso?")) {
-                  return;
-                }
+                if (regeneratingSummaries) return;
                 
+                const confirmed = window.confirm(
+                  "¿Regenerar los resúmenes del curso? Esto consumirá créditos de tu wallet. Los resúmenes se generarán en segundo plano."
+                );
+                
+                if (!confirmed) return;
+                
+                setRegeneratingSummaries(true);
                 try {
-                  const response = await fetch("/api/study-agents/unenroll-course", {
+                  const response = await fetch("/api/study-agents/regenerate-course-summaries", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                      userId: session?.user?.id,
-                      courseId: courseId,
+                      user_id: session.user.id,
+                      course_id: courseId,
+                      model: "gemini-1.5-pro",
                     }),
                   });
                   
-                  if (response.ok) {
-                    router.push("/study-agents");
+                  const data = await response.json();
+                  
+                  if (data.success) {
+                    alert(`✅ Regeneración iniciada. Los resúmenes se generarán en segundo plano.\n\nCosto estimado: ${data.cost_estimate?.estimated_cost_eur?.toFixed(2) || "0.00"}€`);
+                    // Recargar el curso después de unos segundos para ver los nuevos resúmenes
+                    setTimeout(() => {
+                      loadCourseData();
+                    }, 5000);
                   } else {
-                    alert("Error al desapuntarse del curso");
+                    alert(`❌ Error: ${data.error || "No se pudo iniciar la regeneración"}`);
                   }
-                } catch (error) {
-                  console.error("Error:", error);
-                  alert("Error al desapuntarse del curso");
+                } catch (error: any) {
+                  console.error("Error regenerando resúmenes:", error);
+                  alert(`❌ Error: ${error.message || "Error desconocido"}`);
+                } finally {
+                  setRegeneratingSummaries(false);
                 }
               }}
+              disabled={regeneratingSummaries}
               style={{
+                marginTop: "1rem",
+                padding: "0.75rem 1rem",
+                background: regeneratingSummaries ? "var(--bg-overlay-05)" : "#6366f1",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "0.875rem",
+                fontWeight: "500",
+                cursor: regeneratingSummaries ? "not-allowed" : "pointer",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
                 gap: "0.5rem",
-                padding: "0.875rem 1.75rem",
-                background: "var(--bg-card)",
-                border: "3px solid rgba(239, 68, 68, 0.3)",
-                borderRadius: "50px",
-                color: "#ef4444",
-                cursor: "pointer",
-                fontSize: "1rem",
-                fontWeight: "700",
-                transition: "all 0.3s ease",
-                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+                justifyContent: "center",
+                opacity: regeneratingSummaries ? 0.6 : 1,
+                transition: "all 0.2s",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#ef4444";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(239, 68, 68, 0.25)";
-                e.currentTarget.style.transform = "translateY(-2px)";
+                if (!regeneratingSummaries) {
+                  e.currentTarget.style.background = "#4f46e5";
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.3)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.08)";
-                e.currentTarget.style.transform = "translateY(0)";
+                if (!regeneratingSummaries) {
+                  e.currentTarget.style.background = "#6366f1";
+                }
               }}
             >
-              <HiXMark size={18} />
-              Desapuntarse del Curso
+              <HiSparkles size={16} />
+              <span>{regeneratingSummaries ? "Regenerando..." : "Regenerar Resúmenes"}</span>
             </button>
-          </div>
+          )}
+          
         </div>
 
-        {/* Lista de Temas */}
+        {/* Lista de Temas - Compacto y Responsive */}
         <div style={{ flex: 1, overflowY: "auto", padding: "1.5rem 1rem" }}>
           <div style={{ 
             marginBottom: "1.25rem", 
@@ -826,7 +875,8 @@ export default function CoursePage() {
           </div>
           {course.topics.map((topic) => {
             const progress = enrollment.topic_progress[topic.name] || 0;
-            const isSelected = selectedTopic === topic.name;
+            const isSelected = selectedTopic === topic.name || (selectedTopic && selectedTopic.startsWith(topic.name + " > "));
+            const hasSubtopics = topic.subtopics && topic.subtopics.length > 0;
 
             return (
               <div key={topic.name} style={{ marginBottom: "0.75rem" }}>
@@ -1441,7 +1491,8 @@ export default function CoursePage() {
       >
         <div
           style={{
-            maxWidth: "700px",
+            maxWidth: "900px",
+            width: "90%",
             margin: "0 auto",
             background: "var(--bg-card)",
             backdropFilter: "blur(20px)",
@@ -1510,17 +1561,22 @@ export default function CoursePage() {
           borderBottom: "1px solid var(--border-overlay-1)", 
           background: "var(--bg-card)",
           position: "relative",
-          minHeight: "64px", // Altura similar a los botones de navegación
-          paddingRight: "220px", // Espacio para los botones de navegación fijos (3 botones de 48px + gaps)
+          minHeight: "72px",
+          padding: "0 1rem",
         }}>
-          {/* Tabs de Vista */}
-          <div style={{ display: "flex", alignItems: "center", height: "100%" }}>
+          {/* Tabs de Vista - Diseño Profesional Mejorado */}
+          <div style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            height: "100%",
+            gap: "0.25rem"
+          }}>
             <button
               onClick={() => setActiveView("topics")}
               style={{
-                padding: "1.25rem 2rem",
+                padding: "0.875rem 1.5rem",
                 background: activeView === "topics" 
-                  ? "rgba(99, 102, 241, 0.08)" 
+                  ? "var(--bg-card)" 
                   : "transparent",
                 border: "none",
                 borderBottom: activeView === "topics" 
@@ -1529,17 +1585,19 @@ export default function CoursePage() {
                 color: activeView === "topics" ? "#6366f1" : "var(--text-secondary)",
                 cursor: "pointer",
                 fontWeight: activeView === "topics" ? "600" : "500",
-                fontSize: "0.95rem",
+                fontSize: "0.9375rem",
                 transition: "all 0.2s ease",
                 position: "relative",
                 height: "100%",
                 display: "flex",
                 alignItems: "center",
+                gap: "0.5rem",
+                whiteSpace: "nowrap",
               }}
               onMouseEnter={(e) => {
                 if (activeView !== "topics") {
                   e.currentTarget.style.color = "var(--text-primary)";
-                  e.currentTarget.style.background = "rgba(99, 102, 241, 0.05)";
+                  e.currentTarget.style.background = "var(--bg-overlay-02)";
                 }
               }}
               onMouseLeave={(e) => {
@@ -1549,14 +1607,15 @@ export default function CoursePage() {
                 }
               }}
             >
-              {selectedTopic || "Temas"}
+              <HiAcademicCap size={18} />
+              <span>{selectedTopic && !selectedTopic.includes(" > ") ? selectedTopic : "Temas"}</span>
             </button>
             <button
               onClick={() => setActiveView("summary")}
               style={{
-                padding: "1.25rem 2rem",
+                padding: "0.875rem 1.5rem",
                 background: activeView === "summary" 
-                  ? "rgba(99, 102, 241, 0.08)" 
+                  ? "var(--bg-card)" 
                   : "transparent",
                 border: "none",
                 borderBottom: activeView === "summary" 
@@ -1565,16 +1624,18 @@ export default function CoursePage() {
                 color: activeView === "summary" ? "#6366f1" : "var(--text-secondary)",
                 cursor: "pointer",
                 fontWeight: activeView === "summary" ? "600" : "500",
-                fontSize: "0.95rem",
+                fontSize: "0.9375rem",
                 transition: "all 0.2s ease",
                 height: "100%",
                 display: "flex",
                 alignItems: "center",
+                gap: "0.5rem",
+                whiteSpace: "nowrap",
               }}
               onMouseEnter={(e) => {
                 if (activeView !== "summary") {
                   e.currentTarget.style.color = "var(--text-primary)";
-                  e.currentTarget.style.background = "rgba(99, 102, 241, 0.05)";
+                  e.currentTarget.style.background = "var(--bg-overlay-02)";
                 }
               }}
               onMouseLeave={(e) => {
@@ -1584,14 +1645,15 @@ export default function CoursePage() {
                 }
               }}
             >
-              Resumen
+              <HiDocumentText size={18} />
+              <span>Resumen</span>
             </button>
             <button
               onClick={() => setActiveView("chat")}
               style={{
-                padding: "1.25rem 2rem",
+                padding: "0.875rem 1.5rem",
                 background: activeView === "chat" 
-                  ? "rgba(99, 102, 241, 0.08)" 
+                  ? "var(--bg-card)" 
                   : "transparent",
                 border: "none",
                 borderBottom: activeView === "chat" 
@@ -1600,16 +1662,18 @@ export default function CoursePage() {
                 color: activeView === "chat" ? "#6366f1" : "var(--text-secondary)",
                 cursor: "pointer",
                 fontWeight: activeView === "chat" ? "600" : "500",
-                fontSize: "0.95rem",
+                fontSize: "0.9375rem",
                 transition: "all 0.2s ease",
                 height: "100%",
                 display: "flex",
                 alignItems: "center",
+                gap: "0.5rem",
+                whiteSpace: "nowrap",
               }}
               onMouseEnter={(e) => {
                 if (activeView !== "chat") {
                   e.currentTarget.style.color = "var(--text-primary)";
-                  e.currentTarget.style.background = "rgba(99, 102, 241, 0.05)";
+                  e.currentTarget.style.background = "var(--bg-overlay-02)";
                 }
               }}
               onMouseLeave={(e) => {
@@ -1619,7 +1683,168 @@ export default function CoursePage() {
                 }
               }}
             >
-              Chat
+              <HiChatBubbleLeftRight size={18} />
+              <span>Chat</span>
+            </button>
+          </div>
+          
+          {/* Botones de Acción - Integrados con el diseño */}
+          <div style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: "0.375rem",
+            flexShrink: 0,
+            marginLeft: "auto",
+            paddingLeft: "1rem",
+            borderLeft: "1px solid var(--border-overlay-1)",
+          }}>
+            <button
+              onClick={async () => {
+                if (session?.user?.id) {
+                  try {
+                    const streakResponse = await fetch("/api/study-agents/update-streak-credits", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        user_id: session.user.id,
+                        course_id: courseId,
+                      }),
+                    });
+                    
+                    if (streakResponse.ok) {
+                      const streakDataResult = await streakResponse.json();
+                      if (streakDataResult.success) {
+                        setStreakData(streakDataResult);
+                        setShowStreakModal(true);
+                      }
+                    }
+                  } catch (error) {
+                    console.error("Error cargando racha:", error);
+                  }
+                }
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.375rem",
+                padding: "0.5rem 0.875rem",
+                background: "transparent",
+                border: "none",
+                borderRadius: "6px",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+                fontSize: "0.875rem",
+                fontWeight: "500",
+                transition: "all 0.2s ease",
+                whiteSpace: "nowrap",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--bg-overlay-02)";
+                e.currentTarget.style.color = "#fbbf24";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "var(--text-secondary)";
+              }}
+            >
+              <TbFlame size={16} />
+              <span>Racha</span>
+            </button>
+            
+            <button
+              onClick={() => {
+                const rankingView = document.getElementById("ranking-view");
+                if (rankingView) rankingView.style.display = "flex";
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.375rem",
+                padding: "0.5rem 0.875rem",
+                background: "transparent",
+                border: "none",
+                borderRadius: "6px",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+                fontSize: "0.875rem",
+                fontWeight: "500",
+                transition: "all 0.2s ease",
+                whiteSpace: "nowrap",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--bg-overlay-02)";
+                e.currentTarget.style.color = "#6366f1";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "var(--text-secondary)";
+              }}
+            >
+              <HiTrophy size={16} />
+              <span>Ranking</span>
+            </button>
+            
+            <button
+              onClick={async () => {
+                // Verificar si ya tiene una review antes de finalizar
+                if (!hasReviewed) {
+                  setShowReviewModal(true);
+                  return;
+                }
+                
+                if (!confirm("¿Estás seguro de que quieres finalizar este curso?")) {
+                  return;
+                }
+                
+                try {
+                  const response = await fetch("/api/study-agents/unenroll-course", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      userId: session?.user?.id,
+                      courseId: courseId,
+                    }),
+                  });
+                  
+                  if (response.ok) {
+                    router.push("/study-agents");
+                  } else {
+                    alert("Error al finalizar el curso");
+                  }
+                } catch (error) {
+                  console.error("Error:", error);
+                  alert("Error al finalizar el curso");
+                }
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.375rem",
+                padding: "0.5rem 0.875rem",
+                background: "transparent",
+                border: "none",
+                borderRadius: "6px",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+                fontSize: "0.875rem",
+                fontWeight: "500",
+                transition: "all 0.2s ease",
+                whiteSpace: "nowrap",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--bg-overlay-02)";
+                e.currentTarget.style.color = "#ef4444";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "var(--text-secondary)";
+              }}
+            >
+              <HiXMark size={16} />
+              <span>Finalizar</span>
             </button>
           </div>
         </div>
@@ -1680,64 +1905,8 @@ export default function CoursePage() {
                 Progreso: <span style={{ color: "#6366f1", fontWeight: "600" }}>{Math.round(currentTopicProgress)}%</span>
               </div>
 
-              {/* Apuntes Generados (Fijados) */}
-              {topicNotes.length > 0 && (
-                <div style={{ marginBottom: "3rem" }}>
-                  <h3 style={{ 
-                    fontSize: "1.5rem", 
-                    fontWeight: "600", 
-                    marginBottom: "1.5rem",
-                    color: "var(--text-primary)"
-                  }}>
-                    Apuntes Generados
-                  </h3>
-                  {topicNotes.map((note, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        background: "var(--bg-card)",
-                        padding: "2rem",
-                        borderRadius: "16px",
-                        border: "1px solid var(--border-overlay-1)",
-                        marginBottom: "1.5rem",
-                        transition: "all 0.3s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "translateY(-2px)";
-                        e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.3)";
-                        e.currentTarget.style.background = "var(--bg-overlay-04)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.borderColor = "var(--border-overlay-1)";
-                        e.currentTarget.style.background = "var(--bg-card)";
-                      }}
-                    >
-                      <div 
-                        style={{ color: "var(--text-primary)", lineHeight: "1.8" }}
-                        dangerouslySetInnerHTML={{
-                          __html: DOMPurify.sanitize(note, {
-                            ALLOWED_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'strong', 'em', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'section', 'span', 'hr', 'blockquote', 'br'],
-                            ALLOWED_ATTR: ['style', 'class', 'id'],
-                            ALLOW_DATA_ATTR: false,
-                            KEEP_CONTENT: true,
-                            FORBID_TAGS: ['script', 'iframe', 'object', 'embed'],
-                            FORBID_ATTR: ['onerror', 'onload'],
-                            ALLOWED_STYLES: {
-                              '*': {
-                                '*': true  // Permitir todos los estilos CSS
-                              }
-                            }
-                          })
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
               {/* Herramientas Disponibles - Cards estilo página principal */}
-              <div style={{ marginTop: "3rem" }}>
+              <div style={{ marginBottom: "3rem" }}>
                 <h3 style={{ 
                   fontSize: "1.5rem", 
                   fontWeight: "600", 
@@ -2097,54 +2266,163 @@ export default function CoursePage() {
                   `}</style>
                 </div>
               ) : topicSummary[selectedTopic] ? (
-                <div style={{
-                  background: "var(--bg-card)",
-                  padding: "3rem",
-                  borderRadius: "16px",
-                  border: "1px solid var(--border-overlay-1)",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.3)";
-                  e.currentTarget.style.background = "var(--bg-overlay-04)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.borderColor = "var(--border-overlay-1)";
-                  e.currentTarget.style.background = "var(--bg-card)";
-                }}
-                >
+                <>
+                  {/* Botón de descargar PDF */}
                   <div style={{ 
-                    color: "var(--text-primary)", 
-                    lineHeight: "2", 
-                    fontSize: "1.15rem",
+                    display: "flex", 
+                    justifyContent: "flex-end", 
+                    marginBottom: "1rem",
+                    gap: "0.5rem"
                   }}>
-                    <div 
-                      className="notes-html-content"
-                      dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(topicSummary[selectedTopic], {
-                          ALLOWED_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'strong', 'em', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'section', 'span', 'hr', 'blockquote', 'br'],
-                          ALLOWED_ATTR: ['style', 'class', 'id'],
-                          ALLOW_DATA_ATTR: false,
-                          KEEP_CONTENT: true,
-                          FORBID_TAGS: ['script', 'iframe', 'object', 'embed'],
-                          FORBID_ATTR: ['onerror', 'onload'],
-                          ALLOWED_STYLES: {
-                            '*': {
-                              '*': true  // Permitir todos los estilos CSS
-                            }
-                          }
-                        })
-                      }}
+                    <button
+                      onClick={downloadPDF}
                       style={{
-                        color: "var(--text-primary)",
-                        lineHeight: "2",
-                        fontSize: "1.15rem",
+                        padding: "0.75rem 1.5rem",
+                        background: "#6366f1",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        fontSize: "0.9rem",
+                        fontWeight: "500",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        transition: "all 0.2s",
                       }}
-                    />
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#4f46e5";
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#6366f1";
+                        e.currentTarget.style.transform = "translateY(0)";
+                      }}
+                    >
+                      <HiArrowDownTray size={18} />
+                      <span>Descargar PDF</span>
+                    </button>
                   </div>
-                </div>
+                  
+                  {/* Contenedor de apuntes con formato de página */}
+                  <div 
+                    ref={notesContentRef}
+                    style={{
+                      background: "#ffffff",
+                      padding: "4rem",
+                      borderRadius: "8px",
+                      border: "1px solid #e5e7eb",
+                      boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                      maxWidth: "210mm", // A4 width
+                      margin: "0 auto",
+                      minHeight: "297mm", // A4 height
+                      color: "#1f2937",
+                      fontFamily: "'Georgia', 'Times New Roman', serif",
+                      lineHeight: "1.8",
+                      fontSize: "1.1rem",
+                    }}
+                  >
+                    {/* Detectar si es HTML o Markdown */}
+                    {topicSummary[selectedTopic].trim().startsWith('<') || 
+                     topicSummary[selectedTopic].includes('<div') || 
+                     topicSummary[selectedTopic].includes('<h1') || 
+                     topicSummary[selectedTopic].includes('<p') ? (
+                      // Es HTML, usar dangerouslySetInnerHTML con procesamiento de fórmulas
+                      <div 
+                        className="notes-html-content"
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(processMathFormulas(topicSummary[selectedTopic]), {
+                            ALLOWED_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'strong', 'em', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'section', 'span', 'hr', 'blockquote', 'br', 'img'],
+                            ALLOWED_ATTR: ['style', 'class', 'id', 'src', 'alt', 'title'],
+                            ALLOW_DATA_ATTR: false,
+                            KEEP_CONTENT: true,
+                            FORBID_TAGS: ['script', 'iframe', 'object', 'embed'],
+                            FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onmouseout'],
+                            ALLOWED_STYLES: {
+                              '*': {
+                                '*': true  // Permitir todos los estilos CSS
+                              }
+                            },
+                            ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
+                          })
+                        }}
+                        style={{
+                          color: "#1f2937",
+                          lineHeight: "1.8",
+                          fontSize: "1.1rem",
+                        }}
+                      />
+                    ) : (
+                      // Es Markdown, usar ReactMarkdown con procesamiento de fórmulas
+                      <div 
+                        className="notes-markdown-content"
+                        style={{
+                          color: "#1f2937",
+                          lineHeight: "1.8",
+                          fontSize: "1.1rem",
+                        }}
+                      >
+                        <ReactMarkdown
+                          remarkPlugins={[]}
+                          components={{
+                            h1: ({ ...props }) => <h1 {...props} style={{ fontSize: "2.5rem", fontWeight: 700, marginTop: "2rem", marginBottom: "1.5rem", color: "#111827", borderBottom: "2px solid #6366f1", paddingBottom: "0.5rem" }} />,
+                            h2: ({ ...props }) => <h2 {...props} style={{ fontSize: "2rem", fontWeight: 600, marginTop: "2rem", marginBottom: "1rem", color: "#1f2937" }} />,
+                            h3: ({ ...props }) => <h3 {...props} style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: "1.5rem", marginBottom: "0.75rem", color: "#374151" }} />,
+                            p: ({ ...props }) => {
+                              // ReactMarkdown pasa children como ReactNode, necesitamos extraer el texto
+                              let childrenStr = '';
+                              if (typeof props.children === 'string') {
+                                childrenStr = props.children;
+                              } else if (Array.isArray(props.children)) {
+                                childrenStr = props.children.map(c => {
+                                  if (typeof c === 'string') return c;
+                                  if (typeof c === 'object' && c !== null && 'props' in c) {
+                                    // Es un elemento React, extraer texto
+                                    return c.props?.children?.toString() || String(c);
+                                  }
+                                  return String(c);
+                                }).join('');
+                              } else if (props.children) {
+                                childrenStr = String(props.children);
+                              }
+                              const processed = processMathFormulas(childrenStr);
+                              return <p {...props} style={{ marginBottom: "1.25rem", textAlign: "justify" }} dangerouslySetInnerHTML={{ __html: processed }} />;
+                            },
+                            strong: ({ ...props }) => <strong {...props} style={{ fontWeight: 700, color: "#6366f1" }} />,
+                            em: ({ ...props }) => <em {...props} style={{ fontStyle: "italic" }} />,
+                            ul: ({ ...props }) => <ul {...props} style={{ marginLeft: "2rem", marginBottom: "1.25rem", listStyleType: "disc" }} />,
+                            ol: ({ ...props }) => <ol {...props} style={{ marginLeft: "2rem", marginBottom: "1.25rem" }} />,
+                            li: ({ ...props }) => {
+                              // ReactMarkdown pasa children como ReactNode, necesitamos extraer el texto
+                              let childrenStr = '';
+                              if (typeof props.children === 'string') {
+                                childrenStr = props.children;
+                              } else if (Array.isArray(props.children)) {
+                                childrenStr = props.children.map(c => {
+                                  if (typeof c === 'string') return c;
+                                  if (typeof c === 'object' && c !== null && 'props' in c) {
+                                    // Es un elemento React, extraer texto
+                                    return c.props?.children?.toString() || String(c);
+                                  }
+                                  return String(c);
+                                }).join('');
+                              } else if (props.children) {
+                                childrenStr = String(props.children);
+                              }
+                              const processed = processMathFormulas(childrenStr);
+                              return <li {...props} style={{ marginBottom: "0.5rem" }} dangerouslySetInnerHTML={{ __html: processed }} />;
+                            },
+                            img: ({ ...props }) => <img {...props} style={{ maxWidth: "100%", height: "auto", borderRadius: "8px", margin: "1.5rem 0", display: "block", marginLeft: "auto", marginRight: "auto" }} />,
+                            code: ({ ...props }) => <code {...props} style={{ background: "#f3f4f6", padding: "0.2em 0.4em", borderRadius: "4px", fontFamily: "'Courier New', monospace", fontSize: "0.9em" }} />,
+                            pre: ({ ...props }) => <pre {...props} style={{ background: "#1f2937", color: "#f9fafb", padding: "1rem", borderRadius: "8px", overflow: "auto", margin: "1.5rem 0" }} />,
+                          }}
+                        >
+                          {topicSummary[selectedTopic]}
+                        </ReactMarkdown>
+                      </div>
+                    )}
+                  </div>
+                </>
               ) : (
                 <div style={{ 
                   textAlign: "center", 
@@ -2310,91 +2588,280 @@ export default function CoursePage() {
               )}
             </div>
 
-            {/* Input de Mensaje */}
+            {/* Input de Mensaje - Diseño como buscador */}
             <div style={{ 
               padding: "1.5rem 2rem", 
               borderTop: "1px solid var(--border-overlay-1)", 
               background: "var(--bg-card)",
             }}>
-              <div style={{ display: "flex", gap: "1rem", maxWidth: "800px", margin: "0 auto", alignItems: "center" }}>
-                <input
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  placeholder="Escribe tu pregunta..."
-                  disabled={sending}
-                  style={{
-                    flex: 1,
-                    padding: "1rem 1.5rem",
-                    background: "var(--bg-overlay-05)",
-                    border: "1px solid var(--border-overlay-1)",
-                    borderRadius: "14px",
-                    color: "var(--text-primary)",
-                    fontSize: "0.95rem",
-                    transition: "all 0.2s",
-                    outline: "none",
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#6366f1";
-                    e.currentTarget.style.background = "var(--bg-overlay-08)";
-                    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.1)";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "var(--border-overlay-1)";
-                    e.currentTarget.style.background = "var(--bg-overlay-05)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={sending || !inputMessage.trim()}
-                  style={{
-                    padding: "1rem 1.75rem",
-                    background: sending || !inputMessage.trim() 
-                      ? "rgba(156, 163, 175, 0.2)" 
-                      : "#6366f1",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "14px",
-                    cursor: sending || !inputMessage.trim() ? "not-allowed" : "pointer",
-                    fontWeight: "600",
-                    fontSize: "0.95rem",
-                    boxShadow: sending || !inputMessage.trim() 
-                      ? "none" 
-                      : "0 4px 15px rgba(99, 102, 241, 0.3)",
-                    transition: "all 0.2s ease",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!sending && inputMessage.trim()) {
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                      e.currentTarget.style.boxShadow = "0 6px 20px rgba(99, 102, 241, 0.4)";
-                      e.currentTarget.style.background = "#5855eb";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!sending && inputMessage.trim()) {
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "0 4px 15px rgba(99, 102, 241, 0.3)";
-                      e.currentTarget.style.background = "#6366f1";
-                    }
-                  }}
+              <div style={{ 
+                maxWidth: "800px", 
+                margin: "0 auto",
+                position: "relative"
+              }}>
+                <div style={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  background: "var(--bg-card)",
+                  border: "3px solid var(--border-overlay-1)",
+                  borderRadius: "50px",
+                  padding: "0.75rem 1.5rem",
+                  transition: "all 0.3s ease",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#6366f1";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(99, 102, 241, 0.25)";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "var(--border-overlay-1)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.08)";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
                 >
-                  Enviar
-                </button>
+                  {/* Botón de micrófono a la izquierda */}
+                  <button
+                    onClick={toggleRecording}
+                    disabled={sending}
+                    style={{
+                      background: isRecording ? "#ef4444" : "transparent",
+                      border: "none",
+                      borderRadius: "50%",
+                      width: "40px",
+                      height: "40px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: sending ? "not-allowed" : "pointer",
+                      marginRight: "1rem",
+                      flexShrink: 0,
+                      transition: "all 0.2s ease",
+                      color: isRecording ? "white" : "#6366f1",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!sending && !isRecording) {
+                        e.currentTarget.style.background = "rgba(99, 102, 241, 0.1)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!sending && !isRecording) {
+                        e.currentTarget.style.background = "transparent";
+                      }
+                    }}
+                  >
+                    <HiMicrophone 
+                      size={20}
+                      style={{
+                        animation: isRecording ? "pulse 1.5s ease-in-out infinite" : "none"
+                      }}
+                    />
+                    <style jsx>{`
+                      @keyframes pulse {
+                        0%, 100% { opacity: 1; transform: scale(1); }
+                        50% { opacity: 0.7; transform: scale(1.1); }
+                      }
+                    `}</style>
+                  </button>
+                  
+                  {/* Input */}
+                  <input
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    placeholder="Escribe tu pregunta..."
+                    disabled={sending}
+                    style={{
+                      flex: 1,
+                      padding: "0.25rem 0",
+                      fontSize: "1.05rem",
+                      fontWeight: "600",
+                      background: "transparent",
+                      border: "none",
+                      color: "var(--text-primary)",
+                      outline: "none",
+                      transition: "all 0.2s ease",
+                    }}
+                    onFocus={(e) => {
+                      const container = e.currentTarget.closest('div[style*="background"]') as HTMLElement;
+                      if (container) {
+                        container.style.borderColor = "#6366f1";
+                        container.style.boxShadow = "0 6px 20px rgba(99, 102, 241, 0.3)";
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const container = e.currentTarget.closest('div[style*="background"]') as HTMLElement;
+                      if (container) {
+                        container.style.borderColor = "var(--border-overlay-1)";
+                        container.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.08)";
+                      }
+                    }}
+                  />
+                  
+                  {/* Botón de enviar */}
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={sending || !inputMessage.trim()}
+                    style={{
+                      background: sending || !inputMessage.trim() 
+                        ? "rgba(156, 163, 175, 0.2)" 
+                        : "#6366f1",
+                      border: "none",
+                      borderRadius: "50%",
+                      width: "40px",
+                      height: "40px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: sending || !inputMessage.trim() ? "not-allowed" : "pointer",
+                      marginLeft: "1rem",
+                      flexShrink: 0,
+                      transition: "all 0.2s ease",
+                      color: "white",
+                      boxShadow: sending || !inputMessage.trim() 
+                        ? "none" 
+                        : "0 4px 12px rgba(99, 102, 241, 0.3)",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!sending && inputMessage.trim()) {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow = "0 6px 20px rgba(99, 102, 241, 0.4)";
+                        e.currentTarget.style.background = "#5855eb";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!sending && inputMessage.trim()) {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(99, 102, 241, 0.3)";
+                        e.currentTarget.style.background = "#6366f1";
+                      }
+                    }}
+                  >
+                    <HiPaperAirplane size={20} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Modal de Valoración */}
+      {showReviewModal && session?.user?.id && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.8)",
+            backdropFilter: "blur(8px)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "2rem",
+          }}
+          onClick={(e) => {
+            // No permitir cerrar sin valorar si el curso ha finalizado
+            if (!isCourseFinished && e.target === e.currentTarget) {
+              setShowReviewModal(false);
+            }
+          }}
+        >
+          <div
+            style={{
+              maxWidth: "600px",
+              width: "100%",
+              background: "var(--bg-card)",
+              borderRadius: "24px",
+              border: "1px solid var(--border-overlay-1)",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
+              overflow: "hidden",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              padding: "2rem",
+              borderBottom: "1px solid var(--border-overlay-1)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              background: "linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)"
+            }}>
+              <h2 style={{ fontSize: "1.5rem", fontWeight: "600", color: "var(--text-primary)", margin: 0 }}>
+                {isCourseFinished ? "¡Curso Finalizado!" : "Valorar Curso"}
+              </h2>
+              {!isCourseFinished && (
+                <button
+                  onClick={() => setShowReviewModal(false)}
+                  style={{
+                    padding: "0.5rem",
+                    background: "var(--bg-overlay-05)",
+                    border: "none",
+                    fontSize: "1.5rem",
+                    cursor: "pointer",
+                    color: "var(--text-secondary)",
+                    borderRadius: "8px",
+                    width: "40px",
+                    height: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)";
+                    e.currentTarget.style.color = "#ef4444";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "var(--bg-overlay-05)";
+                    e.currentTarget.style.color = "var(--text-secondary)";
+                  }}
+                >
+                  <HiXMark size={24} />
+                </button>
+              )}
+            </div>
+            <div style={{ padding: "2rem" }}>
+              <SatisfactionFeedback
+                courseId={courseId}
+                userId={session.user.id}
+                onSubmitted={() => {
+                  setHasReviewed(true);
+                  setShowReviewModal(false);
+                  if (isCourseFinished) {
+                    // Después de valorar, permitir finalizar
+                    if (confirm("¿Quieres finalizar el curso ahora?")) {
+                      fetch("/api/study-agents/unenroll-course", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          userId: session.user.id,
+                          courseId: courseId,
+                        }),
+                      })
+                        .then(res => {
+                          if (res.ok) {
+                            router.push("/study-agents");
+                          }
+                        });
+                    }
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

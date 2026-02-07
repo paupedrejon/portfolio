@@ -608,28 +608,45 @@ async def health_check():
 @app.get("/api/files/{filename:path}")
 async def serve_file(filename: str):
     """
-    Sirve archivos estáticos desde el directorio de documentos
+    Sirve archivos estáticos desde el directorio de documentos o imágenes generadas
     
     Args:
-        filename: Nombre del archivo (puede incluir subdirectorios)
+        filename: Nombre del archivo (puede incluir subdirectorios como generated_images/)
         
     Returns:
         Archivo solicitado
     """
     try:
-        file_path = os.path.join(UPLOAD_DIR, filename)
-        
-        # Verificar que el archivo existe y está dentro del directorio permitido
-        if not os.path.exists(file_path):
-            raise HTTPException(status_code=404, detail="Archivo no encontrado")
-        
-        # Verificar que no hay path traversal (seguridad)
-        real_path = os.path.realpath(file_path)
-        real_upload_dir = os.path.realpath(UPLOAD_DIR)
-        if not real_path.startswith(real_upload_dir):
-            raise HTTPException(status_code=403, detail="Acceso denegado")
-        
-        return FileResponse(file_path)
+        # Si el archivo está en generated_images/, buscar en courses/generated_images/
+        if filename.startswith("generated_images/"):
+            generated_images_dir = Path("courses/generated_images")
+            file_path = generated_images_dir / filename.replace("generated_images/", "")
+            
+            if not file_path.exists():
+                raise HTTPException(status_code=404, detail="Archivo no encontrado")
+            
+            # Verificar seguridad (path traversal)
+            real_path = os.path.realpath(str(file_path))
+            real_base_dir = os.path.realpath(str(generated_images_dir))
+            if not real_path.startswith(real_base_dir):
+                raise HTTPException(status_code=403, detail="Acceso denegado")
+            
+            return FileResponse(str(file_path))
+        else:
+            # Archivos normales desde UPLOAD_DIR
+            file_path = os.path.join(UPLOAD_DIR, filename)
+            
+            # Verificar que el archivo existe y está dentro del directorio permitido
+            if not os.path.exists(file_path):
+                raise HTTPException(status_code=404, detail="Archivo no encontrado")
+            
+            # Verificar que no hay path traversal (seguridad)
+            real_path = os.path.realpath(file_path)
+            real_upload_dir = os.path.realpath(UPLOAD_DIR)
+            if not real_path.startswith(real_upload_dir):
+                raise HTTPException(status_code=403, detail="Acceso denegado")
+            
+            return FileResponse(file_path)
     except HTTPException:
         raise
     except Exception as e:
@@ -1827,6 +1844,13 @@ class SubmitSatisfactionRequest(BaseModel):
     user_id: str
     course_id: str
     rating: int  # 1-5
+    comment: Optional[str] = None
+
+
+class GetCourseReviewsRequest(BaseModel):
+    """Modelo para obtener reviews de un curso"""
+    course_id: str
+    limit: int = 50
 
 
 class CourseGuideRequest(BaseModel):
@@ -3078,13 +3102,33 @@ async def generate_course_summaries_background(
     topics: List[Dict],
     additional_comments: Optional[str] = None,
     model: str = "gemini-1.5-pro",
-    exam_examples_pdfs: Optional[List[str]] = None
+    exam_examples_pdfs: Optional[List[str]] = None,
+    use_saved_pdfs: bool = False  # Si True, usa los PDFs guardados en el curso
 ):
     """
     Función en background para generar resúmenes del curso
     """
     try:
         print(f"\n🚀 Iniciando generación de resúmenes en background para curso {course_id}")
+        
+        # Si use_saved_pdfs es True, obtener PDFs guardados del curso
+        if use_saved_pdfs:
+            course = course_storage.get_course(course_id)
+            if course:
+                # Usar PDFs guardados en lugar de URLs
+                topics_with_saved_pdfs = []
+                for topic in course.get("topics", []):
+                    topic_copy = topic.copy()
+                    # Usar saved_pdf_paths si existen, sino usar pdfs originales
+                    saved_paths = topic.get("saved_pdf_paths", topic.get("pdfs", []))
+                    topic_copy["pdfs"] = saved_paths
+                    topics_with_saved_pdfs.append(topic_copy)
+                topics = topics_with_saved_pdfs
+                
+                # Usar exam_examples guardados
+                saved_exam_paths = course.get("saved_exam_pdf_paths", course.get("exam_examples", []))
+                exam_examples_pdfs = saved_exam_paths
+                print(f"📁 Usando PDFs guardados del curso: {len([p for t in topics for p in t.get('pdfs', [])])} PDFs de topics, {len(exam_examples_pdfs)} PDFs de exámenes")
         
         # Generar todos los resúmenes
         summaries = gemini_summary_generator.generate_all_course_summaries(
@@ -3132,6 +3176,100 @@ async def generate_course_summaries_background(
         print(f"❌ Error generando resúmenes en background: {e}")
         import traceback
         traceback.print_exc()
+
+
+class RegenerateCourseSummariesRequest(BaseModel):
+    """Modelo para regenerar resúmenes de un curso"""
+    user_id: str
+    course_id: str
+    gemini_api_key: Optional[str] = None
+    model: str = "gemini-1.5-pro"
+    additional_comments: Optional[str] = None
+
+
+@app.post("/api/regenerate-course-summaries")
+async def regenerate_course_summaries_endpoint(request: RegenerateCourseSummariesRequest, background_tasks: BackgroundTasks):
+    """
+    Regenera los resúmenes de un curso existente.
+    Solo el creador del curso puede hacer esto.
+    """
+    try:
+        course = course_storage.get_course(request.course_id)
+        if not course:
+            raise HTTPException(status_code=404, detail="Curso no encontrado")
+
+        if course["creator_id"] != request.user_id:
+            raise HTTPException(status_code=403, detail="Solo el creador del curso puede regenerar los resúmenes")
+
+        gemini_api_key = request.gemini_api_key or os.getenv("GEMINI_API_KEY")
+        if not gemini_api_key:
+            raise HTTPException(
+                status_code=400,
+                detail="Se requiere gemini_api_key (en el request o en GEMINI_API_KEY del .env) para generar resúmenes"
+            )
+
+        # Calcular estimación de costos
+        num_topics = len(course.get("topics", []))
+        num_subtopics = sum(len(topic.get("subtopics", [])) for topic in course.get("topics", []))
+
+        cost_estimate = gemini_summary_generator.estimate_gemini_cost(
+            num_topics=num_topics,
+            num_subtopics=num_subtopics,
+            model=request.model
+        )
+
+        # Verificar créditos del usuario
+        wallet = wallet_storage.get_user_wallet(request.user_id)
+        required_euros = cost_estimate["estimated_cost_eur"]
+
+        if abs(required_euros) > 0.01 and wallet["balance"] < required_euros:
+            raise HTTPException(
+                status_code=402,
+                detail=f"Créditos insuficientes. Necesitas {required_euros:.2f}€ para regenerar los resúmenes. Tu saldo: {wallet['balance']:.2f}€"
+            )
+
+        if abs(required_euros) > 0.01:
+            wallet_storage.deduct_from_wallet(
+                user_id=request.user_id,
+                amount=required_euros,
+                transaction_type="summary_regeneration",
+                metadata={
+                    "course_id": course["course_id"],
+                    "course_title": course["title"],
+                    "estimated_cost": cost_estimate
+                }
+            )
+            print(f"✅ Deducción de {required_euros:.2f}€ de la wallet del usuario {request.user_id} para regeneración de resúmenes.")
+        else:
+            print(f"ℹ️ Costo de regeneración es {required_euros:.2f}€ (sin apartados/subapartados con PDFs), no se deducen créditos.")
+
+        # Iniciar generación en background usando los PDFs guardados
+        background_tasks.add_task(
+            generate_course_summaries_background,
+            gemini_api_key=gemini_api_key,
+            course_id=course["course_id"],
+            course_title=course["title"],
+            course_description=course["description"],
+            topics=course["topics"], # Usar los topics del curso que ya tienen saved_pdf_paths
+            additional_comments=request.additional_comments,
+            model=request.model,
+            exam_examples_pdfs=course.get("exam_examples", []), # Usar los exam_examples del curso
+            use_saved_pdfs=True # Indicar que use los PDFs guardados
+        )
+
+        return {
+            "success": True,
+            "message": "Regeneración de resúmenes iniciada en segundo plano.",
+            "cost_estimate": cost_estimate
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error en regenerate_course_summaries_endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/get-course")
@@ -3183,13 +3321,10 @@ async def enroll_course_endpoint(request: EnrollCourseRequest):
         # Intentar generar resúmenes automáticamente si hay API key
         # Esto se hace en background para no bloquear la respuesta
         if hasattr(request, 'apiKey') and request.apiKey:
-            import asyncio
-            # Ejecutar en background sin esperar
-            asyncio.create_task(generate_all_course_summaries(
-                user_id=request.user_id,
-                course_id=request.course_id,
-                api_key=request.apiKey
-            ))
+            # NOTA: Los resúmenes automáticos se generan con Gemini cuando se crea el curso
+            # usando generate_course_summaries_background. Esta función ya no se usa.
+            # Si se necesitan resúmenes, deben generarse al crear el curso con generate_summaries=True
+            print(f"[FastAPI] ⚠️ generate_all_course_summaries está deprecada. Los resúmenes deben generarse al crear el curso con Gemini.")
         
         return {
             "success": True,
@@ -3208,163 +3343,16 @@ async def enroll_course_endpoint(request: EnrollCourseRequest):
 
 
 async def generate_all_course_summaries(user_id: str, course_id: str, api_key: str):
-    """Genera resúmenes automáticamente para todos los temas y subtemas de un curso"""
-    try:
-        print(f"[FastAPI] Iniciando generación automática de resúmenes para curso {course_id}")
-        
-        # Obtener curso
-        course = course_storage.get_course(course_id)
-        if not course:
-            print(f"[FastAPI] Curso {course_id} no encontrado")
-            return
-        
-        # Obtener sistema
-        system = get_or_create_system(api_key, mode="auto")
-        
-        # Obtener información del examen si está disponible
-        exam_info = None
-        enrollment = course_storage.get_user_enrollment(user_id, course_id)
-        if enrollment and enrollment.get("exam_date"):
-            from datetime import datetime
-            exam_date_str = enrollment.get("exam_date")
-            try:
-                exam_date = datetime.fromisoformat(exam_date_str.replace('Z', '+00:00'))
-                today = datetime.now(exam_date.tzinfo) if exam_date.tzinfo else datetime.now()
-                days_until_exam = (exam_date - today).days
-                exam_info = {
-                    "exam_date": exam_date_str,
-                    "days_until_exam": days_until_exam
-                }
-            except:
-                pass
-        
-        # Construir contexto del curso
-        course_context = {
-            "title": course.get("title", ""),
-            "description": course.get("description", ""),
-            "topics": [t.get("name", "") for t in course.get("topics", [])],
-            "subtopics": {}
-        }
-        # Añadir subtopics
-        for t in course.get("topics", []):
-            t_name = t.get("name", "")
-            if t_name:
-                course_context["subtopics"][t_name] = [
-                    st.get("name", "") for st in t.get("subtopics", [])
-                ]
-        
-        # Generar resúmenes para cada tema
-        for topic in course.get("topics", []):
-            topic_name = topic.get("name", "")
-            if not topic_name:
-                continue
-            
-            try:
-                print(f"[FastAPI] Generando resumen para tema: {topic_name}")
-                
-                # Obtener PDFs del tema principal (sin subtopics)
-                topic_pdf_paths = []
-                for pdf_url in topic.get("pdfs", []):
-                    pdf_path = convert_pdf_url_to_path(pdf_url)
-                    if pdf_path and os.path.exists(pdf_path):
-                        topic_pdf_paths.append(pdf_path)
-                
-                # Generar resumen para el tema principal si tiene PDFs
-                if topic_pdf_paths:
-                    system.upload_documents(topic_pdf_paths)
-                    notes = system.generate_notes(
-                        topics=[topic_name],
-                        model=None,  # modo auto
-                        user_id=user_id,
-                        conversation_history=None,
-                        topic=topic_name,
-                        user_level=None,
-                        chat_id=None,
-                        exam_info=exam_info,
-                        course_context=course_context
-                    )
-                    
-                    # Guardar en la inscripción
-                    enrollment = course_storage.get_user_enrollment(user_id, course_id)
-                    if enrollment:
-                        current_notes = enrollment.get("generated_notes", {})
-                        if topic_name not in current_notes or not current_notes[topic_name]:
-                            current_notes[topic_name] = notes
-                            course_storage.update_enrollment(
-                                user_id=user_id,
-                                course_id=course_id,
-                                updates={"generated_notes": current_notes}
-                            )
-                            print(f"[FastAPI] ✅ Resumen generado y guardado para tema: {topic_name}")
-                
-                # Generar resúmenes para cada subtopic
-                for subtopic in topic.get("subtopics", []):
-                    subtopic_name = subtopic.get("name", "")
-                    if not subtopic_name:
-                        continue
-                    
-                    try:
-                        print(f"[FastAPI] Generando resumen para subtopic: {subtopic_name}")
-                        
-                        # Obtener PDFs del subtopic
-                        subtopic_pdf_paths = []
-                        for pdf_url in subtopic.get("pdfs", []):
-                            pdf_path = convert_pdf_url_to_path(pdf_url)
-                            if pdf_path and os.path.exists(pdf_path):
-                                subtopic_pdf_paths.append(pdf_path)
-                        
-                        if not subtopic_pdf_paths:
-                            print(f"[FastAPI] No hay PDFs para el subtopic {subtopic_name}, saltando...")
-                            continue
-                        
-                        # Procesar documentos del subtopic
-                        system.upload_documents(subtopic_pdf_paths)
-                        
-                        # Generar resumen para el subtopic (usar mismo exam_info y course_context)
-                        subtopic_notes = system.generate_notes(
-                            topics=[subtopic_name],
-                            model=None,  # modo auto
-                            user_id=user_id,
-                            conversation_history=None,
-                            topic=subtopic_name,
-                            user_level=None,
-                            chat_id=None,
-                            exam_info=exam_info,
-                            course_context=course_context
-                        )
-                        
-                        # Guardar en la inscripción con el nombre del subtopic
-                        enrollment = course_storage.get_user_enrollment(user_id, course_id)
-                        if enrollment:
-                            current_notes = enrollment.get("generated_notes", {})
-                            # Usar el nombre del subtopic como clave
-                            if subtopic_name not in current_notes or not current_notes[subtopic_name]:
-                                current_notes[subtopic_name] = subtopic_notes
-                                course_storage.update_enrollment(
-                                    user_id=user_id,
-                                    course_id=course_id,
-                                    updates={"generated_notes": current_notes}
-                                )
-                                print(f"[FastAPI] ✅ Resumen generado y guardado para subtopic: {subtopic_name}")
-                    
-                    except Exception as e:
-                        print(f"[FastAPI] Error generando resumen para subtopic {subtopic_name}: {str(e)}")
-                        import traceback
-                        traceback.print_exc()
-                        continue
-                
-            except Exception as e:
-                print(f"[FastAPI] Error generando resumen para tema {topic_name}: {str(e)}")
-                import traceback
-                traceback.print_exc()
-                continue
-        
-        print(f"[FastAPI] ✅ Generación automática de resúmenes completada para curso {course_id}")
-        
-    except Exception as e:
-        print(f"[FastAPI] Error en generación automática de resúmenes: {str(e)}")
-        import traceback
-        traceback.print_exc()
+    """
+    DEPRECADA: Esta función ya no se usa.
+    
+    Los resúmenes automáticos ahora se generan con Gemini cuando se crea el curso
+    usando generate_course_summaries_background, que guarda los resúmenes en course.summaries.
+    
+    Si necesitas generar resúmenes, hazlo al crear el curso con generate_summaries=True.
+    """
+    print(f"[FastAPI] ⚠️ generate_all_course_summaries está deprecada. Los resúmenes deben generarse al crear el curso con Gemini.")
+    return
 
 
 def convert_pdf_url_to_path(pdf_url: str) -> Optional[str]:
@@ -4138,13 +4126,21 @@ async def generate_course_notes_endpoint(request: GenerateCourseNotesRequest):
         
         # Verificar si ya existen resúmenes generados automáticamente con Gemini
         course_summaries = course.get("summaries", {})
+        print(f"[FastAPI] 🔍 Verificando resúmenes automáticos para tema '{request.topic_name}'")
+        print(f"[FastAPI]   - ¿Tiene course.summaries? {bool(course_summaries)}")
+        if course_summaries:
+            print(f"[FastAPI]   - Temas en summaries: {list(course_summaries.keys())}")
+            print(f"[FastAPI]   - ¿Está '{request.topic_name}' en summaries? {request.topic_name in course_summaries}")
+        
         if course_summaries and request.topic_name in course_summaries:
             topic_summary_data = course_summaries[request.topic_name]
+            print(f"[FastAPI]   - Tipo de topic_summary_data: {type(topic_summary_data)}")
+            
             # Obtener el resumen principal del apartado
             if isinstance(topic_summary_data, dict) and "summary" in topic_summary_data:
                 existing_summary = topic_summary_data["summary"]
                 if existing_summary:
-                    print(f"[FastAPI] Usando resumen generado automáticamente para tema '{request.topic_name}'")
+                    print(f"[FastAPI] ✅ Usando resumen generado automáticamente con Gemini para tema '{request.topic_name}' ({len(existing_summary)} caracteres)")
                     # Guardar también en generated_notes para compatibilidad
                     current_notes = enrollment.get("generated_notes", {})
                     current_notes[request.topic_name] = existing_summary
@@ -4158,9 +4154,11 @@ async def generate_course_notes_endpoint(request: GenerateCourseNotesRequest):
                         "notes": existing_summary,
                         "from_auto_generated": True
                     }
+                else:
+                    print(f"[FastAPI] ⚠️ topic_summary_data tiene 'summary' pero está vacío")
             elif isinstance(topic_summary_data, str) and topic_summary_data:
                 # Si es un string directo
-                print(f"[FastAPI] Usando resumen generado automáticamente (formato string) para tema '{request.topic_name}'")
+                print(f"[FastAPI] ✅ Usando resumen generado automáticamente con Gemini (formato string) para tema '{request.topic_name}' ({len(topic_summary_data)} caracteres)")
                 current_notes = enrollment.get("generated_notes", {})
                 current_notes[request.topic_name] = topic_summary_data
                 course_storage.update_enrollment(
@@ -4173,6 +4171,10 @@ async def generate_course_notes_endpoint(request: GenerateCourseNotesRequest):
                     "notes": topic_summary_data,
                     "from_auto_generated": True
                 }
+            else:
+                print(f"[FastAPI] ⚠️ topic_summary_data no tiene formato válido: {type(topic_summary_data)}")
+        else:
+            print(f"[FastAPI] ⚠️ No hay resúmenes automáticos de Gemini para tema '{request.topic_name}'. Se generarán manualmente.")
         
         if not pdf_paths:
             raise HTTPException(status_code=400, detail=f"No hay PDFs disponibles para el tema '{request.topic_name}'")
@@ -4407,7 +4409,8 @@ async def submit_satisfaction_endpoint(request: SubmitSatisfactionRequest):
         course = course_storage.submit_satisfaction_feedback(
             user_id=request.user_id,
             course_id=request.course_id,
-            rating=request.rating
+            rating=request.rating,
+            comment=request.comment
         )
         return {
             "success": True,
@@ -4417,6 +4420,23 @@ async def submit_satisfaction_endpoint(request: SubmitSatisfactionRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         print(f"[FastAPI] Error enviando satisfacción: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/get-course-reviews")
+async def get_course_reviews_endpoint(request: GetCourseReviewsRequest):
+    """Obtiene las reviews de un curso"""
+    try:
+        reviews = course_storage.get_course_reviews(
+            course_id=request.course_id,
+            limit=request.limit
+        )
+        return {
+            "success": True,
+            "reviews": reviews
+        }
+    except Exception as e:
+        print(f"[FastAPI] Error obteniendo reviews: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

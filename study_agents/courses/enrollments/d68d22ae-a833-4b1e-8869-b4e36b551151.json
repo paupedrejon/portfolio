@@ -8,16 +8,21 @@
     "max_credits": 500,
     "initial_credits": 250,
     "streak_days": 1,
-    "last_connection_date": "2026-02-03",
+    "last_connection_date": "2026-02-05",
     "credits_from_streak": 0,
     "streak_calendar": {
       "2026-02-03": {
         "claimed": false,
         "credits": 12,
         "streak_day": 1
+      },
+      "2026-02-05": {
+        "claimed": false,
+        "credits": 12,
+        "streak_day": 1
       }
     },
-    "pending_credits": 12,
+    "pending_credits": 24,
     "xp": 0,
     "topic_progress": {
       "PARTE 1": 0

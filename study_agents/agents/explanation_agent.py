@@ -933,10 +933,44 @@ description: Este video explica paso a paso cómo resolver ecuaciones de segundo
                     print(f"✅ Usando temas del temario para generar contenido educativo")
         
         if final_topics:
+            # Intentar usar caché de resúmenes si está disponible
+            cached_summary = None
+            course_id = None
+            if course_context and isinstance(final_topics, list) and len(final_topics) == 1:
+                # Solo usar caché si hay un solo tema y hay contexto de curso
+                try:
+                    from summary_cache import get_cached_summary_for_context
+                    # Intentar obtener course_id del contexto
+                    # Nota: course_id puede venir de diferentes lugares según el contexto
+                    main_topic = final_topics[0] if isinstance(final_topics, list) else str(final_topics)
+                    conversation_length = len(conversation_history) if conversation_history else 0
+                    
+                    # Intentar obtener course_id si está disponible en el contexto
+                    # (Esto dependerá de cómo se pase el course_id al agente)
+                    cached_summary = get_cached_summary_for_context(
+                        course_id=course_id or "default",
+                        topic=main_topic,
+                        conversation_length=conversation_length
+                    )
+                    
+                    if cached_summary:
+                        print(f"💾 Usando resumen en caché para tema '{main_topic}' (nivel según longitud: {conversation_length})")
+                except Exception as e:
+                    print(f"⚠️ Error obteniendo caché de resumen: {e}")
+            
             # Si hay historial relevante, usarlo primero
             if has_relevant_conversation:
                 combined_content = conversation_text
                 print(f"📝 Usando historial de conversación sobre '{final_topics[0]}'")
+            elif cached_summary:
+                # Usar resumen en caché como base
+                main_topic = final_topics[0] if isinstance(final_topics, list) else str(final_topics)
+                combined_content = f"TEMA: {main_topic}\n\nRESUMEN DEL CONTENIDO:\n{cached_summary}\n\nGenera apuntes completos basándote en este resumen, adaptado al nivel del estudiante."
+                
+                # Añadir historial si existe
+                if conversation_text:
+                    combined_content += f"\n\n---\n\nHISTORIAL DE CONVERSACIÓN (contexto adicional):\n{conversation_text}"
+                print(f"📝 Usando resumen en caché para '{main_topic}'")
             else:
                 # Si no hay historial relevante pero hay tema, generar desde cero
                 # NO buscar en documentos genéricos que pueden no ser relevantes

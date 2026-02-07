@@ -436,6 +436,35 @@ class QAAssistantAgent:
         # Obtener historial de conversación (solo del chat actual)
         conversation_history = self.memory.get_conversation_history(user_id, chat_id)
         
+        # Resumir historial si es largo
+        if conversation_history and len(conversation_history) > 15:
+            try:
+                from conversation_summarizer import summarize_conversation_history, format_summarized_history
+                
+                summary_data = summarize_conversation_history(
+                    history=conversation_history,
+                    api_key=self.api_key if hasattr(self, 'api_key') else None,
+                    model=None,
+                    max_messages=10,
+                    use_llm=bool(self.api_key)
+                )
+                
+                # Reemplazar historial completo con resumen + recientes
+                conversation_history = summary_data.get("recent_messages", [])
+                history_summary = format_summarized_history(summary_data)
+                
+                # Añadir resumen al contexto si existe
+                if history_summary:
+                    if relevant_content:
+                        relevant_content = [history_summary] + relevant_content
+                    else:
+                        relevant_content = [history_summary]
+                
+                print(f"📝 Historial resumido en QA: {len(conversation_history)} mensajes originales → resumen + {len(summary_data.get('recent_messages', []))} recientes")
+            except Exception as e:
+                print(f"⚠️ Error resumiendo historial en QA: {e}")
+                # Continuar con historial normal
+        
         # Si no hay contexto y no hay historial, usar el título del chat como contexto
         if not relevant_content and not conversation_history and chat_id:
             try:

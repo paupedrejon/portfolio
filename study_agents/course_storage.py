@@ -5,6 +5,7 @@ Guarda los cursos creados por usuarios y las inscripciones
 
 import json
 import os
+import shutil
 from typing import List, Dict, Optional
 from datetime import datetime
 from pathlib import Path
@@ -19,6 +20,10 @@ COURSES_FILE = COURSES_DIR / "all_courses.json"
 # Directorio para inscripciones de usuarios
 ENROLLMENTS_DIR = COURSES_DIR / "enrollments"
 ENROLLMENTS_DIR.mkdir(exist_ok=True)
+
+# Directorio para PDFs de cursos (guardados permanentemente)
+COURSE_PDFS_DIR = COURSES_DIR / "course_pdfs"
+COURSE_PDFS_DIR.mkdir(exist_ok=True)
 
 
 def get_courses_file() -> Path:
@@ -81,6 +86,71 @@ def create_course(
     elif price < 10.0:
         available_tools["games"] = False
     
+    # Copiar PDFs a carpeta del curso para guardarlos permanentemente
+    course_pdfs_dir = COURSE_PDFS_DIR / course_id
+    course_pdfs_dir.mkdir(exist_ok=True)
+    
+    # Función para copiar PDF desde URL a carpeta del curso
+    def copy_pdf_to_course(pdf_url: str, upload_dir: str = "documents") -> Optional[str]:
+        """Copia un PDF desde su ubicación actual a la carpeta del curso"""
+        try:
+            # Extraer nombre del archivo de la URL
+            if pdf_url.startswith("http://localhost:8000/api/files/") or pdf_url.startswith("http://127.0.0.1:8000/api/files/"):
+                filename = pdf_url.split("/api/files/")[-1]
+                source_path = Path(upload_dir) / filename
+            elif pdf_url.startswith("/api/files/"):
+                filename = pdf_url.replace("/api/files/", "")
+                source_path = Path(upload_dir) / filename
+            elif os.path.exists(pdf_url):
+                # Ya es una ruta local
+                source_path = Path(pdf_url)
+                filename = source_path.name
+            else:
+                print(f"⚠️ No se pudo encontrar el PDF: {pdf_url}")
+                return None
+            
+            if not source_path.exists():
+                print(f"⚠️ El archivo no existe: {source_path}")
+                return None
+            
+            # Copiar a la carpeta del curso
+            dest_path = course_pdfs_dir / filename
+            shutil.copy2(source_path, dest_path)
+            print(f"✅ PDF copiado a carpeta del curso: {dest_path}")
+            
+            # Retornar ruta relativa para guardar en el curso
+            return str(dest_path)
+        except Exception as e:
+            print(f"⚠️ Error copiando PDF {pdf_url}: {e}")
+            return None
+    
+    # Copiar PDFs de topics
+    topics_with_saved_pdfs = []
+    for topic in (topics or []):
+        topic_copy = topic.copy()
+        saved_pdfs = []
+        for pdf_url in topic.get("pdfs", []):
+            saved_path = copy_pdf_to_course(pdf_url)
+            if saved_path:
+                saved_pdfs.append(saved_path)
+            else:
+                # Si no se pudo copiar, mantener la URL original
+                saved_pdfs.append(pdf_url)
+        
+        # Guardar tanto las URLs originales como las rutas guardadas
+        topic_copy["pdfs"] = topic.get("pdfs", [])  # URLs originales
+        topic_copy["saved_pdf_paths"] = saved_pdfs  # Rutas guardadas
+        topics_with_saved_pdfs.append(topic_copy)
+    
+    # Copiar PDFs de exam_examples
+    saved_exam_pdfs = []
+    for exam_pdf_url in (exam_examples or []):
+        saved_path = copy_pdf_to_course(exam_pdf_url)
+        if saved_path:
+            saved_exam_pdfs.append(saved_path)
+        else:
+            saved_exam_pdfs.append(exam_pdf_url)
+    
     course_data = {
         "course_id": course_id,
         "creator_id": creator_id,
@@ -89,8 +159,9 @@ def create_course(
         "price": price,
         "max_duration_days": max_duration_days,
         "cover_image": cover_image,
-        "topics": topics or [],
-        "exam_examples": exam_examples or [],
+        "topics": topics_with_saved_pdfs,  # Topics con PDFs guardados
+        "exam_examples": exam_examples or [],  # URLs originales
+        "saved_exam_pdf_paths": saved_exam_pdfs,  # Rutas guardadas
         "available_tools": available_tools,
         "flashcard_questions": flashcard_questions or [],
         "revenue_split": revenue_split,
@@ -513,7 +584,7 @@ def get_course_ranking(course_id: str, limit: int = 10) -> List[Dict]:
     return all_enrollments[:limit]
 
 
-def submit_satisfaction_feedback(user_id: str, course_id: str, rating: int) -> Dict:
+def submit_satisfaction_feedback(user_id: str, course_id: str, rating: int, comment: Optional[str] = None) -> Dict:
     """
     Envía feedback de satisfacción sobre un curso
     
@@ -521,6 +592,7 @@ def submit_satisfaction_feedback(user_id: str, course_id: str, rating: int) -> D
         user_id: ID del usuario
         course_id: ID del curso
         rating: Calificación de 1 a 5
+        comment: Comentario opcional
         
     Returns:
         Datos actualizados del curso
@@ -532,25 +604,88 @@ def submit_satisfaction_feedback(user_id: str, course_id: str, rating: int) -> D
     if not course:
         raise ValueError(f"Curso {course_id} no encontrado")
     
+    # Cargar o crear archivo de reviews
+    reviews_file = COURSES_DIR / "reviews.json"
+    if reviews_file.exists():
+        with open(reviews_file, "r", encoding="utf-8") as f:
+            all_reviews = json.load(f)
+    else:
+        all_reviews = {}
+    
+    # Inicializar reviews del curso si no existe
+    if course_id not in all_reviews:
+        all_reviews[course_id] = []
+    
+    # Verificar si el usuario ya hizo una review
+    existing_review_index = None
+    for i, review in enumerate(all_reviews[course_id]):
+        if review.get("user_id") == user_id:
+            existing_review_index = i
+            break
+    
+    # Crear nueva review
+    new_review = {
+        "user_id": user_id,
+        "rating": rating,
+        "comment": comment or "",
+        "created_at": datetime.now().isoformat(),
+        "updated_at": datetime.now().isoformat()
+    }
+    
+    if existing_review_index is not None:
+        # Actualizar review existente
+        old_rating = all_reviews[course_id][existing_review_index].get("rating", rating)
+        all_reviews[course_id][existing_review_index] = new_review
+    else:
+        # Añadir nueva review
+        all_reviews[course_id].append(new_review)
+    
+    # Guardar reviews
+    with open(reviews_file, "w", encoding="utf-8") as f:
+        json.dump(all_reviews, f, ensure_ascii=False, indent=2)
+    
     # Actualizar satisfacción del curso
     all_courses = load_all_courses()
     if course_id in all_courses:
-        current_rating = all_courses[course_id].get("satisfaction_rating")
-        current_count = all_courses[course_id].get("satisfaction_count", 0)
-        
-        if current_rating is None:
-            new_rating = rating
+        reviews = all_reviews.get(course_id, [])
+        if reviews:
+            total_rating = sum(r.get("rating", 0) for r in reviews)
+            new_count = len(reviews)
+            new_rating = total_rating / new_count
         else:
-            # Calcular promedio
-            total_sum = current_rating * current_count + rating
-            new_count = current_count + 1
-            new_rating = total_sum / new_count
+            new_rating = None
+            new_count = 0
         
         all_courses[course_id]["satisfaction_rating"] = new_rating
-        all_courses[course_id]["satisfaction_count"] = current_count + 1
+        all_courses[course_id]["satisfaction_count"] = new_count
         save_all_courses(all_courses)
     
     return get_course(course_id)
+
+
+def get_course_reviews(course_id: str, limit: int = 50) -> List[Dict]:
+    """
+    Obtiene las reviews de un curso
+    
+    Args:
+        course_id: ID del curso
+        limit: Límite de reviews a retornar
+        
+    Returns:
+        Lista de reviews ordenadas por fecha (más recientes primero)
+    """
+    reviews_file = COURSES_DIR / "reviews.json"
+    if not reviews_file.exists():
+        return []
+    
+    with open(reviews_file, "r", encoding="utf-8") as f:
+        all_reviews = json.load(f)
+    
+    reviews = all_reviews.get(course_id, [])
+    # Ordenar por fecha (más recientes primero)
+    reviews.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    
+    return reviews[:limit]
 
 
 def update_streak_and_credits(user_id: str, course_id: str) -> Dict:

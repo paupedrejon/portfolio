@@ -1,0 +1,618 @@
+{
+  "course_20260203_220814_991266": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260203_220814_991266",
+    "enrolled_at": "2026-02-06T11:34:56.456686",
+    "credits_remaining": 0,
+    "credits_used": 0,
+    "max_credits": 0,
+    "initial_credits": 0,
+    "streak_days": 2,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {},
+    "pending_credits": 0,
+    "xp": 0,
+    "topic_progress": {
+      "PARTE 1": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "PARTE 1": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">PARTE 1</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <p style=\"margin-bottom: 1rem; color: #1f2937;\">La Parte 1 cubre los aspectos fundamentales del curso, abordando vocabulario esencial, estructuras gramaticales básicas y ejemplos prácticos útiles para la comunicación cotidiana.</p>\n    \n    <h3 style=\"font-size: 1.5rem; font-weight: 500; margin-bottom: 1rem; color: #1f2937;\">1. Vocabulario Esencial</h3>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.5rem; color: #1f2937;\"><strong style=\"color: #6366f1;\">Saludos</strong>: Hola, Adiós, Gracias</li>\n      <li style=\"margin-bottom: 0.5rem; color: #1f2937;\"><strong style=\"color: #6366f1;\">Números</strong>: 1 - Uno, 2 - Dos, 3 - Tres, 4 - Cuatro, 5 - Cinco</li>\n      <li style=\"margin-bottom: 0.5rem; color: #1f2937;\"><strong style=\"color: #6366f1;\">Colores Básicos</strong>: Rojo, Azul, Verde, Amarillo</li>\n    </ul>\n\n    <h3 style=\"font-size: 1.5rem; font-weight: 500; margin-bottom: 1rem; color: #1f2937;\">2. Frases de Supervivencia</h3>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.5rem; color: #1f2937;\">¿Cómo estás? - <strong style=\"color: #10b981;\">Contesta:</strong> Estoy bien, gracias.</li>\n      <li style=\"margin-bottom: 0.5rem; color: #1f2937;\">¿Cuánto cuesta? - <strong style=\"color: #10b981;\">Responde:</strong> Cuesta cinco dólares.</li>\n    </ul>\n    \n    <h3 style=\"font-size: 1.5rem; font-weight: 500; margin-bottom: 1rem; color: #1f2937;\">3. Pronunciación Básica</h3>\n    <p style=\"margin-bottom: 1rem; color: #1f2937;\">Cada sonido en el idioma puede ser complicado. Asegúrate de practicar la pronunciación de cada palabra, escuchando y repitiendo los modelos de audio disponibles.</p>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Confundir el género de las palabras: por ejemplo, decir \"el agua\" en lugar de \"la agua\".\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Uso incorrecto de los tiempos verbales en frases simples.\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      <strong style=\"color: #6366f1;\">Diálogo:</strong> \n      <pre style=\"color: #1f2937; background: rgba(0,0,0,0.1); padding: 0.5rem; border-radius: 6px;\">\n      Persona A: Hola, ¿cómo estás?\n      Persona B: Estoy bien, gracias. ¿Y tú?\n      </pre>\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "PARTE 1": []
+    },
+    "updated_at": "2026-02-06T11:35:57.191136"
+  },
+  "course_20260207_141436_500466": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_141436_500466",
+    "enrolled_at": "2026-02-07T14:14:36.516287",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0,
+      "Optimization": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "Physical Design": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">Physical Design</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul>\n      <li style=\"margin-bottom: 0.75rem;\">El <strong style=\"color: #6366f1;\">Physical Design</strong> se refiere a la representación física de un circuito integrado o de un sistema digital.</li>\n      <li style=\"margin-bottom: 0.75rem;\">Involucra la disposición de los componentes en un chip y cómo se interconectan.</li>\n      <li style=\"margin-bottom: 0.75rem;\">El diseño físico se realiza después de la creación del diseño lógico y tiene en cuenta la manufactura y las limitaciones de rendimiento.</li>\n      <li style=\"margin-bottom: 0.75rem;\">Se utilizan herramientas de software de diseño asistido por computadora (CAD) para facilitar este proceso.</li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Descuidar la importancia de la distribución térmica puede llevar a fallos en el rendimiento del chip.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Ignorar los requisitos de espacio puede causar problemas de integración y de ensamblaje.\n      </li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      Considera un chip microprocesador: su diseño físico debe optimizar el tamaño del die, la distribución de los pines y la gestión del calor para asegurar un funcionamiento eficiente.\n    </div>\n  </section>\n\n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Optimización en Physical Design</h2>\n    <ul>\n      <li style=\"margin-bottom: 0.75rem;\">La optimización en el diseño físico se enfoca en mejorar el rendimiento y reducir el tamaño del chip.</li>\n      <li style=\"margin-bottom: 0.75rem;\">Se consideran aspectos como el <strong style=\"color: #6366f1;\">balance de carga</strong> y la <strong style=\"color: #6366f1;\">minimización de la capacitancia</strong>.</li>\n      <li style=\"margin-bottom: 0.75rem;\">La verificación de diseño es crucial para asegurar que las optimizaciones no introduzcan fallos.</li>\n    </ul>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": [],
+      "Optimization": []
+    },
+    "updated_at": "2026-02-07T14:17:18.238774"
+  },
+  "course_20260207_141958_092284": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_141958_092284",
+    "enrolled_at": "2026-02-07T14:19:58.106400",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0,
+      "Optimization": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "Physical Design": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">Physical Design</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul>\n      <li style=\"margin-bottom: 1rem;\">Definición de <strong style=\"color: #6366f1;\">Physical Design</strong>: Proceso de traducción de un modelo lógico en un diseño físico que optimiza el uso de recursos y el rendimiento.</li>\n      <li style=\"margin-bottom: 1rem;\">Elementos Clave:\n        <ul>\n          <li>Tablas, índices y vistas.</li>\n          <li>Optimización de consultas y rendimiento.</li>\n          <li>Normalización y desnormalización.</li>\n          <li>Elección de tipos de datos adecuados.</li>\n        </ul>\n      </li>\n      <li style=\"margin-bottom: 1rem;\">Consideraciones de <strong style=\"color: #6366f1;\">Optimización</strong>:\n        <ul>\n          <li>Uso de índices para acelerar búsquedas.</li>\n          <li>Minimización de duplicación de datos.</li>\n          <li>Uso de particiones y sharding para grandes volúmenes de datos.</li>\n        </ul>\n      </li>\n      <li style=\"margin-bottom: 1rem;\">Factores a considerar:\n        <ul>\n          <li><code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">Costos de almacenamiento</code>.</li>\n          <li><code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">Tiempo de acceso a datos</code>.</li>\n          <li><code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">Escalabilidad</code>.</li>\n        </ul>\n      </li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Ignorar la selección de tipos de datos adecuados puede llevar a un rendimiento subóptimo.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        No utilizar índices en columnas frecuentemente consultadas, lo que afecta la eficiencia de las consultas.\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      Ejemplo de un diseño físico de base de datos para un sistema de gestión de biblioteca:\n      <ul>\n        <li><strong style=\"color: #6366f1;\">Tablas:</strong> Libros, Autores, Usuarios, Préstamos.</li>\n        <li><strong style=\"color: #6366f1;\">Índices:</strong> Índice en la columna ISBN para búsqueda rápida de libros.</li>\n        <li><strong style=\"color: #6366f1;\">Tipología de datos:</strong> VARCHAR para nombres, DATE para fechas de publicación.</li>\n      </ul>\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": [],
+      "Optimization": []
+    },
+    "updated_at": "2026-02-07T14:20:46.774674"
+  },
+  "course_20260207_180524_919220": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_180524_919220",
+    "enrolled_at": "2026-02-07T18:05:24.932828",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0,
+      "Optimization": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "Physical Design": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">Physical Design</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul>\n      <li><strong style=\"color: #6366f1;\">Definición:</strong> <code style=\"color: #10b981;\">Physical Design</code> se refiere a la representación física de un sistema, en este caso, un diseño de circuitos integrados.</li>\n      <li><strong style=\"color: #6366f1;\">Objetivos:</strong>\n        <ul>\n          <li>Optimizar el rendimiento del diseño.</li>\n          <li>Reducir el consumo de energía.</li>\n          <li>Minimizar el área física del circuito.</li>\n        </ul>\n      </li>\n      <li><strong style=\"color: #6366f1;\">Fases del Physical Design:</strong>\n        <ol>\n          <li><strong style=\"color: #6366f1;\">Floorplanning:</strong> Determinación de la ubicación de los bloques funcionales dentro del chip.</li>\n          <li><strong style=\"color: #6366f1;\">Placement:</strong> Asignación de posiciones específicas para cada componente dentro del chip.</li>\n          <li><strong style=\"color: #6366f1;\">Routing:</strong> Establecimiento de conexiones eléctricas entre componentes.</li>\n          <li><strong style=\"color: #6366f1;\">Timing Analysis:</strong> Verificación del tiempo que toma la señal para recorrer el circuito.</li>\n        </ol>\n      </li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        No considerar la distribución térmica, lo que puede dañar componentes.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Ignorar la congestión en el enrutamiento, que puede hacer que algunos caminos se saturen.\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      En el <strong style=\"color: #6366f1;\">Floorplanning</strong>, se distribuirán bloques como la CPU, memoria y E/S. La CPU debe estar en el centro para minimizar la latencia de las conexiones.\n    </div>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Optimización en Physical Design</h2>\n    <ul>\n      <li><strong style=\"color: #6366f1;\">Optimización de Área:</strong> Uso eficiente del espacio del chip.</li>\n      <li><strong style=\"color: #6366f1;\">Optimización de Tiempo:</strong> Acortar el tiempo que tarda en completarse una señal.</li>\n      <li><strong style=\"color: #6366f1;\">Optimización de Consumo de Energía:</strong> Reducir el consumo energético sin sacrificar rendimiento.</li>\n    </ul>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": [],
+      "Optimization": []
+    },
+    "updated_at": "2026-02-07T18:06:14.724775"
+  },
+  "course_20260207_181354_781605": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_181354_781605",
+    "enrolled_at": "2026-02-07T18:13:54.796542",
+    "credits_remaining": 250,
+    "credits_used": 0,
+    "max_credits": 500,
+    "initial_credits": 250,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 12,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 12,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "Physical Design": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">Physical Design</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul>\n      <li><strong style=\"color: #6366f1;\">Definición de Physical Design:</strong> Proceso de creación de un diseño físico optimizado para circuitos integrados.</li>\n      <li><strong style=\"color: #6366f1;\">Objetivos:</strong>\n        <ul>\n          <li>Optimizar rendimiento.</li>\n          <li>Reducir el área total del chip.</li>\n          <li>Minimizar el consumo de energía.</li>\n        </ul>\n      </li>\n      <li><strong style=\"color: #6366f1;\">Etapas del Physical Design:</strong>\n        <ul>\n          <li><strong style=\"color: #10b981;\">Floorplanning:</strong> Distribución inicial de componentes en el chip.</li>\n          <li><strong style=\"color: #10b981;\">Placement:</strong> Posicionamiento de las celdas en el layout.</li>\n          <li><strong style=\"color: #10b981;\">Routing:</strong> Creación de las conexiones eléctricas entre componentes.</li>\n          <li><strong style=\"color: #10b981;\">Signoff:</strong> Verificación final del diseño antes de la fabricación.</li>\n        </ul>\n      </li>\n      <li><strong style=\"color: #6366f1;\">Herramientas Comunes:</strong> \n        <ul>\n          <li>Cadence</li>\n          <li>Synopsys</li>\n          <li>Magma Design Automation</li>\n        </ul>\n      </li>\n      <li><strong style=\"color: #6366f1;\">Consideraciones a Tener en Cuenta:</strong>\n        <ul>\n          <li><strong style=\"color: #10b981;\">Densidad de Circuito:</strong> Evitar el overbooking de celdas.</li>\n          <li><strong style=\"color: #10b981;\">Interferencia Electromagnética:</strong> Minimizar el ruido entre componentes.</li>\n          <li><strong style=\"color: #10b981;\">Calor:</strong> Gestión térmica en el chip.</li>\n        </ul>\n      </li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        No considerar la congestión en el enrutamiento puede llevar a fallas en el diseño.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Ignorar la especificación de los límites térmicos afecta el rendimiento del chip.\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      En un diseño de un microprocesador, el floorplanning puede definir áreas específicas para la ALU, registros y cache, asegurando que las conexiones sean cortas para mejorar velocidad.\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    },
+    "updated_at": "2026-02-07T18:14:23.186358"
+  },
+  "course_20260207_181619_072675": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_181619_072675",
+    "enrolled_at": "2026-02-07T18:16:19.086332",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "Physical Design": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">Physical Design</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul>\n      <li style=\"margin-bottom: 1rem;\">\n        <strong style=\"color: #6366f1;\">Physical Design:</strong> Se refiere a la representación física de un sistema de diseño, donde se determina la disposición de los elementos y su interacción.\n      </li>\n      <li style=\"margin-bottom: 1rem;\">\n        <strong style=\"color: #6366f1;\">Elementos Clave:</strong>\n        <ul>\n          <li>Diagramas de bloques</li>\n          <li>Tablas de asignación de recursos</li>\n          <li>Diseño de circuitos o sistemas</li>\n        </ul>\n      </li>\n      <li style=\"margin-bottom: 1rem;\">\n        <strong style=\"color: #6366f1;\">Proceso:</strong> Implica varios pasos como la evaluación de requisitos, elaboración de conceptos, y validación del diseño.\n      </li>\n      <li style=\"margin-bottom: 1rem;\">\n        <strong style=\"color: #6366f1;\">Verificación:</strong> Es esencial asegurarse de que el diseño cumple con los requisitos especificados y es viable para su implementación.\n      </li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        No considerar adecuadamente la escalabilidad del diseño.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Ignorar las limitaciones de costos y recursos disponibles.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Fallar en documentar adecuadamente el proceso de diseño.\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      Al diseñar un sistema de red, se puede crear un diagrama de bloques que represente los diferentes componentes como servidores, routers y estaciones de trabajo. Esto ayuda a visualizar las conexiones y el flujo de datos.\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    },
+    "updated_at": "2026-02-07T18:16:41.650283"
+  },
+  "course_20260207_182423_820163": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_182423_820163",
+    "enrolled_at": "2026-02-07T18:24:23.834968",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "DBD PARCIAL 2": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "DBD PARCIAL 2": []
+    }
+  },
+  "course_20260207_183023_899273": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_183023_899273",
+    "enrolled_at": "2026-02-07T18:30:23.924055",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    }
+  },
+  "course_20260207_183741_008134": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_183741_008134",
+    "enrolled_at": "2026-02-07T18:37:41.023988",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    }
+  },
+  "course_20260207_184445_393230": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_184445_393230",
+    "enrolled_at": "2026-02-07T18:44:45.412639",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    }
+  },
+  "course_20260207_185137_341943": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_185137_341943",
+    "enrolled_at": "2026-02-07T18:51:37.371183",
+    "credits_remaining": 50,
+    "credits_used": 0,
+    "max_credits": 100,
+    "initial_credits": 50,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 1,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 1,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    }
+  },
+  "course_20260207_185744_005720": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_185744_005720",
+    "enrolled_at": "2026-02-07T18:57:44.036799",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    }
+  },
+  "course_20260207_190734_326180": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_190734_326180",
+    "enrolled_at": "2026-02-07T19:07:34.357164",
+    "credits_remaining": 250,
+    "credits_used": 0,
+    "max_credits": 500,
+    "initial_credits": 250,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 12,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 12,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0,
+      "Optimization": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "Optimization": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">Optimization</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul>\n      <li><strong style=\"color: #6366f1;\">Definición de Optimización:</strong> Proceso de encontrar la mejor solución o el mejor resultado posible bajo ciertas condiciones o restricciones.</li>\n      <li><strong style=\"color: #6366f1;\">Objetivo:</strong> Minimizar o maximizar una función objetivo.</li>\n      <li><strong style=\"color: #6366f1;\">Funciones Objetivo:</strong> Representan el costo o el beneficio que se busca optimizar.</li>\n      <ul>\n        <li>Ejemplo: Minimizar los costos de producción o maximizar el rendimiento de un producto.</li>\n      </ul>\n      <li><strong style=\"color: #6366f1;\">Restricciones:</strong> Condiciones que limitan los valores posibles de las decisiones.</li>\n      <ul>\n        <li>Ejemplo: Presupuesto, recursos disponibles.</li>\n      </ul>\n      <li><strong style=\"color: #6366f1;\">Métodos de Optimización:</strong>\n        <ul>\n          <li><code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">Optimización Lineal</code>: Se utiliza cuando la función objetivo y las restricciones son lineales.</li>\n          <li><code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">Optimización No Lineal</code>: Implica funciones que no son lineales.</li>\n          <li><code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">Optimización Entera</code>: Se refiere a problemas donde las variables de decisión deben ser enteras.</li>\n        </ul>\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Ignorar las restricciones o no definirlas claramente.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Asumir que una solución local es la mejor sin verificar globalmente.\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      Un fabricante de muebles quiere minimizar el costo total de producción de sillas y mesas. La función objetivo es <code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">C = 50x + 70y</code> donde <code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">x</code> es el número de sillas y <code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">y</code> el número de mesas. Las restricciones son que no se pueden producir más de 100 sillas y 50 mesas.\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": [],
+      "Optimization": []
+    },
+    "updated_at": "2026-02-07T19:13:54.582877"
+  },
+  "course_20260207_191749_405073": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_191749_405073",
+    "enrolled_at": "2026-02-07T19:17:49.433036",
+    "credits_remaining": 51,
+    "credits_used": 0,
+    "max_credits": 100,
+    "initial_credits": 50,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 1,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": true,
+        "credits": 1,
+        "streak_day": 1,
+        "claimed_at": "2026-02-07T19:26:43.746373"
+      }
+    },
+    "pending_credits": 0,
+    "xp": 0,
+    "topic_progress": {
+      "Physcal des": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physcal des": []
+    }
+  },
+  "course_20260207_192752_255475": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_192752_255475",
+    "enrolled_at": "2026-02-07T19:27:52.322713",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "PD": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "PD": []
+    }
+  },
+  "course_20260207_193832_640146": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_193832_640146",
+    "enrolled_at": "2026-02-07T19:38:32.673177",
+    "credits_remaining": 50,
+    "credits_used": 0,
+    "max_credits": 100,
+    "initial_credits": 50,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 1,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 1,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {
+      "Physical Design": "<div class=\"notes-container\">\n  <h1 style=\"font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;\">Physical Design</h1>\n  \n  <section style=\"margin-bottom: 3rem;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;\">Contenido del Tema</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 1rem;\">\n        <strong style=\"color: #6366f1;\">Definición:</strong> <code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">Physical Design</code> es el proceso de crear la implementación física de una base de datos.\n      </li>\n      <li style=\"margin-bottom: 1rem;\">\n        <strong style=\"color: #6366f1;\">Objetivos:</strong>\n        <ul style=\"list-style: disc; margin-left: 20px;\">\n          <li>Optimizar el rendimiento de la base de datos.</li>\n          <li>Minimizar el espacio en disco utilizado.</li>\n          <li>Asegurar la integridad de los datos.</li>\n        </ul>\n      </li>\n      <li style=\"margin-bottom: 1rem;\">\n        <strong style=\"color: #6366f1;\">Componentes Clave:</strong>\n        <ul style=\"list-style: disc; margin-left: 20px;\">\n          <li><strong style=\"color: #10b981;\">Tablas:</strong> Estructuras que contienen datos organizados en filas y columnas.</li>\n          <li><strong style=\"color: #10b981;\">Índices:</strong> Facilitan la búsqueda rápida de registros.</li>\n          <li><strong style=\"color: #10b981;\">Vistas:</strong> Consultas almacenadas que presentan datos de una o más tablas.</li>\n          <li><strong style=\"color: #10b981;\">Restricciones:</strong> Reglas que aseguran la validez de los datos (ej. claves primarias y foráneas).</li>\n        </ul>\n      </li>\n      <li style=\"margin-bottom: 1rem;\">\n        <strong style=\"color: #6366f1;\">Proceso de Physical Design:</strong>\n        <ol style=\"margin-left: 20px;\">\n          <li>Convertir el modelo lógico en un modelo físico.</li>\n          <li>Seleccionar tipos de datos adecuados.</li>\n          <li>Definir las tablas y sus relaciones.</li>\n          <li>Implementar índices y restricciones.</li>\n          <li>Realizar pruebas de rendimiento y ajustar.</li>\n        </ol>\n      </li>\n    </ul>\n  </section>\n\n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;\">⚠️ Errores Comunes / Trampas</h2>\n    <ul style=\"list-style: none; padding: 0;\">\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        No considerar el tamaño y crecimiento de los datos, lo que puede afectar el rendimiento a largo plazo.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Ignorar la normalización en favor de la desnormalización, lo que puede llevar a redundancias innecesarias.\n      </li>\n      <li style=\"margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;\">\n        Implementar índices ineficientes puede causar un rendimiento opuesto al esperado.\n      </li>\n    </ul>\n  </section>\n  \n  <section style=\"margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;\">\n    <h2 style=\"font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;\">💎 Ejemplo Práctico</h2>\n    <div style=\"padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;\">\n      Consideremos una base de datos para una tienda en línea. Se definirán tablas para <strong style=\"color: #10b981;\">Clientes</strong>, <strong style=\"color: #10b981;\">Pedidos</strong> y <strong style=\"color: #10b981;\">Productos</strong>. Cada tabla incluirá índices para campos frecuentemente consultados como <code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">customer_id</code> y <code style=\"background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;\">product_id</code> para optimizar las búsquedas.\n    </div>\n  </section>\n</div>"
+    },
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    },
+    "updated_at": "2026-02-07T19:39:02.184515"
+  },
+  "course_20260207_194124_924367": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_194124_924367",
+    "enrolled_at": "2026-02-07T19:41:24.956133",
+    "credits_remaining": 50,
+    "credits_used": 0,
+    "max_credits": 100,
+    "initial_credits": 50,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 1,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 1,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    }
+  },
+  "course_20260207_213729_427651": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_213729_427651",
+    "enrolled_at": "2026-02-07T21:37:29.458860",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    }
+  },
+  "course_20260207_214947_142201": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_214947_142201",
+    "enrolled_at": "2026-02-07T21:49:47.190916",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    }
+  }
+}

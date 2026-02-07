@@ -12,6 +12,7 @@ interface SatisfactionFeedbackProps {
 export default function SatisfactionFeedback({ courseId, userId, onSubmitted }: SatisfactionFeedbackProps) {
   const [rating, setRating] = useState<number | null>(null);
   const [hoveredStar, setHoveredStar] = useState<number | null>(null);
+  const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -27,6 +28,7 @@ export default function SatisfactionFeedback({ courseId, userId, onSubmitted }: 
           userId,
           courseId,
           rating,
+          comment: comment.trim() || null,
         }),
       });
 
@@ -147,7 +149,7 @@ export default function SatisfactionFeedback({ courseId, userId, onSubmitted }: 
       </div>
 
       {rating && (
-        <div style={{ textAlign: "center" }}>
+        <div style={{ textAlign: "center", width: "100%" }}>
           <p style={{ 
             marginBottom: "1.5rem", 
             color: "rgba(255, 255, 255, 0.8)",
@@ -160,6 +162,34 @@ export default function SatisfactionFeedback({ courseId, userId, onSubmitted }: 
             {rating === 4 && "😄 Satisfecho"}
             {rating === 5 && "🤩 Muy satisfecho"}
           </p>
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Escribe un comentario (opcional)..."
+            style={{
+              width: "100%",
+              minHeight: "100px",
+              padding: "1rem",
+              marginBottom: "1.5rem",
+              background: "rgba(255, 255, 255, 0.05)",
+              border: "2px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "12px",
+              color: "white",
+              fontSize: "1rem",
+              fontFamily: "inherit",
+              resize: "vertical",
+              outline: "none",
+              transition: "all 0.2s ease",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+            }}
+          />
           <button
             onClick={handleSubmit}
             disabled={submitting}
