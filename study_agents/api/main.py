@@ -34,6 +34,7 @@ from pydantic import BaseModel, ValidationError
 from typing import List, Optional, Dict
 from threading import Lock
 from datetime import datetime
+from pathlib import Path
 import sys
 import os
 import importlib.util
@@ -237,6 +238,11 @@ progress_tracker_instance = ProgressTracker()
 # Crear directorio para documentos subidos
 UPLOAD_DIR = "documents"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# Crear directorio para imágenes generadas
+GENERATED_IMAGES_DIR = Path("courses/generated_images")
+GENERATED_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+print(f"✅ Directorio de imágenes generadas: {GENERATED_IMAGES_DIR}")
 
 
 def save_user_cost(user_id: str, input_tokens: int, output_tokens: int, model: str, system: StudyAgentsSystem) -> bool:
@@ -1705,6 +1711,8 @@ class CreateCourseRequest(BaseModel):
     max_duration_days: Optional[int] = None  # Duración máxima del curso en días
     cover_image: Optional[str] = None  # Ruta a la imagen de portada
     is_exam: bool = False  # True si es examen, False si es curso
+    institution: Optional[Dict] = None  # {"name": str, "logo": Optional[str]}
+    subject: Optional[str] = None  # Asignatura/Curso/Tipo de examen (ej: B2, Bases de Datos)
     topics: List[Dict]  # [{"name": str, "pdfs": List[str], "subtopics": List[Dict]}]
     exam_examples: List[str]  # Lista de rutas a PDFs
     available_tools: Dict[str, bool]  # {"flashcards": True, "code_interpreter": True, etc.}
@@ -3020,6 +3028,8 @@ async def create_course_endpoint(request: CreateCourseRequest, background_tasks:
             max_duration_days=request.max_duration_days,
             cover_image=request.cover_image,
             is_exam=request.is_exam,
+            institution=request.institution,
+            subject=request.subject,
             topics=request.topics,
             exam_examples=request.exam_examples,
             available_tools=request.available_tools,

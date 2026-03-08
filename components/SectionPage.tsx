@@ -1,5 +1,9 @@
 // components/SectionPage.tsx
+"use client";
+
 import { ReactNode } from "react";
+import ScrollReveal from "./ScrollReveal";
+import TechLogosMarquee from "./TechLogosMarquee";
 
 type Align = "center" | "left" | "right";
 
@@ -90,132 +94,152 @@ export default function SectionPage({
   const ContentBlock = (
     <div className={`${align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left"}`}>
       {kicker && (
-        <p 
-          className="text-xs tracking-[0.2em] uppercase mb-4"
-          style={{ 
-            fontFamily: 'var(--font-mono)',
-            color: 'var(--accent-primary)',
-            fontWeight: 600,
-          }}
-        >
+          <p 
+            className="text-sm tracking-[0.2em] uppercase mb-4"
+            style={{ 
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--accent-primary)',
+              fontWeight: 600,
+            }}
+          >
           {kicker}
         </p>
       )}
 
-      <h2
-        className="font-extrabold tracking-tight"
-        style={{
-          fontFamily: 'var(--font-display)',
-          color: effectiveTextColor,
-          fontSize: "clamp(2rem, 5vw, 3.5rem)",
-          lineHeight: 1,
-          margin: 0,
-          marginBottom: title2 ? '0.5rem' : '0',
-        }}
-      >
-        {title}
-      </h2>
-
-      {title2 && (
-        <h3
-          className="font-bold tracking-tight"
+      {typeof title === "string" ? (
+        <ScrollReveal
+          baseOpacity={0.1}
+          enableBlur
+          baseRotation={3}
+          blurStrength={4}
+          as="h2"
+          containerClassName="font-extrabold tracking-tight scroll-reveal-tight"
+          textClassName="font-extrabold tracking-tight"
           style={{
-            fontFamily: 'var(--font-display)',
-            color: 'var(--text-secondary)',
-            fontSize: "clamp(1.25rem, 3vw, 2rem)",
-            lineHeight: 1.1,
+            fontFamily: "var(--font-display)",
+            color: effectiveTextColor,
+            fontSize: "clamp(2.75rem, 6.5vw, 4.75rem)",
+            lineHeight: 1,
+            fontWeight: 800,
             margin: 0,
-            marginBottom: '1.5rem',
+            marginBottom: title2 ? "0.5rem" : "0",
           }}
         >
-          {title2}
-        </h3>
-      )}
-
-      {subtitle && (
-        <p
-          className="text-base md:text-lg leading-relaxed mb-6"
+          {title}
+        </ScrollReveal>
+      ) : (
+        <h2
+          className="font-extrabold tracking-tight"
           style={{
-            fontFamily: 'var(--font-body)',
-            color: 'var(--text-secondary)',
-            maxWidth: align === "center" ? "none" : "500px",
+            fontFamily: "var(--font-display)",
+            color: effectiveTextColor,
+            fontSize: "clamp(2.75rem, 6.5vw, 4.75rem)",
+            lineHeight: 1,
+            margin: 0,
+            marginBottom: title2 ? "0.5rem" : "0",
           }}
         >
-          {subtitle}
-        </p>
+          {title}
+        </h2>
       )}
 
-      {/* Technologies Section */}
+      {title2 &&
+        (typeof title2 === "string" ? (
+          <ScrollReveal
+            baseOpacity={0.1}
+            enableBlur
+            baseRotation={2}
+            blurStrength={3}
+            as="h3"
+            containerClassName="font-bold tracking-tight scroll-reveal-tight"
+            textClassName="font-bold tracking-tight"
+            style={{
+              fontFamily: "var(--font-display)",
+              color: "var(--text-secondary)",
+              fontSize: "clamp(1.65rem, 4vw, 2.75rem)",
+              lineHeight: 1.1,
+              margin: 0,
+              marginBottom: "1.5rem",
+            }}
+          >
+            {title2}
+          </ScrollReveal>
+        ) : (
+          <h3
+            className="font-bold tracking-tight"
+            style={{
+              fontFamily: "var(--font-display)",
+              color: "var(--text-secondary)",
+              fontSize: "clamp(1.65rem, 4vw, 2.75rem)",
+              lineHeight: 1.1,
+              margin: 0,
+              marginBottom: "1.5rem",
+            }}
+          >
+            {title2}
+          </h3>
+        ))}
+
+      {subtitle &&
+        (typeof subtitle === "string" ? (
+          <ScrollReveal
+            baseOpacity={0.15}
+            enableBlur
+            baseRotation={1}
+            blurStrength={3}
+            as="p"
+            containerClassName="leading-relaxed mb-6"
+            textClassName=""
+            style={{
+              fontFamily: "var(--font-body)",
+              color: "var(--text-secondary)",
+              maxWidth: align === "center" ? "none" : "720px",
+              fontSize: "clamp(1.1rem, 2.2vw, 1.45rem)",
+              lineHeight: 1.6,
+              fontWeight: 400,
+            }}
+          >
+            {subtitle}
+          </ScrollReveal>
+        ) : (
+          <p
+            className="leading-relaxed mb-6"
+            style={{
+              fontFamily: "var(--font-body)",
+              color: "var(--text-secondary)",
+              maxWidth: align === "center" ? "none" : "720px",
+              fontSize: "clamp(1.1rem, 2.2vw, 1.45rem)",
+              lineHeight: 1.6,
+            }}
+          >
+            {subtitle}
+          </p>
+        ))}
+
+      {/* Technologies Section - CSS marquee (lightweight) */}
       {technologies.length > 0 && (
-        <div style={{ marginTop: '2rem', marginBottom: '1.5rem' }}>
-          <p 
-            className="text-xs tracking-[0.15em] uppercase mb-3"
-            style={{ 
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--text-muted)',
+        <div style={{ marginTop: "2rem", marginBottom: "1.5rem" }}>
+          <p
+            className="text-sm tracking-[0.15em] uppercase mb-3"
+            style={{
+              fontFamily: "var(--font-mono)",
+              color: "var(--text-muted)",
               fontWeight: 500,
             }}
           >
             Technologies Used
           </p>
-          <div 
+          <div
             style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '0.75rem',
-              maxWidth: align === "center" ? "none" : "600px",
+              height: 48,
+              display: "flex",
+              alignItems: "center",
+              maxWidth: align === "center" ? "none" : "100%",
             }}
           >
-            {technologies.map((tech, i) => (
-              <span
-                key={i}
-                className="tech-pill"
-                style={{
-                  position: 'relative',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '0.5rem 1rem',
-                  fontSize: '0.8rem',
-                  fontWeight: 500,
-                  fontFamily: 'var(--font-mono)',
-                  color: '#60a5fa',
-                  background: 'rgba(10, 10, 15, 0.8)',
-                  border: '1px solid rgba(96, 165, 250, 0.4)',
-                  borderRadius: '100px',
-                  backdropFilter: 'blur(10px)',
-                  boxShadow: '0 0 20px rgba(96, 165, 250, 0.2), inset 0 0 20px rgba(96, 165, 250, 0.05)',
-                  transition: 'all 0.3s ease',
-                  cursor: 'default',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.8)';
-                  e.currentTarget.style.boxShadow = '0 0 30px rgba(96, 165, 250, 0.4), inset 0 0 20px rgba(96, 165, 250, 0.1)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.color = '#93c5fd';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(96, 165, 250, 0.4)';
-                  e.currentTarget.style.boxShadow = '0 0 20px rgba(96, 165, 250, 0.2), inset 0 0 20px rgba(96, 165, 250, 0.05)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.color = '#60a5fa';
-                }}
-              >
-                {/* Glow effect */}
-                <span
-                  style={{
-                    position: 'absolute',
-                    inset: '-2px',
-                    borderRadius: '100px',
-                    background: 'linear-gradient(135deg, rgba(96, 165, 250, 0.3), rgba(59, 130, 246, 0.2))',
-                    filter: 'blur(8px)',
-                    opacity: 0.6,
-                    zIndex: -1,
-                    transition: 'opacity 0.3s ease',
-                  }}
-                />
-                {tech}
-              </span>
-            ))}
+            <TechLogosMarquee
+              techString={typeof midText === "string" ? midText : ""}
+            />
           </div>
         </div>
       )}

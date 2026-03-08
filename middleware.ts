@@ -1,13 +1,24 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import createMiddleware from "next-intl/middleware";
+import { NextRequest, NextResponse } from "next/server";
+import { routing } from "./i18n/routing";
 
-export function middleware(request: NextRequest) {
-  // La verificación de autenticación se hace en el componente de la página
-  // usando useSession. El middleware solo permite el paso.
-  return NextResponse.next();
+const handleI18nRouting = createMiddleware(routing);
+
+export default function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // Skip i18n for these paths - pass through
+  if (
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/study-agents")
+  ) {
+    return NextResponse.next();
+  }
+
+  return handleI18nRouting(request);
 }
 
 export const config = {
-  matcher: ["/study-agents/:path*"],
+  matcher: ["/((?!api|auth|study-agents|_next|_vercel|.*\\..*).*)"],
 };
-

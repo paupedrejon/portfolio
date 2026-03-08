@@ -2,22 +2,24 @@
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { Providers } from "./providers";
-import Header from "@/components/Header";
 import ConditionalHeader from "@/components/ConditionalHeader";
-import { spaceGrotesk, outfit, jetbrainsMono } from "./fonts";
+import { spaceGrotesk, outfit, jetbrainsMono, leagueSpartan } from "./fonts";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { AiOutlineMail } from "react-icons/ai";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getLocale, getTranslations } from "next-intl/server";
 
 export const metadata = {
   title: "Pau Pedrejon — Software Engineer & Developer",
   description: "Portfolio showcasing my projects, skills and experience as a software engineer specializing in game development, web applications, and creative technology.",
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/LOGO_portfolio.png', type: 'image/png' },
+      { url: '/Favicon.png', sizes: 'any', type: 'image/png' },
+      { url: '/Favicon32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/Favicon16x16.png', sizes: '16x16', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico',
-    apple: '/LOGO_portfolio.png',
+    shortcut: '/Favicon.png',
+    apple: '/Favicon.png',
   },
 };
 
@@ -26,22 +28,30 @@ export const viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html 
-      lang="en" 
-      className={`${spaceGrotesk.variable} ${outfit.variable} ${jetbrainsMono.variable}`}
-    >
-      <body className="overflow-x-hidden w-full">
-        <Providers>
-        <ConditionalHeader />
-        
-        <main className="pt-0 w-full">
-          {children}
-        </main>
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+  const tFooter = await getTranslations("footer");
 
-        {/* Footer */}
-        <footer className="footer">
+  return (
+    <html
+      lang={locale}
+      className={`${spaceGrotesk.variable} ${outfit.variable} ${jetbrainsMono.variable} ${leagueSpartan.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="overflow-x-hidden w-full" suppressHydrationWarning>
+        <Providers>
+          <NextIntlClientProvider messages={messages} locale={locale}>
+            <ConditionalHeader />
+
+            <main className="pt-0 w-full">{children}</main>
+
+            {/* Footer */}
+            <footer className="footer">
           <div className="footer-content">
             {/* Social Links */}
             <div className="footer-social">
@@ -71,12 +81,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
             {/* Copyright */}
             <p className="footer-copyright">
-              © {new Date().getFullYear()} Pau Pedrejon. Crafted with passion.
+              © {new Date().getFullYear()} Pau Pedrejon. {tFooter("craftedWithPassion")}
             </p>
           </div>
         </footer>
 
-        <Analytics />
+            <Analytics />
+          </NextIntlClientProvider>
         </Providers>
       </body>
     </html>

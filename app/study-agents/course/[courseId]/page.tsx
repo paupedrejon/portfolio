@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import DOMPurify from "dompurify";
 import ReactMarkdown from "react-markdown";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 import CourseRanking from "@/components/CourseRanking";
 import GamesView from "@/components/CourseGame";
 import SatisfactionFeedback from "@/components/SatisfactionFeedback";
@@ -37,6 +39,7 @@ interface Course {
     flashcards?: Array<{ question: string; correct_answer_index: number; options: string[] }>;
   }>;
   available_tools: Record<string, boolean>;
+  summaries?: Record<string, { summary?: string | null; subtopics?: Record<string, string> } | string>;
 }
 
 interface Enrollment {
@@ -132,15 +135,42 @@ export default function CoursePage() {
     }
   };
   
-  // Función para procesar fórmulas matemáticas LaTeX ($...$)
+  // Función para convertir URLs relativas de imágenes a absolutas
+  const fixImageUrls = (content: string): string => {
+    if (!content) return "";
+    // Convertir URLs relativas /api/files/ a absolutas con localhost:8000
+    const apiBaseUrl = typeof window !== 'undefined' 
+      ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:8000'
+        : window.location.origin.replace(':3000', ':8000')
+      : 'http://localhost:8000';
+    
+    // Primero corregir URLs
+    let fixed = content.replace(
+      /src=["'](\/api\/files\/[^"']+)["']/g,
+      (match, url) => `src="${apiBaseUrl}${url}"`
+    );
+    
+    // Añadir crossOrigin="anonymous" a todas las imágenes que no lo tengan
+    fixed = fixed.replace(
+      /<img([^>]*?)(?:\s+crossOrigin=["'][^"']*["'])?([^>]*?)>/gi,
+      (match, before, after) => {
+        if (!match.includes('crossOrigin')) {
+          return `<img${before} crossOrigin="anonymous"${after}>`;
+        }
+        return match;
+      }
+    );
+    
+    return fixed;
+  };
+  
+  // Función para procesar fórmulas matemáticas LaTeX ($...$) usando KaTeX
   const processMathFormulas = (content: string): string => {
     if (!content) return "";
-    // Convertir $...$ a <span class="math-inline">...</span> para renderizado
-    // También manejar $$...$$ para bloques
     let processed = content;
     
     // Primero procesar bloques de matemáticas $$...$$ (más específico primero)
-    // Usar un marcador temporal para evitar procesar el contenido interno
     const blockPlaceholders: string[] = [];
     processed = processed.replace(/\$\$([^$]+)\$\$/g, (match, formula) => {
       const placeholder = `__MATH_BLOCK_${blockPlaceholders.length}__`;
@@ -156,61 +186,644 @@ export default function CoursePage() {
       return placeholder;
     });
     
-    // Reemplazar placeholders de bloques
+    // Reemplazar placeholders de bloques con HTML renderizado por KaTeX
     blockPlaceholders.forEach((formula, index) => {
-      processed = processed.replace(
-        `__MATH_BLOCK_${index}__`,
-        `<div class="math-block" style="text-align: center; margin: 1.5rem 0; padding: 1rem; background: rgba(99, 102, 241, 0.1); border-radius: 8px; font-family: 'Courier New', monospace; font-size: 1.1em; white-space: pre-wrap;">$${formula}$</div>`
-      );
+      try {
+        const rendered = katex.renderToString(formula, {
+          displayMode: true,
+          throwOnError: false,
+        });
+        processed = processed.replace(
+          `__MATH_BLOCK_${index}__`,
+          `<div style="text-align: center; margin: 1.5rem 0; padding: 1rem; background: rgba(99, 102, 241, 0.1); border-radius: 8px; overflow-x: auto;">${rendered}</div>`
+        );
+      } catch (e) {
+        // Si KaTeX falla, mostrar la fórmula como texto
+        processed = processed.replace(
+          `__MATH_BLOCK_${index}__`,
+          `<div style="text-align: center; margin: 1.5rem 0; padding: 1rem; background: rgba(99, 102, 241, 0.1); border-radius: 8px; font-family: 'Courier New', monospace;">$${formula}$</div>`
+        );
+      }
     });
     
-    // Reemplazar placeholders inline
+    // Reemplazar placeholders inline con HTML renderizado por KaTeX
     inlinePlaceholders.forEach((formula, index) => {
-      processed = processed.replace(
-        `__MATH_INLINE_${index}__`,
-        `<span class="math-inline" style="font-family: 'Courier New', monospace; background: rgba(99, 102, 241, 0.15); padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.95em;">$${formula}$</span>`
-      );
+      try {
+        const rendered = katex.renderToString(formula, {
+          displayMode: false,
+          throwOnError: false,
+        });
+        processed = processed.replace(
+          `__MATH_INLINE_${index}__`,
+          `<span style="background: rgba(99, 102, 241, 0.15); padding: 0.2em 0.4em; border-radius: 4px;">${rendered}</span>`
+        );
+      } catch (e) {
+        // Si KaTeX falla, mostrar la fórmula como texto
+        processed = processed.replace(
+          `__MATH_INLINE_${index}__`,
+          `<span style="font-family: 'Courier New', monospace; background: rgba(99, 102, 241, 0.15); padding: 0.2em 0.4em; border-radius: 4px;">$${formula}$</span>`
+        );
+      }
     });
     
     return processed;
   };
   
-  // Función para descargar PDF
+  // Función para esperar a que todas las imágenes se carguen
+  const waitForImages = (element: HTMLElement): Promise<void> => {
+    return new Promise((resolve) => {
+      const images = element.querySelectorAll('img');
+      if (images.length === 0) {
+        resolve();
+        return;
+      }
+      
+      let loadedCount = 0;
+      const totalImages = images.length;
+      
+      const checkComplete = () => {
+        loadedCount++;
+        if (loadedCount === totalImages) {
+          resolve();
+        }
+      };
+      
+      images.forEach((img) => {
+        if (img.complete && img.naturalHeight !== 0) {
+          checkComplete();
+        } else {
+          img.onload = checkComplete;
+          img.onerror = checkComplete; // Continuar incluso si hay errores
+        }
+      });
+      
+      // Timeout de seguridad
+      setTimeout(() => resolve(), 5000);
+    });
+  };
+
+  // Función para dividir contenido en secciones que quepan en una página
+  const splitContentIntoPages = (container: HTMLElement, maxHeightMM: number): HTMLElement[] => {
+    const pages: HTMLElement[] = [];
+    const maxHeightPx = maxHeightMM * 3.779527559; // Convertir mm a px (1mm = 3.779527559px a 96dpi)
+    
+    // Encontrar todos los elementos principales (h2, h3, p, ul, ol, img, table, etc.)
+    const allElements: HTMLElement[] = [];
+    const walker = document.createTreeWalker(
+      container,
+      NodeFilter.SHOW_ELEMENT,
+      {
+        acceptNode: (node) => {
+          const el = node as HTMLElement;
+          const tagName = el.tagName?.toLowerCase();
+          if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'img', 'table', 'div', 'section'].includes(tagName)) {
+            return NodeFilter.FILTER_ACCEPT;
+          }
+          return NodeFilter.FILTER_SKIP;
+        }
+      }
+    );
+    
+    let node;
+    while (node = walker.nextNode()) {
+      allElements.push(node as HTMLElement);
+    }
+    
+    let currentPage: HTMLElement | null = null;
+    let currentHeight = 0;
+    
+    for (const el of allElements) {
+      const elHeight = el.offsetHeight || el.scrollHeight || 100; // Altura estimada
+      const isH2 = el.tagName?.toLowerCase() === 'h2';
+      
+      // Si es un h2, siempre empezar nueva página
+      if (isH2 && currentPage) {
+        pages.push(currentPage);
+        currentPage = null;
+        currentHeight = 0;
+      }
+      
+      // Si el elemento no cabe en la página actual, crear nueva página
+      if (currentHeight + elHeight > maxHeightPx && currentPage) {
+        pages.push(currentPage);
+        currentPage = null;
+        currentHeight = 0;
+      }
+      
+      // Crear nueva página si no existe
+      if (!currentPage) {
+        currentPage = document.createElement('div');
+        currentPage.style.cssText = container.style.cssText;
+        currentPage.className = container.className;
+        currentPage.style.position = 'absolute';
+        currentPage.style.left = '-9999px';
+        currentPage.style.top = '0';
+        currentHeight = 0;
+      }
+      
+      // Clonar y añadir elemento
+      const clone = el.cloneNode(true) as HTMLElement;
+      currentPage.appendChild(clone);
+      currentHeight += elHeight;
+    }
+    
+    if (currentPage) {
+      pages.push(currentPage);
+    }
+    
+    return pages;
+  };
+
+  // Función para descargar PDF dividiendo por apartados (h2)
   const downloadPDF = async () => {
-    if (!notesContentRef.current || !selectedTopic) return;
+    console.log('=== INICIANDO GENERACIÓN DE PDF ===');
+    if (!notesContentRef.current || !selectedTopic) {
+      console.error('No hay contenido o tema seleccionado');
+      return;
+    }
     
     try {
       const element = notesContentRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
+      console.log('Elemento encontrado:', element);
+      
+      // Mostrar indicador de carga
+      const loadingMessage = document.createElement('div');
+      loadingMessage.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: 8px;
+        z-index: 10000;
+        font-size: 1rem;
+      `;
+      loadingMessage.textContent = 'Generando PDF... Por favor espera.';
+      document.body.appendChild(loadingMessage);
+      
+      // Esperar a que todas las imágenes se carguen
+      await waitForImages(element);
+      
+      // Asegurar que las imágenes tengan crossOrigin
+      const images = element.querySelectorAll('img');
+      images.forEach((img) => {
+        if (!img.crossOrigin && (img.src.startsWith('http://') || img.src.startsWith('https://'))) {
+          img.crossOrigin = 'anonymous';
+        }
       });
       
-      const imgData = canvas.toDataURL("image/png");
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Buscar todos los h2 en todos los contenedores posibles
+      const allH2: HTMLElement[] = [];
+      
+      // Buscar en el elemento principal
+      element.querySelectorAll('h2').forEach(h2 => allH2.push(h2 as HTMLElement));
+      
+      // Buscar en contenedores específicos
+      const htmlContent = element.querySelector('.notes-html-content');
+      const markdownContent = element.querySelector('.notes-markdown-content');
+      const notesContainer = element.querySelector('.notes-container');
+      
+      if (htmlContent) {
+        htmlContent.querySelectorAll('h2').forEach(h2 => {
+          if (!allH2.includes(h2 as HTMLElement)) {
+            allH2.push(h2 as HTMLElement);
+          }
+        });
+      }
+      
+      if (markdownContent) {
+        markdownContent.querySelectorAll('h2').forEach(h2 => {
+          if (!allH2.includes(h2 as HTMLElement)) {
+            allH2.push(h2 as HTMLElement);
+          }
+        });
+      }
+      
+      if (notesContainer) {
+        notesContainer.querySelectorAll('h2').forEach(h2 => {
+          if (!allH2.includes(h2 as HTMLElement)) {
+            allH2.push(h2 as HTMLElement);
+          }
+        });
+      }
+      
+      // Ordenar h2 por su posición en el DOM
+      allH2.sort((a, b) => {
+        const position = a.compareDocumentPosition(b);
+        if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+        if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+        return 0;
+      });
+      
+      console.log(`=== Encontrados ${allH2.length} apartados (h2) ===`);
+      allH2.forEach((h2, idx) => {
+        console.log(`  ${idx + 1}. ${h2.textContent?.substring(0, 60)}...`);
+      });
+      
       const pdf = new jsPDF("p", "mm", "a4");
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const margin = 10;
+      const usableHeight = pageHeight - (2 * margin);
       
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      if (allH2.length > 0) {
+        // Procesar cada sección (h2 y su contenido hasta el siguiente h2)
+        for (let i = 0; i < allH2.length; i++) {
+          const h2 = allH2[i];
+          const nextH2 = allH2[i + 1];
+          
+          console.log(`\n[${i + 1}/${allH2.length}] Procesando: ${h2.textContent?.substring(0, 50)}...`);
+          
+          // Encontrar el contenedor padre que contiene el contenido real
+          let contentParent = h2.parentElement;
+          
+          // Buscar el contenedor de contenido (notes-html-content, notes-markdown-content, o notes-container)
+          while (contentParent && 
+                 !contentParent.classList.contains('notes-container') && 
+                 !contentParent.classList.contains('notes-html-content') && 
+                 !contentParent.classList.contains('notes-markdown-content') &&
+                 contentParent !== element) {
+            contentParent = contentParent.parentElement;
+          }
+          
+          // Si no encontramos un contenedor específico, usar el padre directo del h2
+          if (!contentParent || contentParent === element) {
+            contentParent = h2.parentElement || element;
+          }
+          
+          console.log(`  Contenedor padre: ${contentParent.className || contentParent.tagName}`);
+          
+          // Crear contenedor para esta sección con los mismos estilos del elemento original
+          const sectionContainer = document.createElement('div');
+          const elementStyle = window.getComputedStyle(element);
+          sectionContainer.style.cssText = elementStyle.cssText;
+          sectionContainer.className = element.className;
+          sectionContainer.style.width = (element.offsetWidth || 1200) + 'px';
+          sectionContainer.style.position = 'absolute';
+          sectionContainer.style.left = '-9999px';
+          sectionContainer.style.top = '0';
+          sectionContainer.style.backgroundColor = '#ffffff';
+          sectionContainer.style.padding = elementStyle.padding || '4rem';
+          sectionContainer.style.margin = '0';
+          sectionContainer.style.maxWidth = elementStyle.maxWidth || '1200px';
+          
+          // Obtener todos los hijos directos del contenedor padre
+          const allChildren = Array.from(contentParent.children) as HTMLElement[];
+          const h2Index = allChildren.indexOf(h2);
+          
+          if (h2Index === -1) {
+            console.warn(`  ⚠️ No se encontró h2 en los hijos directos, intentando búsqueda recursiva...`);
+            // Si no está en los hijos directos, buscar recursivamente
+            const findH2Index = (parent: Element, target: HTMLElement, startIndex: number = 0): number => {
+              for (let j = startIndex; j < parent.children.length; j++) {
+                const child = parent.children[j];
+                if (child === target) return j;
+                if (child.contains(target)) {
+                  return j;
+                }
+              }
+              return -1;
+            };
+            
+            const recursiveIndex = findH2Index(contentParent, h2);
+            if (recursiveIndex !== -1) {
+              console.log(`  ✓ Encontrado en índice recursivo: ${recursiveIndex}`);
+            }
+          }
+          
+          const nextH2Index = nextH2 ? allChildren.indexOf(nextH2) : allChildren.length;
+          
+          console.log(`  Clonando elementos del índice ${h2Index} al ${nextH2Index - 1} (${nextH2Index - h2Index} elementos)`);
+          
+          // Dividir la sección en chunks que quepan en una página
+          // Agrupar elementos relacionados (párrafos, listas, imágenes) para evitar cortes
+          const chunks: HTMLElement[][] = [];
+          let currentChunk: HTMLElement[] = [];
+          
+          // Función para verificar si un elemento es "no divisible" (imagen, tabla, etc.)
+          const isNonDivisible = (el: HTMLElement): boolean => {
+            const tag = el.tagName?.toLowerCase();
+            return ['img', 'table', 'pre', 'blockquote', 'figure'].includes(tag || '');
+          };
+          
+          // Función para verificar si un elemento es de texto (párrafo, lista, etc.)
+          const isTextElement = (el: HTMLElement): boolean => {
+            const tag = el.tagName?.toLowerCase();
+            return ['p', 'ul', 'ol', 'li', 'h3', 'h4', 'h5', 'h6'].includes(tag || '');
+          };
+          
+          // Clonar elementos primero
+          const clonedElements: HTMLElement[] = [];
+          for (let j = h2Index; j < nextH2Index; j++) {
+            const child = allChildren[j];
+            if (!child) continue;
+            
+            const clone = child.cloneNode(true) as HTMLElement;
+            const childStyle = window.getComputedStyle(child);
+            clone.style.cssText = childStyle.cssText;
+            clonedElements.push(clone);
+          }
+          
+          // Crear un contenedor temporal para medir alturas reales con los mismos estilos
+          const measureContainer = document.createElement('div');
+          measureContainer.style.cssText = sectionContainer.style.cssText;
+          measureContainer.style.position = 'absolute';
+          measureContainer.style.left = '-9999px';
+          measureContainer.style.top = '0';
+          measureContainer.style.visibility = 'hidden';
+          measureContainer.style.width = sectionContainer.style.width;
+          measureContainer.style.padding = sectionContainer.style.padding;
+          measureContainer.style.margin = sectionContainer.style.margin;
+          measureContainer.style.maxWidth = sectionContainer.style.maxWidth;
+          document.body.appendChild(measureContainer);
+          
+          // Agrupar elementos en chunks basándose en alturas reales
+          for (let elemIdx = 0; elemIdx < clonedElements.length; elemIdx++) {
+            const element = clonedElements[elemIdx];
+            const isNonDiv = isNonDivisible(element);
+            const isText = isTextElement(element);
+            
+            // Medir altura del elemento solo primero
+            measureContainer.innerHTML = '';
+            const elementClone = element.cloneNode(true) as HTMLElement;
+            measureContainer.appendChild(elementClone);
+            
+            // Forzar renderizado
+            measureContainer.offsetHeight;
+            await new Promise(resolve => setTimeout(resolve, 10));
+            
+            const elementHeightPx = measureContainer.scrollHeight;
+            const containerWidthPx = measureContainer.offsetWidth || 1200;
+            const elementHeightMM = (elementHeightPx * imgWidth) / (containerWidthPx * 3.779527559);
+            
+            // Si el elemento es muy grande (más del 80% de la página), va en su propio chunk
+            if (elementHeightMM > usableHeight * 0.8) {
+              // Guardar chunk actual si tiene contenido
+              if (currentChunk.length > 0) {
+                chunks.push([...currentChunk]);
+                currentChunk = [];
+              }
+              // Este elemento va en su propio chunk
+              chunks.push([element]);
+              continue;
+            }
+            
+            // Medir altura del chunk actual + este elemento
+            measureContainer.innerHTML = '';
+            if (currentChunk.length > 0) {
+              currentChunk.forEach(el => {
+                const elClone = el.cloneNode(true) as HTMLElement;
+                measureContainer.appendChild(elClone);
+              });
+            }
+            measureContainer.appendChild(elementClone);
+            
+            // Forzar renderizado
+            measureContainer.offsetHeight;
+            await new Promise(resolve => setTimeout(resolve, 10));
+            
+            const chunkHeightPx = measureContainer.scrollHeight;
+            const chunkHeightMM = (chunkHeightPx * imgWidth) / (containerWidthPx * 3.779527559);
+            
+            // Si el chunk con este elemento no cabe (con margen de seguridad del 80%), empezar nuevo chunk
+            // Usamos 80% para dejar más margen y evitar cortes
+            if (chunkHeightMM > usableHeight * 0.80 && currentChunk.length > 0) {
+              chunks.push([...currentChunk]);
+              currentChunk = [];
+              
+              // Reiniciar medición solo con este elemento
+              measureContainer.innerHTML = '';
+              measureContainer.appendChild(elementClone);
+              
+              // Verificar que el elemento solo también quepa
+              measureContainer.offsetHeight;
+              await new Promise(resolve => setTimeout(resolve, 10));
+              const singleElementHeightPx = measureContainer.scrollHeight;
+              const singleElementHeightMM = (singleElementHeightPx * imgWidth) / (containerWidthPx * 3.779527559);
+              
+              // Si el elemento solo no cabe, va en su propio chunk (se dividirá después si es necesario)
+              if (singleElementHeightMM > usableHeight * 0.95) {
+                chunks.push([element]);
+                continue;
+              }
+            }
+            
+            // Añadir elemento al chunk actual
+            currentChunk.push(element);
+          }
+          
+          // Limpiar contenedor de medición
+          if (document.body.contains(measureContainer)) {
+            document.body.removeChild(measureContainer);
+          }
+          
+          // Añadir último chunk si queda algo
+          if (currentChunk.length > 0) {
+            chunks.push(currentChunk);
+          }
+          
+          console.log(`  Dividido en ${chunks.length} chunks`);
+          
+          // Procesar cada chunk
+          try {
+          for (let chunkIdx = 0; chunkIdx < chunks.length; chunkIdx++) {
+            const chunk = chunks[chunkIdx];
+            
+            // Crear contenedor para este chunk
+            const chunkContainer = document.createElement('div');
+            chunkContainer.style.cssText = window.getComputedStyle(element).cssText;
+            chunkContainer.className = element.className;
+            chunkContainer.style.width = (element.offsetWidth || 1200) + 'px';
+            chunkContainer.style.position = 'absolute';
+            chunkContainer.style.left = '-9999px';
+            chunkContainer.style.top = '0';
+            chunkContainer.style.backgroundColor = '#ffffff';
+            chunkContainer.style.padding = window.getComputedStyle(element).padding || '4rem';
+            chunkContainer.style.margin = '0';
+            chunkContainer.style.maxWidth = window.getComputedStyle(element).maxWidth || '1200px';
+            
+            // Si es el primer chunk de la sección, incluir el h2
+            if (chunkIdx === 0) {
+              const h2Clone = h2.cloneNode(true) as HTMLElement;
+              const h2Style = window.getComputedStyle(h2);
+              h2Clone.style.cssText = h2Style.cssText;
+              chunkContainer.appendChild(h2Clone);
+            }
+            
+            // Añadir elementos del chunk
+            chunk.forEach(el => chunkContainer.appendChild(el));
+            
+            document.body.appendChild(chunkContainer);
+            
+            try {
+              // Asegurar crossOrigin en imágenes
+              chunkContainer.querySelectorAll('img').forEach((img) => {
+                if (!img.crossOrigin && (img.src.startsWith('http://') || img.src.startsWith('https://'))) {
+                  img.crossOrigin = 'anonymous';
+                }
+                // Asegurar que las imágenes se muestren completas
+                img.style.pageBreakInside = 'avoid';
+                img.style.breakInside = 'avoid';
+              });
+              
+              await waitForImages(chunkContainer);
+              await new Promise(resolve => setTimeout(resolve, 300));
+              
+              // Forzar reflow
+              chunkContainer.offsetHeight;
+              
+              // Capturar el chunk
+              const canvas = await html2canvas(chunkContainer, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: false,
+                logging: false,
+                backgroundColor: "#ffffff",
+                imageTimeout: 15000,
+                windowWidth: chunkContainer.scrollWidth,
+                windowHeight: chunkContainer.scrollHeight,
+              });
+              
+              const imgData = canvas.toDataURL("image/png", 1.0);
+              const imgHeight = (canvas.height * imgWidth) / canvas.width;
+              
+              // SIEMPRE empezar cada apartado (h2) en una nueva página
+              // Y cada chunk adicional también en nueva página
+              if (i === 0 && chunkIdx === 0) {
+                // Primer apartado, primera página - no añadir página nueva
+              } else {
+                // Cualquier otro caso: nueva página
+                pdf.addPage();
+              }
+              
+              // Verificar si el chunk cabe en una página
+              if (imgHeight <= usableHeight) {
+                pdf.addImage(imgData, "PNG", margin, margin, imgWidth - (2 * margin), imgHeight);
+                console.log(`    Chunk ${chunkIdx + 1}/${chunks.length} añadido (${imgHeight.toFixed(1)}mm)`);
+              } else {
+                // Si el chunk es muy grande (imagen grande, tabla grande), dividirlo
+                console.log(`    Chunk ${chunkIdx + 1}/${chunks.length} es muy grande (${imgHeight.toFixed(1)}mm), dividiendo...`);
+                const totalPages = Math.ceil(imgHeight / usableHeight);
+                const pixelsPerMM = canvas.height / imgHeight;
+                const pixelsPerPage = usableHeight * pixelsPerMM;
+                
+                for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+                  if (pageNum > 0) {
+                    pdf.addPage();
+                  }
+                  
+                  const sourceY = pageNum * pixelsPerPage;
+                  const sourceHeight = Math.min(pixelsPerPage, canvas.height - sourceY);
+                  const displayHeight = sourceHeight / pixelsPerMM;
+                  
+                  const pageCanvas = document.createElement('canvas');
+                  pageCanvas.width = canvas.width;
+                  pageCanvas.height = sourceHeight;
+                  const pageCtx = pageCanvas.getContext('2d');
+                  
+                  if (pageCtx) {
+                    pageCtx.drawImage(
+                      canvas,
+                      0, sourceY,
+                      canvas.width, sourceHeight,
+                      0, 0,
+                      canvas.width, sourceHeight
+                    );
+                    
+                    const pageImgData = pageCanvas.toDataURL("image/png", 1.0);
+                    pdf.addImage(pageImgData, "PNG", margin, margin, imgWidth - (2 * margin), displayHeight);
+                  }
+                }
+              }
+            } finally {
+              if (document.body.contains(chunkContainer)) {
+                document.body.removeChild(chunkContainer);
+              }
+            }
+          }
+          } catch (sectionError) {
+            console.error(`Error procesando sección ${i + 1}:`, sectionError);
+          }
+        }
+      } else {
+        console.log('=== NO SE ENCONTRARON H2, PROCESANDO TODO EL CONTENIDO ===');
+        // Si no hay h2, procesar todo el contenido pero dividiéndolo mejor
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          logging: false,
+          backgroundColor: "#ffffff",
+          imageTimeout: 15000,
+          removeContainer: false,
+          onclone: (clonedDoc) => {
+            const clonedImages = clonedDoc.querySelectorAll('img');
+            clonedImages.forEach((img) => {
+              if (!img.crossOrigin && (img.src.startsWith('http://') || img.src.startsWith('https://'))) {
+                img.crossOrigin = 'anonymous';
+              }
+            });
+          },
+        });
+        
+        const imgData = canvas.toDataURL("image/png", 1.0);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        console.log(`Altura total del contenido: ${imgHeight.toFixed(2)}mm`);
+        
+        // Dividir en páginas de manera más inteligente
+        const totalPages = Math.ceil(imgHeight / usableHeight);
+        console.log(`Dividiendo en ${totalPages} páginas`);
+        
+        const pixelsPerMM = canvas.height / imgHeight;
+        const pixelsPerPage = usableHeight * pixelsPerMM;
+        
+        for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+          if (pageNum > 0) {
+            pdf.addPage();
+          }
+          
+          const sourceY = pageNum * pixelsPerPage;
+          const sourceHeight = Math.min(pixelsPerPage, canvas.height - sourceY);
+          const displayHeight = (sourceHeight / pixelsPerMM);
+          
+          // Crear un canvas temporal para esta porción
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sourceHeight;
+          const pageCtx = pageCanvas.getContext('2d');
+          
+          if (pageCtx) {
+            pageCtx.drawImage(
+              canvas,
+              0, sourceY,
+              canvas.width, sourceHeight,
+              0, 0,
+              canvas.width, sourceHeight
+            );
+            
+            const pageImgData = pageCanvas.toDataURL("image/png", 1.0);
+            pdf.addImage(pageImgData, "PNG", margin, margin, imgWidth - (2 * margin), displayHeight);
+            console.log(`Página ${pageNum + 1}/${totalPages} añadida`);
+          }
+        }
+      }
       
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      // Remover indicador de carga
+      if (document.body.contains(loadingMessage)) {
+        document.body.removeChild(loadingMessage);
       }
       
       const safeTopicName = selectedTopic.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-      pdf.save(`${course?.title || "curso"}_${safeTopicName}.pdf`);
+      const fileName = `${course?.title || "curso"}_${safeTopicName}.pdf`;
+      pdf.save(fileName);
+      console.log(`=== PDF GENERADO EXITOSAMENTE: ${fileName} ===`);
     } catch (error) {
-      console.error("Error generando PDF:", error);
-      alert("Error al generar el PDF. Por favor, intenta de nuevo.");
+      console.error("=== ERROR GENERANDO PDF ===", error);
+      alert("Error al generar el PDF. Por favor, intenta de nuevo. Si el problema persiste, verifica que las imágenes se carguen correctamente.");
     }
   };
   
@@ -273,7 +886,7 @@ export default function CoursePage() {
           loadedCourse = courseData.course;
           setCourse(loadedCourse);
           // Seleccionar primer tema por defecto
-          if (loadedCourse.topics.length > 0) {
+          if (loadedCourse && loadedCourse.topics.length > 0) {
             setSelectedTopic(loadedCourse.topics[0].name);
           }
         }
@@ -284,7 +897,7 @@ export default function CoursePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: session.user.id,
+          userId: session?.user?.id,
           courseId,
         }),
       });
@@ -292,13 +905,30 @@ export default function CoursePage() {
       if (enrollmentResponse.ok) {
         const enrollmentData = await enrollmentResponse.json();
         if (enrollmentData.success) {
+          // Actualizar último acceso al curso
+          try {
+            await fetch("/api/study-agents/update-enrollment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId: session?.user?.id,
+                courseId,
+                updates: {
+                  last_accessed: new Date().toISOString(),
+                },
+              }),
+            });
+          } catch (error) {
+            console.error("Error actualizando último acceso:", error);
+          }
+          
           // Actualizar racha y créditos antes de cargar la inscripción
           try {
             const streakResponse = await fetch("/api/study-agents/update-streak-credits", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                user_id: session.user.id,
+                user_id: session?.user?.id,
                 course_id: courseId,
               }),
             });
@@ -322,7 +952,7 @@ export default function CoursePage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              userId: session.user.id,
+              userId: session?.user?.id,
               courseId,
             }),
           });
@@ -345,9 +975,10 @@ export default function CoursePage() {
           const summaries: Record<string, string> = {};
           
           // 1. Intentar usar resúmenes generados automáticamente (course.summaries)
-          if (loadedCourse && loadedCourse.summaries) {
-            Object.keys(loadedCourse.summaries).forEach((topicName) => {
-              const topicSummaryData = loadedCourse.summaries[topicName];
+          const courseSummaries = loadedCourse?.summaries;
+          if (courseSummaries) {
+            Object.keys(courseSummaries).forEach((topicName) => {
+              const topicSummaryData = courseSummaries[topicName];
               if (topicSummaryData) {
                 // Puede ser un objeto con {summary, subtopics} o un string directo
                 let summaryText = "";
@@ -423,7 +1054,7 @@ export default function CoursePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: session.user.id,
+          userId: session?.user?.id,
           courseId,
           question: `Mi nivel actual en este curso es ${level}/10.`,
           apiKey,
@@ -447,7 +1078,7 @@ export default function CoursePage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userId: session.user.id,
+            userId: session?.user?.id,
             courseId,
             updates: {
               messages: [welcomeMessage],
@@ -507,7 +1138,7 @@ export default function CoursePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: session.user.id,
+          userId: session?.user?.id,
           courseId,
           apiKey,
           notesType: "topic",
@@ -645,7 +1276,7 @@ export default function CoursePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: session.user.id,
+          userId: session?.user?.id,
           courseId,
           question: currentInput,
           apiKey,
@@ -715,8 +1346,9 @@ export default function CoursePage() {
       })
         .then(res => res.json())
         .then(data => {
-          if (data.success) {
-            const userReview = data.reviews.find((r: any) => r.user_id === session.user.id);
+          const userId = session?.user?.id;
+          if (data.success && userId) {
+            const userReview = data.reviews.find((r: any) => r.user_id === userId);
             if (!userReview) {
               setShowReviewModal(true);
             } else {
@@ -850,7 +1482,7 @@ export default function CoursePage() {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                      user_id: session.user.id,
+                      user_id: session?.user?.id,
                       course_id: courseId,
                       model: "gemini-1.5-pro",
                     }),
@@ -1209,7 +1841,7 @@ export default function CoursePage() {
                   {(() => {
                     const calendar = streakData.streak_calendar || {};
                     const today = new Date().toISOString().split('T')[0];
-                    const days: JSX.Element[] = [];
+                    const days: React.ReactElement[] = [];
                     
                     // Obtener nombres de los días de la semana
                     const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -1327,7 +1959,7 @@ export default function CoursePage() {
                                     method: "POST",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({
-                                      user_id: session.user.id,
+                                      user_id: session?.user?.id,
                                       course_id: courseId,
                                     }),
                                   });
@@ -1340,7 +1972,7 @@ export default function CoursePage() {
                                       method: "POST",
                                       headers: { "Content-Type": "application/json" },
                                       body: JSON.stringify({
-                                        user_id: session.user.id,
+                                        user_id: session?.user?.id,
                                         course_id: courseId,
                                       }),
                                     });
@@ -1594,7 +2226,7 @@ export default function CoursePage() {
               <HiXMark size={24} />
             </button>
           </div>
-          {session?.user?.id && <CourseRanking courseId={courseId} currentUserId={session.user.id} />}
+          {session?.user?.id && <CourseRanking courseId={courseId} currentUserId={session?.user?.id} />}
         </div>
       </div>
 
@@ -1755,7 +2387,7 @@ export default function CoursePage() {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
-                        user_id: session.user.id,
+                        user_id: session?.user?.id,
                         course_id: courseId,
                       }),
                     });
@@ -2362,15 +2994,577 @@ export default function CoursePage() {
                       borderRadius: "8px",
                       border: "1px solid #e5e7eb",
                       boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                      maxWidth: "210mm", // A4 width
+                      maxWidth: "1200px", // Ancho más amplio para mejor legibilidad
+                      width: "100%",
                       margin: "0 auto",
                       minHeight: "297mm", // A4 height
                       color: "#1f2937",
-                      fontFamily: "'Georgia', 'Times New Roman', serif",
-                      lineHeight: "1.8",
-                      fontSize: "1.1rem",
+                      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
+                      lineHeight: "1.7",
+                      fontSize: "1rem",
                     }}
+                    className="notes-container"
                   >
+                    <style jsx>{`
+                      .notes-container {
+                        page-break-after: always;
+                      }
+                      
+                      /* Separación y paginación para títulos */
+                      .notes-container h1 {
+                        page-break-after: avoid;
+                        page-break-inside: avoid;
+                        page-break-before: always;
+                        margin-top: 3rem;
+                        margin-bottom: 2rem;
+                        padding-bottom: 1rem;
+                        border-bottom: 3px solid #6366f1;
+                      }
+                      
+                      .notes-container h1:first-child {
+                        page-break-before: auto;
+                        margin-top: 0;
+                      }
+                      
+                      .notes-container h2 {
+                        page-break-after: avoid;
+                        page-break-inside: avoid;
+                        page-break-before: always;
+                        margin-top: 3rem; /* Más espacio antes para evitar cortes */
+                        margin-bottom: 2rem; /* Más espacio después */
+                        padding-top: 1.5rem;
+                        padding-bottom: 1rem; /* Más padding para mejor separación */
+                        border-top: 2px solid #e5e7eb;
+                        border-bottom: 2px solid #e5e7eb;
+                        background: #f9fafb;
+                        padding-left: 1rem;
+                        padding-right: 1rem;
+                        border-radius: 4px;
+                        break-after: avoid;
+                        break-inside: avoid;
+                        break-before: page;
+                        min-height: 4em; /* Altura mínima para evitar cortes */
+                      }
+                      
+                      .notes-container h2:first-child {
+                        page-break-before: auto;
+                        break-before: auto;
+                        margin-top: 0;
+                        border-top: none;
+                      }
+                      
+                      /* Agrupar contenido después de h2 para evitar cortes */
+                      .notes-container h2 ~ * {
+                        page-break-before: avoid;
+                        break-before: avoid;
+                      }
+                      
+                      /* Hasta el siguiente h2 o h1, mantener junto */
+                      .notes-container h2 ~ *:not(h1):not(h2) {
+                        page-break-inside: avoid;
+                        break-inside: avoid;
+                      }
+                      
+                      .notes-container h3 {
+                        page-break-after: avoid;
+                        page-break-inside: avoid;
+                        page-break-before: avoid;
+                        break-after: avoid;
+                        break-inside: avoid;
+                        break-before: avoid;
+                        margin-top: 2.5rem; /* Más espacio antes */
+                        margin-bottom: 1.5rem; /* Más espacio después */
+                        padding-top: 0.75rem;
+                        padding-bottom: 0.75rem; /* Más padding */
+                        border-left: 4px solid #6366f1;
+                        padding-left: 1rem;
+                        background: #f9fafb;
+                        border-radius: 2px;
+                        min-height: 3em; /* Altura mínima */
+                      }
+                      
+                      /* Agrupar contenido después de h3 */
+                      .notes-container h3 ~ *:not(h1):not(h2):not(h3) {
+                        page-break-before: avoid;
+                        break-before: avoid;
+                      }
+                      
+                      /* Evitar que elementos queden cortados entre páginas */
+                      .notes-container p {
+                        page-break-inside: avoid;
+                        break-inside: avoid;
+                        orphans: 4;
+                        widows: 4;
+                        margin-bottom: 1rem;
+                        min-height: 2em; /* Evitar párrafos muy cortos al final de página */
+                      }
+                      
+                      .notes-container ul,
+                      .notes-container ol {
+                        page-break-inside: avoid;
+                        break-inside: avoid;
+                        page-break-before: avoid;
+                        break-before: avoid;
+                        margin-top: 1rem;
+                        margin-bottom: 1.5rem;
+                        padding-left: 2rem;
+                      }
+                      
+                      .notes-container li {
+                        page-break-inside: avoid;
+                        break-inside: avoid;
+                        margin-bottom: 0.5rem;
+                        orphans: 3;
+                        widows: 3;
+                        min-height: 1.5em; /* Evitar items muy cortos */
+                      }
+                      
+                      /* Evitar que el último item de una lista quede solo */
+                      .notes-container li:last-child {
+                        page-break-after: avoid;
+                        break-after: avoid;
+                      }
+                      
+                      .notes-container img {
+                        page-break-inside: avoid;
+                        page-break-after: avoid;
+                        page-break-before: avoid;
+                        max-width: 100% !important;
+                        height: auto !important;
+                        display: block;
+                        margin: 2rem auto;
+                      }
+                      
+                      .notes-container table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        border-spacing: 0;
+                        margin: 1.5rem 0;
+                        page-break-inside: avoid;
+                        page-break-after: avoid;
+                        border: 2px solid #1f2937;
+                        background: #ffffff;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                      }
+                      
+                      .notes-container table th,
+                      .notes-container table td {
+                        border: 1px solid #4b5563;
+                        border-top: 1px solid #4b5563;
+                        border-right: 1px solid #4b5563;
+                        border-bottom: 1px solid #4b5563;
+                        border-left: 1px solid #4b5563;
+                        padding: 0.75rem;
+                        text-align: left;
+                        background: #ffffff;
+                      }
+                      
+                      .notes-container table th {
+                        background: #f3f4f6;
+                        font-weight: 600;
+                        border: 2px solid #374151;
+                        border-bottom: 3px solid #6366f1;
+                      }
+                      
+                      .notes-container table thead th {
+                        border-bottom: 3px solid #6366f1;
+                        border-top: 2px solid #374151;
+                        border-left: 2px solid #374151;
+                        border-right: 2px solid #374151;
+                      }
+                      
+                      .notes-container table tbody tr {
+                        border-bottom: 1px solid #4b5563;
+                      }
+                      
+                      .notes-container table tbody tr:last-child td {
+                        border-bottom: 2px solid #374151;
+                      }
+                      
+                      .notes-container table tbody {
+                        border-top: 2px solid #374151;
+                      }
+                      
+                      .notes-container table tr:nth-child(even) td {
+                        background: #f9fafb;
+                      }
+                      
+                      .notes-container table tr:hover td {
+                        background: #f3f4f6;
+                      }
+                      
+                      .notes-container pre {
+                        page-break-inside: avoid;
+                        page-break-after: avoid;
+                        overflow-x: auto;
+                        margin: 1.5rem 0;
+                      }
+                      
+                      .notes-container blockquote {
+                        page-break-inside: avoid;
+                        page-break-after: avoid;
+                        margin: 1.5rem 0;
+                        padding: 1rem;
+                        border-left: 4px solid #6366f1;
+                        background: #f9fafb;
+                      }
+                      
+                      .notes-container code {
+                        page-break-inside: avoid;
+                      }
+                      
+                      .notes-container div {
+                        page-break-inside: avoid;
+                        break-inside: avoid;
+                      }
+                      
+                      /* Agrupar secciones completas */
+                      .notes-container h2 + *,
+                      .notes-container h3 + * {
+                        page-break-before: avoid;
+                        break-before: avoid;
+                      }
+                      
+                      /* Mantener al menos 2 líneas juntas al final de página */
+                      .notes-container p,
+                      .notes-container li {
+                        orphans: 4;
+                        widows: 4;
+                      }
+                      
+                      /* Separador visual entre apartados y evitar cortes */
+                      .notes-container h2 + *,
+                      .notes-container h3 + * {
+                        margin-top: 0;
+                        page-break-before: avoid;
+                        break-before: avoid;
+                      }
+                      
+                      /* Mantener al menos 4 líneas juntas al final de página */
+                      .notes-container p,
+                      .notes-container li {
+                        orphans: 4;
+                        widows: 4;
+                      }
+                      
+                      /* Espaciado después de listas y párrafos */
+                      .notes-container p + h2,
+                      .notes-container p + h3,
+                      .notes-container ul + h2,
+                      .notes-container ul + h3,
+                      .notes-container ol + h2,
+                      .notes-container ol + h3 {
+                        margin-top: 2rem;
+                      }
+                      
+                      /* Estilos para impresión */
+                      @media print {
+                        .notes-container {
+                          page-break-after: always;
+                          padding: 2rem;
+                        }
+                        
+                        .notes-container h2 {
+                          page-break-before: always;
+                          margin-top: 0;
+                        }
+                        
+                        .notes-container h2:first-child {
+                          page-break-before: auto;
+                        }
+                      }
+                      /* Estilos para contenido HTML y Markdown */
+                      .notes-html-content h1,
+                      .notes-markdown-content h1 {
+                        page-break-after: avoid;
+                        page-break-inside: avoid;
+                        page-break-before: always;
+                        margin-top: 3rem;
+                        margin-bottom: 2rem;
+                        padding-bottom: 1rem;
+                        border-bottom: 3px solid #6366f1;
+                      }
+                      
+                      .notes-html-content h1:first-child,
+                      .notes-markdown-content h1:first-child {
+                        page-break-before: auto;
+                        margin-top: 0;
+                      }
+                      
+                      .notes-html-content h2,
+                      .notes-markdown-content h2 {
+                        page-break-after: avoid;
+                        page-break-inside: avoid;
+                        page-break-before: always;
+                        break-after: avoid;
+                        break-inside: avoid;
+                        break-before: page;
+                        margin-top: 3rem; /* Más espacio antes */
+                        margin-bottom: 2rem; /* Más espacio después */
+                        padding-top: 1.5rem;
+                        padding-bottom: 1rem; /* Más padding */
+                        border-top: 2px solid #e5e7eb;
+                        border-bottom: 2px solid #e5e7eb;
+                        background: #f9fafb;
+                        padding-left: 1rem;
+                        padding-right: 1rem;
+                        border-radius: 4px;
+                        min-height: 4em; /* Altura mínima */
+                      }
+                      
+                      .notes-html-content h2:first-child,
+                      .notes-markdown-content h2:first-child {
+                        page-break-before: auto;
+                        break-before: auto;
+                        margin-top: 0;
+                        border-top: none;
+                      }
+                      
+                      /* Agrupar contenido después de h2 */
+                      .notes-html-content h2 ~ *,
+                      .notes-markdown-content h2 ~ * {
+                        page-break-before: avoid;
+                        break-before: avoid;
+                      }
+                      
+                      .notes-html-content h2 ~ *:not(h1):not(h2),
+                      .notes-markdown-content h2 ~ *:not(h1):not(h2) {
+                        page-break-inside: avoid;
+                        break-inside: avoid;
+                      }
+                      
+                      .notes-html-content h3,
+                      .notes-markdown-content h3 {
+                        page-break-after: avoid;
+                        page-break-inside: avoid;
+                        page-break-before: avoid;
+                        break-after: avoid;
+                        break-inside: avoid;
+                        break-before: avoid;
+                        margin-top: 2.5rem; /* Más espacio antes */
+                        margin-bottom: 1.5rem; /* Más espacio después */
+                        padding-top: 0.75rem;
+                        padding-bottom: 0.75rem; /* Más padding */
+                        border-left: 4px solid #6366f1;
+                        padding-left: 1rem;
+                        background: #f9fafb;
+                        border-radius: 2px;
+                        min-height: 3em; /* Altura mínima */
+                      }
+                      
+                      /* Agrupar contenido después de h3 */
+                      .notes-html-content h3 ~ *:not(h1):not(h2):not(h3),
+                      .notes-markdown-content h3 ~ *:not(h1):not(h2):not(h3) {
+                        page-break-before: avoid;
+                        break-before: avoid;
+                      }
+                      
+                      .notes-html-content p,
+                      .notes-markdown-content p {
+                        page-break-inside: avoid;
+                        break-inside: avoid;
+                        orphans: 4;
+                        widows: 4;
+                        margin-bottom: 1rem;
+                        min-height: 2em;
+                      }
+                      
+                      .notes-html-content ul,
+                      .notes-html-content ol,
+                      .notes-markdown-content ul,
+                      .notes-markdown-content ol {
+                        page-break-inside: avoid;
+                        break-inside: avoid;
+                        page-break-before: avoid;
+                        break-before: avoid;
+                        page-break-after: avoid;
+                        break-after: avoid;
+                        margin-top: 1rem;
+                        margin-bottom: 1.5rem;
+                        padding-left: 2rem;
+                      }
+                      
+                      .notes-html-content li,
+                      .notes-markdown-content li {
+                        page-break-inside: avoid;
+                        break-inside: avoid;
+                        margin-bottom: 0.5rem;
+                        orphans: 3;
+                        widows: 3;
+                        min-height: 1.5em;
+                      }
+                      
+                      .notes-html-content li:last-child,
+                      .notes-markdown-content li:last-child {
+                        page-break-after: avoid;
+                        break-after: avoid;
+                      }
+                      
+                      .notes-html-content img {
+                        max-width: 100% !important;
+                        height: auto !important;
+                        display: block;
+                        margin: 2rem auto;
+                        page-break-inside: avoid;
+                        page-break-after: avoid;
+                        page-break-before: avoid;
+                      }
+                      
+                      .notes-html-content table,
+                      .notes-markdown-content table {
+                        width: 100% !important;
+                        border-collapse: collapse !important;
+                        border-spacing: 0 !important;
+                        margin: 1.5rem 0 !important;
+                        border: 2px solid #1f2937 !important;
+                        background: #ffffff !important;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                        page-break-inside: avoid;
+                        page-break-after: avoid;
+                      }
+                      
+                      .notes-html-content table th,
+                      .notes-html-content table td,
+                      .notes-markdown-content table th,
+                      .notes-markdown-content table td {
+                        border: 1px solid #4b5563 !important;
+                        border-top: 1px solid #4b5563 !important;
+                        border-right: 1px solid #4b5563 !important;
+                        border-bottom: 1px solid #4b5563 !important;
+                        border-left: 1px solid #4b5563 !important;
+                        padding: 0.75rem 1rem !important;
+                        text-align: left !important;
+                        background: #ffffff !important;
+                        vertical-align: top;
+                      }
+                      
+                      .notes-html-content table th,
+                      .notes-markdown-content table th {
+                        background: #f3f4f6 !important;
+                        font-weight: 700 !important;
+                        border: 2px solid #374151 !important;
+                        border-bottom: 3px solid #6366f1 !important;
+                        color: #111827 !important;
+                        font-size: 0.95rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                      }
+                      
+                      .notes-html-content table thead th,
+                      .notes-markdown-content table thead th {
+                        border-bottom: 3px solid #6366f1 !important;
+                        border-top: 2px solid #374151 !important;
+                        border-left: 2px solid #374151 !important;
+                        border-right: 2px solid #374151 !important;
+                      }
+                      
+                      .notes-html-content table tbody tr,
+                      .notes-markdown-content table tbody tr {
+                        border-bottom: 1px solid #4b5563 !important;
+                      }
+                      
+                      .notes-html-content table tbody tr:last-child td,
+                      .notes-markdown-content table tbody tr:last-child td {
+                        border-bottom: 2px solid #374151 !important;
+                      }
+                      
+                      .notes-html-content table tr:nth-child(even) td,
+                      .notes-markdown-content table tr:nth-child(even) td {
+                        background: #f9fafb !important;
+                      }
+                      
+                      .notes-html-content table tr:hover td,
+                      .notes-markdown-content table tr:hover td {
+                        background: #f3f4f6 !important;
+                      }
+                      
+                      .notes-html-content table thead,
+                      .notes-markdown-content table thead {
+                        background: #f3f4f6 !important;
+                      }
+                      
+                      .notes-html-content table tbody,
+                      .notes-markdown-content table tbody {
+                        border-top: 2px solid #374151 !important;
+                      }
+                      
+                      .notes-html-content pre,
+                      .notes-markdown-content pre {
+                        page-break-inside: avoid;
+                        page-break-after: avoid;
+                        overflow-x: auto;
+                        margin: 1.5rem 0;
+                      }
+                      
+                      .notes-html-content blockquote,
+                      .notes-markdown-content blockquote {
+                        page-break-inside: avoid;
+                        page-break-after: avoid;
+                        margin: 1.5rem 0;
+                        padding: 1rem;
+                        border-left: 4px solid #6366f1;
+                        background: #f9fafb;
+                      }
+                      
+                      .notes-html-content code,
+                      .notes-markdown-content code {
+                        page-break-inside: avoid;
+                      }
+                      
+                      .notes-html-content div,
+                      .notes-markdown-content div {
+                        page-break-inside: avoid;
+                      }
+                      
+                      /* Separador visual entre apartados en HTML/Markdown y evitar cortes */
+                      .notes-html-content h2 + *,
+                      .notes-html-content h3 + *,
+                      .notes-markdown-content h2 + *,
+                      .notes-markdown-content h3 + * {
+                        margin-top: 0;
+                        page-break-before: avoid;
+                        break-before: avoid;
+                      }
+                      
+                      /* Mantener al menos 4 líneas juntas al final de página */
+                      .notes-html-content p,
+                      .notes-html-content li,
+                      .notes-markdown-content p,
+                      .notes-markdown-content li {
+                        orphans: 4;
+                        widows: 4;
+                      }
+                      
+                      /* Espaciado después de listas y párrafos en HTML/Markdown */
+                      .notes-html-content p + h2,
+                      .notes-html-content p + h3,
+                      .notes-html-content ul + h2,
+                      .notes-html-content ul + h3,
+                      .notes-html-content ol + h2,
+                      .notes-html-content ol + h3,
+                      .notes-markdown-content p + h2,
+                      .notes-markdown-content p + h3,
+                      .notes-markdown-content ul + h2,
+                      .notes-markdown-content ul + h3,
+                      .notes-markdown-content ol + h2,
+                      .notes-markdown-content ol + h3 {
+                        margin-top: 2rem;
+                      }
+                      
+                      /* Estilos para impresión en HTML/Markdown */
+                      @media print {
+                        .notes-html-content h2,
+                        .notes-markdown-content h2 {
+                          page-break-before: always;
+                          margin-top: 0;
+                        }
+                        
+                        .notes-html-content h2:first-child,
+                        .notes-markdown-content h2:first-child {
+                          page-break-before: auto;
+                        }
+                      }
+                    `}</style>
                     {/* Detectar si es HTML o Markdown */}
                     {topicSummary[selectedTopic].trim().startsWith('<') || 
                      topicSummary[selectedTopic].includes('<div') || 
@@ -2380,25 +3574,20 @@ export default function CoursePage() {
                       <div 
                         className="notes-html-content"
                         dangerouslySetInnerHTML={{
-                          __html: DOMPurify.sanitize(processMathFormulas(topicSummary[selectedTopic]), {
+                          __html: DOMPurify.sanitize(fixImageUrls(processMathFormulas(topicSummary[selectedTopic])), {
                             ALLOWED_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'strong', 'em', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'section', 'span', 'hr', 'blockquote', 'br', 'img'],
-                            ALLOWED_ATTR: ['style', 'class', 'id', 'src', 'alt', 'title'],
+                            ALLOWED_ATTR: ['style', 'class', 'id', 'src', 'alt', 'title', 'crossorigin', 'crossOrigin'],
                             ALLOW_DATA_ATTR: false,
                             KEEP_CONTENT: true,
                             FORBID_TAGS: ['script', 'iframe', 'object', 'embed'],
                             FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onmouseout'],
-                            ALLOWED_STYLES: {
-                              '*': {
-                                '*': true  // Permitir todos los estilos CSS
-                              }
-                            },
                             ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
                           })
                         }}
                         style={{
                           color: "#1f2937",
-                          lineHeight: "1.8",
-                          fontSize: "1.1rem",
+                          lineHeight: "1.7",
+                          fontSize: "1rem",
                         }}
                       />
                     ) : (
@@ -2407,8 +3596,8 @@ export default function CoursePage() {
                         className="notes-markdown-content"
                         style={{
                           color: "#1f2937",
-                          lineHeight: "1.8",
-                          fontSize: "1.1rem",
+                          lineHeight: "1.7",
+                          fontSize: "1rem",
                         }}
                       >
                         <ReactMarkdown
@@ -2461,7 +3650,35 @@ export default function CoursePage() {
                               const processed = processMathFormulas(childrenStr);
                               return <li {...props} style={{ marginBottom: "0.5rem" }} dangerouslySetInnerHTML={{ __html: processed }} />;
                             },
-                            img: ({ ...props }) => <img {...props} style={{ maxWidth: "100%", height: "auto", borderRadius: "8px", margin: "1.5rem 0", display: "block", marginLeft: "auto", marginRight: "auto" }} />,
+                            img: ({ ...props }) => {
+                              // Corregir URL de imagen si es relativa
+                              const src = props.src ?? '';
+                              const srcStr = typeof src === 'string' ? src : '';
+                              const fixedSrc = typeof src === 'string' && srcStr.startsWith('/api/files/') 
+                                ? (typeof window !== 'undefined' 
+                                    ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                                      ? `http://localhost:8000${srcStr}`
+                                      : srcStr.replace(':3000', ':8000')
+                                    : `http://localhost:8000${srcStr}`)
+                                : src;
+                              return <img 
+                                {...props} 
+                                src={fixedSrc} 
+                                crossOrigin="anonymous"
+                                style={{ maxWidth: "100%", height: "auto", borderRadius: "8px", margin: "1.5rem 0", display: "block", marginLeft: "auto", marginRight: "auto" }} 
+                                onError={(e) => {
+                                  console.error("Error cargando imagen:", fixedSrc);
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  target.style.display = "none";
+                                }}
+                              />;
+                            },
+                            table: ({ ...props }) => <table {...props} style={{ width: "100%", borderCollapse: "collapse", borderSpacing: "0", margin: "1.5rem 0", border: "2px solid #1f2937", background: "#ffffff", boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)" }} />,
+                            thead: ({ ...props }) => <thead {...props} style={{ background: "#f3f4f6" }} />,
+                            tbody: ({ ...props }) => <tbody {...props} style={{ borderTop: "2px solid #374151" }} />,
+                            tr: ({ ...props }) => <tr {...props} style={{ borderBottom: "1px solid #4b5563" }} />,
+                            th: ({ ...props }) => <th {...props} style={{ border: "2px solid #374151", borderBottom: "3px solid #6366f1", borderTop: "2px solid #374151", borderLeft: "2px solid #374151", borderRight: "2px solid #374151", padding: "0.75rem 1rem", textAlign: "left", fontWeight: "700", background: "#f3f4f6", color: "#111827", fontSize: "0.95rem", textTransform: "uppercase", letterSpacing: "0.5px" }} />,
+                            td: ({ ...props }) => <td {...props} style={{ border: "1px solid #4b5563", borderTop: "1px solid #4b5563", borderRight: "1px solid #4b5563", borderBottom: "1px solid #4b5563", borderLeft: "1px solid #4b5563", padding: "0.75rem 1rem", textAlign: "left", background: "#ffffff", verticalAlign: "top" }} />,
                             code: ({ ...props }) => <code {...props} style={{ background: "#f3f4f6", padding: "0.2em 0.4em", borderRadius: "4px", fontFamily: "'Courier New', monospace", fontSize: "0.9em" }} />,
                             pre: ({ ...props }) => <pre {...props} style={{ background: "#1f2937", color: "#f9fafb", padding: "1rem", borderRadius: "8px", overflow: "auto", margin: "1.5rem 0" }} />,
                           }}
@@ -2883,7 +4100,7 @@ export default function CoursePage() {
             <div style={{ padding: "2rem" }}>
               <SatisfactionFeedback
                 courseId={courseId}
-                userId={session.user.id}
+                userId={session?.user?.id}
                 onSubmitted={() => {
                   setHasReviewed(true);
                   setShowReviewModal(false);
@@ -2894,7 +4111,7 @@ export default function CoursePage() {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                          userId: session.user.id,
+                          userId: session?.user?.id,
                           courseId: courseId,
                         }),
                       })

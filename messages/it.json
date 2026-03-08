@@ -1,0 +1,196 @@
+{
+  "common": {
+    "softwareEngineer": "Software Engineer & Developer",
+    "craftedWithPassion": "Realizzato con passione",
+    "explore": "Esplora",
+    "viewAll": "Vedi tutti"
+  },
+  "nav": {
+    "home": "Home",
+    "projects": "Progetti",
+    "skills": "Competenze",
+    "experience": "Esperienza",
+    "education": "Istruzione",
+    "about": "Chi sono",
+    "contact": "Contatto",
+    "cv": "CV"
+  },
+  "home": {
+    "title": "PAU PEDREJON",
+    "tagline": "Creazione di esperienze digitali immersive attraverso codice, design e tecnologia creativa.",
+    "projectsHighlight": "Progetti in evidenza",
+    "projectsSubtext": "Dai un'occhiata agli ultimi",
+    "viewAllProjects": "Vedi tutti i progetti",
+    "exploreWork": "Esplora il mio lavoro",
+    "exploreSubtext": "Scopri cosa faccio e come posso aiutarti a dare vita alle tue idee",
+    "navCards": {
+      "projects": {
+        "title": "Progetti",
+        "description": "Esplora il mio lavoro creativo e i progetti tecnici"
+      },
+      "skills": {
+        "title": "Competenze",
+        "description": "Tecnologie e strumenti con cui lavoro"
+      },
+      "experience": {
+        "title": "Esperienza",
+        "description": "Il mio percorso professionale"
+      },
+      "education": {
+        "title": "Istruzione",
+        "description": "Il mio background accademico e risultati"
+      },
+      "about": {
+        "title": "Chi sono",
+        "description": "Scopri di più su di me"
+      },
+      "contact": {
+        "title": "Contatto",
+        "description": "Connettiamoci e lavoriamo insieme"
+      }
+    }
+  },
+  "projects": {
+    "badge": "Lavori in evidenza",
+    "title": "PROGETTI",
+    "tagline": "Una collezione di progetti che mostrano la mia passione per lo sviluppo e la tecnologia creativa.",
+    "used": "UTILIZZATO"
+  },
+  "projectsData": {
+    "study-agents": {
+      "title": "StudyAgents",
+      "kicker": "2025 - Instituto de Inteligencia Artificial",
+      "title2": "Assistente didattico con IA",
+      "subtitle": "Sistema educativo intelligente che aiuta gli studenti ad apprendere tramite agenti IA. Carica PDF, genera note, fai domande e sostieni test interattivi con feedback in tempo reale.",
+      "ctaText": "Prova StudyAgents"
+    },
+    "portfolio": {
+      "title2": "Applicazione Web",
+      "subtitle": "Portfolio interattivo progettato con Next.js e React per mostrare i miei progetti, competenze ed esperienza come ingegnere del software.",
+      "ctaText": ""
+    },
+    "shooter": {
+      "title": "Videogioco Online Realistico",
+      "kicker": "2025 - Progetto Personale",
+      "title2": "Parte 2",
+      "subtitle": "Shooter multigiocatore online a personaggi con grafica realistica e meccaniche di gioco.",
+      "ctaText": "Vedi risultati"
+    },
+    "tire-inflator": {
+      "title": "Simulatore Gonfiaggio Pneumatici",
+      "kicker": "2024 - Universitat Politècnica de Barcelona",
+      "title2": "Progetto Microcontrollore",
+      "subtitle": "Simulazione di un sistema di gonfiaggio pneumatici realizzato in Proteus, usando C per la programmazione di microcontrollori.",
+      "ctaText": ""
+    },
+    "fiblab": {
+      "title": "FIB Lab",
+      "kicker": "2024 - Universitat Politècnica de Barcelona",
+      "title2": "Progetto corso Unity 2024",
+      "subtitle": "Un semplice gioco 2D realizzato durante il corso essenziale di Unity.",
+      "ctaText": "Gioca ora"
+    },
+    "circusvr": {
+      "title2": "Game Jam 2024",
+      "subtitle": "Ho realizzato un sistema VR interattivo funzionale con oggetti da circo in 48 ore.",
+      "ctaText": "Info Game Jam"
+    },
+    "vr-experience": {
+      "title": "Esperienza VR",
+      "kicker": "2022 - Institut Tecnològic de Barcelona",
+      "title2": "Treball de Recerca",
+      "subtitle": "Ho creato un'esperienza di Realtà Virtuale per mostrare le capacità del Metaverso.",
+      "ctaText": "Vedi risultati"
+    },
+    "drovo": {
+      "title": "DROVO",
+      "kicker": "2023 - Progetto Personale",
+      "title2": "Prototipo Multigiocatore Online",
+      "subtitle": "Ho realizzato un divertente prototipo multigiocatore per giocare con gli amici.",
+      "ctaText": "Vedi prototipo"
+    },
+    "salmon1": {
+      "title": "Videogioco Online",
+      "kicker": "2020 - Progetto Personale",
+      "title2": "Parte 1",
+      "subtitle": "Il mio primo contatto con la programmazione - un gioco multigiocatore online.",
+      "ctaText": "Vedi risultati"
+    },
+    "3dprinting": {
+      "title": "Stampa 3D",
+      "kicker": "2020 - Progetto Personale",
+      "title2": "Progetto Maker",
+      "subtitle": "Ho adattato e stampato modelli 3D complessi su larga scala.",
+      "ctaText": ""
+    }
+  },
+  "skills": {
+    "badge": "Competenze e tecnologie",
+    "title": "COMPETENZE",
+    "tagline": "Una panoramica completa delle mie competenze tecniche e livelli di padronanza.",
+    "categoryLabel": "Categoria",
+    "categories": {
+      "programmingLanguages": "Linguaggi di Programmazione",
+      "frontEnd": "Front-End",
+      "backEnd": "Back-End",
+      "artificialIntelligence": "Intelligenza Artificiale",
+      "gameCreative": "Sviluppo Giochi e Creativo",
+      "versionControl": "Controllo Versioni e Strumenti",
+      "hardware3d": "Hardware e Stampa 3D"
+    },
+    "items": {
+      "c_cpp": { "name": "C / C++", "description": "Utilizzato ampiamente nello sviluppo di giochi con Unreal Engine per networking multigiocatore, sistemi di gameplay e codice critico per le prestazioni. Anche in programmazione di microcontrollori per il progetto Tire Inflator." },
+      "java": { "name": "Java", "description": "Applicato in corsi universitari per programmazione orientata agli oggetti, strutture dati e design pattern. Sviluppato applicazioni desktop e sistemi backend." },
+      "python": { "name": "Python", "description": "Linguaggio principale per la piattaforma StudyAgents — backend FastAPI, integrazioni LangChain ed elaborazione dati. Anche per scripting, automazione ed esperimenti ML/NLP." },
+      "sql": { "name": "SQL", "description": "Progettazione database e query per applicazioni web e sistemi backend. PostgreSQL e MySQL per modellazione relazionale, ottimizzazioni e reportistica." },
+      "r": { "name": "R", "description": "Analisi statistica e visualizzazione dati in progetti accademici. Analisi esplorativa, modelli di regressione e grafici per pubblicazioni." },
+      "html_css": { "name": "HTML / CSS", "description": "Creazione di interfacce web responsive e accessibili. Usato in portfolio, StudyAgents e altri progetti con CSS moderno (Flexbox, Grid, animazioni) e HTML semantico." },
+      "react_nextjs": { "name": "React / Next.js", "description": "Stack principale per lo sviluppo web — questo portfolio, frontend StudyAgents e vari progetti personali. Esperienza con hooks, SSR, API routes e architettura componenti." },
+      "tailwindcss": { "name": "TailwindCSS", "description": "CSS utility-first per sviluppo UI rapido. Usato in portfolio, StudyAgents e altri progetti Next.js per stili coerenti e design responsive." },
+      "nodejs": { "name": "Node.js", "description": "JavaScript lato server per API e tooling. Usato con FastAPI (Python) in StudyAgents per funzionalità real-time e API routes Next.js." },
+      "postgresql": { "name": "PostgreSQL", "description": "Database relazionale per archiviazione persistente in applicazioni web. Progettazione schemi, migrazioni e ottimizzazione query." },
+      "mongodb": { "name": "MongoDB", "description": "Archiviazione documentale per modelli dati flessibili. Usato in progetti che richiedono flessibilità di schema e iterazione rapida." },
+      "llm": { "name": "LLM", "description": "I Large Language Model alimentano l'assistente StudyAgents — riassunti, Q&A e generazione test. Integrazione OpenAI e modelli locali via LangChain." },
+      "rag": { "name": "RAG", "description": "Retrieval-Augmented Generation in StudyAgents: ChromaDB, chunking documenti e ricerca semantica per fondare le risposte AI sui PDF caricati." },
+      "nlp": { "name": "NLP", "description": "Elaborazione del linguaggio naturale per estrazione testo, riassunti e question-answering. Applicato in StudyAgents ed esperimenti accademici." },
+      "neural_networks": { "name": "Reti Neurali", "description": "Comprensione di architetture e training. Applicato in progetti di corso e per interpretare il comportamento LLM in StudyAgents." },
+      "exp": { "name": "ExP", "description": "Concetti di apprendimento basato su spiegazioni applicati a rendere le uscite AI interpretabili e educative in StudyAgents." },
+      "autonomous_agents": { "name": "Agenti Autonomi", "description": "StudyAgents usa pattern agentici — uso strumenti, pianificazione e ragionamento multi-step per assistenza allo studio, elaborazione documenti e generazione test." },
+      "unreal_engine": { "name": "Unreal Engine", "description": "Motore principale per progetti di giochi: Salmon Infinite (shooter multigiocatore), DROVO, Circus VR e VR Experience. C++, Blueprints, networking e pipeline 3D." },
+      "unity": { "name": "Unity", "description": "Gioco 2D FIB Lab e prototipazione. Esperienza con C#, sistemi 2D e build cross-platform." },
+      "blender": { "name": "Blender", "description": "Modellazione 3D, texturing e animazione per giochi e stampa 3D. Props personaggi, asset ambientali e UV unwrapping." },
+      "photoshop": { "name": "Photoshop", "description": "Texture, asset UI e arte promozionale per giochi e portfolio. Fotoritocco e creazione asset 2D." },
+      "substance": { "name": "Substance", "description": "Substance Painter per materiali PBR e texturing asset di gioco. Superfici realistiche per personaggi e ambienti." },
+      "after_effects": { "name": "After Effects", "description": "Motion graphics e video editing per trailer di giochi e presentazioni portfolio." },
+      "git": { "name": "Git", "description": "Controllo versioni per tutti i progetti — branching, rebasing e workflow collaborativi. Essenziale per sviluppo in solitario e in team." },
+      "jira": { "name": "Jira", "description": "Gestione progetti agile — sprint, backlog e issue tracking in ambienti di team." },
+      "trello": { "name": "Trello", "description": "Task board per organizzazione progetti personali e piccoli team. Workflow stile Kanban." },
+      "3d_printing": { "name": "Stampa 3D", "description": "Stampa FDM con UltiMaker Cura — modelli su larga scala, ottimizzazione supporti e post-processing. Adattato modelli 3D complessi per la stampa." },
+      "proteus": { "name": "Proteus", "description": "Simulazione microcontrollori per il progetto Tire Inflator. Progettazione circuiti e programmazione C per sistemi embedded." },
+      "computer_systems": { "name": "Sistemi Informatici", "description": "Comprensione di sistemi operativi, networking e concetti di basso livello. Applicato in networking giochi e programmazione di sistemi." }
+    }
+  },
+  "experience": {
+    "badge": "Percorso",
+    "title": "ESPERIENZA",
+    "tagline": "Il mio percorso professionale nello sviluppo software e tecnologia."
+  },
+  "education": {
+    "badge": "Formazione",
+    "title": "ISTRUZIONE",
+    "tagline": "Il mio background accademico e risultati."
+  },
+  "about": {
+    "badge": "Chi sono",
+    "title": "CHI SONO",
+    "tagline": "Scopri di più su di me."
+  },
+  "contact": {
+    "badge": "Contatto",
+    "title": "CONTATTO",
+    "tagline": "Connettiamoci e lavoriamo insieme."
+  },
+  "footer": {
+    "craftedWithPassion": "Realizzato con passione"
+  }
+}

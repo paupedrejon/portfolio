@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import ScrollButton from "@/components/ScrollButton";
-import CurriculumButton from "@/components/CurriculumButton";
+import ContactFormModal from "@/components/ContactFormModal";
+import LightRays from "@/components/LightRays";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { AiOutlineMail, AiFillPhone } from "react-icons/ai";
 
@@ -44,16 +45,35 @@ const contactMethods = [
 export default function ContactPage() {
   const [mounted, setMounted] = useState(false);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   return (
-    <>
-      {/* Hero Section */}
-      <section className="hero-section" style={{ minHeight: '80vh', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ background: '#000' }}>
+      {/* Hero Section - same height as Home (100vh) */}
+      <section className="hero-section contact-hero" style={{ position: 'relative', overflow: 'hidden', background: '#000', minHeight: '100vh' }}>
         <div className="hero-grid" />
+
+        {/* LightRays Background */}
+        <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1 }}>
+          <LightRays
+            raysOrigin="top-center"
+            raysColor="#ffffff"
+            raysSpeed={1}
+            lightSpread={0.5}
+            rayLength={3}
+            followMouse={true}
+            mouseInfluence={0.1}
+            noiseAmount={0}
+            distortion={0}
+            pulsating={false}
+            fadeDistance={1}
+            saturation={1}
+          />
+        </div>
         
         {/* Animated Background Orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -100,36 +120,24 @@ export default function ContactPage() {
           className={`relative z-10 flex flex-col items-center text-center px-6 ${mounted ? 'opacity-100' : 'opacity-0'}`}
           style={{ transition: 'opacity 0.8s ease-out' }}
         >
-          <div 
-            className={`text-xs tracking-[0.3em] uppercase mb-6 px-4 py-2 rounded-full border ${mounted ? 'animate-fade-in-up' : ''}`}
+          <h1 
+            className={`hero-title ${mounted ? 'animate-fade-in-up' : ''}`}
             style={{ 
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--accent-primary)',
-              borderColor: 'var(--border-subtle)',
-              background: 'var(--bg-card)',
+              fontFamily: 'var(--font-league-spartan)',
+              color: '#ffffff',
               animationDelay: '0.1s',
               animationFillMode: 'both'
             }}
           >
-            Let&apos;s Connect
-          </div>
-
-          <h1 
-            className={`hero-title ${mounted ? 'animate-fade-in-up' : ''}`}
-            style={{ 
-              fontFamily: 'var(--font-display)',
-              animationDelay: '0.2s',
-              animationFillMode: 'both'
-            }}
-          >
-            <span className="gradient-text">CONTACT</span>
+            CONTACT
           </h1>
 
           <p 
             className={`hero-tagline ${mounted ? 'animate-fade-in-up' : ''}`}
             style={{ 
               fontFamily: 'var(--font-body)',
-              animationDelay: '0.3s',
+              color: 'rgba(255, 255, 255, 0.7)',
+              animationDelay: '0.2s',
               animationFillMode: 'both'
             }}
           >
@@ -138,14 +146,28 @@ export default function ContactPage() {
 
           <div 
             className={`flex flex-wrap gap-4 justify-center mt-8 ${mounted ? 'animate-fade-in-up' : ''}`}
-            style={{ animationDelay: '0.4s', animationFillMode: 'both' }}
+            style={{ animationDelay: '0.3s', animationFillMode: 'both' }}
           >
-            <CurriculumButton href="/PauPedrejonCV.pdf" />
+            <button
+              type="button"
+              onClick={() => setContactModalOpen(true)}
+              className="cv-download-btn"
+            >
+              <span className="cv-btn-text">
+                <AiOutlineMail size={16} />
+                Contact
+              </span>
+            </button>
           </div>
+
+          <ContactFormModal
+            isOpen={contactModalOpen}
+            onClose={() => setContactModalOpen(false)}
+          />
 
           <div 
             className={`scroll-wrap ${mounted ? 'animate-fade-in' : ''}`}
-            style={{ animationDelay: '0.6s', animationFillMode: 'both', marginTop: '3rem' }}
+            style={{ animationDelay: '0.5s', animationFillMode: 'both', marginTop: '3rem' }}
           >
             <ScrollButton targetId="contact" color="transparent" iconColor="var(--text-secondary)" />
           </div>
@@ -168,7 +190,7 @@ export default function ContactPage() {
 
       {/* Contact Section */}
       <section id="contact" style={{ 
-        background: 'var(--bg-secondary)',
+        background: '#000',
         padding: '6rem 2rem',
         position: 'relative',
         overflow: 'hidden',
@@ -541,6 +563,6 @@ export default function ContactPage() {
           }
         `}</style>
       </section>
-    </>
+    </div>
   );
 }

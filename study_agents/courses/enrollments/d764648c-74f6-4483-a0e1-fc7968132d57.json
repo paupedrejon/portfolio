@@ -614,5 +614,139 @@
     "flashcard_responses": {
       "Physical Design": []
     }
+  },
+  "course_20260207_221839_211378": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_221839_211378",
+    "enrolled_at": "2026-02-07T22:18:39.251319",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    }
+  },
+  "course_20260207_222944_508328": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_222944_508328",
+    "enrolled_at": "2026-02-07T22:29:44.574496",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-07",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      }
+    },
+    "pending_credits": 5,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    }
+  },
+  "course_20260207_224248_175523": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260207_224248_175523",
+    "enrolled_at": "2026-02-07T22:42:48.217048",
+    "credits_remaining": 125,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 2,
+    "last_connection_date": "2026-02-08",
+    "credits_from_streak": 0,
+    "streak_calendar": {
+      "2026-02-07": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 1
+      },
+      "2026-02-08": {
+        "claimed": false,
+        "credits": 5,
+        "streak_day": 2
+      }
+    },
+    "pending_credits": 10,
+    "xp": 0,
+    "topic_progress": {
+      "PHYSICAL DESIGN": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "PHYSICAL DESIGN": []
+    },
+    "last_accessed": "2026-02-08T10:58:39.985Z",
+    "updated_at": "2026-02-08T11:58:40.455341"
+  },
+  "course_20260208_120309_997975": {
+    "user_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
+    "course_id": "course_20260208_120309_997975",
+    "enrolled_at": "2026-02-08T12:03:10.035229",
+    "credits_remaining": 130,
+    "credits_used": 0,
+    "max_credits": 250,
+    "initial_credits": 125,
+    "streak_days": 1,
+    "last_connection_date": "2026-02-08",
+    "credits_from_streak": 5,
+    "streak_calendar": {
+      "2026-02-08": {
+        "claimed": true,
+        "credits": 5,
+        "streak_day": 1,
+        "claimed_at": "2026-02-08T12:04:55.472073"
+      }
+    },
+    "pending_credits": 0,
+    "xp": 0,
+    "topic_progress": {
+      "Physical Design": 0
+    },
+    "messages": [],
+    "generated_notes": {},
+    "completed_tests": [],
+    "completed_exercises": [],
+    "flashcard_responses": {
+      "Physical Design": []
+    },
+    "last_accessed": "2026-02-08T11:26:03.424Z",
+    "updated_at": "2026-02-08T12:26:03.449893"
   }
 }

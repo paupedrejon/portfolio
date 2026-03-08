@@ -1,0 +1,52 @@
+.tech-logos-marquee {
+  --marquee-gap: 2.5rem;
+  --marquee-height: 2.25rem;
+  --marquee-duration: 25s;
+}
+
+.tech-logos-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: tech-marquee-scroll var(--marquee-duration) linear infinite;
+}
+
+.tech-logos-marquee__track:hover {
+  animation-play-state: paused;
+}
+
+.tech-logos-marquee__list {
+  display: flex;
+  align-items: center;
+  gap: var(--marquee-gap);
+  padding-right: var(--marquee-gap);
+}
+
+.tech-logos-marquee__item {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  font-size: var(--marquee-height);
+  line-height: 1;
+  color: #ffffff;
+}
+
+.tech-logos-marquee__item svg {
+  width: 1em;
+  height: 1em;
+  display: block;
+}
+
+@keyframes tech-marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tech-logos-marquee__track {
+    animation: none;
+  }
+}

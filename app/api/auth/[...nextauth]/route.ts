@@ -34,7 +34,8 @@ const authOptions = {
     error: "/auth/error",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async signIn({ user, account, profile }: { user?: any; account?: any; profile?: any }) {
       // Permitir el inicio de sesión
       return true;
     },
@@ -84,7 +85,7 @@ const authOptions = {
   secret: secret || undefined,
   debug: process.env.NODE_ENV === "development",
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
     maxAge: 30 * 24 * 60 * 60, // 30 días
     updateAge: 24 * 60 * 60, // Actualizar cada 24 horas
   },

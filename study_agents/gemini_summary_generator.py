@@ -53,7 +53,439 @@ def _is_technical_diagram(description: str) -> bool:
     return any(keyword in description_lower for keyword in technical_keywords)
 
 
-def _generate_image_with_dalle(description: str, api_key: str) -> Optional[Dict[str, str]]:
+def _generate_image_with_gemini(description: str, gemini_api_key: str) -> Optional[Dict[str, str]]:
+    """
+    Genera una imagen usando Gemini Nano Banana (gemini-2.5-flash-image o gemini-3-pro-image-preview)
+    según la documentación oficial: https://ai.google.dev/gemini-api/docs/image-generation
+    
+    Args:
+        description: Descripción de la imagen a generar
+        gemini_api_key: API key de Google Gemini
+        
+    Returns:
+        Dict con 'url' (local path) y 'description' o None si falla
+    """
+    try:
+        from datetime import datetime
+        import hashlib
+        import base64
+        
+        # Limpiar y simplificar la descripción
+        clean_description = description.replace('🖼️', '').replace('[INSERTAR IMAGEN:', '').replace(']', '').strip()
+        if ':' in clean_description:
+            clean_description = clean_description.split(':', 1)[1].strip()
+        
+        # Crear un prompt MUY específico y detallado para diagramas educativos
+        description_lower = clean_description.lower()
+        
+        # Detectar tipo de diagrama y crear descripción específica
+        if any(word in description_lower for word in ['flujo', 'flow', 'proceso', 'process', 'selección', 'selection', 'decisión']):
+            diagram_spec = """Un diagrama de flujo simple con cajas rectangulares blancas con bordes negros, texto corto dentro de cada caja (máximo 3 palabras), flechas negras conectando las cajas de arriba hacia abajo, máximo 5-7 cajas en total, fondo blanco, sin sombras ni decoraciones"""
+        elif any(word in description_lower for word in ['árbol', 'tree', 'b-tree', 'índice', 'index', 'nodo', 'node']):
+            diagram_spec = """Un diagrama de árbol simple con nodos circulares negros en la parte superior (raíz), líneas negras descendiendo hacia nodos hijos, máximo 2-3 niveles de profundidad, etiquetas de texto claras junto a cada nodo, fondo blanco, sin sombras ni decoraciones"""
+        elif any(word in description_lower for word in ['hash', 'función', 'function', 'bucket', 'mapeo', 'mapping']):
+            diagram_spec = """Un diagrama de función hash simple con valores de entrada a la izquierda (cajas rectangulares), una función hash en el centro (caja rectangular con texto HASH), flechas negras apuntando desde entrada hacia la función, buckets/cubos a la derecha (cajas rectangulares o círculos), flechas desde la función hacia los buckets, etiquetas claras en cada elemento, fondo blanco, sin sombras ni decoraciones"""
+        elif any(word in description_lower for word in ['tabla', 'table', 'esquema', 'schema', 'base de datos', 'database']):
+            diagram_spec = """Un diagrama de esquema de base de datos simple con cajas rectangulares representando tablas, nombre de la tabla en la parte superior de cada caja, líneas negras conectando las tablas (relaciones), etiquetas en las líneas indicando el tipo de relación, máximo 3-4 tablas, fondo blanco, sin sombras ni decoraciones"""
+        elif any(word in description_lower for word in ['comparación', 'comparison', 'comparar', 'vs', 'versus', 'diferencia']):
+            diagram_spec = """Un diagrama de comparación simple con dos o tres elementos lado a lado, cajas rectangulares o círculos para cada elemento, etiquetas claras debajo de cada elemento, líneas o flechas indicando diferencias clave, fondo blanco, sin sombras ni decoraciones"""
+        elif any(word in description_lower for word in ['acid', 'transacción', 'transaction', 'propiedad', 'property']):
+            diagram_spec = """Un diagrama de propiedades ACID simple con cuatro cajas rectangulares o círculos en disposición circular o cuadrada, cada caja etiquetada con una propiedad: Atomicity, Consistency, Isolation, Durability, líneas negras conectando las cajas, fondo blanco, sin sombras ni decoraciones"""
+        else:
+            diagram_spec = """Un diagrama educativo simple con formas básicas: rectángulos, círculos, líneas, flechas, etiquetas de texto claras y cortas, máximo 5-6 elementos, fondo blanco, sin sombras ni decoraciones, estilo minimalista y claro"""
+        
+        # Crear prompt final MUY específico para Gemini
+        final_prompt = f"""Crea un diagrama técnico educativo simple y claro que ilustre: {clean_description}
+
+Especificaciones técnicas: {diagram_spec}
+
+Estilo requerido: Arte de línea minimalista, solo colores negro y azul oscuro (máximo 2 colores), fondo completamente blanco, sin sombras, sin gradientes, sin elementos decorativos, solo formas básicas: rectángulos, círculos, líneas rectas, flechas, etiquetas de texto cortas (máximo 3-4 palabras cada una), debe verse como un diagrama de libro de texto técnico, simple, claro y directamente relacionado con el concepto descrito, sin interpretaciones abstractas o artísticas, mostrar exactamente lo que dice la descripción, nada más.
+
+El diagrama debe ser útil para estudiantes que aprenden este concepto."""
+
+        print(f"🎨 Generando imagen con Gemini Nano Banana para: '{description[:80]}...'")
+        print(f"   📝 Prompt: '{final_prompt[:200]}...'")
+        
+        # Intentar primero con gemini-2.5-flash-image (más rápido y eficiente)
+        models_to_try = [
+            ("gemini-2.5-flash-image", "v1beta", {"aspectRatio": "16:9"}),
+            ("gemini-3-pro-image-preview", "v1beta", {"aspectRatio": "16:9", "imageSize": "2K"}),
+        ]
+        
+        for model_name, api_version, image_config in models_to_try:
+            try:
+                url = f"https://generativelanguage.googleapis.com/{api_version}/models/{model_name}:generateContent"
+                headers = {
+                    "x-goog-api-key": gemini_api_key,
+                    "Content-Type": "application/json"
+                }
+                
+                payload = {
+                    "contents": [{
+                        "parts": [
+                            {"text": final_prompt}
+                        ]
+                    }],
+                    "generationConfig": {
+                        "imageConfig": image_config,
+                        "temperature": 0.2  # Muy bajo para precisión
+                    }
+                }
+                
+                print(f"   🔄 Intentando con {model_name}...")
+                response = requests.post(url, headers=headers, json=payload, timeout=60)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    
+                    # Debug: mostrar estructura de respuesta
+                    print(f"   📋 Estructura de respuesta: {list(result.keys())}")
+                    
+                    # Gemini retorna imágenes en el campo "parts" de la respuesta
+                    if "candidates" in result and len(result["candidates"]) > 0:
+                        candidate = result["candidates"][0]
+                        print(f"   📋 Candidate keys: {list(candidate.keys())}")
+                        
+                        if "content" in candidate:
+                            content = candidate["content"]
+                            print(f"   📋 Content keys: {list(content.keys())}")
+                            
+                            if "parts" in content:
+                                parts = content["parts"]
+                                print(f"   📋 Número de parts: {len(parts)}")
+                                
+                                # Buscar la imagen en los parts
+                                for i, part in enumerate(parts):
+                                    print(f"   📋 Part {i} keys: {list(part.keys())}")
+                                    
+                                    # La imagen puede venir como base64 o como URL
+                                    if "inlineData" in part:
+                                        # Imagen en base64
+                                        image_data = part["inlineData"]["data"]
+                                        image_mime = part["inlineData"].get("mimeType", "image/png")
+                                        
+                                        print(f"   📥 Decodificando imagen base64 (tipo: {image_mime})...")
+                                        
+                                        # Decodificar base64
+                                        image_bytes = base64.b64decode(image_data)
+                                        
+                                        # Guardar la imagen localmente
+                                        images_dir = Path("courses/generated_images")
+                                        images_dir.mkdir(parents=True, exist_ok=True)
+                                        
+                                        hash_obj = hashlib.md5(description.encode())
+                                        image_hash = hash_obj.hexdigest()[:12]
+                                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                                        image_filename = f"gemini_{timestamp}_{image_hash}.png"
+                                        image_path = images_dir / image_filename
+                                        
+                                        with open(image_path, "wb") as f:
+                                            f.write(image_bytes)
+                                        
+                                        relative_url = f"/api/files/generated_images/{image_filename}"
+                                        print(f"✅ Imagen generada y guardada con Gemini ({model_name}): {relative_url}")
+                                        
+                                        return {
+                                            "url": relative_url,
+                                            "description": description,
+                                            "local_path": str(image_path)
+                                        }
+                                    elif "url" in part:
+                                        # Imagen como URL (descargar)
+                                        image_url = part["url"]
+                                        print(f"📥 Descargando imagen desde URL de Gemini: {image_url[:80]}...")
+                                        image_response = requests.get(image_url, timeout=60)
+                                        if image_response.status_code == 200:
+                                            images_dir = Path("courses/generated_images")
+                                            images_dir.mkdir(parents=True, exist_ok=True)
+                                            
+                                            hash_obj = hashlib.md5(description.encode())
+                                            image_hash = hash_obj.hexdigest()[:12]
+                                            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                                            image_filename = f"gemini_{timestamp}_{image_hash}.png"
+                                            image_path = images_dir / image_filename
+                                            
+                                            with open(image_path, "wb") as f:
+                                                f.write(image_response.content)
+                                            
+                                            relative_url = f"/api/files/generated_images/{image_filename}"
+                                            print(f"✅ Imagen generada y guardada con Gemini ({model_name}): {relative_url}")
+                                            
+                                            return {
+                                                "url": relative_url,
+                                                "description": description,
+                                                "local_path": str(image_path)
+                                            }
+                                    elif "text" in part:
+                                        # Si hay texto en la respuesta, puede ser un error o información
+                                        print(f"   ⚠️ Respuesta contiene texto: {part['text'][:200]}...")
+                    else:
+                        print(f"   ⚠️ No se encontraron candidates en la respuesta")
+                        print(f"   📋 Respuesta completa: {str(result)[:500]}...")
+                
+                elif response.status_code == 404:
+                    print(f"   ⚠️ Modelo {model_name} no disponible, intentando siguiente...")
+                    continue
+                else:
+                    error_data = response.json() if response.content else {}
+                    error_msg = error_data.get('error', {}).get('message', 'Unknown error') if isinstance(error_data, dict) else str(error_data)
+                    print(f"   ⚠️ Error con {model_name}: {response.status_code} - {error_msg}")
+                    continue
+                    
+            except Exception as e:
+                print(f"   ⚠️ Error con {model_name}: {e}")
+                continue
+        
+        print(f"   ⚠️ No se pudo generar imagen con ningún modelo de Gemini")
+        return None
+            
+    except Exception as e:
+        print(f"   ⚠️ Error generando imagen con Gemini: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def _improve_prompt_with_gemini_advanced(description: str, gemini_api_key: str) -> Optional[str]:
+    """
+    Genera una imagen usando Gemini 2.0 (Imagen) basándose en la descripción
+    Gemini tiene mejor comprensión de contexto educativo y genera diagramas más precisos
+    
+    Args:
+        description: Descripción de la imagen a generar
+        gemini_api_key: API key de Google Gemini
+        
+    Returns:
+        Dict con 'url' (local path) y 'description' o None si falla
+    """
+    try:
+        from datetime import datetime
+        import hashlib
+        import base64
+        
+        # Limpiar y simplificar la descripción
+        clean_description = description.replace('🖼️', '').replace('[INSERTAR IMAGEN:', '').replace(']', '').strip()
+        if ':' in clean_description:
+            clean_description = clean_description.split(':', 1)[1].strip()
+        
+        # Crear un prompt MUY específico y detallado para diagramas educativos
+        description_lower = clean_description.lower()
+        
+        # Detectar tipo de diagrama y crear descripción específica
+        if any(word in description_lower for word in ['flujo', 'flow', 'proceso', 'process', 'selección', 'selection', 'decisión']):
+            diagram_spec = """Un diagrama de flujo simple con:
+- Cajas rectangulares blancas con bordes negros
+- Texto corto dentro de cada caja (máximo 3 palabras)
+- Flechas negras conectando las cajas de arriba hacia abajo
+- Máximo 5-7 cajas en total
+- Fondo blanco, sin sombras ni decoraciones"""
+        elif any(word in description_lower for word in ['árbol', 'tree', 'b-tree', 'índice', 'index', 'nodo', 'node']):
+            diagram_spec = """Un diagrama de árbol simple con:
+- Nodos circulares negros en la parte superior (raíz)
+- Líneas negras descendiendo hacia nodos hijos
+- Máximo 2-3 niveles de profundidad
+- Etiquetas de texto claras junto a cada nodo
+- Fondo blanco, sin sombras ni decoraciones"""
+        elif any(word in description_lower for word in ['hash', 'función', 'function', 'bucket', 'mapeo', 'mapping']):
+            diagram_spec = """Un diagrama de función hash simple con:
+- Valores de entrada a la izquierda (cajas rectangulares)
+- Una función hash en el centro (caja rectangular con "HASH" o "f()")
+- Flechas negras apuntando desde entrada hacia la función
+- Buckets/cubos a la derecha (cajas rectangulares o círculos)
+- Flechas desde la función hacia los buckets
+- Etiquetas claras en cada elemento
+- Fondo blanco, sin sombras ni decoraciones"""
+        elif any(word in description_lower for word in ['tabla', 'table', 'esquema', 'schema', 'base de datos', 'database']):
+            diagram_spec = """Un diagrama de esquema de base de datos simple con:
+- Cajas rectangulares representando tablas
+- Nombre de la tabla en la parte superior de cada caja
+- Líneas negras conectando las tablas (relaciones)
+- Etiquetas en las líneas indicando el tipo de relación
+- Máximo 3-4 tablas
+- Fondo blanco, sin sombras ni decoraciones"""
+        elif any(word in description_lower for word in ['comparación', 'comparison', 'comparar', 'vs', 'versus', 'diferencia']):
+            diagram_spec = """Un diagrama de comparación simple con:
+- Dos o tres elementos lado a lado
+- Cajas rectangulares o círculos para cada elemento
+- Etiquetas claras debajo de cada elemento
+- Líneas o flechas indicando diferencias clave
+- Fondo blanco, sin sombras ni decoraciones"""
+        elif any(word in description_lower for word in ['acid', 'transacción', 'transaction', 'propiedad', 'property']):
+            diagram_spec = """Un diagrama de propiedades ACID simple con:
+- Cuatro cajas rectangulares o círculos en disposición circular o cuadrada
+- Cada caja etiquetada con una propiedad: Atomicity, Consistency, Isolation, Durability
+- Líneas negras conectando las cajas
+- Fondo blanco, sin sombras ni decoraciones"""
+        else:
+            diagram_spec = """Un diagrama educativo simple con:
+- Formas básicas: rectángulos, círculos, líneas, flechas
+- Etiquetas de texto claras y cortas
+- Máximo 5-6 elementos
+- Fondo blanco, sin sombras ni decoraciones
+- Estilo minimalista y claro"""
+        
+        # Crear prompt final MUY específico
+        final_prompt = f"""Crea un diagrama técnico educativo simple y claro que ilustre: {clean_description}
+
+Especificaciones técnicas del diagrama:
+{diagram_spec}
+
+Estilo requerido:
+- Arte de línea minimalista
+- Solo colores negro y azul oscuro (máximo 2 colores)
+- Fondo completamente blanco
+- Sin sombras, sin gradientes, sin elementos decorativos
+- Solo formas básicas: rectángulos, círculos, líneas rectas, flechas
+- Etiquetas de texto cortas (máximo 3-4 palabras cada una)
+- Debe verse como un diagrama de libro de texto técnico
+- Simple, claro y directamente relacionado con el concepto descrito
+- Sin interpretaciones abstractas o artísticas
+- Mostrar exactamente lo que dice la descripción, nada más
+
+El diagrama debe ser útil para estudiantes que aprenden este concepto."""
+
+        print(f"🎨 Generando imagen con Gemini para: '{description[:80]}...'")
+        print(f"   📝 Prompt detallado: '{final_prompt[:200]}...'")
+        
+        # Intentar usar Gemini 2.0 con capacidades de imagen
+        # Nota: Gemini puede generar imágenes a través de su API de generación de contenido
+        # Usaremos el modelo más reciente disponible
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent?key={gemini_api_key}"
+        
+        payload = {
+            "contents": [{
+                "parts": [{
+                    "text": final_prompt
+                }]
+            }],
+            "generationConfig": {
+                "temperature": 0.2,  # Muy bajo para precisión
+                "maxOutputTokens": 1000
+            }
+        }
+        
+        response = requests.post(url, json=payload, timeout=60)
+        
+        # Si el modelo no está disponible, intentar con gemini-1.5-pro
+        if response.status_code == 404:
+            print(f"   ⚠️ Modelo gemini-2.0-flash-exp no disponible, intentando con gemini-1.5-pro...")
+            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key={gemini_api_key}"
+            response = requests.post(url, json=payload, timeout=60)
+        
+        if response.status_code == 200:
+            result = response.json()
+            # Gemini puede retornar imágenes en diferentes formatos
+            # Por ahora, si no hay generación directa de imágenes, retornamos None
+            # y usaremos DALL-E como fallback
+            print(f"   ⚠️ Gemini no generó imagen directamente, usando fallback...")
+            return None
+        else:
+            print(f"   ⚠️ Error con Gemini: {response.status_code}")
+            return None
+            
+    except Exception as e:
+        print(f"   ⚠️ Error generando imagen con Gemini: {e}")
+        return None
+
+
+def _improve_prompt_with_gemini(description: str, gemini_api_key: str) -> Optional[str]:
+    """
+    Usa Gemini para mejorar y refinar el prompt de imagen antes de enviarlo a DALL-E
+    Esto ayuda a generar descripciones más precisas y específicas para diagramas educativos
+    
+    Args:
+        description: Descripción original de la imagen
+        gemini_api_key: API key de Google Gemini
+        
+    Returns:
+        Prompt mejorado o None si falla
+    """
+    try:
+        # Limpiar la descripción
+        clean_description = description.replace('🖼️', '').replace('[INSERTAR IMAGEN:', '').replace(']', '').strip()
+        if ':' in clean_description:
+            clean_description = clean_description.split(':', 1)[1].strip()
+        
+        # Crear prompt para Gemini que mejore la descripción de forma EXTREMADAMENTE detallada
+        improvement_prompt = f"""Eres un experto en crear descripciones EXTREMADAMENTE detalladas y precisas para diagramas educativos técnicos.
+
+La descripción original es: "{clean_description}"
+
+Tu tarea es crear una descripción COMPLETA y MUY ESPECÍFICA para un generador de imágenes que cree diagramas educativos simples y claros.
+
+La descripción debe incluir TODOS estos detalles:
+
+1. TIPO DE DIAGRAMA:
+   - Especifica exactamente qué tipo de diagrama es (flujo, árbol, esquema, comparación, etc.)
+
+2. ELEMENTOS VISUALES ESPECÍFICOS:
+   - Lista EXACTA de cada elemento que debe aparecer
+   - Para cada elemento, especifica: forma (rectángulo, círculo, línea, flecha), tamaño aproximado, color (negro o azul oscuro)
+   - Posición exacta de cada elemento (arriba, abajo, izquierda, derecha, centro)
+
+3. DISPOSICIÓN Y LAYOUT:
+   - Describe la disposición exacta: "3 cajas rectangulares en fila horizontal", "árbol con raíz arriba y 2 niveles", etc.
+   - Especifica el espaciado: "elementos espaciados uniformemente", "cajas apiladas verticalmente"
+
+4. ETIQUETAS DE TEXTO:
+   - Lista EXACTA de todas las etiquetas de texto que deben aparecer
+   - Para cada etiqueta, especifica: texto exacto, posición (dentro de, debajo de, al lado de), tamaño
+
+5. CONEXIONES Y FLUJO:
+   - Describe todas las líneas y flechas: de dónde a dónde van, dirección, estilo (línea recta, flecha)
+
+6. ESTILO VISUAL:
+   - Fondo: blanco puro
+   - Colores: solo negro (#000000) y azul oscuro (#1e40af)
+   - Sin sombras, sin gradientes, sin decoraciones
+   - Líneas: 1-2px de grosor, negras
+   - Formas: bordes claros y visibles
+
+7. CONTEXTO EDUCATIVO:
+   - El diagrama debe ser útil para estudiantes
+   - Debe mostrar claramente el concepto descrito
+   - Debe ser simple y fácil de entender
+
+IMPORTANTE: 
+- Sé EXTREMADAMENTE específico y detallado
+- No dejes nada a la interpretación
+- Describe cada elemento visual que debe aparecer
+- Evita cualquier ambigüedad
+- Enfócate en simplicidad y claridad educativa
+
+Responde SOLO con la descripción mejorada completa, sin explicaciones adicionales ni comentarios."""
+
+        # Llamar a Gemini
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key={gemini_api_key}"
+        payload = {
+            "contents": [{
+                "parts": [{
+                    "text": improvement_prompt
+                }]
+            }],
+            "generationConfig": {
+                "temperature": 0.3,  # Bajo para descripciones más precisas
+                "maxOutputTokens": 500
+            }
+        }
+        
+        response = requests.post(url, json=payload, timeout=30)
+        if response.status_code == 200:
+            result = response.json()
+            if "candidates" in result and len(result["candidates"]) > 0:
+                improved_prompt = result["candidates"][0]["content"]["parts"][0]["text"].strip()
+                print(f"   ✨ Prompt mejorado por Gemini: '{improved_prompt[:150]}...'")
+                return improved_prompt
+        
+        print(f"   ⚠️ No se pudo mejorar el prompt con Gemini, usando descripción original")
+        return clean_description
+        
+    except Exception as e:
+        print(f"   ⚠️ Error mejorando prompt con Gemini: {e}")
+        return description.replace('🖼️', '').replace('[INSERTAR IMAGEN:', '').replace(']', '').strip()
+
+
+def _generate_image_with_dalle(description: str, api_key: str, gemini_api_key: Optional[str] = None) -> Optional[Dict[str, str]]:
     """
     Genera una imagen usando DALL-E (OpenAI) basándose en la descripción
     
@@ -68,11 +500,91 @@ def _generate_image_with_dalle(description: str, api_key: str) -> Optional[Dict[
         from datetime import datetime
         import hashlib
         
-        # Crear un prompt mejorado para DALL-E basado en la descripción
-        # Asegurar que sea educativo y técnico
-        prompt = f"Educational technical diagram: {description}. Clean, professional diagram style with clear labels and structure. Suitable for academic learning material."
+        # Crear un prompt mejorado para DALL-E que genere diagramas SIMPLES, CLAROS y RELEVANTES
+        # Enfocarse en simplicidad, claridad y utilidad educativa
+        # Extraer palabras clave de la descripción para hacer el prompt más específico
+        description_lower = description.lower()
+        
+        # Limpiar y simplificar la descripción
+        # Remover emojis y marcadores innecesarios
+        clean_description = description.replace('🖼️', '').replace('[INSERTAR IMAGEN:', '').replace(']', '').strip()
+        if ':' in clean_description:
+            clean_description = clean_description.split(':', 1)[1].strip()
+        
+        # Mejorar el prompt con Gemini si está disponible
+        # Esto ayuda a generar descripciones más precisas y específicas para diagramas educativos
+        if gemini_api_key:
+            try:
+                improved_description = _improve_prompt_with_gemini(clean_description, gemini_api_key)
+                if improved_description and improved_description != clean_description:
+                    clean_description = improved_description
+                    print(f"   ✨ Prompt mejorado con Gemini")
+            except Exception as e:
+                print(f"   ⚠️ No se pudo mejorar el prompt con Gemini: {e}, usando descripción original")
+        
+        # Detectar tipo de diagrama y crear prompt específico
+        if any(word in description_lower for word in ['flujo', 'flow', 'proceso', 'process', 'selección', 'selection', 'decisión']):
+            diagram_type = "simple flowchart"
+            style_guide = "Use rectangular boxes connected by arrows. Each box should contain one clear concept. Maximum 5-7 boxes total."
+        elif any(word in description_lower for word in ['árbol', 'tree', 'b-tree', 'índice', 'index', 'nodo', 'node']):
+            diagram_type = "simple tree structure diagram"
+            style_guide = "Show a clear tree with nodes (circles) and connections (lines). Root at top, leaves at bottom. Maximum 2-3 levels deep."
+        elif any(word in description_lower for word in ['tabla', 'table', 'esquema', 'schema', 'catálogo', 'catalog', 'base de datos', 'database']):
+            diagram_type = "simple database schema diagram"
+            style_guide = "Show rectangular boxes representing tables, with clear labels. Show relationships with simple lines. Maximum 3-4 tables."
+        elif any(word in description_lower for word in ['hash', 'función', 'function', 'bucket', 'mapeo', 'mapping']):
+            diagram_type = "simple hash function diagram"
+            style_guide = "Show input values on left, hash function in middle (as a box), and output buckets on right. Use simple arrows to show the mapping."
+        elif any(word in description_lower for word in ['comparación', 'comparison', 'comparar', 'vs', 'versus', 'diferencia']):
+            diagram_type = "simple side-by-side comparison diagram"
+            style_guide = "Show two or three items side by side with clear labels. Use simple shapes and minimal text. Highlight key differences."
+        elif any(word in description_lower for word in ['acid', 'transacción', 'transaction', 'propiedad', 'property']):
+            diagram_type = "simple ACID properties diagram"
+            style_guide = "Show four boxes in a circle or square arrangement, each labeled with one ACID property (Atomicity, Consistency, Isolation, Durability). Simple connections between them."
+        elif any(word in description_lower for word in ['red', 'network', 'red de', 'conexión', 'connection']):
+            diagram_type = "simple network diagram"
+            style_guide = "Show nodes (circles) connected by lines. Maximum 5-6 nodes. Clear labels on each node."
+        else:
+            diagram_type = "simple educational diagram"
+            style_guide = "Use the simplest possible representation. Maximum 5-6 elements. Clear labels. Focus on the core concept only."
+        
+        # Crear prompt MUY específico, detallado y enfocado en SIMPLICIDAD
+        # Prompt mejorado con instrucciones MUY específicas
+        prompt = f"""Create a simple, clear, educational {diagram_type} diagram illustrating: {clean_description}
+
+DIAGRAM SPECIFICATIONS:
+{style_guide}
+
+VISUAL REQUIREMENTS:
+- Use ONLY basic geometric shapes: rectangles, circles, straight lines, arrows
+- Maximum 2 colors: black (#000000) and dark blue (#1e40af)
+- Pure white background (#ffffff)
+- NO shadows, NO gradients, NO decorative elements, NO artistic effects
+- Text labels: maximum 3-4 words each, clear and readable
+- All lines must be straight (no curves unless necessary for arrows)
+- All shapes must have clear, visible borders (1-2px black lines)
+
+LAYOUT REQUIREMENTS:
+- Elements must be clearly arranged and spaced
+- Use arrows to show flow/direction when needed
+- Labels must be positioned clearly next to or inside elements
+- Maximum 5-7 main elements total
+- Keep it simple and uncluttered
+
+STYLE REQUIREMENTS:
+- Must look like a technical textbook diagram
+- Professional, educational, and instructional
+- NO abstract interpretations
+- NO artistic or creative elements
+- Show EXACTLY what the description says, nothing more, nothing less
+- Focus on clarity and educational value
+
+The diagram must help students understand the concept clearly and directly."""
         
         print(f"🎨 Generando imagen con DALL-E para: '{description[:80]}...'")
+        print(f"   📝 Descripción limpia: '{clean_description[:100]}...'")
+        print(f"   📝 Tipo de diagrama: {diagram_type}")
+        print(f"   📝 Prompt optimizado: {prompt[:200]}...")
         
         # Llamar a la API de DALL-E
         url = "https://api.openai.com/v1/images/generations"
@@ -116,8 +628,11 @@ def _generate_image_with_dalle(description: str, api_key: str) -> Optional[Dict[
                         f.write(image_response.content)
                     
                     # Retornar URL relativa que se puede servir desde el backend
+                    # El endpoint espera: /api/files/generated_images/{filename}
                     relative_url = f"/api/files/generated_images/{image_filename}"
                     print(f"✅ Imagen generada y guardada: {relative_url}")
+                    print(f"   📁 Ruta completa: {image_path}")
+                    print(f"   🌐 URL completa: http://localhost:8000{relative_url}")
                     
                     return {
                         "url": relative_url,
@@ -128,11 +643,14 @@ def _generate_image_with_dalle(description: str, api_key: str) -> Optional[Dict[
             error_data = response.json() if response.content else {}
             error_msg = error_data.get('error', {}).get('message', 'Unknown error') if isinstance(error_data, dict) else str(error_data)
             print(f"⚠️ Error generando imagen con DALL-E: {response.status_code} - {error_msg}")
+            print(f"   Respuesta completa: {response.text[:200]}")
             
     except Exception as e:
         print(f"⚠️ Error generando imagen con DALL-E: {e}")
         import traceback
         traceback.print_exc()
+    
+    return None
     
     return None
 
@@ -196,7 +714,7 @@ def _search_wikimedia_commons(query: str) -> Optional[Dict[str, str]]:
 
 def search_image(query: str) -> Optional[Dict[str, str]]:
     """
-    Genera o busca una imagen relevante, priorizando generación con DALL-E para contenido educativo
+    Genera o busca una imagen relevante, priorizando generación con Gemini Nano Banana para contenido educativo
     
     Args:
         query: Descripción de la imagen a generar/buscar
@@ -206,12 +724,30 @@ def search_image(query: str) -> Optional[Dict[str, str]]:
     """
     is_technical = _is_technical_diagram(query)
     
-    # PRIORIDAD 1: Intentar generar con DALL-E si hay API key de OpenAI
+    # PRIORIDAD 1: Intentar generar con Gemini Nano Banana (mejor para diagramas educativos)
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if gemini_key:
+        print(f"🎨 Intentando generar imagen con Gemini Nano Banana para: '{query[:60]}...'")
+        try:
+            gemini_result = _generate_image_with_gemini(query, gemini_key)
+            if gemini_result:
+                print(f"✅ Imagen generada exitosamente con Gemini")
+                return gemini_result
+            else:
+                print(f"⚠️ Gemini no pudo generar la imagen, intentando DALL-E como fallback...")
+        except Exception as e:
+            print(f"⚠️ Error con Gemini: {e}, intentando DALL-E como fallback...")
+    else:
+        print(f"ℹ️ GEMINI_API_KEY no configurada, usando DALL-E...")
+    
+    # PRIORIDAD 2: Intentar generar con DALL-E si hay API key de OpenAI (fallback)
+    # Usar Gemini para mejorar el prompt si está disponible
     openai_key = os.getenv("OPENAI_API_KEY")
     if openai_key:
         print(f"🎨 Intentando generar imagen con DALL-E para: '{query[:60]}...'")
         try:
-            dalle_result = _generate_image_with_dalle(query, openai_key)
+            # Pasar también la API key de Gemini para mejorar el prompt
+            dalle_result = _generate_image_with_dalle(query, openai_key, gemini_api_key=gemini_key)
             if dalle_result:
                 print(f"✅ Imagen generada exitosamente con DALL-E")
                 return dalle_result
@@ -568,10 +1104,10 @@ def _process_image_markers(content: str) -> str:
 
 def extract_text_from_pdf(pdf_url: str) -> Optional[str]:
     """
-    Extrae texto de un PDF desde una URL
+    Extrae texto de un PDF desde una URL o ruta de archivo local
     
     Args:
-        pdf_url: URL del PDF
+        pdf_url: URL del PDF o ruta de archivo local
         
     Returns:
         Texto extraído del PDF o None si hay error
@@ -581,6 +1117,25 @@ def extract_text_from_pdf(pdf_url: str) -> Optional[str]:
         return None
     
     try:
+        # Primero verificar si es una ruta de archivo local (no URL)
+        # Las rutas locales no empiezan con http:// o https://
+        is_url = pdf_url.startswith("http://") or pdf_url.startswith("https://")
+        
+        if not is_url:
+            # Es una ruta de archivo local, leer directamente
+            pdf_path = Path(pdf_url)
+            if pdf_path.exists() and pdf_path.is_file():
+                print(f"   📄 Leyendo archivo local: {pdf_path}")
+                with open(pdf_path, "rb") as f:
+                    pdf_reader = PyPDF2.PdfReader(f)
+                    text = ""
+                    for page in pdf_reader.pages:
+                        text += page.extract_text() + "\n"
+                    return text
+            else:
+                print(f"   ⚠️ Archivo local no encontrado: {pdf_path}")
+                return None
+        
         # Si es una URL local (localhost), intentar leer desde el sistema de archivos
         if "localhost" in pdf_url or "127.0.0.1" in pdf_url:
             # Extraer la ruta del archivo de la URL

@@ -16,7 +16,9 @@ interface Course {
   max_duration_days?: number;
   cover_image?: string;
   is_exam?: boolean;
-  topics: Array<{ name: string; pdfs: string[] }>;
+  institution?: { name: string; logo?: string } | null;
+  subject?: string | null; // Asignatura/Curso/Tipo de examen
+  topics: Array<{ name: string; pdfs: string[]; subtopics?: Array<{ name: string; pdfs: string[] }> }>;
   enrollment_count: number;
   satisfaction_rating: number | null;
   satisfaction_count: number;
@@ -35,6 +37,9 @@ interface Enrollment {
     topic_progress: Record<string, number>;
     exam_date?: string;
     end_date?: string;
+    last_accessed?: string;
+    last_connection_date?: string;
+    updated_at?: string;
   };
 }
 
@@ -243,7 +248,21 @@ export default function CoursesMenu() {
       if (enrollmentsResponse.ok) {
         const enrollmentsData = await enrollmentsResponse.json();
         if (enrollmentsData.success) {
-          setEnrollments(enrollmentsData.enrollments || []);
+          // Ordenar enrollments por último acceso (más reciente primero)
+          const sortedEnrollments = (enrollmentsData.enrollments || []).sort((a: Enrollment, b: Enrollment) => {
+            // Priorizar last_accessed, luego last_connection_date, luego updated_at, luego enrolled_at
+            const getDate = (enrollment: Enrollment) => {
+              return enrollment.enrollment.last_accessed || 
+                     enrollment.enrollment.last_connection_date || 
+                     enrollment.enrollment.updated_at || 
+                     enrollment.enrollment.enrolled_at || 
+                     "1970-01-01T00:00:00Z";
+            };
+            const dateA = new Date(getDate(a)).getTime();
+            const dateB = new Date(getDate(b)).getTime();
+            return dateB - dateA; // Más reciente primero
+          });
+          setEnrollments(sortedEnrollments);
         }
       }
 
@@ -854,16 +873,72 @@ export default function CoursesMenu() {
                         </div>
                       )}
 
-                      {/* Título */}
-                      <h3 style={{ 
-                        fontSize: "1.5rem", 
-                        fontWeight: "600", 
-                        marginBottom: "0.75rem",
-                        color: "var(--text-primary)",
-                        lineHeight: "1.3"
-                      }}>
-                        {course.title}
-                      </h3>
+                      {/* Título y Universidad */}
+                      <div style={{ marginBottom: "0.75rem" }}>
+                        <h3 style={{ 
+                          fontSize: "1.5rem", 
+                          fontWeight: "600", 
+                          marginBottom: (course.institution || course.subject) ? "0.5rem" : "0",
+                          color: "var(--text-primary)",
+                          lineHeight: "1.3"
+                        }}>
+                          {course.title}
+                        </h3>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+                          {course.institution && (
+                            <div style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.5rem",
+                              padding: "0.5rem 0.75rem",
+                              background: "var(--bg-overlay-02)",
+                              borderRadius: "8px",
+                              border: "1px solid var(--border-overlay-1)",
+                              width: "fit-content",
+                            }}>
+                              {course.institution.logo && (
+                                <img
+                                  src={course.institution.logo}
+                                  alt={course.institution.name}
+                                  style={{
+                                    width: "20px",
+                                    height: "20px",
+                                    objectFit: "contain",
+                                    borderRadius: "4px",
+                                  }}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = "none";
+                                  }}
+                                />
+                              )}
+                              <span style={{
+                                fontSize: "0.8rem",
+                                color: "var(--text-secondary)",
+                                fontWeight: "500",
+                              }}>
+                                {course.institution.name}
+                              </span>
+                            </div>
+                          )}
+                          {course.subject && (
+                            <div style={{
+                              padding: "0.5rem 0.75rem",
+                              background: "rgba(99, 102, 241, 0.1)",
+                              borderRadius: "8px",
+                              border: "1px solid rgba(99, 102, 241, 0.2)",
+                              width: "fit-content",
+                            }}>
+                              <span style={{
+                                fontSize: "0.8rem",
+                                color: "#6366f1",
+                                fontWeight: "600",
+                              }}>
+                                {course.subject}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
                       {/* Descripción */}
                       <p style={{ 
@@ -1157,16 +1232,72 @@ export default function CoursesMenu() {
                         </div>
                       )}
 
-                      {/* Título */}
-                      <h3 style={{ 
-                        fontSize: "1.5rem", 
-                        fontWeight: "600", 
-                        marginBottom: "0.75rem",
-                        color: "var(--text-primary)",
-                        lineHeight: "1.3"
-                      }}>
-                        {course.title}
-                      </h3>
+                      {/* Título y Universidad */}
+                      <div style={{ marginBottom: "0.75rem" }}>
+                        <h3 style={{ 
+                          fontSize: "1.5rem", 
+                          fontWeight: "600", 
+                          marginBottom: (course.institution || course.subject) ? "0.5rem" : "0",
+                          color: "var(--text-primary)",
+                          lineHeight: "1.3"
+                        }}>
+                          {course.title}
+                        </h3>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
+                          {course.institution && (
+                            <div style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.5rem",
+                              padding: "0.5rem 0.75rem",
+                              background: "var(--bg-overlay-02)",
+                              borderRadius: "8px",
+                              border: "1px solid var(--border-overlay-1)",
+                              width: "fit-content",
+                            }}>
+                              {course.institution.logo && (
+                                <img
+                                  src={course.institution.logo}
+                                  alt={course.institution.name}
+                                  style={{
+                                    width: "20px",
+                                    height: "20px",
+                                    objectFit: "contain",
+                                    borderRadius: "4px",
+                                  }}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = "none";
+                                  }}
+                                />
+                              )}
+                              <span style={{
+                                fontSize: "0.8rem",
+                                color: "var(--text-secondary)",
+                                fontWeight: "500",
+                              }}>
+                                {course.institution.name}
+                              </span>
+                            </div>
+                          )}
+                          {course.subject && (
+                            <div style={{
+                              padding: "0.5rem 0.75rem",
+                              background: "rgba(99, 102, 241, 0.1)",
+                              borderRadius: "8px",
+                              border: "1px solid rgba(99, 102, 241, 0.2)",
+                              width: "fit-content",
+                            }}>
+                              <span style={{
+                                fontSize: "0.8rem",
+                                color: "#6366f1",
+                                fontWeight: "600",
+                              }}>
+                                {course.subject}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
                       {/* Descripción */}
                       <p style={{ 

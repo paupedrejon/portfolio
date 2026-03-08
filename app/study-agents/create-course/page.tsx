@@ -22,6 +22,8 @@ export default function CreateCoursePage() {
     maxDurationDays: null as number | null,
     coverImage: null as string | null,
     isExam: false,
+    institution: null as { name: string; logo?: string } | null,
+    subject: "", // Asignatura/Curso/Tipo de examen (ej: B2, Bases de Datos, etc.)
     topics: [{ 
       name: "", 
       pdfs: [] as string[], 
@@ -45,6 +47,33 @@ export default function CreateCoursePage() {
     additionalComments: "",
     geminiModel: "gemini-1.5-pro",
   });
+  
+  const [institutionSearch, setInstitutionSearch] = useState("");
+  const [showInstitutionSuggestions, setShowInstitutionSuggestions] = useState(false);
+  
+  // Lista de universidades/entidades predefinidas con logos
+  const predefinedInstitutions = [
+    { name: "Universitat Politècnica de Barcelona", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Logo_UPC.svg/200px-Logo_UPC.svg.png" },
+    { name: "Universitat de Barcelona", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Logo_UB.svg/200px-Logo_UB.svg.png" },
+    { name: "Universitat Autònoma de Barcelona", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Logo_UAB.svg/200px-Logo_UAB.svg.png" },
+    { name: "Universitat Pompeu Fabra", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Logo_UPF.svg/200px-Logo_UPF.svg.png" },
+    { name: "Universitat Ramon Llull", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Logo_URL.svg/200px-Logo_URL.svg.png" },
+    { name: "Universitat Oberta de Catalunya", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Logo_UOC.svg/200px-Logo_UOC.svg.png" },
+    { name: "Universidad Complutense de Madrid", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Logo_UCM.svg/200px-Logo_UCM.svg.png" },
+    { name: "Universidad Autónoma de Madrid", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Logo_UAM.svg/200px-Logo_UAM.svg.png" },
+    { name: "Universidad Politécnica de Madrid", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Logo_UPM.svg/200px-Logo_UPM.svg.png" },
+    { name: "Universidad Carlos III de Madrid", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Logo_UC3M.svg/200px-Logo_UC3M.svg.png" },
+    { name: "Universidad de Valencia", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Logo_UV.svg/200px-Logo_UV.svg.png" },
+    { name: "Universidad de Sevilla", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Logo_US.svg/200px-Logo_US.svg.png" },
+    { name: "Universidad de Granada", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Logo_UGR.svg/200px-Logo_UGR.svg.png" },
+    { name: "Universidad de Zaragoza", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Logo_UNIZAR.svg/200px-Logo_UNIZAR.svg.png" },
+    { name: "Universidad de Salamanca", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Logo_USAL.svg/200px-Logo_USAL.svg.png" },
+    { name: "Universidad de Santiago de Compostela", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Logo_USC.svg/200px-Logo_USC.svg.png" },
+    { name: "Universidad del País Vasco", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Logo_UPV-EHU.svg/200px-Logo_UPV-EHU.svg.png" },
+    { name: "Universidad de Navarra", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Logo_UNAV.svg/200px-Logo_UNAV.svg.png" },
+    { name: "IE University", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Logo_IE.svg/200px-Logo_IE.svg.png" },
+    { name: "ESADE", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Logo_ESADE.svg/200px-Logo_ESADE.svg.png" },
+  ];
   
   const [showProgress, setShowProgress] = useState(false);
   const [progress, setProgress] = useState({ percentage: 0, currentItem: "", status: "" });
@@ -388,6 +417,8 @@ export default function CreateCoursePage() {
           maxDurationDays: formData.maxDurationDays,
           coverImage: formData.coverImage,
           isExam: formData.isExam,
+          institution: formData.institution,
+          subject: formData.subject || null,
           topics: formData.topics,
           examExamples: formData.examExamples,
           availableTools: formData.availableTools,
@@ -619,7 +650,7 @@ export default function CreateCoursePage() {
                 </div>
               )}
               <input
-                ref={(el) => (coverImageInputRef.current = el)}
+                ref={(el) => { coverImageInputRef.current = el; }}
                 type="file"
                 accept="image/*"
                 onChange={(e) => {
@@ -734,6 +765,288 @@ export default function CreateCoursePage() {
                   placeholder="Describe el contenido del curso y qué se estudiará..."
                 />
               </div>
+
+              {/* Universidad/Entidad */}
+              <div>
+                <label style={{ 
+                  display: "block", 
+                  marginBottom: "0.75rem", 
+                  fontWeight: "500", 
+                  fontSize: "0.95rem",
+                  color: "var(--text-primary)"
+                }}>
+                  Universidad/Entidad
+                </label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    type="text"
+                    value={formData.institution ? formData.institution.name : institutionSearch}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setInstitutionSearch(value);
+                      setShowInstitutionSuggestions(value.length > 0);
+                      // Si se borra todo, limpiar la institución seleccionada
+                      if (value === "") {
+                        setFormData({ ...formData, institution: null });
+                      }
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.5)";
+                      e.currentTarget.style.background = "var(--bg-overlay-08)";
+                      if (institutionSearch.length > 0 || !formData.institution) {
+                        setShowInstitutionSuggestions(true);
+                      }
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "var(--border-overlay-1)";
+                      e.currentTarget.style.background = "var(--bg-overlay-05)";
+                      // Delay para permitir click en sugerencias
+                      setTimeout(() => setShowInstitutionSuggestions(false), 200);
+                    }}
+                    placeholder="Buscar o escribir universidad/entidad..."
+                    style={{
+                      width: "100%",
+                      padding: "1rem 1.25rem",
+                      paddingRight: formData.institution ? "3rem" : "1.25rem",
+                      background: "var(--bg-overlay-05)",
+                      border: "1px solid var(--border-overlay-1)",
+                      borderRadius: "10px",
+                      color: "var(--text-primary)",
+                      fontSize: "1rem",
+                      transition: "all 0.2s",
+                    }}
+                  />
+                  {formData.institution && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, institution: null });
+                        setInstitutionSearch("");
+                      }}
+                      style={{
+                        position: "absolute",
+                        right: "0.75rem",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        padding: "0.25rem 0.5rem",
+                        background: "transparent",
+                        border: "none",
+                        color: "var(--text-secondary)",
+                        cursor: "pointer",
+                        borderRadius: "4px",
+                        display: "flex",
+                        alignItems: "center",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "var(--bg-overlay-05)";
+                        e.currentTarget.style.color = "var(--text-primary)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = "var(--text-secondary)";
+                      }}
+                    >
+                      <HiXMark size={16} />
+                    </button>
+                  )}
+                  
+                  {/* Sugerencias */}
+                  {showInstitutionSuggestions && (
+                    <div style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      marginTop: "0.5rem",
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border-overlay-1)",
+                      borderRadius: "10px",
+                      maxHeight: "300px",
+                      overflowY: "auto",
+                      zIndex: 1000,
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                    }}>
+                      {(() => {
+                        const searchLower = institutionSearch.toLowerCase();
+                        const filtered = predefinedInstitutions.filter(inst =>
+                          inst.name.toLowerCase().includes(searchLower)
+                        );
+                        
+                        // Si hay coincidencias, mostrarlas
+                        if (filtered.length > 0) {
+                          return filtered.map((inst) => (
+                            <div
+                              key={inst.name}
+                              onClick={() => {
+                                setFormData({ ...formData, institution: inst });
+                                setInstitutionSearch(inst.name);
+                                setShowInstitutionSuggestions(false);
+                              }}
+                              style={{
+                                padding: "0.75rem 1rem",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.75rem",
+                                transition: "all 0.2s",
+                                borderBottom: "1px solid var(--border-overlay-1)",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = "var(--bg-overlay-02)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = "transparent";
+                              }}
+                            >
+                              {inst.logo && (
+                                <img
+                                  src={inst.logo}
+                                  alt={inst.name}
+                                  style={{
+                                    width: "24px",
+                                    height: "24px",
+                                    objectFit: "contain",
+                                    borderRadius: "4px",
+                                  }}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = "none";
+                                  }}
+                                />
+                              )}
+                              <span style={{ fontSize: "0.95rem", color: "var(--text-primary)" }}>
+                                {inst.name}
+                              </span>
+                            </div>
+                          ));
+                        }
+                        
+                        // Si no hay coincidencias pero hay texto, permitir crear nueva
+                        if (institutionSearch.trim().length > 0) {
+                          return (
+                            <div
+                              onClick={() => {
+                                setFormData({ 
+                                  ...formData, 
+                                  institution: { name: institutionSearch.trim() } 
+                                });
+                                setShowInstitutionSuggestions(false);
+                              }}
+                              style={{
+                                padding: "0.75rem 1rem",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.75rem",
+                                transition: "all 0.2s",
+                                color: "var(--text-secondary)",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = "var(--bg-overlay-02)";
+                                e.currentTarget.style.color = "var(--text-primary)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = "transparent";
+                                e.currentTarget.style.color = "var(--text-secondary)";
+                              }}
+                            >
+                              <HiPlus size={16} />
+                              <span style={{ fontSize: "0.95rem" }}>
+                                Crear "{institutionSearch.trim()}"
+                              </span>
+                            </div>
+                          );
+                        }
+                        
+                        return null;
+                      })()}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Vista previa de institución seleccionada */}
+                {formData.institution && (
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                    padding: "0.75rem 1rem",
+                    marginTop: "0.75rem",
+                    background: "var(--bg-overlay-02)",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-overlay-1)",
+                  }}>
+                    {formData.institution.logo && (
+                      <img
+                        src={formData.institution.logo}
+                        alt={formData.institution.name}
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          objectFit: "contain",
+                          borderRadius: "4px",
+                        }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    )}
+                    <span style={{ 
+                      fontSize: "0.95rem", 
+                      color: "var(--text-primary)",
+                      fontWeight: "500"
+                    }}>
+                      {formData.institution.name}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Asignatura/Curso/Tipo de Examen */}
+              {formData.institution && (
+                <div>
+                  <label style={{ 
+                    display: "block", 
+                    marginBottom: "0.75rem", 
+                    fontWeight: "500", 
+                    fontSize: "0.95rem",
+                    color: "var(--text-primary)"
+                  }}>
+                    Asignatura/Curso/Tipo de Examen
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    placeholder="Ej: B2, Bases de Datos, Álgebra Lineal, etc."
+                    style={{
+                      width: "100%",
+                      padding: "1rem 1.25rem",
+                      background: "var(--bg-overlay-05)",
+                      border: "1px solid var(--border-overlay-1)",
+                      borderRadius: "10px",
+                      color: "var(--text-primary)",
+                      fontSize: "1rem",
+                      transition: "all 0.2s",
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.5)";
+                      e.currentTarget.style.background = "var(--bg-overlay-08)";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "var(--border-overlay-1)";
+                      e.currentTarget.style.background = "var(--bg-overlay-05)";
+                    }}
+                  />
+                  <p style={{
+                    marginTop: "0.5rem",
+                    fontSize: "0.85rem",
+                    color: "var(--text-muted)",
+                  }}>
+                    Ejemplos: B2, C1, Bases de Datos, Álgebra Lineal, Estructura de Datos, etc.
+                  </p>
+                </div>
+              )}
 
               {/* Tipo: Curso o Examen */}
               <div>
@@ -1049,13 +1362,12 @@ export default function CreateCoursePage() {
                               display: "flex", 
                               justifyContent: "space-between",
                               alignItems: "center",
-                              padding: "0.5rem 0",
+                              padding: "0.75rem",
                               background: formData.price === plan.price 
                                 ? "rgba(99, 102, 241, 0.1)" 
                                 : "transparent",
                               borderRadius: "8px",
                               marginTop: "0.25rem",
-                              padding: "0.75rem",
                             }}>
                               <div>
                                 <div style={{ 

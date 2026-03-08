@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { HiXMark, HiUsers, HiPlay, HiTrophy } from "react-icons/hi2";
 
@@ -525,6 +525,7 @@ interface Game {
     explanation: string;
   };
   winner?: string;
+  topic_filter?: string;
 }
 
 interface GamesViewProps {
@@ -1982,7 +1983,7 @@ export default function GamesView({ courseId, userId, course }: GamesViewProps) 
                   }
                   
                   // Renderizar el tablero
-                  const cells: JSX.Element[] = [];
+                  const cells: React.ReactElement[] = [];
                   for (let row = 0; row < 17; row++) {
                     for (let col = 0; col < 17; col++) {
                       const cell = board[row][col];

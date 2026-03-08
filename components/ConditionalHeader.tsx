@@ -2,8 +2,10 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
-import Header from "./Header";
+import LanguageSwitcher from "./LanguageSwitcher";
+import StaggeredMenu from "./StaggeredMenu";
 import { HiHome } from "react-icons/hi2";
 import { BsSun, BsMoon } from "react-icons/bs";
 import { HiUserCircle } from "react-icons/hi2";
@@ -17,6 +19,7 @@ export default function ConditionalHeader() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
+  const t = useTranslations("nav");
 
   // Leer el tema del localStorage
   useEffect(() => {
@@ -344,6 +347,46 @@ export default function ConditionalHeader() {
     );
   }
 
-  return <Header />;
+  const menuItems = [
+    { label: t("home"), ariaLabel: "Go to home page", link: "/" },
+    { label: t("projects"), ariaLabel: "View my projects", link: "/proyectos" },
+    { label: t("skills"), ariaLabel: "View my skills", link: "/skills" },
+    { label: t("experience"), ariaLabel: "View my experience", link: "/experience" },
+    { label: t("education"), ariaLabel: "View my education", link: "/education" },
+    { label: t("about"), ariaLabel: "Learn about me", link: "/about-me" },
+    { label: t("contact"), ariaLabel: "Get in touch", link: "/contact" },
+    { label: t("cv"), ariaLabel: "Download CV", link: "/PauPedrejonCV.pdf", external: true },
+  ];
+
+  const socialItems = [
+    { label: "GitHub", link: "https://github.com/paupedrejon" },
+    { label: "LinkedIn", link: "https://es.linkedin.com/in/pau-pedrejon-sobrino-0b5643380" },
+    { label: "Email", link: "mailto:paupedrejon@gmail.com" },
+  ];
+
+  return (
+    <>
+      <StaggeredMenu
+      position="right"
+      items={menuItems}
+      socialItems={socialItems}
+      displaySocials
+      displayItemNumbering
+      menuButtonColor="#ffffff"
+      openMenuButtonColor="#000"
+      changeMenuColorOnOpen
+      colors={["#B19EEF", "#5227FF"]}
+      logoUrl="/logo.svg"
+      accentColor="#5227FF"
+      isFixed
+      closeOnClickAway
+      headerExtra={
+        <div style={{ color: "#ffffff" }}>
+          <LanguageSwitcher />
+        </div>
+      }
+    />
+    </>
+  );
 }
 

@@ -1,7 +1,7 @@
 {
-  "balance": 19.08115000000003,
+  "balance": 18.675775000000055,
   "total_deposited": 20.0,
-  "total_spent": 0.9188499999999998,
+  "total_spent": 1.3242250000000007,
   "transactions": [
     {
       "type": "deposit",
@@ -496,6 +496,426 @@
       "metadata": {
         "course_id": "course_20260207_214947_142201",
         "course_title": "DBD 21:48 07/02",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_generation",
+      "amount": -0.027025,
+      "timestamp": "2026-02-07T22:18:39.264797",
+      "metadata": {
+        "course_id": "course_20260207_221839_211378",
+        "course_title": "DBD PARCIAL 22:17 07/02",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_generation",
+      "amount": -0.027025,
+      "timestamp": "2026-02-07T22:29:44.590046",
+      "metadata": {
+        "course_id": "course_20260207_222944_508328",
+        "course_title": "DBD PARCIAL 22:28 07/2026",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_generation",
+      "amount": -0.027025,
+      "timestamp": "2026-02-07T22:42:48.236071",
+      "metadata": {
+        "course_id": "course_20260207_224248_175523",
+        "course_title": "DBD Parcial 2 22 39 07",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_regeneration",
+      "amount": -0.027025,
+      "timestamp": "2026-02-07T23:19:57.449572",
+      "metadata": {
+        "course_id": "course_20260207_224248_175523",
+        "course_title": "DBD Parcial 2 22 39 07",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_regeneration",
+      "amount": -0.027025,
+      "timestamp": "2026-02-07T23:23:49.746991",
+      "metadata": {
+        "course_id": "course_20260207_224248_175523",
+        "course_title": "DBD Parcial 2 22 39 07",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_regeneration",
+      "amount": -0.027025,
+      "timestamp": "2026-02-07T23:27:21.599511",
+      "metadata": {
+        "course_id": "course_20260207_224248_175523",
+        "course_title": "DBD Parcial 2 22 39 07",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_regeneration",
+      "amount": -0.027025,
+      "timestamp": "2026-02-07T23:30:26.070011",
+      "metadata": {
+        "course_id": "course_20260207_224248_175523",
+        "course_title": "DBD Parcial 2 22 39 07",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_regeneration",
+      "amount": -0.027025,
+      "timestamp": "2026-02-07T23:38:52.138279",
+      "metadata": {
+        "course_id": "course_20260207_224248_175523",
+        "course_title": "DBD Parcial 2 22 39 07",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_regeneration",
+      "amount": -0.027025,
+      "timestamp": "2026-02-08T00:12:33.495255",
+      "metadata": {
+        "course_id": "course_20260207_224248_175523",
+        "course_title": "DBD Parcial 2 22 39 07",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_regeneration",
+      "amount": -0.027025,
+      "timestamp": "2026-02-08T00:41:14.859725",
+      "metadata": {
+        "course_id": "course_20260207_224248_175523",
+        "course_title": "DBD Parcial 2 22 39 07",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_regeneration",
+      "amount": -0.027025,
+      "timestamp": "2026-02-08T00:54:24.446660",
+      "metadata": {
+        "course_id": "course_20260207_224248_175523",
+        "course_title": "DBD Parcial 2 22 39 07",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_regeneration",
+      "amount": -0.027025,
+      "timestamp": "2026-02-08T01:05:31.972629",
+      "metadata": {
+        "course_id": "course_20260207_224248_175523",
+        "course_title": "DBD Parcial 2 22 39 07",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_regeneration",
+      "amount": -0.027025,
+      "timestamp": "2026-02-08T01:15:42.428732",
+      "metadata": {
+        "course_id": "course_20260207_224248_175523",
+        "course_title": "DBD Parcial 2 22 39 07",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_generation",
+      "amount": -0.027025,
+      "timestamp": "2026-02-08T12:03:10.049999",
+      "metadata": {
+        "course_id": "course_20260208_120309_997975",
+        "course_title": "DBD PARCIAL 2",
+        "estimated_cost": {
+          "model": "gemini-1.5-pro",
+          "total_items": 1,
+          "estimated_input_tokens": 15500,
+          "estimated_output_tokens": 2000,
+          "estimated_cost_usd": 0.029375,
+          "estimated_cost_eur": 0.027025,
+          "pricing_per_million": {
+            "input_usd": 1.25,
+            "output_usd": 5.0
+          },
+          "breakdown": {
+            "input_cost_usd": 0.019375,
+            "output_cost_usd": 0.01,
+            "input_cost_eur": 0.017825,
+            "output_cost_eur": 0.0092
+          },
+          "note": "⚠️ Los precios son estimados. Verificar precios oficiales en Google AI Studio."
+        }
+      }
+    },
+    {
+      "type": "summary_regeneration",
+      "amount": -0.027025,
+      "timestamp": "2026-02-08T12:13:02.113987",
+      "metadata": {
+        "course_id": "course_20260208_120309_997975",
+        "course_title": "DBD PARCIAL 2",
         "estimated_cost": {
           "model": "gemini-1.5-pro",
           "total_items": 1,

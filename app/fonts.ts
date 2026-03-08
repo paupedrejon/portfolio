@@ -1,5 +1,5 @@
 // app/fonts.ts
-import { Space_Grotesk, JetBrains_Mono, Outfit } from "next/font/google";
+import { Space_Grotesk, JetBrains_Mono, Outfit, League_Spartan } from "next/font/google";
 
 // Display font - Bold, modern, geometric
 export const spaceGrotesk = Space_Grotesk({
@@ -23,6 +23,14 @@ export const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-mono",
+});
+
+// League Spartan - Hero name
+export const leagueSpartan = League_Spartan({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-league-spartan",
 });
 
 // Legacy export for compatibility

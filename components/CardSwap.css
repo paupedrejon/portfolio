@@ -1,0 +1,63 @@
+.card-swap-container {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  transform: translate(5%, 20%);
+  transform-origin: bottom right;
+
+  perspective: 900px;
+  overflow: visible;
+}
+
+/* When inside card-swap-wrapper: position higher so cards don't extend down as much */
+.card-swap-wrapper .card-swap-container {
+  top: 40px;
+  bottom: auto;
+  right: 0;
+  transform: translate(5%, 0);
+  transform-origin: top right;
+}
+
+/* Cards can extend for visual effect */
+.card-swap-wrapper {
+  overflow: visible;
+}
+
+.card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #0a0a0a;
+  overflow: hidden;
+
+  transform-style: preserve-3d;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.project-card-inner {
+  border-radius: inherit;
+}
+
+@media (max-width: 768px) {
+  .card-swap-container {
+    transform: scale(0.75) translate(25%, 25%);
+  }
+
+  .card-swap-wrapper .card-swap-container {
+    transform: scale(0.75) translate(15%, 0);
+  }
+}
+
+@media (max-width: 480px) {
+  .card-swap-container {
+    transform: scale(0.55) translate(25%, 25%);
+  }
+
+  .card-swap-wrapper .card-swap-container {
+    transform: scale(0.6) translate(10%, 0);
+  }
+}

@@ -48,7 +48,9 @@ def create_course(
     available_tools: Dict[str, bool] = None,  # {"flashcards": True, "code_interpreter": True, etc.}
     flashcard_questions: Optional[List[Dict]] = None,  # Preguntas predefinidas para flashcards
     course_id: Optional[str] = None,
-    is_exam: bool = False  # Si es True, es un examen (no curso)
+    is_exam: bool = False,  # Si es True, es un examen (no curso)
+    institution: Optional[Dict] = None,  # {"name": str, "logo": Optional[str]}
+    subject: Optional[str] = None  # Asignatura/Curso/Tipo de examen (ej: B2, Bases de Datos)
 ) -> Dict:
     """
     Crea un nuevo curso/examen
@@ -166,6 +168,8 @@ def create_course(
         "flashcard_questions": flashcard_questions or [],
         "revenue_split": revenue_split,
         "is_exam": is_exam,  # True si es examen, False si es curso
+        "institution": institution,  # {"name": str, "logo": Optional[str]}
+        "subject": subject,  # Asignatura/Curso/Tipo de examen
         "created_at": datetime.now().isoformat(),
         "updated_at": datetime.now().isoformat(),
         "enrollment_count": 0,

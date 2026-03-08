@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ScrollButton from "@/components/ScrollButton";
 import CurriculumButton from "@/components/CurriculumButton";
+import PrismaticBurst from "@/components/PrismaticBurst";
 import { FaUniversity, FaGraduationCap, FaCertificate } from "react-icons/fa";
 
 const educationItems = [
@@ -54,6 +55,22 @@ export default function EducationPage() {
       {/* Hero Section */}
       <section className="hero-section" style={{ minHeight: '80vh', position: 'relative', overflow: 'hidden' }}>
         <div className="hero-grid" />
+
+        {/* PrismaticBurst Background */}
+        <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}>
+          <PrismaticBurst
+            animationType="rotate3d"
+            intensity={2}
+            speed={0.5}
+            distort={0}
+            paused={false}
+            offset={{ x: 0, y: 0 }}
+            hoverDampness={0.25}
+            rayCount={0}
+            mixBlendMode="lighten"
+            colors={['#10b981', '#059669', '#ffffff']}
+          />
+        </div>
         
         {/* Animated Background Orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
