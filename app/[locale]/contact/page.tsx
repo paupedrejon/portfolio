@@ -209,13 +209,23 @@ export default function ContactPage() {
           }}
         />
 
-        {/* Rising Lines - Inverted Rain */}
+        {/* Rising Lines - Inverted Rain (deterministic to avoid hydration mismatch) */}
         {[...Array(20)].map((_, i) => {
-          const width = Math.random() * 2 + 1;
-          const height = Math.random() * 250 + 120;
-          const left = Math.random() * 100;
-          const duration = Math.random() * 8 + 6;
-          const delay = Math.random() * 5;
+          const s = (i * 2654435761) % 10000 / 10000;
+          const t = ((i + 1) * 1597334677) % 10000 / 10000;
+          const u = ((i + 2) * 32416190071) % 10000 / 10000;
+          const v = ((i + 3) * 2038074743) % 10000 / 10000;
+          const w = ((i + 4) * 2166136261) % 10000 / 10000;
+          const width = s * 2 + 1;
+          const height = t * 250 + 120;
+          const left = u * 100;
+          const duration = v * 8 + 6;
+          const delay = w * 5;
+          const color1 = s > 0.5 ? '236, 72, 153' : '6, 182, 212';
+          const color2 = t > 0.5 ? '236, 72, 153' : '6, 182, 212';
+          const opacity = u * 0.5 + 0.3;
+          const shadowSize = v * 15 + 8;
+          const shadowColor = w > 0.5 ? '236, 72, 153' : '6, 182, 212';
           return (
             <div
               key={i}
@@ -223,13 +233,13 @@ export default function ContactPage() {
                 position: 'absolute',
                 width: `${width}px`,
                 height: `${height}px`,
-                background: `linear-gradient(to top, rgba(${Math.random() > 0.5 ? '236, 72, 153' : '6, 182, 212'}, 0), rgba(${Math.random() > 0.5 ? '236, 72, 153' : '6, 182, 212'}, ${Math.random() * 0.5 + 0.3}))`,
+                background: `linear-gradient(to top, rgba(${color1}, 0), rgba(${color2}, ${opacity}))`,
                 left: `${left}%`,
                 bottom: '-250px',
                 borderRadius: '2px',
                 animation: `riseLine ${duration}s linear infinite`,
                 animationDelay: `${delay}s`,
-                boxShadow: `0 0 ${Math.random() * 15 + 8}px rgba(${Math.random() > 0.5 ? '236, 72, 153' : '6, 182, 212'}, 0.4)`,
+                boxShadow: `0 0 ${shadowSize}px rgba(${shadowColor}, 0.4)`,
               }}
             />
           );

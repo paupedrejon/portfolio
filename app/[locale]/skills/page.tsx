@@ -35,7 +35,7 @@ const SKILLS_CONFIG: Array<{
   abbreviation?: string;
 }> = [
   { key: "c_cpp", categoryKey: "programmingLanguages", icon: "https://cdn.simpleicons.org/cplusplus/ffffff" },
-  { key: "java", categoryKey: "programmingLanguages", icon: "https://cdn.simpleicons.org/java/ffffff" },
+  { key: "java", categoryKey: "programmingLanguages", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/java/java-original.svg" },
   { key: "python", categoryKey: "programmingLanguages", icon: "https://cdn.simpleicons.org/python/ffffff" },
   { key: "sql", categoryKey: "programmingLanguages", icon: "https://cdn.simpleicons.org/mysql/ffffff" },
   { key: "r", categoryKey: "programmingLanguages", icon: "https://cdn.simpleicons.org/r/ffffff" },

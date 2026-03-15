@@ -65,6 +65,8 @@
       "ctaText": "Prova StudyAgents"
     },
     "portfolio": {
+      "title": "Portfolio Personale",
+      "kicker": "2025 - Progetto Personale",
       "title2": "Applicazione Web",
       "subtitle": "Portfolio interattivo progettato con Next.js e React per mostrare i miei progetti, competenze ed esperienza come ingegnere del software.",
       "ctaText": ""
@@ -91,6 +93,8 @@
       "ctaText": "Gioca ora"
     },
     "circusvr": {
+      "title": "Circus VR",
+      "kicker": "2024 - Universitat Politècnica de Barcelona",
       "title2": "Game Jam 2024",
       "subtitle": "Ho realizzato un sistema VR interattivo funzionale con oggetti da circo in 48 ore.",
       "ctaText": "Info Game Jam"
@@ -178,7 +182,39 @@
   "education": {
     "badge": "Formazione",
     "title": "ISTRUZIONE",
-    "tagline": "Il mio background accademico e risultati."
+    "tagline": "Il mio background accademico e risultati.",
+    "academicBackground": "Background accademico",
+    "educationTimeline": "Timeline formazione",
+    "viewMoreInfo": "Maggiori informazioni",
+    "close": "Chiudi",
+    "types": {
+      "certificate": "Certificato",
+      "degree": "Laurea",
+      "course": "Corso",
+      "diploma": "Diploma"
+    },
+    "items": {
+      "iia10x": {
+        "title": "10x Developer with Artificial Intelligence",
+        "school": "Instituto de Inteligencia Artificial (IIA)",
+        "description": "Formazione intensiva in sviluppo con IA per moltiplicare la produttività usando strumenti all'avanguardia."
+      },
+      "upcDegree": {
+        "title": "Laurea in Ingegneria Informatica",
+        "school": "Universitat Politècnica de Barcelona (UPC)",
+        "description": "Laurea in Ingegneria Informatica dalla FIB. Mi specializzo nella menzione Ingegneria del Software."
+      },
+      "unityCourse": {
+        "title": "Corso Unity Essential",
+        "school": "Universitat Politècnica de Barcelona (UPC)",
+        "description": "Introduzione allo sviluppo di videogiochi con Unity, organizzato da VGAFIB alla FIB. Valido 2 crediti ECTS."
+      },
+      "itbDiploma": {
+        "title": "Diploma di Liceo Tecnologico",
+        "school": "Institut Tecnològic de Barcelona (ITB)",
+        "description": "Baccalaureato in Scienze e Tecnologia con formazione specifica in programmazione Python e tecnologie digitali."
+      }
+    }
   },
   "about": {
     "badge": "Chi sono",

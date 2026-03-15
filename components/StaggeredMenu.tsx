@@ -32,6 +32,7 @@ interface StaggeredMenuProps {
   changeMenuColorOnOpen?: boolean;
   isFixed?: boolean;
   closeOnClickAway?: boolean;
+  closeOnPathnameChange?: string;
   onMenuOpen?: () => void;
   onMenuClose?: () => void;
   headerExtra?: React.ReactNode;
@@ -52,6 +53,7 @@ export const StaggeredMenu = ({
   changeMenuColorOnOpen = true,
   isFixed = false,
   closeOnClickAway = true,
+  closeOnPathnameChange,
   onMenuOpen,
   onMenuClose,
   headerExtra,
@@ -360,6 +362,12 @@ export const StaggeredMenu = ({
     onMenuOpen,
     onMenuClose,
   ]);
+
+  React.useEffect(() => {
+    if (closeOnPathnameChange !== undefined && openRef.current) {
+      closeMenu();
+    }
+  }, [closeOnPathnameChange]);
 
   React.useEffect(() => {
     if (!closeOnClickAway || !open) return;

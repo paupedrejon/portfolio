@@ -151,11 +151,24 @@ export default function ExperiencePage() {
           </div>
         </div>
 
+        {/* Suavizado negro hacia arriba (transición al siguiente apartado) */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '120px',
+            background: 'linear-gradient(to top, #0a0a0f 0%, transparent 100%)',
+            pointerEvents: 'none',
+            zIndex: 5,
+          }}
+        />
       </section>
 
-      {/* Experience Section */}
+      {/* Experience Section - Dark mode */}
       <section id="experience" style={{ 
-        background: 'var(--bg-secondary)',
+        background: '#0a0a0f',
         padding: '5rem 2rem',
       }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -167,7 +180,7 @@ export default function ExperiencePage() {
                 fontSize: '0.75rem',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
-                color: 'var(--accent-primary)',
+                color: 'rgba(139, 92, 246, 0.95)',
                 marginBottom: '0.75rem',
               }}
             >
@@ -178,7 +191,7 @@ export default function ExperiencePage() {
                 fontFamily: 'var(--font-display)',
                 fontSize: 'clamp(1.75rem, 3vw, 2.25rem)',
                 fontWeight: 700,
-                color: 'var(--text-primary)',
+                color: '#f8fafc',
               }}
             >
               Experience Timeline
@@ -224,8 +237,8 @@ export default function ExperiencePage() {
                     width: '1rem',
                     height: '1rem',
                     borderRadius: '50%',
-                    background: hoveredExp === index ? item.gradient : 'var(--accent-primary)',
-                    border: '3px solid var(--bg-secondary)',
+                    background: hoveredExp === index ? item.gradient : 'rgba(139, 92, 246, 0.9)',
+                    border: '3px solid #12121a',
                     zIndex: 2,
                     transition: 'all 0.3s ease',
                     transform: hoveredExp === index ? 'scale(1.3)' : 'scale(1)',
@@ -239,14 +252,14 @@ export default function ExperiencePage() {
                     display: 'block',
                     padding: '1.75rem 2rem',
                     borderRadius: '20px',
-                    background: 'var(--bg-card)',
-                    border: `1px solid ${hoveredExp === index ? 'rgba(99, 102, 241, 0.5)' : 'var(--border-subtle)'}`,
+                    background: 'rgba(26, 26, 36, 0.9)',
+                    border: `1px solid ${hoveredExp === index ? 'rgba(139, 92, 246, 0.5)' : 'rgba(255, 255, 255, 0.08)'}`,
                     backdropFilter: 'blur(20px)',
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                     transform: hoveredExp === index ? 'translateX(10px) scale(1.02)' : 'translateX(0) scale(1)',
                     boxShadow: hoveredExp === index 
-                      ? '0 20px 40px -10px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.2)' 
-                      : '0 10px 30px -10px rgba(0, 0, 0, 0.2)',
+                      ? '0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.3)' 
+                      : '0 10px 30px -10px rgba(0, 0, 0, 0.3)',
                   }}
                 >
                   {/* Gradient Overlay on Hover */}
@@ -278,12 +291,12 @@ export default function ExperiencePage() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        background: hoveredExp === index ? item.gradient : 'rgba(99, 102, 241, 0.15)',
-                        color: hoveredExp === index ? 'white' : 'var(--accent-primary)',
+                        background: hoveredExp === index ? item.gradient : 'rgba(139, 92, 246, 0.2)',
+                        color: hoveredExp === index ? 'white' : 'rgba(139, 92, 246, 0.95)',
                         flexShrink: 0,
                         transition: 'all 0.4s ease',
                         transform: hoveredExp === index ? 'rotate(-5deg) scale(1.1)' : 'rotate(0) scale(1)',
-                        boxShadow: hoveredExp === index ? '0 10px 25px rgba(99, 102, 241, 0.4)' : 'none',
+                        boxShadow: hoveredExp === index ? '0 10px 25px rgba(139, 92, 246, 0.4)' : 'none',
                       }}
                     >
                       {item.icon}
@@ -296,7 +309,7 @@ export default function ExperiencePage() {
                           fontFamily: 'var(--font-display)',
                           fontSize: '1.25rem',
                           fontWeight: 700,
-                          color: 'var(--text-primary)',
+                          color: '#f8fafc',
                           marginBottom: '0.5rem',
                         }}
                       >
@@ -306,7 +319,7 @@ export default function ExperiencePage() {
                         style={{
                           fontFamily: 'var(--font-body)',
                           fontSize: '0.95rem',
-                          color: 'var(--accent-primary)',
+                          color: 'rgba(139, 92, 246, 0.95)',
                           fontWeight: 600,
                           marginBottom: '0.75rem',
                         }}
@@ -317,7 +330,7 @@ export default function ExperiencePage() {
                         style={{
                           fontFamily: 'var(--font-body)',
                           fontSize: '0.9rem',
-                          color: 'var(--text-secondary)',
+                          color: '#94a3b8',
                           lineHeight: 1.7,
                           marginBottom: '1rem',
                         }}
@@ -331,15 +344,15 @@ export default function ExperiencePage() {
                           gap: '0.5rem',
                           fontFamily: 'var(--font-mono)',
                           fontSize: '0.85rem',
-                          color: 'var(--text-muted)',
+                          color: '#64748b',
                         }}
                       >
                         <span
                           style={{
                             padding: '0.25rem 0.75rem',
                             borderRadius: '100px',
-                            background: hoveredExp === index ? item.gradient : 'rgba(99, 102, 241, 0.1)',
-                            color: hoveredExp === index ? 'white' : 'var(--accent-primary)',
+                            background: hoveredExp === index ? item.gradient : 'rgba(139, 92, 246, 0.2)',
+                            color: hoveredExp === index ? 'white' : 'rgba(139, 92, 246, 0.95)',
                             fontWeight: 600,
                             transition: 'all 0.3s ease',
                           }}

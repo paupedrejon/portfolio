@@ -100,6 +100,8 @@
       "ctaText": "Sobre el Game Jam"
     },
     "vr-experience": {
+      "title": "Experiencia VR",
+      "kicker": "2022 - Institut Tecnològic de Barcelona",
       "title2": "Treball de Recerca",
       "subtitle": "Realicé una experiencia de Realidad Virtual para mostrar las capacidades del Metaverso.",
       "ctaText": "Ver resultados"
@@ -180,7 +182,39 @@
   "education": {
     "badge": "Formación",
     "title": "EDUCACIÓN",
-    "tagline": "Mi formación académica y logros."
+    "tagline": "Mi formación académica y logros.",
+    "academicBackground": "Formación académica",
+    "educationTimeline": "Cronología académica",
+    "viewMoreInfo": "Ver más información",
+    "close": "Cerrar",
+    "types": {
+      "certificate": "Certificado",
+      "degree": "Grado",
+      "course": "Curso",
+      "diploma": "Diploma"
+    },
+    "items": {
+      "iia10x": {
+        "title": "10x Developer with Artificial Intelligence",
+        "school": "Instituto de Inteligencia Artificial (IIA)",
+        "description": "Formación intensiva en desarrollo con IA para multiplicar la productividad usando herramientas de última generación."
+      },
+      "upcDegree": {
+        "title": "Grado en Ingeniería Informática",
+        "school": "Universitat Politècnica de Barcelona (UPC)",
+        "description": "Grado en Ingeniería Informática por la FIB. Me especializo en la mención de Ingeniería del Software."
+      },
+      "unityCourse": {
+        "title": "Unity Essential Course",
+        "school": "Universitat Politècnica de Barcelona (UPC)",
+        "description": "Curso de introducción al desarrollo de videojuegos con Unity, impartido por VGAFIB en la FIB. Convalida 2 créditos ECTS."
+      },
+      "itbDiploma": {
+        "title": "Bachillerato Tecnológico",
+        "school": "Institut Tecnològic de Barcelona (ITB)",
+        "description": "Bachillerato de Ciencias y Tecnología con formación específica en programación Python y tecnologías digitales."
+      }
+    }
   },
   "about": {
     "badge": "Sobre mí",

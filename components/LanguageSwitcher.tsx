@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocale } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { useTransition } from "react";
 
 const locales = [
   { code: "es", label: "ES" },
@@ -11,31 +10,22 @@ const locales = [
   { code: "it", label: "IT" },
 ] as const;
 
-const LOCALE_PATTERN = /^\/(es|en|it)(\/|$)/;
-
-function getPathnameWithoutLocale(raw: string): string {
-  const stripped = raw.replace(LOCALE_PATTERN, "$2") || "/";
-  return stripped.startsWith("/") ? stripped : `/${stripped}`;
-}
-
 export default function LanguageSwitcher() {
   const locale = useLocale();
+  const pathname = usePathname();
   const router = useRouter();
-  const rawPathname = usePathname();
-  const [isPending, startTransition] = useTransition();
   const [isOpen, setIsOpen] = useState(false);
+  const [isChanging, setIsChanging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const pathname = getPathnameWithoutLocale(rawPathname);
   const currentLocale = locales.find((l) => l.code === locale) ?? locales[0];
   const otherLocales = locales.filter((l) => l.code !== locale);
 
   const handleLocaleChange = (newLocale: string) => {
     if (newLocale === locale) return;
-    startTransition(() => {
-      router.replace(pathname, { locale: newLocale });
-    });
     setIsOpen(false);
+    setIsChanging(true);
+    router.replace(pathname, { locale: newLocale });
   };
 
   useEffect(() => {
@@ -52,7 +42,7 @@ export default function LanguageSwitcher() {
     <div ref={containerRef} style={{ position: "relative" }}>
       <button
         onClick={() => setIsOpen((o) => !o)}
-        disabled={isPending}
+        disabled={isChanging}
         aria-label="Seleccionar idioma"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
@@ -61,12 +51,13 @@ export default function LanguageSwitcher() {
           alignItems: "center",
           gap: "0.25rem",
           padding: 0,
+          minWidth: "2.75rem",
           fontSize: "1.25rem",
           fontWeight: 500,
           background: "transparent",
           color: "inherit",
           border: "none",
-          cursor: "pointer",
+          cursor: isChanging ? "wait" : "pointer",
           lineHeight: 1,
         }}
       >
@@ -100,7 +91,7 @@ export default function LanguageSwitcher() {
               key={code}
               role="option"
               onClick={() => handleLocaleChange(code)}
-              disabled={isPending}
+              disabled={isChanging}
               aria-label={`Cambiar a ${label}`}
               style={{
                 display: "block",

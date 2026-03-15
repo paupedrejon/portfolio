@@ -72,6 +72,8 @@
       "ctaText": ""
     },
     "shooter": {
+      "title": "Realistic Online Videogame",
+      "kicker": "2025 - Personal Project",
       "title2": "Part 2",
       "subtitle": "Online Multiplayer character-based shooter with realistic graphics and gameplay mechanics.",
       "ctaText": "View Results"
@@ -105,6 +107,8 @@
       "ctaText": "View Results"
     },
     "drovo": {
+      "title": "DROVO",
+      "kicker": "2023 - Personal Project",
       "title2": "Online Multiplayer Prototype",
       "subtitle": "Built a fun multiplayer prototype to play with friends.",
       "ctaText": "View Prototype"
@@ -178,7 +182,39 @@
   "education": {
     "badge": "Education",
     "title": "EDUCATION",
-    "tagline": "My academic background and achievements."
+    "tagline": "My academic background and achievements.",
+    "academicBackground": "Academic Background",
+    "educationTimeline": "Education Timeline",
+    "viewMoreInfo": "View more information",
+    "close": "Close",
+    "types": {
+      "certificate": "Certificate",
+      "degree": "Degree",
+      "course": "Course",
+      "diploma": "Diploma"
+    },
+    "items": {
+      "iia10x": {
+        "title": "10x Developer with Artificial Intelligence",
+        "school": "Instituto de Inteligencia Artificial (IIA)",
+        "description": "Intensive training in AI-powered development to multiply productivity using cutting-edge tools."
+      },
+      "upcDegree": {
+        "title": "Bachelor's degree in Computer Engineering",
+        "school": "Universitat Politècnica de Barcelona (UPC)",
+        "description": "Computer Engineering degree from FIB. I specialize in the Software Engineering track."
+      },
+      "unityCourse": {
+        "title": "Unity Essential Course",
+        "school": "Universitat Politècnica de Barcelona (UPC)",
+        "description": "Introduction to game development with Unity, taught by VGAFIB at FIB. Counts as 2 ECTS credits."
+      },
+      "itbDiploma": {
+        "title": "Technological High-School Diploma",
+        "school": "Institut Tecnològic de Barcelona (ITB)",
+        "description": "Science and Technology baccalaureate with specific training in Python programming and digital technologies."
+      }
+    }
   },
   "about": {
     "badge": "About Me",

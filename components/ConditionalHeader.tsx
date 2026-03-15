@@ -368,6 +368,7 @@ export default function ConditionalHeader() {
     <>
       <StaggeredMenu
       position="right"
+      closeOnPathnameChange={pathname ?? ""}
       items={menuItems}
       socialItems={socialItems}
       displaySocials
