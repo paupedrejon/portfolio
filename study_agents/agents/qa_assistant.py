@@ -359,7 +359,7 @@ class QAAssistantAgent:
         
         return processed_content
     
-    def answer_question(self, question: str, user_id: str = "default", model: Optional[str] = None, chat_id: Optional[str] = None, topic: Optional[str] = None, force_premium: bool = False, initial_form_data: Optional[dict] = None) -> tuple[str, dict]:
+    def answer_question(self, question: str, user_id: str = "default", model: Optional[str] = None, chat_id: Optional[str] = None, topic: Optional[str] = None, force_premium: bool = False, initial_form_data: Optional[dict] = None, course_context: Optional[dict] = None, exam_info: Optional[dict] = None) -> tuple[str, dict]:
         """
         Responde una pregunta del estudiante usando el temario y el historial
         
@@ -370,6 +370,8 @@ class QAAssistantAgent:
             chat_id: ID de la conversación (opcional, para obtener el nivel)
             topic: Tema del chat (opcional, para contextualizar las respuestas)
             force_premium: Si es True, fuerza el uso de un modelo premium (GPT-5)
+            course_context: Contexto del curso (título, descripción, temas, subtopics)
+            exam_info: Información del examen (fecha, días restantes)
             
         Returns:
             Respuesta contextualizada
@@ -433,6 +435,35 @@ class QAAssistantAgent:
         
         # Obtener historial de conversación (solo del chat actual)
         conversation_history = self.memory.get_conversation_history(user_id, chat_id)
+        
+        # Resumir historial si es largo
+        if conversation_history and len(conversation_history) > 15:
+            try:
+                from conversation_summarizer import summarize_conversation_history, format_summarized_history
+                
+                summary_data = summarize_conversation_history(
+                    history=conversation_history,
+                    api_key=self.api_key if hasattr(self, 'api_key') else None,
+                    model=None,
+                    max_messages=10,
+                    use_llm=bool(self.api_key)
+                )
+                
+                # Reemplazar historial completo con resumen + recientes
+                conversation_history = summary_data.get("recent_messages", [])
+                history_summary = format_summarized_history(summary_data)
+                
+                # Añadir resumen al contexto si existe
+                if history_summary:
+                    if relevant_content:
+                        relevant_content = [history_summary] + relevant_content
+                    else:
+                        relevant_content = [history_summary]
+                
+                print(f"📝 Historial resumido en QA: {len(conversation_history)} mensajes originales → resumen + {len(summary_data.get('recent_messages', []))} recientes")
+            except Exception as e:
+                print(f"⚠️ Error resumiendo historial en QA: {e}")
+                # Continuar con historial normal
         
         # Si no hay contexto y no hay historial, usar el título del chat como contexto
         if not relevant_content and not conversation_history and chat_id:
@@ -525,195 +556,82 @@ Este chat es especial: está diseñado para que el usuario aprenda cómo usar la
             if form_parts:
                 form_context = f"\n\n📋 INFORMACIÓN DEL ESTUDIANTE (importante para personalizar la respuesta):\n" + "\n".join(form_parts) + "\n\n**IMPORTANTE**: Adapta tu respuesta según esta información. Por ejemplo:\n- Si el tiempo es limitado (ej: 1 semana), enfócate en lo esencial y práctico\n- Si el objetivo es específico (ej: vivir en Japón), prioriza contenido relevante para ese contexto\n- Si el nivel es bajo, usa explicaciones más simples y ejemplos básicos\n- Si el nivel es alto, puedes profundizar más y usar terminología técnica"
         
-        # Construir información sobre las capacidades de la aplicación
-        app_capabilities = """
-### 🎯 CAPACIDADES DE LA APLICACIÓN (IMPORTANTE - DEBES CONOCER ESTO):
-
-Esta aplicación tiene las siguientes herramientas disponibles para ayudar al estudiante:
-
-1. **Generar Apuntes**: Puede convertir documentos PDF en apuntes estructurados y organizados. El usuario puede pedir "genera apuntes" o "crea apuntes sobre [tema]".
-
-2. **Generar Tests**: Puede crear tests personalizados con preguntas de opción múltiple adaptadas al nivel del estudiante. El usuario puede pedir "genera un test" o "hazme un test sobre [tema]".
-
-3. **Generar Ejercicios Prácticos**: Puede crear ejercicios prácticos personalizados con corrección automática. El usuario puede pedir "genera un ejercicio" o "crea un ejercicio sobre [tema]".
-
-4. **Flashcards para Idiomas**: Si el tema es un idioma, puede generar flashcards interactivas para aprender vocabulario. El usuario puede pedir "flashcards" o "tarjetas de vocabulario".
-
-5. **Intérprete de Código**: Para temas de programación (Python, JavaScript, Java, C++, SQL), puede ejecutar código directamente en el navegador. El usuario puede escribir código y ejecutarlo.
-
-6. **Chat Interactivo**: Puede hacer preguntas y recibir respuestas contextualizadas basadas en documentos subidos.
-
-**TU ROL COMO GUÍA PROACTIVO:**
-
-Después de responder cada pregunta, DEBES sugerir proactivamente qué hacer a continuación basándote en:
-- El nivel del estudiante (si es bajo, sugiere ejercicios básicos; si es alto, sugiere tests desafiantes)
-- El objetivo de aprendizaje (si es para un examen, sugiere tests; si es para práctica, sugiere ejercicios)
-- El tiempo disponible (si es limitado, sugiere lo más eficiente; si hay tiempo, sugiere aprendizaje profundo)
-- El contexto de la conversación (si acabas de explicar algo, sugiere practicarlo)
-
-**FORMATO DE SUGERENCIAS:**
-
-Al final de tu respuesta, añade una sección como esta (adaptada al contexto):
-
----
-
-### ¿Qué te gustaría hacer ahora?
-
-Basándome en tu nivel y objetivo, te recomiendo:
-- Hacer un test para evaluar tu comprensión de [tema específico que acabas de explicar]
-- Generar un ejercicio práctico sobre [concepto específico] para practicar
-- Generar apuntes sobre [tema] para tener un resumen estructurado
-- Continuar con más preguntas sobre [aspecto específico que podría interesar]
-
-O simplemente dime qué quieres hacer a continuación.
-
-**REGLAS PARA SUGERENCIAS:**
-- Sé específico: menciona el tema o concepto exacto sobre el que sugerir la acción
-- Sé contextual: adapta la sugerencia al nivel, objetivo y tiempo del estudiante
-- Sé proactivo: no esperes a que el usuario pregunte, sugiere acciones útiles de forma natural
-- Variedad: sugiere diferentes tipos de actividades (tests, ejercicios, apuntes) según el contexto
-- Si el estudiante acaba de aprender algo nuevo, SIEMPRE sugiere practicarlo con un test o ejercicio
-- Si el tiempo es limitado (ej: 1 semana, 2 semanas), prioriza tests y ejercicios prácticos sobre apuntes extensos
-- Si el objetivo es un examen, enfócate en sugerir tests y ejercicios de práctica
-- Si el nivel es bajo (0-3), sugiere ejercicios básicos y explicaciones adicionales
-- Si el nivel es alto (7-10), sugiere tests desafiantes y conceptos avanzados
-- Si el objetivo es práctico (ej: vivir en un país, trabajo), sugiere ejercicios y situaciones reales
-- Si el objetivo es teórico (ej: examen, certificación), sugiere tests y apuntes estructurados
-"""
+        # Construir contexto del curso si está disponible
+        course_context_str = ""
+        if course_context:
+            course_info = []
+            course_info.append(f"**Curso:** {course_context.get('title', '')}")
+            if course_context.get('description'):
+                course_info.append(f"**Descripción:** {course_context.get('description', '')}")
+            
+            topics_list = course_context.get('topics', [])
+            if topics_list:
+                course_info.append(f"**Temas del curso:** {', '.join(topics_list)}")
+            
+            subtopics = course_context.get('subtopics', {})
+            if subtopics and topic and topic in subtopics:
+                subtopics_list = subtopics[topic]
+                if subtopics_list:
+                    course_info.append(f"**Subapartados de '{topic}':** {', '.join(subtopics_list)}")
+            
+            if course_info:
+                course_context_str = "\n\n**CONTEXTO DEL CURSO:**\n" + "\n".join(course_info) + "\n\n**IMPORTANTE:** Siempre ten presente esta información del curso al responder. El estudiante está trabajando en este curso específico."
         
-        prompt_template = """Eres un asistente educativo experto que ayuda a estudiantes a entender conceptos y los guía proactivamente en su aprendizaje.
+        # Construir información del examen si está disponible
+        exam_context_str = ""
+        if exam_info:
+            days_left = exam_info.get('days_until_exam', 0)
+            exam_date = exam_info.get('exam_date', '')
+            if days_left > 0:
+                exam_context_str = f"\n\n**INFORMACIÓN DEL EXAMEN:**\n- **Fecha del examen:** {exam_date}\n- **Días restantes:** {days_left} días\n\n**IMPORTANTE:** El estudiante tiene un examen en {days_left} días. Adapta tus respuestas para ayudarle a prepararse eficientemente. Enfócate en los conceptos clave que entran en el examen y ayúdale a priorizar su estudio."
+            elif days_left == 0:
+                exam_context_str = f"\n\n**INFORMACIÓN DEL EXAMEN:**\n- **Fecha del examen:** {exam_date}\n- **El examen es HOY**\n\n**IMPORTANTE:** El examen es hoy. Enfócate en repasar conceptos clave y dar confianza al estudiante."
+            else:
+                exam_context_str = f"\n\n**INFORMACIÓN DEL EXAMEN:**\n- **Fecha del examen:** {exam_date}\n- **El examen ya pasó**\n\n**IMPORTANTE:** El examen ya pasó. Puedes ayudar al estudiante a repasar o profundizar en los conceptos."
+        
+        prompt_template = """Eres un asistente educativo experto que ayuda a estudiantes a entender conceptos.
 
-Tu objetivo es:
-- Responder preguntas de manera clara y educativa usando formato Markdown visual
-- Usar el contenido del temario proporcionado cuando esté disponible
+Tu objetivo es responder preguntas de manera clara, natural y educativa, como cualquier LLM moderno, pero usando HTML para mejorar el diseño visual de tus respuestas.
+
+**FORMATO DE RESPUESTA:**
+- Usa HTML con estilos inline para mejorar la presentación visual
+- Usa `<h2>`, `<h3>` para títulos
+- Usa `<p>` para párrafos
+- Usa `<ul>`, `<ol>`, `<li>` para listas
+- Usa `<strong>` y `<em>` para énfasis
+- Usa `<code>` y `<pre>` para código
+- Usa `<table>` para tablas cuando compares conceptos
+- Usa colores y estilos inline para hacer el contenido más visual y atractivo
+- Mantén un tono natural y conversacional, como si fueras un tutor personal
+
+**CONTEXTO IMPORTANTE:**
+- Si hay contenido del temario/PDF disponible, úsalo como referencia principal
 - Si no hay información en el temario, puedes usar tu conocimiento general
-- Mantener un tono amigable y paciente
-- Explicar conceptos de manera sencilla y VISUAL
-- **SER PROACTIVO**: Después de cada respuesta, sugerir qué hacer a continuación (tests, ejercicios, apuntes, etc.)
-- **CONOCER LAS HERRAMIENTAS**: Estar consciente de las capacidades de la aplicación y sugerirlas cuando sean útiles
+- Mantén un tono amigable, paciente y natural
+- Explica conceptos de manera clara y adaptada al nivel del estudiante
+
+__COURSE_CONTEXT_PLACEHOLDER__
+
+__EXAM_CONTEXT_PLACEHOLDER__
+
 __TOPIC_CONTEXT_PLACEHOLDER__
-
-__APP_CAPABILITIES_PLACEHOLDER__
-
-FORMATO DE RESPUESTA (Markdown ULTRA VISUAL):
-- Usa títulos y subtítulos (##, ###)
-- Usa **negritas** para conceptos clave
-- Crea listas con viñetas para información estructurada
-- Si es apropiado, crea esquemas conceptuales usando JSON estructurado (NO uses Mermaid)
-- Usa tablas cuando compares conceptos
-- Separa secciones con líneas horizontales (---)
-
-**⚠️ CRÍTICO - ESQUEMAS CONCEPTUALES:**
-- **NO uses código Mermaid** (NO flowchart, NO graph, NO gantt, NADA de Mermaid)
-- **SOLO usa JSON estructurado** dentro de bloques ```diagram-json
-
-**🚫 PROHIBIDO GENERAR ESQUEMAS PARA:**
-- Explicaciones generales de un solo concepto
-- Desgloses de características de un tema
-- Estructuras jerárquicas o categorías
-- Mapas conceptuales de un solo tema
-- Cualquier esquema que NO sea una comparación directa entre DOS elementos
-
-**✅ SOLO GENERA ESQUEMAS SI:**
-- Es una **COMPARACIÓN DIRECTA entre EXACTAMENTE 2 elementos** (ej: "A vs B", "X versus Y")
-- El título contiene palabras de comparación: "vs", "versus", "contra", "comparación entre"
-- Hay EXACTAMENTE 2 nodos principales en el esquema
-- La pregunta específicamente pide comparar dos cosas
-
-**⚠️ REGLA ESTRICTA:**
-- Si NO es una comparación de 2 elementos → NO generes diagrama
-- Si tienes CUALQUIER duda → NO generes diagrama. Usa tablas o listas en su lugar.
-- NO generes esquemas para explicar un solo concepto, por complejo que sea
-
-**FORMATO JSON OBLIGATORIO PARA COMPARACIONES (SOLO 2 ELEMENTOS):**
-```diagram-json
-{
-  "title": "Elemento A vs Elemento B",
-  "nodes": [
-    {"id": "A", "label": "Elemento A", "color": "#6366f1"},
-    {"id": "B", "label": "Elemento B", "color": "#10b981"}
-  ],
-  "edges": []
-}
-```
-
-**REGLAS CRÍTICAS PARA ESQUEMAS:**
-- DEBE tener EXACTAMENTE 2 nodos (ni más, ni menos)
-- El título DEBE contener "vs", "versus", "contra" o "comparación"
-- NO uses edges (conexiones) en comparaciones
-- Si NO es una comparación de 2 elementos → NO generes diagrama
-- Si tienes CUALQUIER duda → NO generes diagrama. Usa tablas o listas en su lugar.
-
-**IMPORTANTE:** SOLO genera esquemas si es una COMPARACIÓN entre DOS elementos. Si el usuario pide un esquema pero NO es una comparación, usa tablas o listas en su lugar. NO generes esquemas para explicar un solo concepto.
-
-### 🖼️ INSTRUCCIONES PARA IMÁGENES:
-
-**✅ GENERA BLOQUES DE IMAGEN CUANDO:**
-- El usuario explícitamente pide una imagen o visualización
-- Una imagen ayudaría significativamente a explicar un concepto visual
-- El concepto es difícil de entender sin una representación visual
-
-**FORMATO OBLIGATORIO PARA IMÁGENES:**
-
-```image
-query: descripción de lo que debe mostrar la imagen
-description: explicación de cómo la imagen ayuda a entender el concepto
-```
-
-**EJEMPLOS:**
-```image
-query: estructura de una célula eucariota con orgánulos etiquetados
-description: Esta imagen muestra las partes principales de una célula eucariota.
-```
-
-**REGLAS:**
-- Solo genera bloques de imagen cuando realmente añadan valor educativo
-- Si el usuario pide explícitamente una imagen, SIEMPRE incluye un bloque de imagen
-- Usa queries descriptivas y específicas
-- **IMPORTANTE**: Si el concepto se beneficiaría de una imagen, SIEMPRE incluye un bloque de imagen
-
-### 🎬 INSTRUCCIONES PARA VIDEOS:
-
-**✅ GENERA BLOQUES DE VIDEO CUANDO:**
-- El usuario explícitamente pide un video o visualización
-- Un video explicativo ayudaría significativamente a entender un concepto (ej: procesos, tutoriales, demostraciones)
-- El concepto es mejor explicado con movimiento o secuencia (ej: cómo funciona algo, pasos de un proceso)
-- Estás explicando algo que se beneficia de una demostración visual
-
-**FORMATO OBLIGATORIO PARA VIDEOS:**
-
-```youtube-video
-query: descripción de lo que debe explicar el video
-description: explicación de cómo el video ayuda a entender el concepto
-```
-
-**EJEMPLOS:**
-```youtube-video
-query: cómo funciona el sistema circulatorio explicación educativa
-description: Este video muestra cómo funciona el sistema circulatorio con animaciones.
-```
-
-**REGLAS:**
-- Solo genera bloques de video cuando realmente añadan valor educativo
-- Si el usuario pide explícitamente un video, SIEMPRE incluye un bloque de video
-- Usa queries descriptivas y específicas
-- **IMPORTANTE**: Si el concepto se beneficiaría de un video, SIEMPRE incluye un bloque de video
 
 __FORM_CONTEXT_PLACEHOLDER__
 
-CONTEXTO DEL TEMARIO:
+**CONTENIDO DEL TEMARIO/PDF:**
 __CONTEXT_PLACEHOLDER__
 
-HISTORIAL DE CONVERSACIÓN:
+**HISTORIAL DE CONVERSACIÓN:**
 __HISTORY_PLACEHOLDER__
 
-PREGUNTA DEL ESTUDIANTE: __QUESTION_PLACEHOLDER__
+**PREGUNTA DEL ESTUDIANTE:** __QUESTION_PLACEHOLDER__
 
-Responde de manera clara, completa y VISUAL usando Markdown. Si el contexto del temario es relevante, úsalo. SOLO crea esquemas conceptuales usando JSON estructurado (bloques ```diagram-json) si es una COMPARACIÓN entre DOS elementos. Para todo lo demás, usa tablas, listas o texto estructurado - NO uses Mermaid de ningún tipo."""
+Responde de manera natural, clara y completa usando HTML con estilos inline para mejorar la presentación visual. Si el contexto del temario es relevante, úsalo como referencia principal."""
 
         # Reemplazar placeholders de forma segura (sin usar f-strings que interpretan llaves)
-        full_prompt = prompt_template.replace("__TOPIC_CONTEXT_PLACEHOLDER__", topic_context)
-        full_prompt = full_prompt.replace("__APP_CAPABILITIES_PLACEHOLDER__", app_capabilities)
+        full_prompt = prompt_template.replace("__COURSE_CONTEXT_PLACEHOLDER__", course_context_str)
+        full_prompt = full_prompt.replace("__EXAM_CONTEXT_PLACEHOLDER__", exam_context_str)
+        full_prompt = full_prompt.replace("__TOPIC_CONTEXT_PLACEHOLDER__", topic_context)
         full_prompt = full_prompt.replace("__FORM_CONTEXT_PLACEHOLDER__", form_context)
         full_prompt = full_prompt.replace("__CONTEXT_PLACEHOLDER__", context)
         full_prompt = full_prompt.replace("__HISTORY_PLACEHOLDER__", history_str or "No hay historial previo de conversación.")
