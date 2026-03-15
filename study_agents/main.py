@@ -26,25 +26,11 @@ from agents.correction_agent import CorrectionAgent
 from memory.memory_manager import MemoryManager
 
 # Cargar variables de entorno desde el archivo .env
-# Prioridad: 1) .env.local en la raíz del proyecto, 2) .env en study_agents, 3) variables de entorno del sistema
+# Buscar en el directorio actual y en el directorio del script
 import os
-script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(script_dir)  # Un nivel arriba (raíz del proyecto)
-
-# 1. Intentar cargar .env.local desde la raíz del proyecto (prioridad más alta)
-env_local_path = os.path.join(project_root, '.env.local')
-if os.path.exists(env_local_path):
-    load_dotenv(env_local_path, override=True)  # override=True para que tenga prioridad
-    print(f"✅ Cargado .env.local desde: {env_local_path}")
-
-# 2. Intentar cargar .env desde study_agents
-env_path = os.path.join(script_dir, '.env')
-if os.path.exists(env_path):
-    load_dotenv(env_path)  # No override para que .env.local tenga prioridad
-    print(f"✅ Cargado .env desde: {env_path}")
-
-# 3. También intentar desde el directorio actual (por si acaso)
-load_dotenv()  # Esto no sobrescribe variables ya cargadas
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+load_dotenv(env_path)  # Cargar desde la ubicación específica
+load_dotenv()  # También intentar desde el directorio actual
 
 class StudyAgentsSystem:
     """
@@ -173,25 +159,21 @@ class StudyAgentsSystem:
         print("✅ Explicaciones generadas")
         return explanations
     
-    def generate_notes(self, topics: Optional[list[str]] = None, model: Optional[str] = None, user_id: Optional[str] = None, conversation_history: Optional[list[dict]] = None, topic: Optional[str] = None, user_level: Optional[int] = None, chat_id: Optional[str] = None, exam_info: Optional[dict] = None, course_context: Optional[dict] = None) -> str:
+    def generate_notes(self, topics: Optional[list[str]] = None, model: Optional[str] = None, user_id: Optional[str] = None, conversation_history: Optional[list[dict]] = None, topic: Optional[str] = None, user_level: Optional[int] = None, chat_id: Optional[str] = None) -> str:
         """
-        Genera apuntes completos del tema, orientados a preparación de examen
+        Genera resumen completo de la conversación en formato Markdown
         
         Args:
             topics: Lista de temas específicos (opcional)
             model: Modelo preferido (opcional, si no se especifica usa modo automático)
             user_id: ID del usuario para obtener su nivel (opcional)
             conversation_history: Historial de conversación para generar resumen actualizado (opcional)
-            exam_info: Información del examen (fecha, días restantes) (opcional)
-            course_context: Contexto del curso (título, temas, subtopics) (opcional)
             
         Returns:
-            Apuntes en formato HTML
+            Resumen en formato Markdown
         """
         # Usar el nivel pasado como parámetro, o intentar obtenerlo si no está disponible
-        # IMPORTANTE: Solo obtener el nivel si hay conversation_history o chat_id (apuntes del chat)
-        # Los resúmenes automáticos de temas NO deben usar el nivel del usuario
-        if user_level is None and (conversation_history or chat_id):
+        if user_level is None:
             # Priorizar topic sobre topics
             main_topic = topic if topic else (topics[0] if topics and len(topics) > 0 else None)
             
@@ -208,10 +190,8 @@ class StudyAgentsSystem:
         
         model_str = model if model else "automático (optimizando costes)"
         print(f"\n📝 Generando resumen con modelo {model_str}...")
-        if user_level is not None and (conversation_history or chat_id):
+        if user_level is not None:
             print(f"📊 Usando nivel del usuario: {user_level}/10")
-        elif not conversation_history and not chat_id:
-            print("📝 Generando resumen objetivo del tema (sin nivel de usuario)")
         
         # Si no hay historial y hay chat_id, usar el título del chat como contexto
         if not conversation_history and chat_id and user_id:
@@ -227,127 +207,112 @@ class StudyAgentsSystem:
                 print(f"⚠️ No se pudo obtener el título del chat: {e}")
         
         # Generar apuntes iniciales
-        notes, usage_info_notes = self.explanation_agent.generate_notes(
-            topics=topics, 
-            model=model, 
-            user_level=user_level, 
-            conversation_history=conversation_history, 
-            topic=topic, 
-            chat_id=chat_id, 
-            user_id=user_id,
-            exam_info=exam_info,
-            course_context=course_context
-        )
+        notes, usage_info_notes = self.explanation_agent.generate_notes(topics=topics, model=model, user_level=user_level, conversation_history=conversation_history, topic=topic, chat_id=chat_id, user_id=user_id)
         print(f"💡 Apuntes generados ({len(notes)} caracteres)")
         
-        # DESACTIVADO: Revisar y corregir los apuntes usando el agente corrector
-        # El agente corrector está desactivado temporalmente
-        # Retornar apuntes sin corrección
-        return notes
-        
-        # CÓDIGO COMENTADO - Agente corrector desactivado
-        # try:
-        #     # Obtener apuntes anteriores si hay historial de conversación
-        #     previous_notes = None
-        #     if conversation_history:
-        #         # Buscar apuntes anteriores en el historial
-        #         for msg in reversed(conversation_history):
-        #             if msg.get('role') == 'assistant' and ('# ' in msg.get('content', '') or '## ' in msg.get('content', '')):
-        #                 # Parece ser apuntes
-        #                 previous_notes = msg.get('content', '')
-        #                 if len(previous_notes) > 500:  # Solo si es suficientemente largo
-        #                     break
-        #     
-        #     # Revisar y corregir
-        #     print("🔍 Revisando apuntes con agente corrector (verificando variación y calidad)...")
-        #     corrected_notes, needs_correction, correction_analysis, nivel_ajustado = self.correction_agent.review_and_correct(
-        #         response=notes,
-        #         question=f"Generar apuntes sobre {topic or (topics[0] if topics and len(topics) > 0 else 'el tema')}",
-        #         conversation_history=conversation_history,
-        #         topic=topic,
-        #         context=None,  # Los apuntes ya tienen el contexto integrado
-        #         model=model,
-        #         user_level=user_level,
-        #         is_notes=True,
-        #         previous_notes=previous_notes,
-        #         user_id=user_id,
-        #         chat_id=None  # No hay chat_id para apuntes, pero podemos usar user_id y topic
-        #     )
-        #     
-        #     # Aplicar ajuste de nivel si el agente lo recomienda
-        #     if nivel_ajustado is not None and user_id and topic:
-        #         try:
-        #             from progress_tracker import ProgressTracker
-        #             tracker = ProgressTracker()
-        #             # Buscar el chat_id asociado al tema
-        #             user_progress = tracker.get_user_progress(user_id)
-        #             if "chats" in user_progress:
-        #                 for cid, chat_data in user_progress["chats"].items():
-        #                     if chat_data.get("topic") == topic:
-        #                         tracker.set_chat_level(user_id, cid, nivel_ajustado, topic)
-        #                         print(f"📊 Nivel ajustado automáticamente: {user_level or 0} → {nivel_ajustado}/10")
-        #                         break
-        #         except Exception as e:
-        #             print(f"⚠️ Error al ajustar nivel: {e}")
-        #     
-        #     if needs_correction:
-        #         print(f"✅ Apuntes corregidos (problemas detectados: {len(correction_analysis.get('problemas', []))})")
-        #         if correction_analysis.get('problemas'):
-        #             print(f"   Problemas: {', '.join(correction_analysis['problemas'][:3])}")
-        #         
-        #         # Si se fuerza regeneración porque son muy similares, regenerar completamente
-        #         if correction_analysis.get('force_regeneration'):
-        #             print("🔄 Regenerando apuntes completamente diferentes...")
-        #             # Regenerar con instrucciones explícitas de variación
-        #             notes, _ = self.explanation_agent.generate_notes(
-        #                 topics=topics, 
-        #                 model=model, 
-        #                 user_level=user_level, 
-        #                 conversation_history=conversation_history, 
-        #                 topic=topic,
-        #                 chat_id=chat_id,
-        #                 user_id=user_id
-        #             )
-        #             # Usar nivel ajustado si está disponible
-        #             nivel_a_usar = nivel_ajustado if nivel_ajustado is not None else user_level
-        #             # Revisar de nuevo
-        #             corrected_notes2, needs_correction2, _, nivel_ajustado2 = self.correction_agent.review_and_correct(
-        #                 response=notes,
-        #                 question=f"Generar apuntes sobre {topic or (topics[0] if topics and len(topics) > 0 else 'el tema')}",
-        #                 conversation_history=conversation_history,
-        #                 topic=topic,
-        #                 context=None,
-        #                 model=model,
-        #                 user_level=nivel_a_usar,
-        #                 is_notes=True,
-        #                 previous_notes=previous_notes,
-        #                 user_id=user_id,
-        #                 chat_id=None
-        #             )
-        #             # Aplicar segundo ajuste de nivel si es necesario
-        #             if nivel_ajustado2 is not None and user_id and topic:
-        #                 try:
-        #                     from progress_tracker import ProgressTracker
-        #                     tracker = ProgressTracker()
-        #                     user_progress = tracker.get_user_progress(user_id)
-        #                     if "chats" in user_progress:
-        #                         for cid, chat_data in user_progress["chats"].items():
-        #                             if chat_data.get("topic") == topic:
-        #                                 tracker.set_chat_level(user_id, cid, nivel_ajustado2, topic)
-        #                                 print(f"📊 Nivel ajustado automáticamente (segunda revisión): {nivel_a_usar or 0} → {nivel_ajustado2}/10")
-        #                                 break
-        #                 except Exception as e:
-        #                     print(f"⚠️ Error al ajustar nivel: {e}")
-        #             return corrected_notes2 if needs_correction2 else notes
-        #         
-        #         return corrected_notes
-        #     else:
-        #         print("✅ Apuntes aprobados (no necesita corrección)")
-        #         return notes
-        #         
-        # except Exception as e:
-        #     print(f"⚠️ Error en corrección de apuntes, usando apuntes originales: {e}")
-        #     return notes
+        # Revisar y corregir los apuntes usando el agente corrector
+        try:
+            # Obtener apuntes anteriores si hay historial de conversación
+            previous_notes = None
+            if conversation_history:
+                # Buscar apuntes anteriores en el historial
+                for msg in reversed(conversation_history):
+                    if msg.get('role') == 'assistant' and ('# ' in msg.get('content', '') or '## ' in msg.get('content', '')):
+                        # Parece ser apuntes
+                        previous_notes = msg.get('content', '')
+                        if len(previous_notes) > 500:  # Solo si es suficientemente largo
+                            break
+            
+            # Revisar y corregir
+            print("🔍 Revisando apuntes con agente corrector (verificando variación y calidad)...")
+            corrected_notes, needs_correction, correction_analysis, nivel_ajustado = self.correction_agent.review_and_correct(
+                response=notes,
+                question=f"Generar apuntes sobre {topic or (topics[0] if topics and len(topics) > 0 else 'el tema')}",
+                conversation_history=conversation_history,
+                topic=topic,
+                context=None,  # Los apuntes ya tienen el contexto integrado
+                model=model,
+                user_level=user_level,
+                is_notes=True,
+                previous_notes=previous_notes,
+                user_id=user_id,
+                chat_id=None  # No hay chat_id para apuntes, pero podemos usar user_id y topic
+            )
+            
+            # Aplicar ajuste de nivel si el agente lo recomienda
+            if nivel_ajustado is not None and user_id and topic:
+                try:
+                    from progress_tracker import ProgressTracker
+                    tracker = ProgressTracker()
+                    # Buscar el chat_id asociado al tema
+                    user_progress = tracker.get_user_progress(user_id)
+                    if "chats" in user_progress:
+                        for cid, chat_data in user_progress["chats"].items():
+                            if chat_data.get("topic") == topic:
+                                tracker.set_chat_level(user_id, cid, nivel_ajustado, topic)
+                                print(f"📊 Nivel ajustado automáticamente: {user_level or 0} → {nivel_ajustado}/10")
+                                break
+                except Exception as e:
+                    print(f"⚠️ Error al ajustar nivel: {e}")
+            
+            if needs_correction:
+                print(f"✅ Apuntes corregidos (problemas detectados: {len(correction_analysis.get('problemas', []))})")
+                if correction_analysis.get('problemas'):
+                    print(f"   Problemas: {', '.join(correction_analysis['problemas'][:3])}")
+                
+                # Si se fuerza regeneración porque son muy similares, regenerar completamente
+                if correction_analysis.get('force_regeneration'):
+                    print("🔄 Regenerando apuntes completamente diferentes...")
+                    # Regenerar con instrucciones explícitas de variación
+                    notes, _ = self.explanation_agent.generate_notes(
+                        topics=topics, 
+                        model=model, 
+                        user_level=user_level, 
+                        conversation_history=conversation_history, 
+                        topic=topic,
+                        chat_id=chat_id,
+                        user_id=user_id
+                    )
+                    # Usar nivel ajustado si está disponible
+                    nivel_a_usar = nivel_ajustado if nivel_ajustado is not None else user_level
+                    # Revisar de nuevo
+                    corrected_notes2, needs_correction2, _, nivel_ajustado2 = self.correction_agent.review_and_correct(
+                        response=notes,
+                        question=f"Generar apuntes sobre {topic or (topics[0] if topics and len(topics) > 0 else 'el tema')}",
+                        conversation_history=conversation_history,
+                        topic=topic,
+                        context=None,
+                        model=model,
+                        user_level=nivel_a_usar,
+                        is_notes=True,
+                        previous_notes=previous_notes,
+                        user_id=user_id,
+                        chat_id=None
+                    )
+                    # Aplicar segundo ajuste de nivel si es necesario
+                    if nivel_ajustado2 is not None and user_id and topic:
+                        try:
+                            from progress_tracker import ProgressTracker
+                            tracker = ProgressTracker()
+                            user_progress = tracker.get_user_progress(user_id)
+                            if "chats" in user_progress:
+                                for cid, chat_data in user_progress["chats"].items():
+                                    if chat_data.get("topic") == topic:
+                                        tracker.set_chat_level(user_id, cid, nivel_ajustado2, topic)
+                                        print(f"📊 Nivel ajustado automáticamente (segunda revisión): {nivel_a_usar or 0} → {nivel_ajustado2}/10")
+                                        break
+                        except Exception as e:
+                            print(f"⚠️ Error al ajustar nivel: {e}")
+                    return corrected_notes2 if needs_correction2 else notes
+                
+                return corrected_notes
+            else:
+                print("✅ Apuntes aprobados (no necesita corrección)")
+                return notes
+                
+        except Exception as e:
+            print(f"⚠️ Error en corrección de apuntes, usando apuntes originales: {e}")
+            return notes
     
     def _detect_negative_feedback(self, question: str) -> bool:
         """
@@ -394,7 +359,7 @@ class StudyAgentsSystem:
         
         return False
     
-    def ask_question(self, question: str, user_id: str = "default", model: Optional[str] = None, chat_id: Optional[str] = None, topic: Optional[str] = None, initial_form_data: Optional[dict] = None, course_context: Optional[dict] = None, exam_info: Optional[dict] = None) -> tuple[str, dict]:
+    def ask_question(self, question: str, user_id: str = "default", model: Optional[str] = None, chat_id: Optional[str] = None, topic: Optional[str] = None, initial_form_data: Optional[dict] = None) -> tuple[str, dict]:
         """
         Responde una pregunta del estudiante
         
@@ -405,8 +370,6 @@ class StudyAgentsSystem:
             chat_id: ID de la conversación (para obtener el nivel)
             topic: Tema del chat (para contextualizar las respuestas)
             initial_form_data: Datos del formulario inicial (nivel, objetivo, tiempo disponible)
-            course_context: Contexto del curso (título, descripción, temas, subtopics)
-            exam_info: Información del examen (fecha, días restantes)
             
         Returns:
             Tupla con (respuesta contextualizada, información de tokens)
@@ -429,9 +392,7 @@ class StudyAgentsSystem:
             chat_id=chat_id, 
             topic=topic,
             force_premium=needs_premium,  # Forzar premium si se detectó feedback negativo
-            initial_form_data=initial_form_data,  # Pasar datos del formulario inicial
-            course_context=course_context,  # Pasar contexto del curso
-            exam_info=exam_info  # Pasar información del examen
+            initial_form_data=initial_form_data  # Pasar datos del formulario inicial
         )
         print(f"💡 Respuesta generada ({len(answer)} caracteres)")
         

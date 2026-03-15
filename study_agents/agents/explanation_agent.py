@@ -241,7 +241,7 @@ class ExplanationAgent:
                 response.raise_for_status()
                 
                 # Buscar video ID en el HTML (método básico)
-                # re ya está importado al principio del archivo
+                import re
                 video_id_pattern = r'"videoId":"([a-zA-Z0-9_-]{11})"'
                 matches = re.findall(video_id_pattern, response.text)
                 
@@ -481,24 +481,19 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
                 "status": "error"
             }
     
-    def generate_notes(self, topics: Optional[List[str]] = None, model: Optional[str] = None, user_level: Optional[int] = None, conversation_history: Optional[List[dict]] = None, topic: Optional[str] = None, chat_id: Optional[str] = None, user_id: Optional[str] = None, exam_info: Optional[dict] = None, course_context: Optional[dict] = None) -> tuple[str, dict]:
+    def generate_notes(self, topics: Optional[List[str]] = None, model: Optional[str] = None, user_level: Optional[int] = None, conversation_history: Optional[List[dict]] = None, topic: Optional[str] = None, chat_id: Optional[str] = None, user_id: Optional[str] = None) -> tuple[str, dict]:
         """
-        Genera apuntes completos del tema, orientados a preparación de examen
+        Genera resumen completo de la conversación en formato Markdown
         
         Args:
             topics: Lista de temas específicos a cubrir (opcional)
             model: Modelo preferido (opcional, si no se especifica usa modo automático)
             user_level: Nivel del usuario en el tema (1-10, opcional)
             conversation_history: Historial de conversación para generar resumen actualizado (opcional)
-            exam_info: Información del examen (fecha, días restantes) (opcional)
-            course_context: Contexto del curso (título, temas, subtopics) (opcional)
             
         Returns:
-            Apuntes en formato HTML estilizado con estilos inline
+            Resumen en formato Markdown
         """
-        # Asegurar que re esté disponible (ya está importado globalmente, pero esto evita conflictos de scope)
-        import re as re_module
-        re = re_module  # Alias para evitar problemas de scope
         # Usar model_manager si está disponible (modo automático)
         if self.model_manager:
             try:
@@ -562,20 +557,28 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
         
         # Definir el prompt template que se usará en ambos casos
         # Usar raw string (r"""...""") para evitar problemas con secuencias de escape
-        prompt_template = r"""Eres un tutor experto de una academia que prepara estudiantes para exámenes.
+        prompt_template = r"""Eres un Arquitecto de Conocimiento experto en crear 'Hojas de Estudio de Alto Rendimiento'.
 
-Tu objetivo es crear apuntes completos y naturales que ayuden al estudiante a prepararse para su examen, actuando como una academia profesional que guía paso a paso al estudiante.
+Tu objetivo NO es resumir, sino destilar la información para que sea memorizable al instante.
 
-**IMPORTANTE - TU ROL COMO ACADEMIA:**
-- Actúa como una academia profesional que prepara estudiantes para exámenes
-- Lee y comprende bien el contenido del PDF proporcionado
-- Crea apuntes naturales y completos, como cualquier LLM moderno lo haría
-- Enfócate en explicar cada concepto que entra en el examen de forma clara y completa
-- Ayuda al estudiante a entender cada concepto paso a paso
-- Prioriza los conceptos clave que entran en el examen
-- Si hay información sobre cuánto falta para el examen, adapta el contenido para ayudar al estudiante a prepararse eficientemente
+**🚨 CRÍTICO - DETECCIÓN DE TEMARIOS:**
+Si el contenido fuente es un TEMARIO (lista de temas de examen/oposición), NO generes apuntes sobre "el temario", "qué temas entran" o "el contenido del examen". 
+En su lugar, genera contenido educativo COMPLETO sobre CADA UNO de los temas listados. 
+Crea apuntes detallados que cubran el contenido real de cada tema, como si fueras a enseñar ese tema desde cero.
+Si hay múltiples temas, organiza el contenido por tema y cubre todos los temas listados con su contenido educativo completo.
 
 {language_instruction}
+
+### 🎲 VARIACIÓN Y ORIGINALIDAD (IMPORTANTE):
+
+**CRÍTICO**: Cada vez que generes apuntes, varía el contenido significativamente:
+- Usa diferentes ejemplos, palabras y frases
+- Cambia el orden de los conceptos presentados
+- Incluye contenido diferente pero igualmente relevante y útil
+- NO repitas exactamente el mismo contenido de generaciones anteriores
+- Si es un idioma, incluye vocabulario y frases diferentes cada vez
+- Varía los ejemplos prácticos y casos de uso
+- Presenta la información desde diferentes ángulos o enfoques
 
 CONTENIDO FUENTE:
 {content}
@@ -588,15 +591,17 @@ CONTENIDO FUENTE:
 
 2. **FORMATO ATÓMICO:** Usa Bullet points (•) para todo. Párrafos de máximo 2 líneas.
 
-3. **VISUAL:** Usa HTML con estilos inline. Usa `<strong>` para conceptos clave y `<code>` para términos técnicos, ambos con estilos inline de color.
+3. **VISUAL:** Usa **Negritas** para conceptos clave y `código` para términos técnicos.
 
 4. **NO MERMAID:** Absolutamente prohibido usar bloques ```mermaid. Si necesitas un diagrama, usa SOLO el formato JSON especificado abajo.
 
 ### 📊 ADAPTACIÓN AL NIVEL (CRÍTICO - OBLIGATORIO):
 
+**NIVEL ACTUAL DEL ESTUDIANTE: {user_level}/10**
+
 {level_note}
 
-{level_instruction}
+**DEBES ADAPTAR ESTRICTAMENTE TODO EL CONTENIDO AL NIVEL {user_level}/10. NO uses contenido de otros niveles.**
 
 **NIVEL 0-1 (Principiante Absoluto):**
 - Solo vocabulario esencial: saludos, números 1-10, colores básicos
@@ -646,83 +651,35 @@ CONTENIDO FUENTE:
 - Uso estilístico avanzado y figuras retóricas
 - Ejemplos de textos clásicos o académicos especializados
 
-### 📐 ESTRUCTURA DE SALIDA OBLIGATORIA (HTML):
+### 📐 ESTRUCTURA DE SALIDA OBLIGATORIA:
 
-**🚨 CRÍTICO: DEBES GENERAR EL CONTENIDO EN FORMATO HTML, NO MARKDOWN**
+# {topic_name}
 
-Genera el contenido usando HTML estilizado y moderno. Usa las siguientes etiquetas HTML:
+## ⚡ Conceptos Blitz (Lo esencial)
+*Lista rápida de definiciones clave. Formato: **Concepto**: Definición ultra-corta.*
 
-- `<h1>`, `<h2>`, `<h3>`, `<h4>` para títulos
-- `<p>` para párrafos
-- `<ul>`, `<ol>`, `<li>` para listas
-- `<table>`, `<thead>`, `<tbody>`, `<tr>`, `<th>`, `<td>` para tablas
-- `<strong>`, `<em>`, `<code>`, `<pre>` para énfasis y código
-- `<div>` con clases para secciones estilizadas
-- `<span>` con clases para elementos inline estilizados
-- `<hr>` para separadores visuales
-- `<blockquote>` para citas o notas importantes
+## 📚 Núcleo del Conocimiento
+*Organiza el contenido por subtemas. Usa tablas siempre que sea posible para comparar.*
 
-**ESTILOS INLINE OBLIGATORIOS:**
-- Usa estilos inline para colores, espaciado y tipografía
-- Colores principales: `#6366f1` (azul), `#10b981` (verde), `#f59e0b` (amarillo), `#ef4444` (rojo)
-- Usa `border-bottom`, `padding`, `margin` para separadores y espaciado
-- Usa `background-color` con transparencias para destacar secciones
-- Usa `border-radius` para bordes redondeados
+*Si es IDIOMAS (ADÁPTATE AL NIVEL):*
+- **Nivel 0-3**: Tablas simples: | Palabra | Traducción | Pronunciación (letras) |
+- **Nivel 4-6**: Tablas ampliadas: | Vocabulario | Traducción | Contexto/Ejemplo | Notas |
+- **Nivel 7-9**: Tablas avanzadas: | Término | Traducción Literal | Uso | Contexto Formal/Informal | Variaciones Regionales |
+- **Nivel 10**: Tablas expertas: | Término | Etimo | Uso Arcaico/Moderno | Variantes Dialectales | Referencias Culturales |
 
-**ESTRUCTURA HTML OBLIGATORIA:**
+*Si es PROGRAMACIÓN (ADÁPTATE AL NIVEL):*
+- **Nivel 0-3**: Código simple con comentarios línea por línea, sin conceptos complejos
+- **Nivel 4-6**: Bloques de código con comentarios explicativos y conceptos intermedios
+- **Nivel 7-9**: Código avanzado con patrones, mejores prácticas, optimizaciones
+- **Nivel 10**: Código experto con arquitecturas complejas, patrones avanzados, casos edge
 
-```html
-<div class="notes-container">
-  <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;">{topic_name}</h1>
-  
-  <!-- Explicación natural y completa del tema, como un tutor de academia -->
-  <section style="margin-bottom: 3rem;">
-    <h2 style="font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;">Contenido del Tema</h2>
-    <!-- Explica el tema de forma natural, completa y educativa. Organiza por subtemas si es necesario. -->
-    <!-- Usa párrafos, listas, tablas según sea apropiado. -->
-  </section>
+*Si es TEORÍA:* Usa listas anidadas, adaptando la complejidad al nivel.
 
-**Si es IDIOMAS (ADÁPTATE AL NIVEL) - USA TABLAS HTML:**
-- **Nivel 0-3**: Tablas HTML simples con `<table>`, `<tr>`, `<th>`, `<td>` con estilos inline. Columnas: Palabra | Traducción | Pronunciación
-- **Nivel 4-6**: Tablas HTML ampliadas: Vocabulario | Traducción | Contexto/Ejemplo | Notas
-- **Nivel 7-9**: Tablas HTML avanzadas: Término | Traducción Literal | Uso | Contexto Formal/Informal | Variaciones Regionales
-- **Nivel 10**: Tablas HTML expertas: Término | Etimo | Uso Arcaico/Moderno | Variantes Dialectales | Referencias Culturales
+## ⚠️ Errores Comunes / Trampas
+*Lista de cosas donde los estudiantes suelen fallar o confundirse.*
 
-**Si es PROGRAMACIÓN (ADÁPTATE AL NIVEL) - USA CÓDIGO HTML:**
-- **Nivel 0-3**: Código simple con `<pre><code>` y comentarios línea por línea, sin conceptos complejos
-- **Nivel 4-6**: Bloques de código con `<pre><code>` y comentarios explicativos y conceptos intermedios
-- **Nivel 7-9**: Código avanzado con `<pre><code>` y patrones, mejores prácticas, optimizaciones
-- **Nivel 10**: Código experto con `<pre><code>` y arquitecturas complejas, patrones avanzados, casos edge
-
-**Si es TEORÍA:** Usa listas HTML anidadas (`<ul>`, `<ol>`, `<li>`), adaptando la complejidad al nivel.
-
-  <section style="margin-bottom: 3rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border-left: 4px solid #ef4444;">
-    <h2 style="font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #ef4444;">⚠️ Errores Comunes / Trampas</h2>
-    <ul style="list-style: none; padding: 0;">
-      <li style="margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; border-left: 3px solid #ef4444;">
-        Lista de cosas donde los estudiantes suelen fallar o confundirse
-      </li>
-    </ul>
-  </section>
-  
-  <section style="margin-bottom: 3rem; padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: 12px; border-left: 4px solid #10b981;">
-    <h2 style="font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem; color: #10b981;">💎 Ejemplo Práctico</h2>
-    <div style="padding: 1rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px;">
-      Un caso de uso real, frase completa o snippet de código
-    </div>
-  </section>
-</div>
-```
-
-**REGLAS CRÍTICAS PARA HTML:**
-- SIEMPRE usa HTML válido y bien formado
-- Cierra TODAS las etiquetas correctamente
-- Usa estilos inline para TODOS los elementos (colores, espaciado, bordes)
-- NO uses Markdown, SOLO HTML
-- Usa tablas HTML (`<table>`) para comparaciones con estilos inline
-- Usa listas HTML (`<ul>`, `<ol>`) para información estructurada
-- Usa `<code style="background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px;">` y `<pre>` para código
-- Separa secciones con `<hr style="border: none; border-top: 2px solid #e5e7eb; margin: 2rem 0;">` o con secciones con bordes
+## 💎 Ejemplo Práctico
+*Un caso de uso real, frase completa o snippet de código.*
 
 ---
 
@@ -867,7 +824,7 @@ description: Este video explica paso a paso cómo resolver ecuaciones de segundo
                 return None
             
             # Intentar extraer temas del temario
-            # re ya está importado al principio del archivo
+            import re
             topics = []
             
             # Patrones comunes para listas de temas:
@@ -933,44 +890,10 @@ description: Este video explica paso a paso cómo resolver ecuaciones de segundo
                     print(f"✅ Usando temas del temario para generar contenido educativo")
         
         if final_topics:
-            # Intentar usar caché de resúmenes si está disponible
-            cached_summary = None
-            course_id = None
-            if course_context and isinstance(final_topics, list) and len(final_topics) == 1:
-                # Solo usar caché si hay un solo tema y hay contexto de curso
-                try:
-                    from summary_cache import get_cached_summary_for_context
-                    # Intentar obtener course_id del contexto
-                    # Nota: course_id puede venir de diferentes lugares según el contexto
-                    main_topic = final_topics[0] if isinstance(final_topics, list) else str(final_topics)
-                    conversation_length = len(conversation_history) if conversation_history else 0
-                    
-                    # Intentar obtener course_id si está disponible en el contexto
-                    # (Esto dependerá de cómo se pase el course_id al agente)
-                    cached_summary = get_cached_summary_for_context(
-                        course_id=course_id or "default",
-                        topic=main_topic,
-                        conversation_length=conversation_length
-                    )
-                    
-                    if cached_summary:
-                        print(f"💾 Usando resumen en caché para tema '{main_topic}' (nivel según longitud: {conversation_length})")
-                except Exception as e:
-                    print(f"⚠️ Error obteniendo caché de resumen: {e}")
-            
             # Si hay historial relevante, usarlo primero
             if has_relevant_conversation:
                 combined_content = conversation_text
                 print(f"📝 Usando historial de conversación sobre '{final_topics[0]}'")
-            elif cached_summary:
-                # Usar resumen en caché como base
-                main_topic = final_topics[0] if isinstance(final_topics, list) else str(final_topics)
-                combined_content = f"TEMA: {main_topic}\n\nRESUMEN DEL CONTENIDO:\n{cached_summary}\n\nGenera apuntes completos basándote en este resumen, adaptado al nivel del estudiante."
-                
-                # Añadir historial si existe
-                if conversation_text:
-                    combined_content += f"\n\n---\n\nHISTORIAL DE CONVERSACIÓN (contexto adicional):\n{conversation_text}"
-                print(f"📝 Usando resumen en caché para '{main_topic}'")
             else:
                 # Si no hay historial relevante pero hay tema, generar desde cero
                 # NO buscar en documentos genéricos que pueden no ser relevantes
@@ -1090,12 +1013,7 @@ description: Este video explica paso a paso cómo resolver ecuaciones de segundo
         # Preparar nota de nivel si está disponible
         level_note = ""
         user_level_display = user_level if user_level is not None else 0
-        
-        # IMPORTANTE: Solo adaptar al nivel si hay conversation_history o chat_id (apuntes del chat)
-        # Los resúmenes automáticos de temas NO deben adaptarse al nivel del usuario
-        should_adapt_to_level = user_level is not None and (conversation_history or chat_id)
-        
-        if should_adapt_to_level:
+        if user_level is not None:
             if user_level <= 3:
                 level_note = f"""
 **NIVEL PRINCIPIANTE ({user_level}/10) - INSTRUCCIONES OBLIGATORIAS:**
@@ -1127,13 +1045,8 @@ description: Este video explica paso a paso cómo resolver ecuaciones de segundo
 - Ejemplos de literatura o discursos formales
 - Puedes usar terminología técnica avanzada y profundizar en los conceptos"""
         else:
-            if not should_adapt_to_level:
-                # Para resúmenes automáticos de temas, no usar nivel
-                level_note = ""
-                user_level_display = 0
-            else:
-                level_note = "\n\n**NIVEL NO ESPECIFICADO**: Usa nivel intermedio por defecto."
-                user_level_display = 5
+            level_note = "\n\n**NIVEL NO ESPECIFICADO**: Usa nivel intermedio por defecto."
+            user_level_display = 5
         
         # Preparar nombre del tema
         topic_name = ""
@@ -1143,7 +1056,7 @@ description: Este video explica paso a paso cómo resolver ecuaciones de segundo
             topic_name = topic
         elif combined_content.strip().startswith("TEMA:"):
             # Extraer el tema del contenido generado
-            # re ya está importado al principio del archivo
+            import re
             topic_match = re.search(r'TEMA:\s*(.+)', combined_content)
             if topic_match:
                 topic_name = topic_match.group(1).split('\n')[0].strip()
@@ -1207,63 +1120,11 @@ Ejemplo CORRECTO para Francés:
         if 'user_level_display' not in locals():
             user_level_display = user_level if user_level is not None else 0
         
-        # Determinar si se debe adaptar al nivel
-        if 'should_adapt_to_level' not in locals():
-            should_adapt_to_level = user_level is not None and (conversation_history or chat_id)
-        
-        # Crear instrucción de nivel
-        if should_adapt_to_level and user_level is not None:
-            level_instruction = f"**NIVEL ACTUAL DEL ESTUDIANTE: {user_level}/10**\n\n**DEBES ADAPTAR ESTRICTAMENTE TODO EL CONTENIDO AL NIVEL {user_level}/10. NO uses contenido de otros niveles.**"
-        else:
-            level_instruction = "**GENERA CONTENIDO OBJETIVO Y COMPLETO DEL TEMA, SIN ADAPTARLO A UN NIVEL ESPECÍFICO.**"
-        
-        # Construir información del curso si está disponible
-        course_context_str = ""
-        if course_context:
-            course_info = []
-            course_info.append(f"**Curso:** {course_context.get('title', '')}")
-            if course_context.get('description'):
-                course_info.append(f"**Descripción:** {course_context.get('description', '')}")
-            if course_context.get('topics'):
-                topics_list = [t.get('name', '') if isinstance(t, dict) else str(t) for t in course_context.get('topics', [])]
-                if topics_list:
-                    course_info.append(f"**Temas del curso:** {', '.join(topics_list)}")
-            if course_info:
-                course_context_str = "\n\n**CONTEXTO DEL CURSO:**\n" + "\n".join(course_info) + "\n\n**IMPORTANTE:** Siempre ten presente esta información del curso al generar los apuntes. El estudiante está trabajando en este curso específico."
-        
-        # Construir información del examen si está disponible
-        exam_context_str = ""
-        if exam_info:
-            days_left = exam_info.get('days_until_exam', 0)
-            exam_date = exam_info.get('exam_date', '')
-            if days_left > 0:
-                exam_context_str = f"\n\n**INFORMACIÓN DEL EXAMEN:**\n- **Fecha del examen:** {exam_date}\n- **Días restantes:** {days_left} días\n\n**IMPORTANTE:** El estudiante tiene un examen en {days_left} días. Adapta los apuntes para ayudarle a prepararse eficientemente. Enfócate en los conceptos clave que entran en el examen y ayúdale a priorizar su estudio."
-            elif days_left == 0:
-                exam_context_str = f"\n\n**INFORMACIÓN DEL EXAMEN:**\n- **Fecha del examen:** {exam_date}\n- **El examen es HOY**\n\n**IMPORTANTE:** El examen es hoy. Enfócate en repasar conceptos clave y dar confianza al estudiante."
-            else:
-                exam_context_str = f"\n\n**INFORMACIÓN DEL EXAMEN:**\n- **Fecha del examen:** {exam_date}\n- **El examen ya pasó**\n\n**IMPORTANTE:** El examen ya pasó. Puedes ayudar al estudiante a repasar o profundizar en los conceptos."
-        
-        final_prompt = prompt_template.replace("{content}", combined_content).replace("{level_note}", level_note).replace("{level_instruction}", level_instruction).replace("{topic_name}", topic_name).replace("{language_instruction}", language_instruction).replace("{user_level}", str(user_level_display))
-        
-        # Añadir contexto del examen y curso
-        if exam_context_str:
-            final_prompt = final_prompt.replace("CONTENIDO FUENTE:", f"{exam_context_str}\n\nCONTENIDO FUENTE:")
-        if course_context_str:
-            final_prompt = final_prompt.replace("CONTENIDO FUENTE:", f"{course_context_str}\n\nCONTENIDO FUENTE:")
+        final_prompt = prompt_template.replace("{content}", combined_content).replace("{level_note}", level_note).replace("{topic_name}", topic_name).replace("{language_instruction}", language_instruction).replace("{user_level}", str(user_level_display))
         if is_language_topic and language_name:
             final_prompt = final_prompt.replace("{language_name}", language_name)
         else:
             final_prompt = final_prompt.replace("{language_name}", "el idioma objetivo")
-        
-        # Añadir instrucción final crítica sobre HTML
-        final_prompt += "\n\n**🚨 INSTRUCCIÓN FINAL CRÍTICA - LEE ESTO CON ATENCIÓN:**\n"
-        final_prompt += "DEBES generar el contenido COMPLETO en formato HTML con estilos inline. \n"
-        final_prompt += "❌ PROHIBIDO usar Markdown (NO uses #, ##, **, `, etc.). \n"
-        final_prompt += "✅ OBLIGATORIO usar HTML (<h1>, <h2>, <p>, <ul>, <li>, <strong>, <code>, etc.). \n"
-        final_prompt += "✅ TODOS los elementos DEBEN tener estilos inline (style=\"...\"). \n"
-        final_prompt += "✅ El HTML debe ser válido, bien formado, con todas las etiquetas cerradas correctamente. \n"
-        final_prompt += "✅ Responde SOLO con el HTML, sin texto adicional antes o después. \n"
-        final_prompt += "✅ NO uses Markdown bajo ninguna circunstancia. SOLO HTML.\n"
         
         prompt = final_prompt
 
@@ -1273,42 +1134,6 @@ Ejemplo CORRECTO para Francés:
             notes_content = response.content
             print(f"✅ Respuesta recibida: {len(notes_content)} caracteres")
             print(f"📄 Primeros 300 caracteres: {notes_content[:300]}")
-            
-            # Eliminar marcadores de código HTML (```html y ```) pero preservar el contenido
-            original_length = len(notes_content)
-            
-            # Si comienza con ```html, extraer solo el contenido HTML
-            if notes_content.strip().startswith('```html') or notes_content.strip().startswith('``` html'):
-                # Buscar el bloque completo ```html ... ```
-                match = re.search(r'```\s*html\s*\n(.*?)\n```\s*$', notes_content, flags=re.DOTALL | re.IGNORECASE)
-                if match:
-                    notes_content = match.group(1)
-                    print(f"🧹 Extraído contenido HTML del bloque ```html (antes: {original_length} chars, después: {len(notes_content)} chars)")
-                else:
-                    # Si no hay cierre ```, eliminar solo el marcador inicial
-                    notes_content = re.sub(r'^```\s*html\s*\n', '', notes_content, flags=re.MULTILINE | re.IGNORECASE)
-                    notes_content = notes_content.strip()
-                    print(f"🧹 Eliminado marcador ```html inicial (antes: {original_length} chars, después: {len(notes_content)} chars)")
-            else:
-                # Eliminar cualquier ```html suelto
-                notes_content = re.sub(r'^```\s*html\s*$', '', notes_content, flags=re.MULTILINE | re.IGNORECASE)
-                notes_content = re.sub(r'^```\s*$', '', notes_content, flags=re.MULTILINE)
-                notes_content = notes_content.strip()
-            
-            # DETECCIÓN INMEDIATA: Verificar si es Markdown ANTES de cualquier procesamiento
-            is_markdown = notes_content.strip().startswith('#') or bool(re.search(r'^#+\s+', notes_content.strip()[:100], re.MULTILINE))
-            is_html = notes_content.strip().startswith('<') or bool(re.search(r'<[hH][1-6][^>]*style', notes_content.strip()[:200]))
-            print(f"🔍 DETECCIÓN INMEDIATA: ¿Es Markdown? {is_markdown}, ¿Es HTML? {is_html}")
-            
-            # Si es Markdown, convertir INMEDIATAMENTE
-            if is_markdown and not is_html:
-                print("=" * 80)
-                print("🚨 CONVIRTIENDO MARKDOWN A HTML INMEDIATAMENTE")
-                print("=" * 80)
-                notes_content = self._markdown_to_html_fallback(notes_content)
-                print(f"✅ Conversión completada: {len(notes_content)} caracteres")
-                print(f"📄 Primeros 300 chars después de conversión: {notes_content[:300]}")
-                print("=" * 80)
             
             # Capturar tokens de uso
             usage_info = {
@@ -1343,7 +1168,7 @@ Ejemplo CORRECTO para Francés:
                 usage_info["outputTokens"] = len(notes_content) // 4
             
             # POST-PROCESAMIENTO: Eliminar cualquier bloque Mermaid y validar diagramas JSON
-            # re ya está importado al principio del archivo
+            import re
             import json as json_module
             
             # Detectar y eliminar bloques de código Mermaid (multilínea)
@@ -1437,59 +1262,7 @@ Ejemplo CORRECTO para Francés:
             if len(notes_content.strip()) < 50:
                 return f"# Error\n\n⚠️ La respuesta del modelo es demasiado corta. Respuesta recibida: {notes_content[:200]}", {"inputTokens": 0, "outputTokens": 0, "model": model_used}
             
-            # VALIDACIÓN CRÍTICA: Detectar si se generó Markdown en lugar de HTML
-            # Si el contenido comienza con # (Markdown) en lugar de < (HTML), es un error
-            content_start = notes_content.strip()[:1000]  # Revisar más contenido
-            full_content = notes_content.strip()
-            
-            # Detectar patrones de Markdown
-            has_markdown_headers = bool(re.search(r'^#+\s+', content_start, re.MULTILINE))
-            has_markdown_bold = bool(re.search(r'\*\*[^*]+\*\*', content_start))
-            has_markdown_tables = bool(re.search(r'^\|.+\|', content_start, re.MULTILINE))
-            has_markdown_lists = bool(re.search(r'^[-*+]\s+', content_start, re.MULTILINE))
-            has_markdown_code = bool(re.search(r'`[^`]+`', content_start))
-            
-            # Detectar HTML (más permisivo - solo verificar que tenga tags HTML básicos)
-            # Si tiene tags HTML con estilos inline, es HTML válido
-            has_html_tags = bool(re.search(r'<[hH][1-6][^>]*style|<[pP][^>]*style|<[dD][iI][vV][^>]*style|<[sS][eE][cC][tT][iI][oO][nN][^>]*style|<[uU][lL][^>]*style|<[lL][iI][^>]*style|<[tT][aA][bB][lL][eE][^>]*style|<[tT][hH][^>]*style|<[tT][dD][^>]*style', full_content))
-            
-            # También verificar si tiene estructura HTML básica (tags de apertura y cierre)
-            if not has_html_tags:
-                has_html_tags = bool(re.search(r'<[hH][1-6][^>]*>|<[pP][^>]*>|<[dD][iI][vV][^>]*>|<[sS][eE][cC][tT][iI][oO][nN][^>]*>|<[uU][lL][^>]*>|<[lL][iI][^>]*>|<[tT][aA][bB][lL][eE][^>]*>', full_content))
-            
-            # Si el contenido comienza con # o tiene patrones de Markdown pero no HTML estructurado, convertir
-            starts_with_hash = full_content.startswith('#')
-            has_markdown_patterns = has_markdown_headers or has_markdown_bold or has_markdown_tables or has_markdown_lists
-            
-            print(f"🔍 Análisis de contenido generado:")
-            print(f"   - Comienza con #: {starts_with_hash}")
-            print(f"   - Headers Markdown: {has_markdown_headers}")
-            print(f"   - Bold Markdown: {has_markdown_bold}")
-            print(f"   - Tablas Markdown: {has_markdown_tables}")
-            print(f"   - Listas Markdown: {has_markdown_lists}")
-            print(f"   - Código Markdown: {has_markdown_code}")
-            print(f"   - HTML estructurado: {has_html_tags}")
-            print(f"   - Primeros 200 chars: {full_content[:200]}")
-            
-            # Si tiene Markdown, convertir SIEMPRE (sin excepciones)
-            if starts_with_hash or has_markdown_patterns:
-                print("=" * 80)
-                print("⚠️ ADVERTENCIA: El modelo generó Markdown en lugar de HTML.")
-                print(f"   Detección: starts_with_hash={starts_with_hash}, has_markdown_patterns={has_markdown_patterns}")
-                print(f"   has_html_tags={has_html_tags}")
-                print("   Convirtiendo automáticamente a HTML...")
-                print("=" * 80)
-                notes_content = self._markdown_to_html_fallback(notes_content)
-                print(f"✅ Conversión de Markdown a HTML completada ({len(notes_content)} caracteres)")
-                print(f"   Primeros 300 chars después de conversión: {notes_content[:300]}")
-                print("=" * 80)
-            elif has_html_tags:
-                print("✅ El contenido ya está en formato HTML")
-            else:
-                print("⚠️ No se detectó ni Markdown ni HTML estructurado. Asumiendo texto plano.")
-            
             return notes_content, usage_info
-        
         except KeyError as e:
             error_str = str(e)
             print(f"❌ KeyError al generar apuntes: {error_str}")
@@ -1507,255 +1280,6 @@ Ejemplo CORRECTO para Francés:
             if "context_length" in error_str.lower() or "tokens" in error_str.lower():
                 return f"# Error\n\nEl contenido es demasiado extenso. Por favor, intenta generar apuntes sobre temas específicos o divide el documento en partes más pequeñas.\n\nError: {error_str}", {"inputTokens": 0, "outputTokens": 0, "model": model_used}
             return f"# Error\n\nNo se pudieron generar los apuntes: {error_str}", {"inputTokens": 0, "outputTokens": 0, "model": model_used}
-    
-    def _markdown_to_html_fallback(self, markdown_content: str) -> str:
-        """
-        Convierte Markdown básico a HTML como fallback cuando el modelo no genera HTML
-        """
-        # re ya está importado al principio del archivo
-        
-        # Primero, procesar tablas de Markdown
-        def process_markdown_table(table_text: str) -> str:
-            """Convierte una tabla de Markdown a HTML"""
-            lines = [l.strip() for l in table_text.strip().split('\n') if l.strip()]
-            if len(lines) < 2:
-                return table_text
-            
-            # Separar header y separador
-            header_line = lines[0]
-            if len(lines) > 1 and re.match(r'^[\|\s\-:]+$', lines[1]):
-                data_lines = lines[2:]
-            else:
-                data_lines = lines[1:]
-            
-            # Parsear header
-            header_cells = [cell.strip() for cell in header_line.split('|') if cell.strip()]
-            
-            # Generar HTML de la tabla
-            html = '<table style="width: 100%; border-collapse: collapse; margin: 1.5rem 0; background: rgba(255, 255, 255, 0.8); border-radius: 8px; overflow: hidden;">'
-            html += '<thead style="background: rgba(99, 102, 241, 0.1);">'
-            html += '<tr>'
-            for cell in header_cells:
-                html += f'<th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: #6366f1; border-bottom: 2px solid #6366f1;">{cell}</th>'
-            html += '</tr>'
-            html += '</thead>'
-            html += '<tbody>'
-            
-            # Parsear filas de datos
-            for row_line in data_lines:
-                if not row_line.strip() or re.match(r'^[\|\s\-:]+$', row_line):
-                    continue
-                cells = [cell.strip() for cell in row_line.split('|') if cell.strip()]
-                if len(cells) == len(header_cells):
-                    html += '<tr style="border-bottom: 1px solid #e5e7eb;">'
-                    for cell in cells:
-                        # Procesar negritas en las celdas
-                        cell = re.sub(r'\*\*(.+?)\*\*', r'<strong style="color: #6366f1; font-weight: 600;">\1</strong>', cell)
-                        html += f'<td style="padding: 0.75rem 1rem; color: #1f2937;">{cell}</td>'
-                    html += '</tr>'
-            
-            html += '</tbody>'
-            html += '</table>'
-            return html
-        
-        # Detectar y procesar tablas primero (mejorado)
-        table_replacements = {}
-        
-        # Buscar bloques de tablas (líneas consecutivas con |)
-        lines = markdown_content.split('\n')
-        table_blocks = []
-        current_block = []
-        current_start = None
-        
-        for i, line in enumerate(lines):
-            stripped = line.strip()
-            # Detectar línea de tabla
-            if '|' in stripped and stripped.startswith('|') and stripped.endswith('|'):
-                if current_start is None:
-                    current_start = i
-                current_block.append((i, line))
-            else:
-                # Si hay un bloque pendiente, guardarlo
-                if current_block:
-                    table_blocks.append((current_start, current_block))
-                    current_block = []
-                    current_start = None
-        
-        # Procesar último bloque si existe
-        if current_block:
-            table_blocks.append((current_start, current_block))
-        
-        # Procesar bloques de atrás hacia adelante para no afectar índices
-        for start_idx, block_lines in reversed(table_blocks):
-            table_text = '\n'.join([line for _, line in block_lines])
-            placeholder = f"__TABLE_{len(table_replacements)}__"
-            table_replacements[placeholder] = process_markdown_table(table_text)
-            # Reemplazar las líneas de la tabla
-            for j, (orig_idx, _) in enumerate(block_lines):
-                if j == 0:
-                    lines[orig_idx] = placeholder
-                else:
-                    lines[orig_idx] = ''
-        
-        # Reconstruir markdown_content sin líneas vacías de tablas
-        markdown_content = '\n'.join([l for l in lines if l != ''])
-        
-        # Procesar línea por línea para manejar correctamente la estructura
-        lines = markdown_content.split('\n')
-        result_lines = []
-        in_list = False
-        current_list_items = []
-        
-        for line in lines:
-            line_stripped = line.strip()
-            
-            # Si es un placeholder de tabla, reemplazarlo
-            if line_stripped.startswith('__TABLE_') and line_stripped in table_replacements:
-                if in_list and current_list_items:
-                    result_lines.append('<ul style="list-style: none; padding: 0; margin-bottom: 1.5rem;">')
-                    result_lines.extend(current_list_items)
-                    result_lines.append('</ul>')
-                    current_list_items = []
-                    in_list = False
-                result_lines.append(table_replacements[line_stripped])
-                continue
-            
-            # Línea vacía
-            if not line_stripped:
-                if in_list and current_list_items:
-                    result_lines.append('<ul style="list-style: none; padding: 0; margin-bottom: 1.5rem;">')
-                    result_lines.extend(current_list_items)
-                    result_lines.append('</ul>')
-                    current_list_items = []
-                    in_list = False
-                result_lines.append('')
-                continue
-            
-            # Detectar headers (debe ir antes de otros procesamientos)
-            # Manejar headers múltiples en la misma línea (ej: "# Physical Design ## ⚡ Conceptos")
-            if line_stripped.startswith('#'):
-                # Buscar todos los headers en la línea
-                header_parts = re.findall(r'(#{1,4})\s+([^#]+?)(?=\s*#{1,4}|$)', line_stripped)
-                if header_parts:
-                    # Cerrar lista si está abierta
-                    if in_list and current_list_items:
-                        result_lines.append('<ul style="list-style: none; padding: 0; margin-bottom: 1.5rem;">')
-                        result_lines.extend(current_list_items)
-                        result_lines.append('</ul>')
-                        current_list_items = []
-                        in_list = False
-                    
-                    # Procesar cada header encontrado
-                    for level_markers, content in header_parts:
-                        level = len(level_markers)
-                        content = content.strip()
-                        # Procesar negritas y código dentro del header
-                        content = re.sub(r'\*\*(.+?)\*\*', r'<strong style="color: #6366f1; font-weight: 600;">\1</strong>', content)
-                        content = re.sub(r'`(.+?)`', r'<code style="background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.9em;">\1</code>', content)
-                        # Convertir emojis a iconos
-                        content = self._convert_emojis_to_icons(content)
-                        
-                        if level == 1:
-                            result_lines.append(f'<h1 style="font-size: 2.5rem; font-weight: 700; margin-top: 2.5rem; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;">{content}</h1>')
-                        elif level == 2:
-                            result_lines.append(f'<h2 style="font-size: 1.75rem; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;">{content}</h2>')
-                        elif level == 3:
-                            result_lines.append(f'<h3 style="font-size: 1.5rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #1f2937;">{content}</h3>')
-                        elif level == 4:
-                            result_lines.append(f'<h4 style="font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #1f2937;">{content}</h4>')
-                    continue
-            
-            # Detectar header simple (fallback)
-            header_match = re.match(r'^(#{1,4})\s+(.+)$', line_stripped)
-            if header_match:
-                # Cerrar lista si está abierta
-                if in_list and current_list_items:
-                    result_lines.append('<ul style="list-style: none; padding: 0; margin-bottom: 1.5rem;">')
-                    result_lines.extend(current_list_items)
-                    result_lines.append('</ul>')
-                    current_list_items = []
-                    in_list = False
-                
-                level = len(header_match.group(1))
-                content = header_match.group(2).strip()
-                
-                # Procesar negritas y código dentro del header
-                content = re.sub(r'\*\*(.+?)\*\*', r'<strong style="color: #6366f1; font-weight: 600;">\1</strong>', content)
-                content = re.sub(r'`(.+?)`', r'<code style="background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.9em;">\1</code>', content)
-                # Convertir emojis a iconos
-                content = self._convert_emojis_to_icons(content)
-                
-                if level == 1:
-                    result_lines.append(f'<h1 style="font-size: 2.5rem; font-weight: 700; margin-top: 2.5rem; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 3px solid #6366f1; color: #1f2937;">{content}</h1>')
-                elif level == 2:
-                    result_lines.append(f'<h2 style="font-size: 1.75rem; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; color: #1f2937;">{content}</h2>')
-                elif level == 3:
-                    result_lines.append(f'<h3 style="font-size: 1.5rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #1f2937;">{content}</h3>')
-                elif level == 4:
-                    result_lines.append(f'<h4 style="font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #1f2937;">{content}</h4>')
-                continue
-            
-            # Detectar listas
-            list_match = re.match(r'^-\s+(.+)$', line_stripped)
-            if list_match:
-                content = list_match.group(1).strip()
-                # Procesar negritas dentro de la lista
-                content = re.sub(r'\*\*(.+?)\*\*', r'<strong style="color: #6366f1; font-weight: 600;">\1</strong>', content)
-                # Procesar código inline
-                content = re.sub(r'`(.+?)`', r'<code style="background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.9em;">\1</code>', content)
-                # Convertir emojis a iconos y quitar el fondo/highlight
-                content = self._convert_emojis_to_icons(content)
-                current_list_items.append(f'<li style="margin-bottom: 0.75rem; padding: 0.5rem 0; color: #1f2937;">{content}</li>')
-                in_list = True
-                continue
-            
-            # Párrafo normal
-            if in_list and current_list_items:
-                result_lines.append('<ul style="list-style: none; padding: 0; margin-bottom: 1.5rem;">')
-                result_lines.extend(current_list_items)
-                result_lines.append('</ul>')
-                current_list_items = []
-                in_list = False
-            
-            # Procesar negritas y código en párrafos
-            content = line_stripped
-            content = re.sub(r'\*\*(.+?)\*\*', r'<strong style="color: #6366f1; font-weight: 600;">\1</strong>', content)
-            content = re.sub(r'`(.+?)`', r'<code style="background: rgba(0,0,0,0.1); padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.9em;">\1</code>', content)
-            # Convertir emojis a iconos
-            content = self._convert_emojis_to_icons(content)
-            result_lines.append(f'<p style="margin-bottom: 1rem; font-size: 1.15rem; line-height: 1.8; color: #1f2937;">{content}</p>')
-        
-        # Cerrar lista si queda abierta
-        if in_list and current_list_items:
-            result_lines.append('<ul style="list-style: none; padding: 0; margin-bottom: 1.5rem;">')
-            result_lines.extend(current_list_items)
-            result_lines.append('</ul>')
-        
-        html = '\n'.join(result_lines)
-        
-        # Reemplazar cualquier placeholder de tabla que quede
-        for placeholder, table_html in table_replacements.items():
-            html = html.replace(placeholder, table_html)
-        
-        # Envolver todo en un div
-        html = f'<div style="max-width: 100%;">{html}</div>'
-        
-        return html
-    
-    def _convert_emojis_to_icons(self, text: str) -> str:
-        """
-        Convierte emojis comunes a iconos estilizados
-        Los emojis se mantienen pero con mejor espaciado y tamaño
-        """
-        # Asegurar que los emojis tengan el tamaño correcto y se rendericen como iconos
-        emoji_list = ['⚡', '📚', '⚠️', '💎', '🔍', '💡', '🎯', '📝', '✅', '❌']
-        
-        for emoji in emoji_list:
-            if emoji in text:
-                # Reemplazar emoji con versión estilizada
-                text = text.replace(emoji, f'<span style="font-size: 1.2em; display: inline-block; margin-right: 0.3em; vertical-align: middle;">{emoji}</span>')
-        
-        return text
     
     def explain_concept(self, concept: str) -> str:
         """
