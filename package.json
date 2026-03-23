@@ -8,10 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "record-promos": "node scripts/record-study-promos.mjs",
-    "record-promos:setup": "npx playwright install chromium",
-    "record-exact-promos": "node scripts/record-study-agents-exact-promos.mjs",
-    "record-exact-promos:setup": "npx playwright install chromium"
+    "postinstall": "echo \"npm install OK\""
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.3",
@@ -38,7 +35,7 @@
     "next": "^15.5.9",
     "next-auth": "^5.0.0-beta.30",
     "next-intl": "^4.8.3",
-    "nodemailer": "^6.10.1",
+    "nodemailer": "^7.0.13",
     "ogl": "^1.0.11",
     "postprocessing": "^6.38.3",
     "react": "19.1.0",
@@ -56,13 +53,13 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/node": "^20",
+    "@types/nodemailer": "^7.0.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.183.1",
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.5.0",
-    "playwright": "^1.58.2",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.12",
     "typescript": "^5"
