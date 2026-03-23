@@ -494,6 +494,19 @@ class GenerateNotesRequest(BaseModel):
     conversation_history: Optional[List[dict]] = None
     topic: Optional[str] = None
 
+
+class StudyPlanRequest(BaseModel):
+    """Modelo para generar un plan de estudio personalizado (Markdown)."""
+    apiKey: str
+    topic: str
+    days: int = 7
+    minutes_per_day: int = 45
+    goal: Optional[str] = None
+    model: Optional[str] = "gpt-4-turbo"
+    user_id: Optional[str] = None
+    chat_id: Optional[str] = None
+
+
 class GenerateExerciseRequest(BaseModel):
     """Modelo para generar un ejercicio"""
     apiKey: str
@@ -826,6 +839,54 @@ async def generate_notes(request: GenerateNotesRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=error_msg)
+
+
+@app.post("/api/generate-study-plan")
+async def generate_study_plan(request: StudyPlanRequest):
+    """
+    Genera un plan de estudio personalizado en Markdown (calendario, técnicas, checklist).
+    Si hay chat_id + documentos indexados, enriquece el plan con fragmentos RAG.
+    """
+    try:
+        if not request.apiKey:
+            raise HTTPException(status_code=400, detail="API key requerida")
+        topic = (request.topic or "").strip()
+        if not topic:
+            raise HTTPException(status_code=400, detail="topic es obligatorio")
+
+        system = get_or_create_system(request.apiKey, mode="auto")
+        plan_md, usage_info = system.generate_study_plan(
+            topic=topic,
+            days=request.days,
+            minutes_per_day=request.minutes_per_day,
+            goal=request.goal,
+            model=request.model if request.model else None,
+            user_id=request.user_id,
+            chat_id=request.chat_id,
+        )
+
+        if request.user_id:
+            input_tokens = usage_info.get("inputTokens", 0)
+            output_tokens = usage_info.get("outputTokens", 0)
+            model_used = usage_info.get("model") or request.model or "gpt-3.5-turbo"
+            save_user_cost(request.user_id, input_tokens, output_tokens, model_used, system)
+
+        return {
+            "success": True,
+            "plan": plan_md,
+            "topic": topic,
+            "days": request.days,
+            "minutes_per_day": request.minutes_per_day,
+            "inputTokens": usage_info.get("inputTokens", 0),
+            "outputTokens": usage_info.get("outputTokens", 0),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[FastAPI] Error en generate_study_plan: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/ask-question")

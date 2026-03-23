@@ -175,10 +175,14 @@ class MemoryManager:
             safe_n_results = max(1, n_results)
             
             # Buscar contenido relevante
+            # ChromaDB: varias condiciones requieren $and (no un dict plano con dos claves).
+            where_filter = None
+            if chat_id and user_id:
+                where_filter = {"$and": [{"chat_id": chat_id}, {"user_id": user_id}]}
             results = self.collection.query(
                 query_texts=[query],
                 n_results=min(safe_n_results * 3, collection_count),  # Buscar más para tener opciones al filtrar
-                where={"chat_id": chat_id, "user_id": user_id} if chat_id and user_id else None
+                where=where_filter,
             )
             
             documents = results.get('documents', [])

@@ -167,6 +167,13 @@ class ExplanationAgent:
                 if wiki:
                     print(f"✅ Imagen (Wikimedia Commons) para '{query[:60]}...'")
                     return wiki
+                keywords = [w for w in re.findall(r"[A-Za-zÀ-ÿ0-9]+", query) if len(w) >= 4]
+                simplified = " ".join(keywords[:4]).strip()
+                if simplified and simplified.lower() != query.lower():
+                    wiki = search_wikimedia_commons_image(simplified)
+                    if wiki:
+                        print(f"✅ Imagen (Wikimedia Commons, fallback) para '{simplified}'")
+                        return wiki
             
             return None
             
@@ -300,7 +307,13 @@ class ExplanationAgent:
                 return f'\n\n![{image_desc}]({image_url})\n\n*Imagen: {image_desc}*\n\n'
             else:
                 print(f"⚠️ No se encontró imagen para '{query}', dejando descripción")
-                return f'\n\n*💡 Imagen sugerida: {description or query}*\n\n'
+                fallback_desc = description or query
+                seed = requests.utils.quote((query or "study-agents-image")[:80])
+                fallback_url = f"https://picsum.photos/seed/{seed}/1200/700"
+                return (
+                    f'\n\n![{fallback_desc}]({fallback_url})\n\n'
+                    f'*💡 Imagen sugerida (fallback visual): {fallback_desc}*\n\n'
+                )
         
         # Reemplazar todos los bloques de imagen
         processed_content = re.sub(image_block_pattern, replace_image_block, content, flags=re.DOTALL | re.IGNORECASE)
@@ -474,6 +487,134 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
                 "status": "error"
             }
     
+    def generate_study_plan(
+        self,
+        topic: str,
+        days: int = 7,
+        minutes_per_day: int = 45,
+        goal: Optional[str] = None,
+        user_level: Optional[int] = None,
+        model: Optional[str] = None,
+        chat_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+    ) -> tuple[str, dict]:
+        """
+        Genera un plan de estudio personalizado en Markdown (calendario, objetivos, técnicas).
+        Opcionalmente usa fragmentos RAG del chat si hay documentos indexados.
+        """
+        topic = (topic or "").strip() or "Estudio general"
+        days = max(1, min(int(days or 7), 90))
+        minutes_per_day = max(15, min(int(minutes_per_day or 45), 240))
+        level_display = int(user_level) if user_level is not None else 5
+        level_display = max(0, min(level_display, 10))
+
+        rag_text = ""
+        if chat_id and user_id:
+            try:
+                chunks = self.memory.retrieve_relevant_content(
+                    topic, n_results=4, chat_id=chat_id, user_id=user_id
+                )
+                if chunks:
+                    rag_text = "\n\n---\n\n".join(chunks[:4])
+                    if len(rag_text) > 6000:
+                        rag_text = rag_text[:6000] + "\n\n[... documentos truncados ...]"
+            except Exception as e:
+                print(f"⚠️ generate_study_plan RAG: {e}")
+        if not rag_text.strip():
+            rag_text = "(No hay extractos de documentos en este chat; basa el plan en buenas prácticas de estudio y el tema.)"
+
+        # Inicializar LLM (mismo criterio que apuntes: generación media)
+        if self.model_manager:
+            try:
+                self.current_model_config, base_llm = self.model_manager.select_model(
+                    task_type="generation",
+                    min_quality="medium",
+                    preferred_model=model if model else None,
+                    context_length=6000,
+                )
+                if hasattr(base_llm, "temperature"):
+                    base_llm.temperature = 0.75
+                self.llm = base_llm
+                print(
+                    f"✅ Plan de estudio — modelo: {self.current_model_config.name}"
+                )
+            except Exception as e:
+                print(f"⚠️ ModelManager plan estudio: {e}")
+                if not self.api_key:
+                    return (
+                        f"# Error\n\nNo se pudo inicializar el modelo: {e}",
+                        {"inputTokens": 0, "outputTokens": 0, "model": None},
+                    )
+                self.llm = ChatOpenAI(
+                    model=model or "gpt-3.5-turbo",
+                    temperature=0.75,
+                    api_key=self.api_key,
+                )
+                self.current_model_config = None
+        else:
+            if not self.api_key:
+                return (
+                    "# Error\n\nSe requiere API key para generar el plan.",
+                    {"inputTokens": 0, "outputTokens": 0, "model": None},
+                )
+            self.llm = ChatOpenAI(
+                model=model or "gpt-3.5-turbo",
+                temperature=0.75,
+                api_key=self.api_key,
+            )
+            self.current_model_config = None
+
+        goal_line = goal.strip() if goal else "Mejorar comprensión y retención del tema."
+
+        prompt = f"""Eres un coach de estudio experto. Genera un PLAN DE ESTUDIO en **Markdown** (español).
+
+## Datos del estudiante
+- **Tema principal**: {topic}
+- **Días disponibles**: {days} (organiza día a día del 1 al {days})
+- **Tiempo aproximado por día**: {minutes_per_day} minutos (sé realista)
+- **Nivel autopercepción / app (0-10)**: {level_display}/10 (ajusta profundidad y carga)
+- **Objetivo**: {goal_line}
+
+## Fragmentos del temario/material del chat (si aplica)
+{rag_text}
+
+## Requisitos de formato (obligatorio)
+1. Título: `# Plan de estudio: {topic}`
+2. Sección `## Resumen` (3-5 bullets)
+3. Sección `## Calendario` — para cada día: objetivos concretos, qué estudiar, y **un micro-ejercicio** (5-10 min)
+4. `## Técnicas recomendadas` (p. ej. Pomodoro, repaso espaciado, active recall, Feynman) adaptadas al tiempo disponible
+5. `## Métricas de progreso` — cómo saber si va bien (señales observables)
+6. `## Si te quedas atrás` — plan B en 5 bullets
+7. `## Próximo paso en Study Agents` — sugiere usar apuntes, test, ejercicio o flashcards según el tema
+
+**Prohibido**: bloques ```mermaid. Sin relleno genérico; sé específico al tema **{topic}**.
+"""
+        try:
+            response = self.llm.invoke(prompt)
+            plan_md = response.content if hasattr(response, "content") else str(response)
+            usage_info: Dict = {"inputTokens": 0, "outputTokens": 0, "model": None}
+            if self.current_model_config:
+                usage_info["model"] = self.current_model_config.name
+            elif model:
+                usage_info["model"] = model
+            elif hasattr(self.llm, "model_name"):
+                usage_info["model"] = self.llm.model_name
+            else:
+                usage_info["model"] = "gpt-3.5-turbo"
+            if hasattr(response, "response_metadata") and response.response_metadata:
+                tu = response.response_metadata.get("token_usage", {})
+                usage_info["inputTokens"] = tu.get("prompt_tokens", 0)
+                usage_info["outputTokens"] = tu.get("completion_tokens", 0)
+            else:
+                usage_info["inputTokens"] = len(prompt) // 4
+                usage_info["outputTokens"] = len(plan_md) // 4
+            return plan_md, usage_info
+        except Exception as e:
+            return (
+                f"# Error\n\nNo se pudo generar el plan: {e}",
+                {"inputTokens": 0, "outputTokens": 0, "model": None},
+            )
+
     def generate_notes(self, topics: Optional[List[str]] = None, model: Optional[str] = None, user_level: Optional[int] = None, conversation_history: Optional[List[dict]] = None, topic: Optional[str] = None, chat_id: Optional[str] = None, user_id: Optional[str] = None) -> tuple[str, dict]:
         """
         Genera resumen completo de la conversación en formato Markdown

@@ -320,6 +320,51 @@ class StudyAgentsSystem:
             print(f"⚠️ Error en corrección de apuntes, usando apuntes originales: {e}")
             return notes
     
+    def generate_study_plan(
+        self,
+        topic: str,
+        days: int = 7,
+        minutes_per_day: int = 45,
+        goal: Optional[str] = None,
+        model: Optional[str] = None,
+        user_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
+    ) -> tuple[str, dict]:
+        """
+        Genera un plan de estudio en Markdown (calendario, técnicas, checklist).
+        """
+        user_level: Optional[int] = None
+        main_topic = (topic or "").strip()
+        if user_id and main_topic:
+            try:
+                from progress_tracker import ProgressTracker
+                tracker = ProgressTracker()
+                topic_data = tracker.get_topic_level(user_id, main_topic)
+                user_level = topic_data.get("level", 0)
+                print(f"📊 Nivel para plan de estudio '{main_topic}': {user_level}/10")
+            except Exception as e:
+                print(f"⚠️ Nivel no disponible para plan de estudio: {e}")
+                user_level = None
+        if user_level is None and user_id and chat_id:
+            try:
+                from progress_tracker import ProgressTracker
+                tracker = ProgressTracker()
+                chat_data = tracker.get_chat_level(user_id, chat_id)
+                user_level = chat_data.get("level", 5)
+            except Exception:
+                user_level = 5
+        plan, usage = self.explanation_agent.generate_study_plan(
+            topic=main_topic or "Estudio",
+            days=days,
+            minutes_per_day=minutes_per_day,
+            goal=goal,
+            user_level=user_level if user_level is not None else 5,
+            model=model,
+            chat_id=chat_id,
+            user_id=user_id,
+        )
+        return plan, usage
+    
     def _detect_negative_feedback(self, question: str) -> bool:
         """
         Detecta si el usuario está dando feedback negativo o pidiendo mejor calidad
