@@ -6047,7 +6047,13 @@ ${contentPreview}
                                 {children}
                               </a>
                             ),
-                            code: (codeProps: any) => {
+                            code: (
+                              codeProps: {
+                                inline?: boolean;
+                                className?: string;
+                                children?: React.ReactNode;
+                              } & React.HTMLAttributes<HTMLElement>
+                            ) => {
                               const { inline, className, children, ...props } = codeProps;
                               const content = String(children ?? "");
                               if (inline) {
