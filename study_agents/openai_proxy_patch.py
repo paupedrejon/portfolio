@@ -10,6 +10,14 @@ También parchea httpx.Client para evitar que reciba proxies.
 import functools
 import sys
 
+# Windows suele usar cp1252 en consola; evitamos que logs con caracteres
+# especiales (o prints con emojis) rompan el arranque con UnicodeEncodeError.
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 # Parchear httpx.Client y AsyncClient ANTES de que se importe openai
 def patch_httpx_client():
     """Parchea httpx.Client y AsyncClient para eliminar 'proxies'"""
@@ -28,7 +36,7 @@ def patch_httpx_client():
             
             httpx.Client.__init__ = patched_httpx_client_init
             httpx.Client._patched_proxies = True
-            print("✅ Parche de httpx.Client aplicado (proxies eliminado)")
+            print("[OK] Parche de httpx.Client aplicado (proxies eliminado)")
         
         # Parchear httpx.AsyncClient
         if hasattr(httpx, 'AsyncClient') and not hasattr(httpx.AsyncClient, '_patched_proxies'):
@@ -42,9 +50,9 @@ def patch_httpx_client():
             
             httpx.AsyncClient.__init__ = patched_httpx_async_client_init
             httpx.AsyncClient._patched_proxies = True
-            print("✅ Parche de httpx.AsyncClient aplicado (proxies eliminado)")
+            print("[OK] Parche de httpx.AsyncClient aplicado (proxies eliminado)")
     except Exception as e:
-        print(f"⚠️ Warning: No se pudo aplicar parche de httpx: {e}")
+        print(f"[WARN] Warning: No se pudo aplicar parche de httpx: {e}")
 
 # Aplicar parche de httpx inmediatamente
 try:
@@ -115,7 +123,7 @@ def patch_openai_client():
             
             openai.OpenAI.init = PatchedOpenAIInitMethod(openai.OpenAI._original_init_method)
             openai.OpenAI._patched_init_method = True
-            print("✅ Parche de OpenAI.init() aplicado con descriptor (proxies eliminado)")
+            print("[OK] Parche de OpenAI.init() aplicado con descriptor (proxies eliminado)")
         
         # También parchear el módulo _client si existe (donde se crea el cliente internamente)
         try:
@@ -174,15 +182,18 @@ def patch_openai_client():
                     
                     _client.Client.init = PatchedInitMethod(_client.Client._original_init_method)
                     _client.Client._patched_init_method = True
-                    print("✅ Parche de Client.init() aplicado con descriptor (proxies establecido a None)")
+                    print("[OK] Parche de Client.init() aplicado con descriptor (proxies establecido a None)")
         except Exception as e:
-            print(f"⚠️ Warning al parchear _client: {e}")
+            print(f"[WARN] Warning al parchear _client: {e}")
             import traceback
             traceback.print_exc()
         
         # CRÍTICO: Parchear _base_client.BaseClient (__init__ e init)
-        # En versiones recientes de openai, BaseClient.__init__() NO acepta `proxies` en absoluto.
-        # Nuestra estrategia: ELIMINAR `proxies` completamente antes de llamar al método original.
+        # En algunas versiones de openai, BaseClient.init() exige `proxies` como keyword-only.
+        # Nuestra estrategia:
+        # - Intentar primero con los kwargs tal cual.
+        # - Si falla por "missing ... proxies", reintentamos con `proxies=None`.
+        # - Si falla por "unexpected keyword argument 'proxies'", reintentamos eliminándolo.
         try:
             from openai import _base_client
             
@@ -191,29 +202,55 @@ def patch_openai_client():
                 
                 @functools.wraps(_base_client.BaseClient._original_init)
                 def patched_base_client_init(self, *args, **kwargs):
-                    # ELIMINAR proxies completamente (no es aceptado en esta versión)
-                    kwargs.pop('proxies', None)
-                    return _base_client.BaseClient._original_init(self, *args, **kwargs)
+                    try:
+                        return _base_client.BaseClient._original_init(self, *args, **kwargs)
+                    except TypeError as e:
+                        msg = str(e)
+                        if "unexpected keyword argument 'proxies'" in msg or 'got an unexpected keyword argument' in msg:
+                            kwargs_no_proxies = dict(kwargs)
+                            kwargs_no_proxies.pop('proxies', None)
+                            return _base_client.BaseClient._original_init(self, *args, **kwargs_no_proxies)
+
+                        if 'proxies' in msg and ('missing' in msg or 'required keyword-only' in msg):
+                            kwargs_with_proxies = dict(kwargs)
+                            kwargs_with_proxies.setdefault('proxies', None)
+                            return _base_client.BaseClient._original_init(
+                                self, *args, **kwargs_with_proxies
+                            )
+                        raise
                 
                 _base_client.BaseClient.__init__ = patched_base_client_init
                 _base_client.BaseClient._patched = True
-                print("✅ Parche de BaseClient.__init__ aplicado (proxies eliminado)")
+                print("[OK] Parche de BaseClient.__init__ aplicado (proxies eliminados)")
 
-            # Parchear BaseClient.init() si existe
+            # Parchear BaseClient.init() si existe y requiere proxies
             if hasattr(_base_client, 'BaseClient') and hasattr(_base_client.BaseClient, 'init') and not hasattr(_base_client.BaseClient, '_patched_init_method'):
                 _base_client.BaseClient._original_init_method = _base_client.BaseClient.init
 
                 @functools.wraps(_base_client.BaseClient._original_init_method)
                 def patched_base_client_init_method(*args, **kwargs):
-                    # ELIMINAR proxies completamente
-                    kwargs.pop('proxies', None)
-                    return _base_client.BaseClient._original_init_method(*args, **kwargs)
+                    try:
+                        return _base_client.BaseClient._original_init_method(*args, **kwargs)
+                    except TypeError as e:
+                        msg = str(e)
+                        if "unexpected keyword argument 'proxies'" in msg or 'got an unexpected keyword argument' in msg:
+                            kwargs_no_proxies = dict(kwargs)
+                            kwargs_no_proxies.pop('proxies', None)
+                            return _base_client.BaseClient._original_init_method(*args, **kwargs_no_proxies)
+
+                        if 'proxies' in msg and ('missing' in msg or 'required keyword-only' in msg):
+                            kwargs_with_proxies = dict(kwargs)
+                            kwargs_with_proxies.setdefault('proxies', None)
+                            return _base_client.BaseClient._original_init_method(
+                                *args, **kwargs_with_proxies
+                            )
+                        raise
 
                 _base_client.BaseClient.init = patched_base_client_init_method
                 _base_client.BaseClient._patched_init_method = True
-                print("✅ Parche de BaseClient.init aplicado (proxies eliminado)")
+                print("[OK] Parche de BaseClient.init aplicado (proxies eliminados)")
         except Exception as e:
-            print(f"⚠️ Warning al parchear _base_client: {e}")
+            print(f"[WARN] Warning al parchear _base_client: {e}")
             import traceback
             traceback.print_exc()
         
@@ -234,7 +271,7 @@ def patch_openai_client():
                 
                 _base_client.SyncHttpxClientWrapper.__init__ = patched_sync_httpx_wrapper_init
                 _base_client.SyncHttpxClientWrapper._patched = True
-                print("✅ Parche de SyncHttpxClientWrapper aplicado (proxies eliminado)")
+                print("[OK] Parche de SyncHttpxClientWrapper aplicado (proxies eliminado)")
             
             # Parchear AsyncHttpxClientWrapper
             if hasattr(_base_client, 'AsyncHttpxClientWrapper') and not hasattr(_base_client.AsyncHttpxClientWrapper, '_patched'):
@@ -248,15 +285,15 @@ def patch_openai_client():
                 
                 _base_client.AsyncHttpxClientWrapper.__init__ = patched_async_httpx_wrapper_init
                 _base_client.AsyncHttpxClientWrapper._patched = True
-                print("✅ Parche de AsyncHttpxClientWrapper aplicado (proxies eliminado)")
+                print("[OK] Parche de AsyncHttpxClientWrapper aplicado (proxies eliminado)")
         except Exception as e:
-            print(f"⚠️ Warning al parchear HttpxClientWrapper: {e}")
+            print(f"[WARN] Warning al parchear HttpxClientWrapper: {e}")
             import traceback
             traceback.print_exc()
         
-        print("✅ Parche de OpenAI aplicado (proxies eliminado)")
+        print("[OK] Parche de OpenAI aplicado (proxies eliminado)")
     except Exception as e:
-        print(f"⚠️ Warning: No se pudo aplicar parche de OpenAI: {e}")
+        print(f"[WARN] Warning: No se pudo aplicar parche de OpenAI: {e}")
         import traceback
         traceback.print_exc()
 
@@ -311,9 +348,9 @@ def patch_langchain_openai():
             except:
                 pass
             
-            print("✅ Parche de ChatOpenAI aplicado (proxies eliminado)")
+            print("[OK] Parche de ChatOpenAI aplicado (proxies eliminado)")
     except Exception as e:
-        print(f"⚠️ Warning: No se pudo aplicar parche de ChatOpenAI: {e}")
+        print(f"[WARN] Warning: No se pudo aplicar parche de ChatOpenAI: {e}")
         import traceback
         traceback.print_exc()
 
