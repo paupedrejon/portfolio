@@ -189,22 +189,11 @@ class ModelManager:
     def _check_ollama_availability(self) -> bool:
         """Verifica si Ollama está disponible"""
         if requests is None:
-            logger.warning("⚠️ 'requests' no está instalado, Ollama no disponible")
             return False
         try:
             response = requests.get("http://localhost:11434/api/tags", timeout=2)
-            if response.status_code == 200:
-                logger.info("✅ Ollama está disponible y corriendo")
-                return True
-            else:
-                logger.warning(f"⚠️ Ollama responde pero con código {response.status_code}")
-                return False
-        except requests.exceptions.ConnectionError:
-            logger.warning("⚠️ Ollama no está corriendo (no se puede conectar a localhost:11434)")
-            logger.info("💡 Para usar Ollama gratis, instálalo desde https://ollama.ai y ejecuta: ollama serve")
-            return False
-        except Exception as e:
-            logger.warning(f"⚠️ Error al verificar Ollama: {e}")
+            return response.status_code == 200
+        except:
             return False
     
     def get_available_models(self, min_quality: str = "low") -> List[ModelConfig]:
@@ -310,20 +299,12 @@ class ModelManager:
                     if not m.max_tokens or m.max_tokens >= context_length
                 ]
             
-            # Log de modelos disponibles
-            logger.info(f"📋 Modelos disponibles ({len(available_models)}):")
-            for i, model in enumerate(available_models[:5], 1):  # Mostrar solo los primeros 5
-                cost_str = "GRATIS" if model.cost_per_1k_input == 0.0 else f"${model.cost_per_1k_input:.4f}/{model.cost_per_1k_output:.4f}"
-                logger.info(f"   {i}. {model.name} ({model.provider.value}) - {cost_str} por 1k tokens")
-            
             # Intentar cada modelo hasta encontrar uno que funcione
             for model in available_models:
                 try:
-                    logger.info(f"🔄 Intentando usar modelo: {model.name} ({model.provider.value})...")
                     llm = self._create_llm(model)
                     if llm:
-                        cost_str = "GRATIS" if model.cost_per_1k_input == 0.0 else f"${model.cost_per_1k_input:.4f}/{model.cost_per_1k_output:.4f}"
-                        logger.info(f"✅ Modelo seleccionado automáticamente: {model.name} ({model.provider.value}) - {cost_str} por 1k tokens")
+                        logger.info(f"✅ Modelo seleccionado automáticamente: {model.name} (${model.cost_per_1k_input:.4f}/{model.cost_per_1k_output:.4f} por 1k tokens)")
                         return model, llm
                 except Exception as e:
                     logger.warning(f"⚠️ No se pudo crear modelo {model.name}: {e}")

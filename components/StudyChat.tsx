@@ -261,6 +261,102 @@ interface ExerciseCorrection {
   correct_answer_explanation: string;
 }
 
+type AssistantChatPart =
+  | { kind: "text"; text: string }
+  | { kind: "youtube"; id: string; title: string };
+
+function parseYoutubeVideoAttrs(attrs: string): { id: string; title: string } {
+  const props: Record<string, string> = {};
+  const re = /(\w+)="([^"]*)"/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(attrs)) !== null) {
+    props[m[1]] = m[2];
+  }
+  return { id: props.id || "", title: props.title || "Video de YouTube" };
+}
+
+/** Evita que `<youtube-video />` se pierda al normalizar HTML→markdown en el chat. */
+function splitAssistantContentByYoutubeVideos(input: string): AssistantChatPart[] {
+  if (!input) return [{ kind: "text", text: "" }];
+  const videoBlockRegex = /<youtube-video\s+([^>]+)\s*\/>/g;
+  const parts: AssistantChatPart[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = videoBlockRegex.exec(input)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ kind: "text", text: input.slice(lastIndex, match.index) });
+    }
+    const { id, title } = parseYoutubeVideoAttrs(match[1]);
+    if (id) {
+      parts.push({ kind: "youtube", id, title });
+    } else {
+      parts.push({ kind: "text", text: match[0] });
+    }
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < input.length) {
+    parts.push({ kind: "text", text: input.slice(lastIndex) });
+  }
+  return parts.length > 0 ? parts : [{ kind: "text", text: input }];
+}
+
+function AssistantYoutubeChatEmbed({
+  videoId,
+  title,
+  colorTheme,
+}: {
+  videoId: string;
+  title: string;
+  colorTheme: "dark" | "light";
+}) {
+  const borderColor =
+    colorTheme === "dark" ? "rgba(148, 163, 184, 0.35)" : "rgba(148, 163, 184, 0.45)";
+  const textColor = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
+  return (
+    <div
+      style={{
+        margin: "1.25rem 0",
+        borderRadius: "16px",
+        overflow: "hidden",
+        border: `1px solid ${borderColor}`,
+      }}
+    >
+      <div
+        style={{
+          padding: "0.85rem 1rem",
+          background: colorTheme === "dark" ? "rgba(239, 68, 68, 0.12)" : "rgba(239, 68, 68, 0.08)",
+          borderBottom: `1px solid ${borderColor}`,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span style={{ fontSize: "1.15rem" }} aria-hidden>
+            🎬
+          </span>
+          <strong style={{ color: textColor, fontWeight: 700 }}>{title}</strong>
+        </div>
+      </div>
+      <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden" }}>
+        <iframe
+          title={title}
+          width="100%"
+          height="100%"
+          src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+          frameBorder={0}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function StudyChat() {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -347,7 +443,17 @@ export default function StudyChat() {
     // Párrafos.
     out = out.replace(/<p\b[^>]*>([\s\S]*?)<\/p>/gi, (_m, text) => `${String(text).trim()}\n\n`);
 
-    // Eliminar cualquier etiqueta HTML restante.
+    // <img> → markdown para que las previews no desaparezcan al quitar HTML.
+    out = out.replace(/<img\b[^>]*>/gi, (tag) => {
+      const srcMatch = /\bsrc\s*=\s*["']([^"']+)["']/i.exec(tag);
+      if (!srcMatch) return "";
+      const src = srcMatch[1];
+      const altMatch = /\balt\s*=\s*["']([^"']*)["']/i.exec(tag);
+      const alt = altMatch ? altMatch[1] : "imagen";
+      return `\n\n![${alt}](${src})\n\n`;
+    });
+
+    // Eliminar cualquier etiqueta HTML restante (p. ej. <div>, <span>; no <youtube-video> si ya se partió el mensaje).
     out = out.replace(/<\/?[^>]+>/g, "");
 
     return out.trim();
@@ -5911,9 +6017,19 @@ ${contentPreview}
                         }}
                         className="message-content"
                       >
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
+                        {splitAssistantContentByYoutubeVideos(message.content).map((part, segIdx) =>
+                          part.kind === "youtube" ? (
+                            <AssistantYoutubeChatEmbed
+                              key={`${message.id}-yt-${segIdx}`}
+                              videoId={part.id}
+                              title={part.title}
+                              colorTheme={colorTheme}
+                            />
+                          ) : (
+                            <ReactMarkdown
+                              key={`${message.id}-md-${segIdx}`}
+                              remarkPlugins={[remarkGfm]}
+                              components={{
                             h1: ({ ...props }) => (
                               <h1
                                 {...props}
@@ -6082,6 +6198,31 @@ ${contentPreview}
                                 {children}
                               </a>
                             ),
+                            img: ({
+                              src,
+                              alt,
+                              ...props
+                            }: React.ImgHTMLAttributes<HTMLImageElement>) => (
+                              <img
+                                src={src}
+                                alt={alt ?? ""}
+                                {...props}
+                                loading="lazy"
+                                decoding="async"
+                                style={{
+                                  maxWidth: "100%",
+                                  height: "auto",
+                                  display: "block",
+                                  borderRadius: "14px",
+                                  margin: "0.85rem 0",
+                                  border: `1px solid ${
+                                    colorTheme === "dark"
+                                      ? "rgba(148, 163, 184, 0.28)"
+                                      : "rgba(148, 163, 184, 0.4)"
+                                  }`,
+                                }}
+                              />
+                            ),
                             code: (
                               codeProps: {
                                 inline?: boolean;
@@ -6146,8 +6287,10 @@ ${contentPreview}
                             ),
                           }}
                         >
-                          {htmlToMarkdown(message.content)}
+                          {htmlToMarkdown(part.text)}
                         </ReactMarkdown>
+                          )
+                        )}
                       </div>
                     ) : (
                     <div
@@ -8579,7 +8722,7 @@ function NotesViewer({
         parts.push(
           <div key={`video-${partIndex++}`} style={{
             margin: "1.5rem 0",
-            borderRadius: "12px",
+            borderRadius: "999px",
             overflow: "hidden",
             border: `1px solid ${borderColor}`,
           }}>
@@ -9730,6 +9873,7 @@ function TestComponent({
 }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [questionResults, setQuestionResults] = useState<Record<string, { isCorrect: boolean; showFeedback: boolean }>>({});
+  const [isMobileView, setIsMobileView] = useState(false);
   const answeredCount = Object.keys(answers).length;
   const totalQuestions = test.questions.length;
   const progress = (answeredCount / totalQuestions) * 100;
@@ -9738,6 +9882,13 @@ function TestComponent({
   // Calcular estadísticas en tiempo real
   const correctCount = Object.entries(questionResults).filter(([, result]) => result.isCorrect).length;
   const currentScore = totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobileView(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   
   // Manejar cambio de respuesta con corrección inmediata
   const handleAnswerChange = (questionId: string, answer: string) => {
@@ -9765,13 +9916,15 @@ function TestComponent({
     : "#ffffff";
   const textColor = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
   const secondaryTextColor = colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563";
+  const accentColor = "#1A8CA1";
+  const accentSoft = colorTheme === "dark" ? "rgba(26, 140, 161, 0.18)" : "rgba(26, 140, 161, 0.1)";
   
   return (
     <div
       style={{
         background: bgColor,
-        borderRadius: "24px",
-        padding: "1.5rem",
+        borderRadius: isMobileView ? "18px" : "24px",
+        padding: isMobileView ? "1rem" : "1.5rem",
         border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
         boxShadow: colorTheme === "dark"
           ? "0 2px 8px rgba(0, 0, 0, 0.2)"
@@ -9786,17 +9939,17 @@ function TestComponent({
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
+            alignItems: isMobileView ? "flex-start" : "center",
             marginBottom: "1rem",
             flexWrap: "wrap",
-            gap: "1rem",
+            gap: isMobileView ? "0.75rem" : "1rem",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <TestIcon size={20} color="#6366f1" />
+            <TestIcon size={20} color={accentColor} />
               <h3
                 style={{
-                fontSize: "1.25rem",
+                fontSize: isMobileView ? "1.05rem" : "1.25rem",
                 fontWeight: 600,
                 color: textColor,
                   margin: 0,
@@ -9804,7 +9957,7 @@ function TestComponent({
               >
                 Test de Evaluación
               </h3>
-            <span style={{ fontSize: "0.875rem", color: secondaryTextColor }}>
+            <span style={{ fontSize: isMobileView ? "0.8rem" : "0.875rem", color: secondaryTextColor }}>
               · Nivel: {test.user_level !== undefined ? `${test.user_level}/10` : test.difficulty}
             </span>
           </div>
@@ -9812,7 +9965,7 @@ function TestComponent({
           {/* Puntuación en tiempo real */}
           {answeredCount > 0 && (
             <div style={{
-              padding: "0.5rem 1rem",
+              padding: isMobileView ? "0.4rem 0.75rem" : "0.5rem 1rem",
               background: colorTheme === "dark"
                 ? "rgba(16, 185, 129, 0.1)"
                 : "rgba(16, 185, 129, 0.08)",
@@ -9824,7 +9977,7 @@ function TestComponent({
                 Puntuación
               </div>
               <div style={{
-                fontSize: "1.25rem",
+                fontSize: isMobileView ? "1rem" : "1.25rem",
                 fontWeight: 700,
                 color: "#10b981",
               }}>
@@ -9841,13 +9994,13 @@ function TestComponent({
               display: "flex",
               justifyContent: "space-between",
               marginBottom: "0.5rem",
-              fontSize: "0.875rem",
+              fontSize: isMobileView ? "0.8rem" : "0.875rem",
               color: secondaryTextColor,
               fontWeight: 500,
             }}
           >
             <span>Progreso: {answeredCount}/{totalQuestions} preguntas</span>
-            <span style={{ fontWeight: 600, color: "#6366f1" }}>{Math.round(progress)}%</span>
+            <span style={{ fontWeight: 600, color: accentColor }}>{Math.round(progress)}%</span>
           </div>
           <div
             style={{
@@ -9862,7 +10015,7 @@ function TestComponent({
               style={{
                 width: `${progress}%`,
                 height: "100%",
-                background: "#6366f1",
+                background: accentColor,
                 borderRadius: "8px",
                 transition: "width 0.3s ease",
               }}
@@ -9877,7 +10030,7 @@ function TestComponent({
         justifyContent: "space-between", 
         alignItems: "center", 
         marginBottom: "1.5rem",
-        gap: "1rem"
+        gap: isMobileView ? "0.5rem" : "1rem"
       }}>
         <button
           onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
@@ -9887,54 +10040,57 @@ function TestComponent({
             alignItems: "center",
             justifyContent: "center",
             gap: "0.5rem",
-            padding: "0.5rem 1rem",
+            padding: isMobileView ? "0.5rem 0.7rem" : "0.5rem 1rem",
             background: currentQuestionIndex === 0
               ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.15)")
-              : (colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff"),
+              : (colorTheme === "dark" ? "rgba(26, 140, 161, 0.18)" : "rgba(26, 140, 161, 0.1)"),
             border: `1px solid ${currentQuestionIndex === 0 
               ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)")
-              : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)")}`,
-            borderRadius: "12px",
+              : "rgba(26, 140, 161, 0.35)"}`,
+            borderRadius: "999px",
             color: currentQuestionIndex === 0 
               ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.5)" : "rgba(148, 163, 184, 0.6)")
               : textColor,
             cursor: currentQuestionIndex === 0 ? "not-allowed" : "pointer",
-            fontWeight: 500,
-            fontSize: "0.875rem",
+            fontWeight: 600,
+            fontSize: isMobileView ? "0.8rem" : "0.875rem",
             transition: "all 0.2s ease",
             opacity: currentQuestionIndex === 0 ? 0.5 : 1,
+            boxShadow: currentQuestionIndex === 0
+              ? "none"
+              : (colorTheme === "dark" ? "0 6px 18px rgba(26, 140, 161, 0.18)" : "0 6px 18px rgba(26, 140, 161, 0.12)"),
           }}
           onMouseEnter={(e) => {
             if (currentQuestionIndex > 0) {
               e.currentTarget.style.background = colorTheme === "dark" 
-                ? "rgba(148, 163, 184, 0.15)" 
-                : "rgba(148, 163, 184, 0.1)";
+                ? "rgba(26, 140, 161, 0.26)" 
+                : "rgba(26, 140, 161, 0.16)";
             }
           }}
           onMouseLeave={(e) => {
             if (currentQuestionIndex > 0) {
               e.currentTarget.style.background = colorTheme === "dark" 
-                ? "rgba(26, 26, 36, 0.8)" 
-                : "#ffffff";
+                ? "rgba(26, 140, 161, 0.18)" 
+                : "rgba(26, 140, 161, 0.1)";
             }
           }}
         >
-          <span style={{ fontSize: "1.25rem" }}>‹</span>
-          <span>Anterior</span>
+          {!isMobileView && <span style={{ fontSize: "1.25rem" }}>‹</span>}
+          <span>{isMobileView ? "Ant" : "Anterior"}</span>
         </button>
 
         <div style={{
-          padding: "0.5rem 1rem",
+          padding: isMobileView ? "0.5rem 0.65rem" : "0.5rem 1rem",
           background: colorTheme === "dark" 
-            ? "rgba(26, 26, 36, 0.8)" 
-            : "#ffffff",
-          borderRadius: "12px",
-          border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`,
+            ? "rgba(26, 140, 161, 0.12)" 
+            : "rgba(26, 140, 161, 0.08)",
+          borderRadius: "999px",
+          border: `1px solid ${colorTheme === "dark" ? "rgba(26, 140, 161, 0.25)" : "rgba(26, 140, 161, 0.3)"}`,
           fontWeight: 500,
           color: textColor,
-          fontSize: "0.875rem",
+          fontSize: isMobileView ? "0.75rem" : "0.875rem",
         }}>
-          Pregunta {currentQuestionIndex + 1} de {totalQuestions}
+          {isMobileView ? `${currentQuestionIndex + 1}/${totalQuestions}` : `Pregunta ${currentQuestionIndex + 1} de ${totalQuestions}`}
         </div>
 
         <button
@@ -9945,40 +10101,39 @@ function TestComponent({
             alignItems: "center",
             justifyContent: "center",
             gap: "0.5rem",
-            padding: "0.5rem 1rem",
+            padding: isMobileView ? "0.5rem 0.7rem" : "0.5rem 1rem",
             background: currentQuestionIndex === totalQuestions - 1
               ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.15)")
-              : (colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff"),
+              : "linear-gradient(135deg, #1A8CA1, #167c90)",
             border: `1px solid ${currentQuestionIndex === totalQuestions - 1 
               ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)")
-              : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)")}`,
+              : "rgba(26, 140, 161, 0.5)"}`,
             borderRadius: "12px",
             color: currentQuestionIndex === totalQuestions - 1 
               ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.5)" : "rgba(148, 163, 184, 0.6)")
-              : textColor,
+              : "white",
             cursor: currentQuestionIndex === totalQuestions - 1 ? "not-allowed" : "pointer",
-            fontWeight: 600,
-            fontSize: "0.875rem",
+            fontWeight: 700,
+            fontSize: isMobileView ? "0.8rem" : "0.875rem",
             transition: "all 0.2s ease",
             opacity: currentQuestionIndex === totalQuestions - 1 ? 0.5 : 1,
+            boxShadow: currentQuestionIndex === totalQuestions - 1
+              ? "none"
+              : "0 10px 24px rgba(26, 140, 161, 0.22)",
           }}
           onMouseEnter={(e) => {
             if (currentQuestionIndex < totalQuestions - 1) {
-              e.currentTarget.style.background = colorTheme === "dark" 
-                ? "rgba(148, 163, 184, 0.15)" 
-                : "rgba(148, 163, 184, 0.1)";
+              e.currentTarget.style.background = "linear-gradient(135deg, #167c90, #136f81)";
             }
           }}
           onMouseLeave={(e) => {
             if (currentQuestionIndex < totalQuestions - 1) {
-              e.currentTarget.style.background = colorTheme === "dark" 
-                ? "rgba(26, 26, 36, 0.8)" 
-                : "#ffffff";
+              e.currentTarget.style.background = "linear-gradient(135deg, #1A8CA1, #167c90)";
             }
           }}
         >
-          <span>Siguiente</span>
-          <span style={{ fontSize: "1.25rem" }}>›</span>
+          <span>{isMobileView ? "Sig" : "Siguiente"}</span>
+          {!isMobileView && <span style={{ fontSize: "1.25rem" }}>›</span>}
         </button>
       </div>
 
@@ -10016,10 +10171,10 @@ function TestComponent({
               style={{
                 width: "100%",
                 marginBottom: "1.5rem",
-                padding: "1.25rem",
-                background: questionBg,
-                borderRadius: "16px",
-                border: `1px solid ${questionBorder}`,
+                padding: isMobileView ? "0.2rem 0" : "0.35rem 0",
+                background: "transparent",
+                borderRadius: "0px",
+                border: "none",
                 transition: "all 0.2s ease",
                 position: "relative",
                 boxSizing: "border-box",
@@ -10031,8 +10186,8 @@ function TestComponent({
                   position: "absolute",
                   top: "1rem",
                   right: "1rem",
-                  width: "48px",
-                  height: "48px",
+                  width: isMobileView ? "38px" : "48px",
+                  height: isMobileView ? "38px" : "48px",
                   borderRadius: "50%",
                   background: isCorrect
                     ? "linear-gradient(135deg, #10b981, #059669)"
@@ -10064,25 +10219,25 @@ function TestComponent({
               >
                 <div
                   style={{
-                    width: "40px",
-                    height: "40px",
+                    width: isMobileView ? "34px" : "40px",
+                    height: isMobileView ? "34px" : "40px",
                     borderRadius: "50%",
-                    background: showFeedback
+                background: showFeedback
                       ? (isCorrect
                           ? "linear-gradient(135deg, #10b981, #059669)"
                           : "linear-gradient(135deg, #ef4444, #dc2626)")
                       : isAnswered
-                      ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
+                      ? `linear-gradient(135deg, ${accentColor}, #167c90)`
                       : colorTheme === "dark"
-                      ? "rgba(99, 102, 241, 0.2)"
-                      : "rgba(99, 102, 241, 0.15)",
+                      ? "rgba(26, 140, 161, 0.18)"
+                      : "rgba(26, 140, 161, 0.1)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontWeight: 700,
-                    color: (showFeedback || isAnswered) ? "white" : "#6366f1",
-                    border: (showFeedback || isAnswered) ? "none" : `2px solid #6366f1`,
-                    fontSize: showFeedback ? "0" : "1rem",
+                    color: (showFeedback || isAnswered) ? "white" : accentColor,
+                    border: (showFeedback || isAnswered) ? "none" : `2px solid ${accentColor}`,
+                    fontSize: showFeedback ? "0" : (isMobileView ? "0.9rem" : "1rem"),
                     transition: "all 0.3s ease",
                   }}
                 >
@@ -10098,7 +10253,7 @@ function TestComponent({
                   style={{
                     margin: 0,
                     fontWeight: 600,
-                    fontSize: "1.1rem",
+                    fontSize: isMobileView ? "1rem" : "1.1rem",
                     flex: 1,
                     color: textColor,
                   }}
@@ -10112,7 +10267,7 @@ function TestComponent({
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                    gridTemplateColumns: isMobileView ? "1fr" : "repeat(auto-fit, minmax(200px, 1fr))",
                     gap: "0.75rem",
                     marginTop: "1rem",
                     width: "100%",
@@ -10131,27 +10286,30 @@ function TestComponent({
                           display: "flex",
                           alignItems: "center",
                           gap: "0.75rem",
-                          padding: "1rem",
-                          background: isSelectedOption
-                            ? "rgba(99, 102, 241, 0.2)"
-                            : "rgba(148, 163, 184, 0.05)",
-                          borderRadius: "8px",
+                          padding: isMobileView ? "0.85rem" : "1rem",
+                          background: isSelectedOption ? accentSoft : (colorTheme === "dark" ? "rgba(255,255,255,0.02)" : "rgba(15, 23, 42, 0.03)"),
+                          borderRadius: "16px",
                           border: isSelectedOption
-                            ? "2px solid #6366f1"
+                            ? `1.5px solid ${accentColor}`
                             : "1px solid rgba(148, 163, 184, 0.2)",
                           cursor: "pointer",
                           transition: "all 0.2s ease",
+                          boxShadow: isSelectedOption
+                            ? (colorTheme === "dark" ? "0 8px 20px rgba(26, 140, 161, 0.2)" : "0 8px 20px rgba(26, 140, 161, 0.14)")
+                            : "none",
                         }}
                         onMouseEnter={(e) => {
                           if (!isSelectedOption) {
-                            e.currentTarget.style.background = "rgba(99, 102, 241, 0.1)";
-                            e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.5)";
+                            e.currentTarget.style.background = accentSoft;
+                            e.currentTarget.style.borderColor = "rgba(26, 140, 161, 0.45)";
+                            e.currentTarget.style.transform = "translateY(-1px)";
                           }
                         }}
                         onMouseLeave={(e) => {
                           if (!isSelectedOption) {
                             e.currentTarget.style.background = "rgba(148, 163, 184, 0.05)";
                             e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.2)";
+                            e.currentTarget.style.transform = "translateY(0)";
                           }
                         }}
                       >
@@ -10161,9 +10319,9 @@ function TestComponent({
                             height: "24px",
                             borderRadius: "50%",
                             border: "2px solid",
-                            borderColor: isSelectedOption ? "#6366f1" : "rgba(148, 163, 184, 0.5)",
+                            borderColor: isSelectedOption ? accentColor : "rgba(148, 163, 184, 0.5)",
                             background: isSelectedOption
-                              ? "#6366f1"
+                              ? accentColor
                               : "transparent",
                             display: "flex",
                             alignItems: "center",
@@ -10271,7 +10429,7 @@ function TestComponent({
                       padding: "0.75rem",
                       background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.5)" : "rgba(255, 255, 255, 0.5)",
                       borderRadius: "8px",
-                      border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"}`,
+                          border: `1px solid ${colorTheme === "dark" ? "rgba(26, 140, 161, 0.3)" : "rgba(26, 140, 161, 0.35)"}`,
                     }}>
                       <div style={{ fontSize: "0.875rem", color: secondaryTextColor, marginBottom: "0.25rem" }}>
                         Respuesta correcta:
@@ -10308,6 +10466,7 @@ function TestComponent({
                   style={{
                     display: "flex",
                     gap: "1rem",
+                    flexDirection: isMobileView ? "column" : "row",
                     marginTop: "1rem",
                     width: "100%",
                     boxSizing: "border-box",
@@ -10484,19 +10643,19 @@ function TestComponent({
         disabled={answeredCount !== totalQuestions}
         style={{
           width: "100%",
-          padding: "0.5rem 1rem",
+          padding: isMobileView ? "0.8rem 1rem" : "0.7rem 1rem",
           background:
             answeredCount === totalQuestions
-              ? "#10b981"
+              ? "#1A8CA1"
               : (colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff"),
           border: `1px solid ${answeredCount === totalQuestions
-            ? "#10b981"
+            ? "#1A8CA1"
             : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)")}`,
-          borderRadius: "12px",
+          borderRadius: "999px",
           color: answeredCount === totalQuestions 
             ? "white" 
             : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.5)" : "rgba(148, 163, 184, 0.6)"),
-          fontSize: "0.875rem",
+          fontSize: isMobileView ? "0.9rem" : "0.95rem",
           fontWeight: answeredCount === totalQuestions ? 600 : 500,
           cursor: answeredCount === totalQuestions ? "pointer" : "not-allowed",
           transition: "all 0.2s ease",
@@ -10507,7 +10666,7 @@ function TestComponent({
         }}
         onMouseEnter={(e) => {
           if (answeredCount === totalQuestions) {
-            e.currentTarget.style.background = "#059669";
+            e.currentTarget.style.background = "#167c90";
           } else {
             e.currentTarget.style.background = colorTheme === "dark" 
               ? "rgba(148, 163, 184, 0.15)" 
@@ -10516,7 +10675,7 @@ function TestComponent({
         }}
         onMouseLeave={(e) => {
           if (answeredCount === totalQuestions) {
-            e.currentTarget.style.background = "#10b981";
+            e.currentTarget.style.background = "#1A8CA1";
           } else {
             e.currentTarget.style.background = colorTheme === "dark" 
               ? "rgba(26, 26, 36, 0.8)" 
@@ -10754,7 +10913,7 @@ function SuccessMessage({
           marginBottom: "2rem",
           padding: "1rem",
           background: colorTheme === "dark" ? "rgba(16, 185, 129, 0.1)" : "rgba(16, 185, 129, 0.08)",
-          borderRadius: "12px",
+          borderRadius: "999px",
           border: `1px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.4)"}`,
         }}>
           <div style={{
@@ -10823,7 +10982,7 @@ function SuccessMessage({
             gap: "1rem",
             padding: "1.25rem",
             background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
-            borderRadius: "12px",
+                          borderRadius: "14px",
             border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"}`,
             transition: "all 0.3s ease",
             cursor: "pointer",
@@ -12201,6 +12360,7 @@ function LanguageFlashcards({
   const [isShowingFailedWords, setIsShowingFailedWords] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState({ correct: 0, total: 0 });
+  const [isMobileView, setIsMobileView] = useState(false);
   const [learnedWordsList, setLearnedWordsList] = useState<Array<{ 
     word: string; 
     translation: string; 
@@ -12218,6 +12378,13 @@ function LanguageFlashcards({
   const textColor = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
   const bgColor = colorTheme === "dark" ? "rgba(26, 26, 36, 0.8)" : "#ffffff";
   const borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobileView(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Cargar palabras aprendidas al montar el componente
   useEffect(() => {
@@ -12789,9 +12956,9 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
 
   return (
     <div style={{
-      padding: "2rem",
+      padding: isMobileView ? "1rem" : "2rem",
       background: bgColor,
-      borderRadius: "12px",
+      borderRadius: isMobileView ? "16px" : "12px",
       border: `1px solid ${borderColor}`,
       boxShadow: colorTheme === "dark" ? "0 2px 8px rgba(0, 0, 0, 0.2)" : "0 2px 8px rgba(0, 0, 0, 0.08)",
     }}>
@@ -12799,15 +12966,17 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
       <div style={{
         display: "flex",
         justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "1.5rem",
-        paddingBottom: "1rem",
+        alignItems: isMobileView ? "flex-start" : "center",
+        flexDirection: isMobileView ? "column" : "row",
+        gap: isMobileView ? "0.75rem" : "0",
+        marginBottom: "1.25rem",
+        paddingBottom: "0.75rem",
         borderBottom: `1px solid ${borderColor}`,
       }}>
-        <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600, color: textColor }}>
+        <h3 style={{ margin: 0, fontSize: isMobileView ? "1.05rem" : "1.25rem", fontWeight: 600, color: textColor }}>
           Flashcards - {language}
         </h3>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap", width: isMobileView ? "100%" : "auto" }}>
           <button
             onClick={() => setShowLearnedWords(true)}
             disabled={learnedWords.length === 0}
@@ -12815,7 +12984,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
               display: "flex",
               alignItems: "center",
               gap: "0.5rem",
-              padding: "0.5rem 1rem",
+              padding: isMobileView ? "0.45rem 0.75rem" : "0.5rem 1rem",
               background: learnedWords.length === 0 
                 ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.05)")
                 : "#10b981",
@@ -12823,9 +12992,9 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
                 ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.5)" : "rgba(148, 163, 184, 0.7)")
                 : "white",
               border: `1px solid ${learnedWords.length === 0 ? borderColor : "#10b981"}`,
-              borderRadius: "16px",
+              borderRadius: "999px",
               fontWeight: 600,
-              fontSize: "0.875rem",
+              fontSize: isMobileView ? "0.8rem" : "0.875rem",
               cursor: learnedWords.length === 0 ? "not-allowed" : "pointer",
               transition: "all 0.2s ease",
               opacity: learnedWords.length === 0 ? 0.5 : 1,
@@ -12854,7 +13023,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
               display: "flex",
               alignItems: "center",
               gap: "0.5rem",
-              padding: "0.5rem 1rem",
+              padding: isMobileView ? "0.45rem 0.75rem" : "0.5rem 1rem",
               background: failedWords.length === 0 
                 ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.05)")
                 : "#ef4444",
@@ -12862,9 +13031,9 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
                 ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.5)" : "rgba(148, 163, 184, 0.7)")
                 : "white",
               border: `1px solid ${failedWords.length === 0 ? borderColor : "#ef4444"}`,
-              borderRadius: "16px",
+              borderRadius: "999px",
               fontWeight: 600,
-              fontSize: "0.875rem",
+              fontSize: isMobileView ? "0.8rem" : "0.875rem",
               cursor: failedWords.length === 0 ? "not-allowed" : "pointer",
               transition: "all 0.2s ease",
               opacity: failedWords.length === 0 ? 0.5 : 1,
@@ -12890,9 +13059,9 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
             display: "flex",
             alignItems: "center",
             gap: "0.5rem",
-            fontSize: "0.875rem",
+            fontSize: isMobileView ? "0.8rem" : "0.875rem",
             color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
-            padding: "0.5rem 0.75rem",
+            padding: isMobileView ? "0.45rem 0.5rem" : "0.5rem 0.75rem",
           }}>
             <HiChartBar size={16} />
             <span>{stats.total}</span>
@@ -12905,9 +13074,9 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
         className={showAnswer && isCorrect ? "flashcard-flip" : ""}
         style={{
           background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
-          borderRadius: "16px",
-          padding: "2rem",
-          marginBottom: "1.5rem",
+          borderRadius: isMobileView ? "14px" : "16px",
+          padding: isMobileView ? "1rem" : "2rem",
+          marginBottom: "1.25rem",
           border: `2px solid ${isCorrect === true ? "#10b981" : isCorrect === false ? "#ef4444" : "transparent"}`,
           transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
           minHeight: "200px",
@@ -12924,15 +13093,15 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
         {language && (
           <div style={{
             position: "absolute",
-            top: "1rem",
-            right: "1rem",
+            top: isMobileView ? "0.6rem" : "1rem",
+            right: isMobileView ? "0.6rem" : "1rem",
           }}>
             <AudioButton text={(checkedWord || currentWord).word} language={language} colorTheme={colorTheme} size={20} />
           </div>
         )}
         
         <div style={{
-          fontSize: "2rem",
+          fontSize: isMobileView ? "1.5rem" : "2rem",
           fontWeight: 700,
           color: textColor,
           textAlign: "center",
@@ -12943,7 +13112,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
         
         {(checkedWord || currentWord).romanization && (
           <div style={{
-            fontSize: "1rem",
+            fontSize: isMobileView ? "0.92rem" : "1rem",
             color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
             fontStyle: "italic",
             marginBottom: "1rem",
@@ -12991,7 +13160,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
       {((!showAnswer && currentWord?.options) || (showAnswer && checkedWord?.options)) && (
         <div style={{ marginBottom: "1rem" }}>
           <div style={{
-            fontSize: "0.875rem",
+            fontSize: isMobileView ? "0.8rem" : "0.875rem",
             fontWeight: 600,
             color: textColor,
             marginBottom: "0.75rem",
@@ -13035,9 +13204,9 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
                   }}
                   disabled={showAnswer}
                   style={{
-                    flex: "1 1 calc(25% - 0.75rem)",
-                    minWidth: "150px",
-                    padding: "1rem 1.25rem",
+                    flex: isMobileView ? "1 1 100%" : "1 1 calc(25% - 0.75rem)",
+                    minWidth: isMobileView ? "100%" : "150px",
+                    padding: isMobileView ? "0.8rem 0.9rem" : "1rem 1.25rem",
                     background: showAnswer
                       ? (isCorrectOption 
                           ? (colorTheme === "dark" ? "rgba(16, 185, 129, 0.2)" : "rgba(16, 185, 129, 0.15)")
@@ -13056,9 +13225,9 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
                       : (isSelected
                           ? `2px solid #6366f1`
                           : `1px solid ${borderColor}`),
-                    borderRadius: "16px",
+                    borderRadius: "14px",
                     color: textColor,
-                    fontSize: "1rem",
+                    fontSize: isMobileView ? "0.92rem" : "1rem",
                     fontWeight: isSelected ? 600 : 500,
                     cursor: showAnswer ? "default" : "pointer",
                     textAlign: "center",
@@ -13111,22 +13280,22 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
           onClick={handleNext}
           style={{
             width: "100%",
-            padding: "0.875rem 1.5rem",
-            background: "#6366f1",
+            padding: isMobileView ? "0.8rem 1rem" : "0.875rem 1.5rem",
+            background: "#1A8CA1",
             color: "white",
             border: "none",
-            borderRadius: "16px",
+            borderRadius: "999px",
             fontWeight: 600,
             cursor: "pointer",
-            fontSize: "1rem",
+            fontSize: isMobileView ? "0.95rem" : "1rem",
             transition: "all 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#4f46e5";
+            e.currentTarget.style.background = "#167c90";
             e.currentTarget.style.transform = "scale(1.02)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#6366f1";
+            e.currentTarget.style.background = "#1A8CA1";
             e.currentTarget.style.transform = "scale(1)";
           }}
         >
@@ -13149,18 +13318,18 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
             alignItems: "center",
             justifyContent: "center",
             zIndex: 2000,
-            padding: "2rem",
+            padding: isMobileView ? "0.75rem" : "2rem",
           }}
           onClick={() => setShowLearnedWords(false)}
         >
           <div
             style={{
               background: bgColor,
-              borderRadius: "20px",
-              padding: "2.5rem",
+              borderRadius: isMobileView ? "14px" : "20px",
+              padding: isMobileView ? "1rem" : "2.5rem",
               maxWidth: "900px",
               width: "100%",
-              maxHeight: "90vh",
+              maxHeight: isMobileView ? "92vh" : "90vh",
               overflow: "auto",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
               border: `1px solid ${borderColor}`,
@@ -13171,11 +13340,11 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: "2rem",
+              marginBottom: isMobileView ? "1rem" : "2rem",
             }}>
               <h2 style={{
                 margin: 0,
-                fontSize: "1.75rem",
+                fontSize: isMobileView ? "1.2rem" : "1.75rem",
                 fontWeight: 700,
                 color: textColor,
               }}>
