@@ -3,7 +3,8 @@ Q&A Assistant Agent - Responde preguntas del estudiante
 Usa RAG para buscar información relevante y responde con contexto
 """
 
-from typing import List, Optional, Dict
+import json
+from typing import List, Optional, Dict, Any
 from langchain_openai import ChatOpenAI
 from memory.memory_manager import MemoryManager
 import os
@@ -163,6 +164,14 @@ class QAAssistantAgent:
                 if wiki:
                     print(f"✅ Imagen (Wikimedia Commons) para '{query[:60]}...'")
                     return wiki
+                # Segundo intento con query simplificada (reduce ruido del prompt).
+                keywords = [w for w in re.findall(r"[A-Za-zÀ-ÿ0-9]+", query) if len(w) >= 4]
+                simplified = " ".join(keywords[:4]).strip()
+                if simplified and simplified.lower() != query.lower():
+                    wiki = search_wikimedia_commons_image(simplified)
+                    if wiki:
+                        print(f"✅ Imagen (Wikimedia Commons, fallback) para '{simplified}'")
+                        return wiki
             
             return None
             
@@ -215,7 +224,13 @@ class QAAssistantAgent:
                 return f'\n\n![{image_desc}]({image_url})\n\n*Imagen: {image_desc}*\n\n'
             else:
                 print(f"⚠️ No se encontró imagen para '{query}', dejando descripción")
-                return f'\n\n*💡 Imagen sugerida: {description or query}*\n\n'
+                fallback_desc = description or query
+                seed = requests.utils.quote((query or "study-agents-image")[:80])
+                fallback_url = f"https://picsum.photos/seed/{seed}/1200/700"
+                return (
+                    f'\n\n![{fallback_desc}]({fallback_url})\n\n'
+                    f'*💡 Imagen sugerida (fallback visual): {fallback_desc}*\n\n'
+                )
         
         # Reemplazar todos los bloques de imagen
         processed_content = re.sub(image_block_pattern, replace_image_block, content, flags=re.DOTALL | re.IGNORECASE)
@@ -357,7 +372,18 @@ class QAAssistantAgent:
         
         return processed_content
     
-    def answer_question(self, question: str, user_id: str = "default", model: Optional[str] = None, chat_id: Optional[str] = None, topic: Optional[str] = None, force_premium: bool = False, initial_form_data: Optional[dict] = None) -> tuple[str, dict]:
+    def answer_question(
+        self,
+        question: str,
+        user_id: str = "default",
+        model: Optional[str] = None,
+        chat_id: Optional[str] = None,
+        topic: Optional[str] = None,
+        force_premium: bool = False,
+        initial_form_data: Optional[dict] = None,
+        course_context: Optional[Any] = None,
+        exam_info: Optional[Any] = None,
+    ) -> tuple[str, dict]:
         """
         Responde una pregunta del estudiante usando el temario y el historial
         
@@ -453,6 +479,34 @@ class QAAssistantAgent:
                 content_cleaned = re.sub(r'```\s*diagram-json\s*\n.*?```', '[Esquema visual]', content_part, flags=re.DOTALL | re.IGNORECASE)
                 context_parts.append(content_cleaned)
         context = "\n\n".join(context_parts) if context_parts else "No hay contenido relevante disponible en los documentos procesados."
+
+        prefix_blocks: list[str] = []
+        if course_context is not None and course_context != "":
+            if isinstance(course_context, dict):
+                try:
+                    cc = json.dumps(course_context, ensure_ascii=False, indent=2)
+                except Exception:
+                    cc = str(course_context)
+            else:
+                cc = str(course_context).strip()
+            if cc:
+                if len(cc) > 12000:
+                    cc = cc[:12000] + "\n\n[... contexto de curso truncado ...]"
+                prefix_blocks.append(f"CONTEXTO DEL CURSO (metadatos):\n{cc}")
+
+        if exam_info is not None and exam_info != "":
+            if isinstance(exam_info, dict):
+                try:
+                    ei = json.dumps(exam_info, ensure_ascii=False, indent=2)
+                except Exception:
+                    ei = str(exam_info)
+            else:
+                ei = str(exam_info).strip()
+            if ei:
+                prefix_blocks.append(f"INFORMACIÓN DE EXAMEN (si aplica):\n{ei}")
+
+        if prefix_blocks:
+            context = "\n\n---\n\n".join(prefix_blocks) + "\n\n---\n\n" + context
         
         # Construir historial como string, limpiando cualquier JSON problemático
         history_str = ""

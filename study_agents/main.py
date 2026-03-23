@@ -365,7 +365,18 @@ class StudyAgentsSystem:
         
         return False
     
-    def ask_question(self, question: str, user_id: str = "default", model: Optional[str] = None, chat_id: Optional[str] = None, topic: Optional[str] = None, initial_form_data: Optional[dict] = None) -> tuple[str, dict]:
+    def ask_question(
+        self,
+        question: str,
+        user_id: str = "default",
+        model: Optional[str] = None,
+        chat_id: Optional[str] = None,
+        topic: Optional[str] = None,
+        initial_form_data: Optional[dict] = None,
+        course_context: Optional[Any] = None,
+        exam_info: Optional[Any] = None,
+        **kwargs: Any,
+    ) -> tuple[str, dict]:
         """
         Responde una pregunta del estudiante
         
@@ -376,10 +387,14 @@ class StudyAgentsSystem:
             chat_id: ID de la conversación (para obtener el nivel)
             topic: Tema del chat (para contextualizar las respuestas)
             initial_form_data: Datos del formulario inicial (nivel, objetivo, tiempo disponible)
+            course_context: Contexto de curso (str o dict) para enriquecer el prompt
+            exam_info: Metadatos de examen (dict) si el usuario está en un curso con fecha de examen
             
         Returns:
             Tupla con (respuesta contextualizada, información de tokens)
         """
+        if kwargs:
+            print(f"⚠️ ask_question: ignorando argumentos no soportados: {list(kwargs.keys())}")
         # Detectar si el usuario está dando feedback negativo o pidiendo mejor calidad
         needs_premium = self._detect_negative_feedback(question)
         
@@ -398,7 +413,9 @@ class StudyAgentsSystem:
             chat_id=chat_id, 
             topic=topic,
             force_premium=needs_premium,  # Forzar premium si se detectó feedback negativo
-            initial_form_data=initial_form_data  # Pasar datos del formulario inicial
+            initial_form_data=initial_form_data,  # Pasar datos del formulario inicial
+            course_context=course_context,
+            exam_info=exam_info,
         )
         print(f"💡 Respuesta generada ({len(answer)} caracteres)")
         

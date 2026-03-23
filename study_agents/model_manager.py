@@ -418,15 +418,19 @@ class ModelManager:
             else:
                 # Límites reales de tokens de salida por modelo
                 # Nota: El contexto puede ser mayor, pero la salida tiene límites más estrictos
+                # Algunos entornos/API keys devuelven límites más bajos (p. ej. 4096).
+                # Usamos un tope conservador para evitar errores 400 por max_tokens excedido.
                 model_output_limits = {
-                    "gpt-3.5-turbo": 16384,
-                    "gpt-4o-mini": 16384,
-                    "gpt-4-turbo": 16384,
-                    "gpt-4o": 16384,
-                    "gpt-4": 8192,
+                    "gpt-3.5-turbo": 4096,
+                    "gpt-4o-mini": 4096,
+                    "gpt-4-turbo": 4096,
+                    "gpt-4o": 4096,
+                    "gpt-4": 4096,
                 }
                 if model_config.name in model_output_limits:
                     max_output_tokens = min(max_output_tokens, model_output_limits[model_config.name])
+                # Clamp global defensivo para modelos nuevos/no mapeados.
+                max_output_tokens = min(max_output_tokens, 4096)
             
             llm = ChatOpenAI(
                 model=model_config.name,
