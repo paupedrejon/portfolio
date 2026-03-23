@@ -324,6 +324,35 @@ export default function StudyChat() {
   // Gemini-like: reducir ruido visual en el feed de conversación.
   const showMessageEntryEffects = false;
 
+  // Algunos mensajes en producción vienen con HTML embebido (p.ej. <h2 style="...">...</h2>).
+  // ReactMarkdown por defecto no renderiza HTML como DOM, así que lo convertimos a Markdown básico
+  // para que no se muestren las etiquetas y quede consistente con el estilo del chat.
+  const htmlToMarkdown = (input: string) => {
+    if (!input) return input;
+
+    let out = input;
+
+    // Simple formatting first (para que el contenido interno ya venga en Markdown).
+    out = out
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<strong\b[^>]*>([\s\S]*?)<\/strong>/gi, (_m, text) => `**${text}**`)
+      .replace(/<em\b[^>]*>([\s\S]*?)<\/em>/gi, (_m, text) => `*${text}*`);
+
+    // Encabezados.
+    out = out.replace(
+      /<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi,
+      (_m, level, text) => `${"#".repeat(Number(level))} ${String(text).trim()}\n\n`
+    );
+
+    // Párrafos.
+    out = out.replace(/<p\b[^>]*>([\s\S]*?)<\/p>/gi, (_m, text) => `${String(text).trim()}\n\n`);
+
+    // Eliminar cualquier etiqueta HTML restante.
+    out = out.replace(/<\/?[^>]+>/g, "");
+
+    return out.trim();
+  };
+
   // Función helper para guardar una palabra aprendida (no usada actualmente)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const saveLearnedWord = async (
@@ -5695,7 +5724,7 @@ ${contentPreview}
                           ),
                         }}
                       >
-                        {message.content}
+                        {htmlToMarkdown(message.content)}
                       </ReactMarkdown>
                     </div>
                   </div>
@@ -6117,7 +6146,7 @@ ${contentPreview}
                             ),
                           }}
                         >
-                          {message.content}
+                          {htmlToMarkdown(message.content)}
                         </ReactMarkdown>
                       </div>
                     ) : (
@@ -6133,7 +6162,7 @@ ${contentPreview}
                         textRendering: "optimizeLegibility",
                       }}
                     >
-                      {message.content}
+                      {htmlToMarkdown(message.content)}
                     </div>
                     )}
                     {showCostEstimates && message.costEstimate && (
