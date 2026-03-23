@@ -14,6 +14,7 @@ export const metadata = {
   description: "Portfolio showcasing my projects, skills and experience as a software engineer specializing in game development, web applications, and creative technology.",
   icons: {
     icon: [
+      { url: "/favicon.ico", sizes: "any" },
       { url: '/Favicon.png', sizes: 'any', type: 'image/png' },
       { url: '/Favicon32x32.png', sizes: '32x32', type: 'image/png' },
       { url: '/Favicon16x16.png', sizes: '16x16', type: 'image/png' },

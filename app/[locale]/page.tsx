@@ -5,11 +5,23 @@ import ScrollButton from "@/components/ScrollButton";
 import CurriculumButton from "@/components/CurriculumButton";
 import FloatingLines from "@/components/FloatingLines";
 import Masonry from "@/components/Masonry";
+import StudyAgentsHomeSpotlight from "@/components/StudyAgentsHomeSpotlight";
 import { allProjects } from "@/data/projectsData";
 import { useEffect, useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
+
+function projectToMasonryItem(
+  p: (typeof allProjects)[number],
+  locale: string
+) {
+  const isInternal = p.ctaHref.startsWith("/") && !p.ctaHref.startsWith("//");
+  const isOutsideLocale = /^\/(study-agents|api|auth)/.test(p.ctaHref);
+  const url =
+    isInternal && !isOutsideLocale ? `/${locale}${p.ctaHref}` : p.ctaHref;
+  return { id: p.id, img: p.imageCard, url, height: p.height };
+}
 
 const navCardKeys = [
   "projects",
@@ -67,6 +79,7 @@ const navCardIcons = [
 
 export default function HomePage() {
   const t = useTranslations("home");
+  const tProjects = useTranslations("projectsData");
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const [mounted, setMounted] = useState(false);
@@ -74,16 +87,21 @@ export default function HomePage() {
   const floatingLinesGradient = useMemo(() => ["#6366f1", "#8b5cf6", "#a855f7"], []);
 
   const masonryItems = useMemo(
-    () =>
-      allProjects.map((p) => {
-        const isInternal = p.ctaHref.startsWith("/") && !p.ctaHref.startsWith("//");
-        const isOutsideLocale = /^\/(study-agents|api|auth)/.test(p.ctaHref);
-        const url = isInternal && !isOutsideLocale
-          ? `/${locale}${p.ctaHref}`
-          : p.ctaHref;
-        return { id: p.id, img: p.imageCard, url, height: p.height };
-      }),
+    () => allProjects.map((p) => projectToMasonryItem(p, locale)),
     [locale]
+  );
+
+  const masonryItemsWithoutStudyAgents = useMemo(
+    () =>
+      allProjects
+        .filter((p) => p.id !== "study-agents")
+        .map((p) => projectToMasonryItem(p, locale)),
+    [locale]
+  );
+
+  const studyAgentsProject = useMemo(
+    () => allProjects.find((p) => p.id === "study-agents"),
+    []
   );
 
   const risingLinesConfig = useMemo(
@@ -341,6 +359,18 @@ export default function HomePage() {
             overflow: "hidden",
           }}
         >
+          {studyAgentsProject ? (
+            <StudyAgentsHomeSpotlight
+              imageSrc={studyAgentsProject.imageCard}
+              badge={t("studyAgentsFeaturedBadge")}
+              previewCaption={t("studyAgentsPreviewCaption")}
+              title={tProjects("study-agents.title")}
+              titleLine2={tProjects("study-agents.title2")}
+              description={tProjects("study-agents.subtitle")}
+              ctaLabel={tProjects("study-agents.ctaText")}
+            />
+          ) : null}
+
           <div
             className="whats-new-grid"
             style={{
@@ -422,7 +452,7 @@ export default function HomePage() {
 
             <div style={{ width: "100%", minHeight: "400px", display: "flex", justifyContent: "center", alignItems: "center" }}>
               <Masonry
-                items={masonryItems.slice(0, 7)}
+                items={masonryItemsWithoutStudyAgents.slice(0, 7)}
                 columns={3}
                 ease="power3.out"
                 duration={0.6}
