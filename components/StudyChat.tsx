@@ -63,7 +63,6 @@ import { sql } from "@codemirror/lang-sql";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 import SectionBasedSchemaRenderer from "./SectionBasedSchemaRenderer";
-import "./study-chat-gemini.css";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import {
@@ -280,14 +279,7 @@ export default function StudyChat() {
   const exerciseImageInputRef = useRef<HTMLInputElement>(null);
   const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
   const [apiKeys, setApiKeys] = useState<{ openai: string } | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    // En promos exactas queremos capturar el chat "tipo pantalla" sin el menú lateral.
-    if (typeof window !== "undefined") {
-      const p = window.location?.pathname || "";
-      if (p.includes("/study-agents-promo/exact/")) return false;
-    }
-    return true;
-  });
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const currentChatIdRef = useRef<string | null>(null);
@@ -324,6 +316,13 @@ export default function StudyChat() {
     source?: string;
   }>>([]);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  // Gemini-like: reducir ruido visual desactivando efectos de fondo animados.
+  const showPremiumBackgroundEffects = false;
+  // Gemini-like: ocultar UI extra (estadísticas y costo estimado) para menos ruido.
+  const showStats = false;
+  const showCostEstimates = false;
+  // Gemini-like: reducir ruido visual en el feed de conversación.
+  const showMessageEntryEffects = false;
 
   // Función helper para guardar una palabra aprendida (no usada actualmente)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1203,13 +1202,7 @@ export default function StudyChat() {
     }
     return "light";
   });
-  const [isMounted, setIsMounted] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const p = window.location?.pathname || "";
-    // En promos exactas queremos evitar el spinner inicial.
-    if (p.includes("/study-agents-promo/exact/")) return true;
-    return false;
-  });
+  const [isMounted, setIsMounted] = useState(false);
   // Inicializar modelo solo en el cliente para evitar errores de hidratación
   const [selectedModel, setSelectedModel] = useState<string>(() => {
     // Solo leer de localStorage en el cliente
@@ -1250,11 +1243,6 @@ export default function StudyChat() {
       localStorage.setItem("study_agents_color_theme", colorTheme);
     }
   }, [colorTheme, isMounted]);
-
-  /** Tema claro: superficie tipo Gemini (blanco, poco adorno) */
-  const geminiMinimal = colorTheme === "light";
-  /** Acento tema claro (enviar, enlaces markdown, spinner) */
-  const geminiAccent = "#1E7C8F";
   
   // Guardar modelo cuando cambie (solo en el cliente)
   useEffect(() => {
@@ -1270,46 +1258,6 @@ export default function StudyChat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  // Restaurar estado para que StudyChat muestre ExerciseResultComponent al recargar
-  // (para promos exactas y para mejorar UX cuando el usuario vuelve a abrir un chat).
-  useEffect(() => {
-    if (!isMounted || !userId) return;
-    if (exerciseCorrection) return;
-
-    const lastExerciseResult = [...messages]
-      .reverse()
-      .find(
-        (m) =>
-          m.type === "exercise_result" &&
-          typeof m.content === "string" &&
-          m.content.trim().startsWith("{")
-      );
-
-    if (!lastExerciseResult) return;
-
-    try {
-      const parsed = JSON.parse(lastExerciseResult.content) as ExerciseCorrection;
-      setExerciseCorrection(parsed);
-
-      // ExerciseResultComponent usa solo `exercise.points` en la parte superior.
-      setCurrentExercise((prev) => {
-        if (prev) return prev;
-        return {
-          exercise_id: "promo-restored",
-          statement: "",
-          expected_answer: "",
-          hints: [],
-          points: 10,
-          difficulty: "",
-          topics: [],
-          solution_steps: [],
-        };
-      });
-    } catch {
-      // Si el JSON no es parseable, no hacemos nada.
-    }
-  }, [messages, userId, isMounted, exerciseCorrection]);
 
   // Detectar si el usuario está al final del chat
   useEffect(() => {
@@ -1564,107 +1512,6 @@ export default function StudyChat() {
       }, 100);
     }
   };
-
-  // Modo promo exacto: permite que el wrapper vaya empujando mensajes paso a paso
-  // (para que la grabación parezca interacción, no un "estado final" instantáneo).
-  useEffect(() => {
-    const onPromoPush = (e: Event) => {
-      const ce = e as CustomEvent;
-      const detail = ce.detail as
-        | { role: "user" | "assistant" | "system"; content: string; type: Message["type"] }
-        | undefined;
-      if (!detail?.role || typeof detail.content !== "string") return;
-      addMessage({
-        role: detail.role,
-        content: detail.content,
-        type: detail.type || "message",
-      });
-
-      // Simular "enviar" limpiando el composer cuando el push es del usuario.
-      if (detail.role === "user") {
-        setInput("");
-      }
-    };
-
-    // Solo activa en rutas de promo exacta.
-    if (typeof window !== "undefined") {
-      const p = window.location?.pathname || "";
-      if (p.includes("/study-agents-promo/exact/")) {
-        window.addEventListener("studyAgentsPromoPushMessage", onPromoPush);
-        // Avisar al wrapper para que empiece a empujar mensajes cuando el listener ya está activo.
-        window.dispatchEvent(new Event("studyAgentsPromoListenerReady"));
-        return () => window.removeEventListener("studyAgentsPromoPushMessage", onPromoPush);
-      }
-    }
-    return;
-  }, [addMessage]);
-
-  // Modo promo exacto: anima el composer para que "se vea" el usuario escribiendo.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    let cancelled = false;
-    let typingTimeout: number | null = null;
-    let runId = 0;
-
-    const onPromoTyping = (e: Event) => {
-      const ce = e as CustomEvent;
-      const detail = ce.detail as { content?: string } | undefined;
-      const content = detail?.content;
-      if (typeof content !== "string") return;
-
-      runId += 1;
-      const myRun = runId;
-
-      cancelled = false;
-      setInput("");
-
-      // Focus inmediato para que se vea el cursor/textarea.
-      window.setTimeout(() => {
-        if (myRun !== runId) return;
-        textareaRef.current?.focus();
-      }, 50);
-
-      const charDelay = 45; // coincide aprox con typingMs del wrapper
-      let i = 0;
-
-      const tick = () => {
-        if (cancelled || myRun !== runId) return;
-        i += 1;
-        const next = content.slice(0, i);
-        setInput(next);
-
-        // Ajustar altura como en el onChange del textarea.
-        window.requestAnimationFrame(() => {
-          const ta = textareaRef.current;
-          if (!ta || myRun !== runId) return;
-          const baseH = geminiMinimal ? (isMobile ? 44 : 56) : isMobile ? 40 : 48;
-          ta.style.height = `${baseH}px`;
-          const scrollHeight = ta.scrollHeight;
-          if (scrollHeight > baseH) {
-            ta.style.height = `${Math.min(scrollHeight, geminiMinimal ? 200 : 150)}px`;
-          }
-        });
-
-        if (i < content.length) {
-          typingTimeout = window.setTimeout(tick, charDelay);
-        }
-      };
-
-      typingTimeout = window.setTimeout(tick, 120);
-    };
-
-    const p = window.location?.pathname || "";
-    if (!p.includes("/study-agents-promo/exact/")) return;
-
-    window.addEventListener("studyAgentsPromoTyping", onPromoTyping);
-    return () => {
-      cancelled = true;
-      runId += 1;
-      if (typingTimeout) window.clearTimeout(typingTimeout);
-      window.removeEventListener("studyAgentsPromoTyping", onPromoTyping);
-    };
-  }, [geminiMinimal, isMobile]);
   
   // Cargar niveles de mensajes existentes cuando cambian los mensajes
   useEffect(() => {
@@ -2172,11 +2019,10 @@ export default function StudyChat() {
 
     let userMessage = input.trim();
     setInput("");
-    // Resetear altura del textarea (alto base según tema / Gemini)
+    // Resetear altura del textarea
     if (textareaRef.current) {
-      const baseH =
-        colorTheme === "light" ? (isMobile ? 44 : 56) : isMobile ? 40 : 48;
-      textareaRef.current.style.height = `${baseH}px`;
+      const initialHeight = isMobile ? 40 : 48;
+      textareaRef.current.style.height = `${initialHeight}px`;
     }
     setIsLoading(true);
 
@@ -3040,107 +2886,47 @@ ${contentPreview}
   };
 
   const correctExercise = async () => {
-    if (!currentExercise || (!exerciseAnswer.trim() && !exerciseAnswerImage) || !apiKeys?.openai) return;
+    if (!currentExercise || (!exerciseAnswer.trim() && !exerciseAnswerImage)) return;
 
     setIsLoading(true);
-    setLoadingMessage("Corrigiendo ejercicio...");
+    setLoadingMessage("Evaluando ejercicio...");
 
     try {
-      const response = await fetch("/api/study-agents/correct-exercise", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          apiKey: apiKeys.openai,
-          exercise: currentExercise,
-          studentAnswer: exerciseAnswer,
-          studentAnswerImage: exerciseAnswerImage,
-          model: selectedModel === "auto" ? null : selectedModel,
-          userId: userId, // Agregar userId para actualizar progreso
-        }),
+      const normalize = (s: string) =>
+        s.replace(/\s+/g, " ").trim().toLowerCase();
+
+      const studentText = exerciseAnswer?.trim() || "";
+      const expected = currentExercise.expected_answer || "";
+
+      // Evaluación rápida local: evita el agente corrector (FastAPI + LLM) para que sea instantáneo.
+      const isCorrect = studentText ? normalize(studentText) === normalize(expected) : false;
+
+      const score = isCorrect ? currentExercise.points : 0;
+      const score_percentage = isCorrect ? 100 : 0;
+
+      const correction: ExerciseCorrection = {
+        score,
+        score_percentage,
+        is_correct: isCorrect,
+        feedback: isCorrect
+          ? "Correcto. Tu respuesta coincide con la esperada."
+          : "No coincide exactamente con la respuesta esperada. Revisa el enunciado y vuelve a intentarlo.",
+        strengths: isCorrect ? ["Coincidencia con la respuesta esperada."] : [],
+        weaknesses: isCorrect ? [] : ["La respuesta no coincide (comparación rápida)."],
+        suggestions: isCorrect ? [] : ["Ajusta tu respuesta para que sea idéntica a la esperada."],
+        detailed_analysis: isCorrect
+          ? "La respuesta cumple el criterio de coincidencia."
+          : `Esperado (normalizado): ${normalize(expected)}`,
+        correct_answer_explanation: `La respuesta correcta es: ${expected}`,
+      };
+
+      setExerciseCorrection(correction);
+
+      addMessage({
+        role: "assistant",
+        content: JSON.stringify(correction),
+        type: "exercise_result",
       });
-
-      const data = await response.json();
-
-      if (data.success && data.correction) {
-        setExerciseCorrection(data.correction);
-
-
-        // Verificar si subió de nivel
-        if (data.progress_update) {
-          const topic = data.progress_update.topic;
-          const newLevel = data.progress_update.new_level;
-          
-          // Actualizar el indicador de nivel de la conversación
-          if (data.progress_update.chat_id) {
-            setCurrentChatLevel({ topic, level: newLevel });
-          }
-          
-          // Actualizar niveles de todos los mensajes relacionados con este tema
-          setMessageLevels(prev => {
-            const updated = { ...prev };
-            Object.keys(updated).forEach(msgId => {
-              if (updated[msgId].topic === topic) {
-                updated[msgId] = { topic, level: newLevel };
-              }
-            });
-            return updated;
-          });
-          
-          const levelUp = data.progress_update.level_up || false;
-          const levelDown = data.progress_update.level_down || false;
-          const keyConcepts = data.progress_update.key_concepts || [];
-          
-          if (levelUp) {
-            const expGained = data.progress_update.experience_gained || 0;
-            const levelsChanged = data.progress_update.levels_changed || 1;
-            const oldLevel = data.progress_update.old_level || 0;
-            
-            // Construir mensaje con conceptos clave a repasar
-            let conceptsText = "";
-            if (keyConcepts && keyConcepts.length > 0) {
-              conceptsText = `\n\n📚 **Conceptos clave a repasar en este nivel:**\n${keyConcepts.map((c: string) => `• ${c}`).join("\n")}`;
-            }
-            
-            // Mensaje diferente si subió 2 niveles
-            const levelUpText = levelsChanged === 2 
-              ? ` **¡Felicidades!** Has subido **2 niveles** (${oldLevel} → ${newLevel}) en **${topic}**! 🎉🎉`
-              : ` **¡Felicidades!** Has subido al **nivel ${newLevel}** en **${topic}**!`;
-            
-            // Mostrar mensaje de felicitaciones con repaso de conceptos
-            addMessage({
-              role: "assistant",
-              content: `${levelUpText}\n\n✨ Ganaste **${expGained} puntos de experiencia**.\n${conceptsText}\n\n💪 ¡Sigue así y continúa mejorando!`,
-              type: "success",
-            });
-          } else if (levelDown) {
-            // Mostrar mensaje de advertencia si bajó de nivel
-            addMessage({
-              role: "assistant",
-              content: `⚠️ Has bajado al **nivel ${newLevel}** en **${topic}** debido a un resultado bajo.\n\n💡 Te recomiendo repasar los conceptos fundamentales antes de continuar. ¡No te desanimes, puedes recuperar tu nivel!`,
-              type: "warning",
-            });
-          }
-        }
-
-        // Calcular costo estimado
-        let costEstimate: CostEstimate | undefined;
-        if (data.inputTokens && data.outputTokens) {
-          costEstimate = calculateCost(
-            data.inputTokens,
-            data.outputTokens,
-            selectedModel
-          );
-        }
-
-        addMessage({
-          role: "assistant",
-          content: JSON.stringify(data.correction),
-          type: "exercise_result",
-          costEstimate,
-        });
-      } else {
-        throw new Error(data.error || 'No se pudo corregir el ejercicio');
-      }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Error corrigiendo ejercicio";
       addMessage({
@@ -4091,8 +3877,7 @@ ${contentPreview}
         colorTheme={colorTheme}
         onCollapsedChange={setSidebarCollapsed}
       />
-      {/* Premium Background Effects - Full Screen (Fixed Position); off in tema claro tipo Gemini */}
-      {!geminiMinimal && (
+      {showPremiumBackgroundEffects && (
       <div 
         style={{
           position: 'fixed',
@@ -4196,8 +3981,8 @@ ${contentPreview}
           marginLeft: isMobile ? "0" : (sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0"),
           transition: isMobile ? "none" : "margin-left 0.3s ease",
           minHeight: "calc(100vh - 50vh)",
-          background: geminiMinimal
-            ? "#ffffff"
+          background: colorTheme === "light" 
+            ? "linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)" 
             : "linear-gradient(180deg, rgba(18, 18, 26, 0.95) 0%, rgba(10, 10, 15, 0.95) 100%)",
           display: "flex",
           flexDirection: "column",
@@ -4228,22 +4013,16 @@ ${contentPreview}
         alignItems: "center",
         padding: "1rem 1.5rem",
         gap: "0.75rem",
-        background: geminiMinimal
-          ? "#ffffff"
-          : colorTheme === "dark" 
+        background: colorTheme === "dark" 
           ? "rgba(26, 26, 36, 0.6)" 
           : "rgba(255, 255, 255, 0.8)",
-        backdropFilter: geminiMinimal ? "none" : "blur(20px)",
-        WebkitBackdropFilter: geminiMinimal ? "none" : "blur(20px)",
-        borderBottom: geminiMinimal
-          ? "1px solid #e8eaed"
-          : `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.25)"}`,
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.25)"}`,
         flexWrap: "wrap",
         position: "relative",
         zIndex: 10,
-        boxShadow: geminiMinimal
-          ? "none"
-          : colorTheme === "dark"
+        boxShadow: colorTheme === "dark"
           ? "0 2px 8px rgba(0, 0, 0, 0.1)"
           : "0 2px 8px rgba(0, 0, 0, 0.05)",
       }}>
@@ -4555,7 +4334,7 @@ ${contentPreview}
         {/* Messages */}
         <div
           ref={messagesContainerRef}
-          className={`messages-container-scroll${geminiMinimal ? " study-chat-gemini-markdown" : ""}`}
+          className="messages-container-scroll"
           style={{
             flex: 1,
             overflowY: "auto",
@@ -5542,75 +5321,54 @@ ${contentPreview}
             </div>
           )}
 
-          {messages.map((message, index) => {
-            const simpleBubble =
-              geminiMinimal && (!message.type || message.type === "message");
-            return (
+          {messages.map((message, index) => (
             <div
               key={message.id}
               className={`message-container ${message.role === "user" ? "user-message-premium" : "assistant-message-premium"}`}
               style={{
                 display: "flex",
                 justifyContent: message.role === "user" ? "flex-end" : "flex-start",
-                marginBottom: simpleBubble ? "1.1rem" : "1.5rem",
-                animation: simpleBubble
-                  ? "none"
-                  : message.role === "user" 
-                  ? `userMessageEnter 1.1s cubic-bezier(0.25, 0.1, 0.25, 1) ${index * 0.05}s forwards`
-                  : `assistantMessageEnter 1.3s cubic-bezier(0.25, 0.1, 0.25, 1) ${index * 0.05}s forwards`,
+                marginBottom: "1.5rem",
+                animation: "none",
               }}
             >
               <div
                 className="message-bubble-premium"
                 style={{
-                  maxWidth: simpleBubble
-                    ? message.role === "user"
-                      ? "min(92%, 36rem)"
-                      : "100%"
-                    : message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning"
-                    ? "100%"
-                    : "85%",
+                  maxWidth: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" ? "100%" : "85%",
                   width: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" ? "100%" : undefined,
-                  padding: simpleBubble
-                    ? message.role === "user"
-                      ? "0.65rem 1.1rem"
-                      : "0.2rem 0"
-                    : "1.25rem 1.5rem",
-                  borderRadius: simpleBubble ? (message.role === "user" ? "1.5rem" : "0") : "12px",
-                  background: simpleBubble
-                    ? message.role === "user"
-                      ? "#e8eef4"
-                      : "transparent"
-                    : message.role === "user"
-                      ? "#6366f1"
+                  padding:
+                    message.role === "user"
+                      ? "1.1rem 1.25rem"
+                      : message.type === "message"
+                      ? "0.25rem 0.35rem"
+                      : "1.1rem 1.25rem",
+                  borderRadius: message.role === "user" ? "18px" : "14px",
+                  background:
+                    message.role === "user"
+                      ? "#1A8CA1"
+                      : message.type === "message" || message.type === "notes"
+                      ? "transparent"
                       : colorTheme === "dark"
-                      ? "rgba(26, 26, 36, 0.8)"
+                      ? "rgba(26, 26, 36, 0.75)"
                       : "#ffffff",
-                  border: simpleBubble
+                  border:
+                    "none",
+                  boxShadow: message.role === "user"
+                    ? "0 10px 30px rgba(26, 140, 161, 0.14)"
+                    : message.type === "message" || message.type === "notes"
                     ? "none"
-                    : message.role === "assistant"
-                      ? `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`
-                      : "none",
-                  boxShadow: simpleBubble
-                    ? "none"
-                    : message.role === "user"
-                    ? "0 4px 16px rgba(99, 102, 241, 0.3), 0 2px 8px rgba(99, 102, 241, 0.2)"
                     : colorTheme === "dark"
-                    ? "0 4px 16px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)"
-                    : "0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08)",
-                  color: simpleBubble
-                    ? "#202124"
-                    : message.role === "user"
-                    ? "white"
-                    : colorTheme === "dark"
-                    ? "var(--text-primary)"
-                    : "#1a1a24",
+                    ? "0 6px 18px rgba(0, 0, 0, 0.28)"
+                    : "0 6px 18px rgba(0, 0, 0, 0.08)",
+                  color: message.role === "user" ? "white" : (colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"),
                   position: "relative",
-                  overflow: simpleBubble ? "visible" : "hidden",
-                  willChange: simpleBubble ? "auto" : "transform, opacity",
+                  overflow: "hidden",
+                  willChange: "transform, opacity",
                 }}
               >
-                {message.role === "user" && !simpleBubble && (
+                {/* Efecto de entrada único (desactivado para look Gemini) */}
+                {showMessageEntryEffects && message.role === "user" && (
                   <div 
                     className="user-entry-effect"
                     style={{
@@ -5626,7 +5384,8 @@ ${contentPreview}
                   />
                 )}
                 
-                {message.role === "assistant" && !simpleBubble && (
+                {/* Efecto de entrada único (desactivado para look Gemini) */}
+                {showMessageEntryEffects && message.role === "assistant" && (
                   <div 
                     className="assistant-entry-effect"
                     style={{
@@ -5648,7 +5407,7 @@ ${contentPreview}
                       colorTheme={colorTheme}
                       language={currentChatLevel?.topic || null}
                     />
-                    {message.costEstimate && (
+                    {showCostEstimates && message.costEstimate && (
                       <div style={{
                         marginTop: "1.5rem",
                         padding: "0.75rem 1rem",
@@ -5684,7 +5443,7 @@ ${contentPreview}
                       onSubmit={handleTestSubmit}
                       colorTheme={colorTheme}
                     />
-                    {message.costEstimate && (
+                    {showCostEstimates && message.costEstimate && (
                       <div style={{
                         marginTop: "1.5rem",
                         padding: "0.75rem 1rem",
@@ -5715,7 +5474,7 @@ ${contentPreview}
                       feedbackData={message.content}
                       colorTheme={colorTheme}
                     />
-                    {message.costEstimate && (
+                    {showCostEstimates && message.costEstimate && (
                       <div style={{
                         marginTop: "1.5rem",
                         padding: "0.75rem 1rem",
@@ -5753,7 +5512,7 @@ ${contentPreview}
                       onSubmit={correctExercise}
                       colorTheme={colorTheme}
                     />
-                    {message.costEstimate && (
+                    {showCostEstimates && message.costEstimate && (
                       <div style={{
                         marginTop: "1.5rem",
                         padding: "0.75rem 1rem",
@@ -5785,7 +5544,7 @@ ${contentPreview}
                       exercise={currentExercise}
                       colorTheme={colorTheme}
                     />
-                    {message.costEstimate && (
+                    {showCostEstimates && message.costEstimate && (
                       <div style={{
                         marginTop: "1.5rem",
                         padding: "0.75rem 1rem",
@@ -5869,9 +5628,9 @@ ${contentPreview}
                     {/* Contenido del mensaje */}
                     <div
                       style={{
-                        lineHeight: 1.8,
+                        lineHeight: 1.65,
                         color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                        fontSize: "1.1rem",
+                        fontSize: "1.05rem",
                       }}
                       className="message-content"
                     >
@@ -6106,35 +5865,244 @@ ${contentPreview}
                     {message.role === "assistant" ? (
                       <div
                         style={{
-                          lineHeight: 1.6,
+                          lineHeight: 1.75,
                           color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                          fontSize: isMobile ? "1.15rem" : "1.25rem",
+                          fontFamily:
+                            "var(--font-display), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+                          fontWeight: 400,
+                          letterSpacing: "-0.01em",
+                          textRendering: "optimizeLegibility",
                         }}
                         className="message-content"
                       >
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
                           components={{
-                            h1: ({ ...props }) => <h1 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
-                            h2: ({ ...props }) => <h2 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
-                            h3: ({ ...props }) => <h3 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
-                            h4: ({ ...props }) => <h4 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
-                            h5: ({ ...props }) => <h5 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
-                            h6: ({ ...props }) => <h6 {...props} style={{ textDecoration: "none", borderBottom: "none" }} />,
-                            strong: ({ ...props }) => <strong {...props} style={{ 
-                              textDecoration: "none !important", 
-                              borderBottom: "none !important",
-                              textUnderlineOffset: "0 !important",
-                              textUnderlinePosition: "unset !important",
-                              fontWeight: 700,
-                              background: "none !important",
-                              backgroundColor: "transparent !important",
-                              padding: 0,
-                              borderRadius: 0,
-                            }} />,
-                            p: ({ ...props }) => <p {...props} style={{ margin: "0.5rem 0", textDecoration: "none" }} />,
-                            li: ({ ...props }) => <li {...props} style={{ textDecoration: "none" }} />,
+                            h1: ({ ...props }) => (
+                              <h1
+                                {...props}
+                                style={{
+                                  textDecoration: "none",
+                                  borderBottom: "none",
+                                  fontWeight: 800,
+                                  letterSpacing: "-0.02em",
+                                  fontSize: "1.55rem",
+                                  marginTop: "1.1rem",
+                                  marginBottom: "0.7rem",
+                                  color: colorTheme === "dark" ? "#79e0dc" : "#1A8CA1",
+                                }}
+                              />
+                            ),
+                            h2: ({ ...props }) => (
+                              <h2
+                                {...props}
+                                style={{
+                                  textDecoration: "none",
+                                  borderBottom: "none",
+                                  fontWeight: 750,
+                                  letterSpacing: "-0.01em",
+                                  fontSize: "1.3rem",
+                                  marginTop: "1rem",
+                                  marginBottom: "0.65rem",
+                                  color: colorTheme === "dark" ? "#79e0dc" : "#1A8CA1",
+                                }}
+                              />
+                            ),
+                            h3: ({ ...props }) => (
+                              <h3
+                                {...props}
+                                style={{
+                                  textDecoration: "none",
+                                  borderBottom: "none",
+                                  fontWeight: 700,
+                                  fontSize: "1.15rem",
+                                  marginTop: "0.95rem",
+                                  marginBottom: "0.6rem",
+                                }}
+                              />
+                            ),
+                            h4: ({ ...props }) => (
+                              <h4
+                                {...props}
+                                style={{
+                                  textDecoration: "none",
+                                  borderBottom: "none",
+                                  fontWeight: 700,
+                                  fontSize: "1.05rem",
+                                  marginTop: "0.9rem",
+                                  marginBottom: "0.55rem",
+                                }}
+                              />
+                            ),
+                            h5: ({ ...props }) => (
+                              <h5
+                                {...props}
+                                style={{
+                                  textDecoration: "none",
+                                  borderBottom: "none",
+                                  fontWeight: 700,
+                                  fontSize: "0.98rem",
+                                  marginTop: "0.85rem",
+                                  marginBottom: "0.5rem",
+                                }}
+                              />
+                            ),
+                            h6: ({ ...props }) => (
+                              <h6
+                                {...props}
+                                style={{
+                                  textDecoration: "none",
+                                  borderBottom: "none",
+                                  fontWeight: 700,
+                                  fontSize: "0.92rem",
+                                  marginTop: "0.8rem",
+                                  marginBottom: "0.45rem",
+                                }}
+                              />
+                            ),
+                            strong: ({ ...props }) => (
+                              <strong
+                                {...props}
+                                style={{
+                                  textDecoration: "none !important",
+                                  borderBottom: "none !important",
+                                  fontWeight: 800,
+                                  color: colorTheme === "dark" ? "#79e0dc" : "#1A8CA1",
+                                  background:
+                                    colorTheme === "dark" ? "rgba(26, 140, 161, 0.18)" : "rgba(26, 140, 161, 0.10)",
+                                  padding: "0.05rem 0.35rem",
+                                  borderRadius: "10px",
+                                }}
+                              />
+                            ),
+                            p: ({ ...props }) => (
+                              <p
+                                {...props}
+                                style={{
+                                  margin: "0.8rem 0",
+                                  textDecoration: "none",
+                                  fontSize: "inherit",
+                                  lineHeight: "inherit",
+                                }}
+                              />
+                            ),
+                            ul: ({ ...props }) => (
+                              <ul
+                                {...props}
+                                style={{
+                                  margin: "0.75rem 0",
+                                  paddingLeft: "1.25rem",
+                                }}
+                              />
+                            ),
+                            ol: ({ ...props }) => (
+                              <ol
+                                {...props}
+                                style={{
+                                  margin: "0.75rem 0",
+                                  paddingLeft: "1.25rem",
+                                }}
+                              />
+                            ),
+                            li: ({ ...props }) => (
+                              <li
+                                {...props}
+                                style={{
+                                  textDecoration: "none",
+                                  fontSize: "inherit",
+                                  lineHeight: "inherit",
+                                  marginBottom: "0.6rem",
+                                }}
+                              />
+                            ),
                             span: ({ ...props }) => <span {...props} style={{ textDecoration: "none" }} />,
                             div: ({ ...props }) => <div {...props} style={{ textDecoration: "none" }} />,
+                            blockquote: ({ ...props }) => (
+                              <blockquote
+                                {...props}
+                                style={{
+                                  margin: "0.95rem 0",
+                                  padding: "0.75rem 1rem",
+                                  borderLeft: `3px solid ${colorTheme === "dark" ? "rgba(121, 224, 220, 0.55)" : "rgba(26, 140, 161, 0.45)"}`,
+                                  borderRadius: "14px",
+                                  background:
+                                    colorTheme === "dark" ? "rgba(26, 140, 161, 0.08)" : "rgba(26, 140, 161, 0.06)",
+                                }}
+                              />
+                            ),
+                            a: ({ href, children, ...props }) => (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                {...props}
+                                style={{
+                                  color: colorTheme === "dark" ? "#79e0dc" : "#1A8CA1",
+                                  textDecoration: "underline",
+                                  textUnderlineOffset: "3px",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {children}
+                              </a>
+                            ),
+                            code: (codeProps: any) => {
+                              const { inline, className, children, ...props } = codeProps;
+                              const content = String(children ?? "");
+                              if (inline) {
+                                return (
+                                  <code
+                                    {...props}
+                                    className={className}
+                                    style={{
+                                      background:
+                                        colorTheme === "dark" ? "rgba(26, 140, 161, 0.16)" : "rgba(26, 140, 161, 0.10)",
+                                      padding: "0.15rem 0.35rem",
+                                      borderRadius: "10px",
+                                      border: `1px solid ${
+                                        colorTheme === "dark" ? "rgba(26, 140, 161, 0.22)" : "rgba(26, 140, 161, 0.18)"
+                                      }`,
+                                      fontFamily: "var(--font-mono), ui-monospace, monospace",
+                                      fontSize: "0.95em",
+                                    }}
+                                  >
+                                    {content}
+                                  </code>
+                                );
+                              }
+                              return (
+                                <code
+                                  {...props}
+                                  className={className}
+                                  style={{
+                                    fontFamily: "var(--font-mono), ui-monospace, monospace",
+                                  }}
+                                >
+                                  {content}
+                                </code>
+                              );
+                            },
+                            pre: ({ children, ...props }) => (
+                              <pre
+                                {...props}
+                                style={{
+                                  background:
+                                    colorTheme === "dark"
+                                      ? "linear-gradient(135deg, rgba(26, 140, 161, 0.10), rgba(99, 102, 241, 0.08))"
+                                      : "linear-gradient(135deg, rgba(26, 140, 161, 0.08), rgba(99, 102, 241, 0.06))",
+                                  border: `1px solid ${
+                                    colorTheme === "dark" ? "rgba(26, 140, 161, 0.22)" : "rgba(26, 140, 161, 0.18)"
+                                  }`,
+                                  borderRadius: "14px",
+                                  padding: "0.9rem 1rem",
+                                  overflowX: "auto",
+                                  margin: "1rem 0",
+                                }}
+                              >
+                                {children}
+                              </pre>
+                            ),
                           }}
                         >
                           {message.content}
@@ -6144,13 +6112,19 @@ ${contentPreview}
                     <div
                       style={{
                         whiteSpace: "pre-wrap",
-                        lineHeight: 1.6,
+                        lineHeight: 1.75,
+                        fontFamily:
+                          "var(--font-display), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+                        fontSize: isMobile ? "1.15rem" : "1.2rem",
+                        fontWeight: 400,
+                        letterSpacing: "-0.01em",
+                        textRendering: "optimizeLegibility",
                       }}
                     >
                       {message.content}
                     </div>
                     )}
-                    {message.costEstimate && (
+                    {showCostEstimates && message.costEstimate && (
                       <div style={{
                         marginTop: "1rem",
                         padding: "0.75rem 1rem",
@@ -6178,8 +6152,7 @@ ${contentPreview}
                 )}
               </div>
             </div>
-          );
-          })}
+          ))}
 
           {(isLoading || isGeneratingTest || isGeneratingExercise) && (
             <div
@@ -6187,144 +6160,58 @@ ${contentPreview}
               style={{
                 display: "flex",
                 justifyContent: "flex-start",
-                marginBottom: geminiMinimal ? "1rem" : "1.5rem",
-                animation: geminiMinimal ? "none" : "loadingMessageEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                marginBottom: "1.5rem",
+                animation: "loadingMessageEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
                 opacity: 1,
               }}
             >
               <div
                 className="premium-loading-card"
                 style={{
-                  padding: geminiMinimal ? "0.85rem 1.1rem" : "1.75rem 2.25rem",
-                  borderRadius: geminiMinimal ? "12px" : "20px",
-                  background: geminiMinimal
-                    ? "#f8f9fa"
-                    : colorTheme === "dark" 
-                    ? "linear-gradient(135deg, rgba(26, 26, 36, 0.98), rgba(30, 30, 45, 0.95))"
-                    : "linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(248, 250, 252, 0.98))",
-                  border: geminiMinimal
-                    ? "1px solid #e8eaed"
-                    : `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.3)"}`,
-                  boxShadow: geminiMinimal
-                    ? "none"
-                    : colorTheme === "dark"
-                    ? "0 12px 48px rgba(99, 102, 241, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 60px rgba(99, 102, 241, 0.2)"
-                    : "0 12px 48px rgba(99, 102, 241, 0.2), 0 0 0 1px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 60px rgba(99, 102, 241, 0.1)",
+                  padding: "1rem 1.25rem",
+                  borderRadius: "16px",
+                  background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.65)" : "rgba(255, 255, 255, 0.85)",
+                  border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.12)" : "rgba(148, 163, 184, 0.25)"}`,
+                  boxShadow: "none",
                   display: "flex",
                   alignItems: "center",
-                  gap: geminiMinimal ? "0.85rem" : "1.75rem",
-                  position: "relative",
-                  overflow: geminiMinimal ? "visible" : "hidden",
-                  backdropFilter: geminiMinimal ? "none" : "blur(24px)",
-                  WebkitBackdropFilter: geminiMinimal ? "none" : "blur(24px)",
-                  minWidth: geminiMinimal ? "auto" : "360px",
-                  transform: "translateZ(0)",
-                  willChange: geminiMinimal ? "auto" : "transform, opacity",
+                  gap: "0.75rem",
+                  minWidth: isMobile ? "unset" : "360px",
                 }}
               >
-                {!geminiMinimal && (
-                <>
-                {/* Animated Background Glow - Multiple Layers - Fixed to prevent square flashes */}
-                <div 
-                  className="loading-card-glow"
+                <div
+                  aria-hidden
                   style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    width: "200%",
-                    height: "200%",
-                    transform: "translate(-50%, -50%)",
-                    background: `radial-gradient(ellipse at center, ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.25)" : "rgba(99, 102, 241, 0.18)"} 0%, ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)"} 40%, transparent 70%)`,
-                    animation: "loadingGlowRotate 8s linear infinite",
-                    pointerEvents: "none",
-                    zIndex: 0,
+                    width: 10,
+                    height: 10,
                     borderRadius: "50%",
-                    filter: "blur(40px)",
+                    background: colorTheme === "dark" ? "rgba(26, 140, 161, 0.95)" : "rgba(26, 140, 161, 0.8)",
+                    flexShrink: 0,
                   }}
                 />
-                <div 
-                  className="loading-card-glow-secondary"
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    width: "180%",
-                    height: "180%",
-                    transform: "translate(-50%, -50%)",
-                    background: `radial-gradient(ellipse at center, ${colorTheme === "dark" ? "rgba(139, 92, 246, 0.2)" : "rgba(139, 92, 246, 0.12)"} 0%, ${colorTheme === "dark" ? "rgba(139, 92, 246, 0.08)" : "rgba(139, 92, 246, 0.06)"} 45%, transparent 75%)`,
-                    animation: "loadingGlowRotate 10s linear infinite reverse",
-                    pointerEvents: "none",
-                    zIndex: 0,
-                    borderRadius: "50%",
-                    filter: "blur(35px)",
-                  }}
-                />
-                
-                {/* Premium Loading Animation - Enhanced */}
-                <div className="premium-loading-indicator-enhanced">
-                  <div className="loading-orb-container-enhanced">
-                    <div className="loading-orb-enhanced orb-1-enhanced"></div>
-                    <div className="loading-orb-enhanced orb-2-enhanced"></div>
-                    <div className="loading-orb-enhanced orb-3-enhanced"></div>
-                    <div className="loading-orb-enhanced orb-4-enhanced"></div>
-                  </div>
-                  <div className="loading-pulse-ring-enhanced ring-1"></div>
-                  <div className="loading-pulse-ring-enhanced ring-2"></div>
-                  <div className="loading-center-core"></div>
-                </div>
-                </>
-                )}
-                {geminiMinimal && (
+                <div style={{ flex: 1 }}>
                   <div
-                    aria-hidden
                     style={{
-                      width: 20,
-                      height: 20,
-                      border: "2px solid #e8eaed",
-                      borderTopColor: geminiAccent,
-                      borderRadius: "50%",
-                      animation: "studyGeminiSpin 0.75s linear infinite",
-                      flexShrink: 0,
+                      fontSize: "1.05rem",
+                      fontWeight: 700,
+                      color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
                     }}
-                  />
-                )}
-                
-                <div style={{ position: "relative", zIndex: 1, flex: 1 }}>
-                  <div style={{ 
-                    fontSize: geminiMinimal ? "0.95rem" : "1.125rem", 
-                    fontWeight: geminiMinimal ? 500 : 700,
-                    color: geminiMinimal ? "#202124" : colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                    marginBottom: "0.5rem",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.75rem",
-                    letterSpacing: "-0.01em",
-                  }}>
+                  >
                     <span>
-                      {isGeneratingTest 
-                        ? "Generando test..." 
-                        : isGeneratingExercise 
-                        ? "Generando ejercicio..." 
-                        : (loadingMessage || "Procesando...")}
+                      {isGeneratingTest
+                        ? "Generando test..."
+                        : isGeneratingExercise
+                        ? "Generando ejercicio..."
+                        : loadingMessage || "Procesando..."}
                     </span>
-                    <span className="loading-dots-enhanced">
+                    <span className="loading-dots-enhanced" aria-hidden>
                       <span>.</span>
                       <span>.</span>
                       <span>.</span>
                     </span>
-                  </div>
-                  <div style={{ 
-                    fontSize: "0.875rem", 
-                    color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
-                    opacity: 0.9,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}>
-                    <div className="loading-progress-bar-container">
-                      <div className="loading-progress-bar"></div>
-                    </div>
-                    <span>Esto puede tardar unos segundos</span>
                   </div>
                 </div>
               </div>
@@ -6627,20 +6514,12 @@ ${contentPreview}
             bottom: 0,
             display: "flex",
             flexDirection: "column",
-            gap: geminiMinimal
-              ? (isMobile ? "0.75rem" : "1rem")
-              : isMobile ? "0.5rem" : isTablet ? "0.625rem" : "0.75rem",
-            padding: geminiMinimal
-              ? (isMobile ? "0.875rem 0.75rem" : isTablet ? "1.125rem 1.25rem" : "1.35rem 1.5rem")
-              : isMobile ? "0.625rem" : isTablet ? "0.875rem" : "1rem",
-            background: geminiMinimal ? "#ffffff" : "rgba(26, 26, 36, 0.95)",
-            borderRadius: geminiMinimal ? "0" : isMobile ? "8px" : isTablet ? "10px" : "12px",
-            border: geminiMinimal
-              ? "none"
-              : "1px solid rgba(148, 163, 184, 0.2)",
-            boxShadow: geminiMinimal
-              ? "0 -1px 0 #e8eaed"
-              : "0 -4px 12px rgba(0, 0, 0, 0.3)",
+            gap: isMobile ? "0.5rem" : isTablet ? "0.625rem" : "0.75rem",
+            padding: isMobile ? "0.5rem" : isTablet ? "0.75rem" : "0.875rem",
+            background: "transparent",
+            borderRadius: "0px",
+            border: "none",
+            boxShadow: "none",
             zIndex: 100,
             marginTop: "auto",
           }}
@@ -6667,69 +6546,12 @@ ${contentPreview}
             <button
               onClick={() => {
                 setInput("");
-                generateNotes();
-              }}
-              disabled={isLoading || isGeneratingTest}
-              title="Generar apuntes del contenido"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: isMobile ? "0.375rem" : "0.5rem",
-                height: isMobile ? "40px" : "48px",
-                padding: isMobile ? "0 0.75rem" : "0 1rem",
-                background: (isLoading || isGeneratingTest)
-                  ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.2)")
-                  : (colorTheme === "light" ? "#ffffff" : "#ffffff"),
-                border: colorTheme === "light" && !(isLoading || isGeneratingTest)
-                  ? `1px solid rgba(148, 163, 184, 0.2)`
-                  : (colorTheme === "dark" ? `1px solid rgba(148, 163, 184, 0.2)` : `1px solid rgba(148, 163, 184, 0.2)`),
-                borderRadius: "24px",
-                cursor: (isLoading || isGeneratingTest) ? "not-allowed" : "pointer",
-                transition: "all 0.2s ease",
-                opacity: (isLoading || isGeneratingTest) ? 0.6 : 1,
-                boxShadow: !(isLoading || isGeneratingTest)
-                  ? "0 1px 3px rgba(0, 0, 0, 0.1)"
-                  : "none",
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => {
-                if (!isLoading && !isGeneratingTest) {
-                  e.currentTarget.style.background = "#f8f9fa";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isLoading && !isGeneratingTest) {
-                  e.currentTarget.style.background = "#ffffff";
-                }
-              }}
-            >
-              <NotesIcon 
-                size={isMobile ? 18 : 20} 
-                color={
-                  (isLoading || isGeneratingTest)
-                    ? "rgba(26, 36, 52, 0.4)"
-                    : "#1a1a24"
-                } 
-              />
-              <span style={{
-                fontSize: isMobile ? "0.75rem" : "0.875rem",
-                fontWeight: 600,
-                color: (isLoading || isGeneratingTest)
-                  ? "rgba(26, 36, 52, 0.4)"
-                  : "#1a1a24",
-                whiteSpace: "nowrap",
-              }}>Apuntes</span>
-            </button>
-            <button
-              onClick={() => {
-                setInput("");
                 generateTest("medium", null, null);
               }}
               disabled={isLoading || isGeneratingTest}
               title="Generar test de evaluación"
               style={{
-                display: "flex",
+                display: "none",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: isMobile ? "0.375rem" : "0.5rem",
@@ -6784,7 +6606,7 @@ ${contentPreview}
               disabled={isLoading || isGeneratingExercise || isGeneratingTest}
               title="Generar ejercicio"
               style={{
-                display: "flex",
+                display: "none",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: isMobile ? "0.375rem" : "0.5rem",
@@ -7275,25 +7097,23 @@ ${contentPreview}
             )}
           </div>
 
-          {/* Text Input — barra tipo Gemini en tema claro (pill amplia, poco ruido) */}
+          {/* Text Input - Premium Design */}
           <div style={{ 
             display: "flex", 
-            gap: geminiMinimal
-              ? (isMobile ? "0.65rem" : "1rem")
-              : isMobile ? "0.5rem" : "0.75rem", 
-            alignItems: geminiMinimal ? "center" : "stretch",
+            gap: isMobile ? "0.5rem" : "0.75rem", 
+            alignItems: "center", 
             position: "relative",
             zIndex: 10,
-            minHeight: geminiMinimal ? (isMobile ? "52px" : "60px") : undefined,
-            ...(geminiMinimal
-              ? {
-                  padding: isMobile ? "0.5rem 0.65rem" : "0.65rem 1rem 0.65rem 1.1rem",
-                  background: "#fafafa",
-                  borderRadius: "32px",
-                  border: "1px solid #e8eaed",
-                  boxShadow: "0 1px 2px rgba(60, 64, 67, 0.06)",
-                }
-              : {}),
+            background: colorTheme === "light" ? "rgba(255, 255, 255, 1)" : "rgba(26, 26, 36, 1)",
+            borderRadius: "9999px",
+            border: colorTheme === "light" 
+              ? "1px solid rgba(148, 163, 184, 0.25)" 
+              : "1px solid rgba(148, 163, 184, 0.2)",
+            padding: isMobile ? "0.65rem 0.65rem" : "0.75rem 0.9rem",
+            boxShadow: colorTheme === "light"
+              ? "0 10px 30px rgba(0, 0, 0, 0.06)"
+              : "0 10px 35px rgba(0, 0, 0, 0.35)",
+            overflow: "hidden",
           }}>
             {/* Botón Subir PDF - Premium */}
             <button
@@ -7301,63 +7121,45 @@ ${contentPreview}
               disabled={isLoading}
               title="Subir PDF"
               style={{
-                width: geminiMinimal ? (isMobile ? "44px" : "48px") : "48px",
-                height: geminiMinimal ? (isMobile ? "44px" : "48px") : "48px",
-                minWidth: geminiMinimal ? (isMobile ? "44px" : "48px") : "48px",
+                width: isMobile ? "48px" : "60px",
+                height: isMobile ? "48px" : "60px",
+                minWidth: isMobile ? "48px" : "60px",
                 padding: 0,
-                background:
-                  geminiMinimal
-                    ? (isLoading ? "rgba(148, 163, 184, 0.12)" : "transparent")
-                    : isLoading
-                    ? "rgba(99, 102, 241, 0.3)"
-                    : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                background: "transparent",
                 border: "none",
                 borderRadius: "50%",
                 cursor: isLoading ? "not-allowed" : "pointer",
-                transition: "all 0.2s ease",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 opacity: isLoading ? 0.6 : 1,
-                boxShadow: geminiMinimal || isLoading
-                  ? "none"
-                  : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+                boxShadow: "none",
                 flexShrink: 0,
                 position: "relative",
                 overflow: "hidden",
               }}
               onMouseEnter={(e) => {
                 if (!isLoading) {
-                  if (geminiMinimal) {
-                    e.currentTarget.style.background = "rgba(95, 99, 104, 0.06)";
-                  } else {
-                    e.currentTarget.style.transform = "scale(1.1)";
-                    e.currentTarget.style.boxShadow =
-                      "0 6px 24px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)";
-                  }
+                  e.currentTarget.style.transform = "scale(1.08)";
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.background = "transparent";
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isLoading) {
-                  if (geminiMinimal) {
-                    e.currentTarget.style.background = "transparent";
-                  } else {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.boxShadow = isLoading
-                      ? "none"
-                      : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)";
-                  }
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.background = "transparent";
                 }
               }}
             >
               <UploadIcon 
-                size={geminiMinimal ? (isMobile ? 20 : 22) : isMobile ? 18 : 20} 
+                size={isMobile ? 22 : 24} 
                 color={
                   isLoading
-                    ? (geminiMinimal ? "rgba(95, 99, 104, 0.5)" : "rgba(255, 255, 255, 0.5)")
-                    : geminiMinimal
-                    ? "#5f6368"
-                    : "white"
+                    ? (colorTheme === "light" ? "rgba(26, 36, 52, 0.4)" : "rgba(255, 255, 255, 0.5)")
+                    : (colorTheme === "light" ? "#1a1a24" : "white")
                 } 
               />
             </button>
@@ -7368,11 +7170,12 @@ ${contentPreview}
                 setInput(e.target.value);
                 // Ajustar altura automáticamente
                 if (textareaRef.current) {
-                  const baseH = geminiMinimal ? (isMobile ? 44 : 56) : isMobile ? 40 : 48;
-                  textareaRef.current.style.height = `${baseH}px`;
+                  const initialHeight = isMobile ? 40 : 48;
+                  const maxHeight = isMobile ? 150 : 150;
+                  textareaRef.current.style.height = `${initialHeight}px`;
                   const scrollHeight = textareaRef.current.scrollHeight;
-                  if (scrollHeight > baseH) {
-                    textareaRef.current.style.height = `${Math.min(scrollHeight, geminiMinimal ? 200 : 150)}px`;
+                  if (scrollHeight > initialHeight) {
+                    textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
                   }
                 }
               }}
@@ -7382,33 +7185,29 @@ ${contentPreview}
                   handleSend();
                 }
               }}
-              placeholder={geminiMinimal ? "Pregunta al asistente…" : "Escribe tu mensaje..."}
+              placeholder="Escribe tu mensaje..."
               disabled={isLoading}
               style={{
                 flex: 1,
-                padding: geminiMinimal
-                  ? (isMobile ? "0.5rem 0.35rem" : "0.65rem 0.5rem")
-                  : (isMobile ? "0.5rem 0.75rem" : "0.5rem 1rem"),
-                background: geminiMinimal
-                  ? "transparent"
-                  : "linear-gradient(135deg, rgba(26, 26, 36, 0.9), rgba(30, 30, 45, 0.8))",
-                border: geminiMinimal ? "none" : "1px solid rgba(148, 163, 184, 0.25)",
-                borderRadius: geminiMinimal ? "8px" : "24px",
-                color: geminiMinimal ? "#202124" : "var(--text-primary)",
-                fontSize: geminiMinimal ? (isMobile ? "1rem" : "1.0625rem") : isMobile ? "0.875rem" : "1rem",
+                padding: isMobile ? "0.5rem 0.75rem" : "0.5rem 1rem",
+                background: colorTheme === "dark" ? "#1A1A24" : "#ffffff",
+                border: "none",
+                borderRadius: "0px",
+                color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                fontSize: isMobile ? "1.125rem" : "1.25rem",
                 resize: "none",
-                minHeight: geminiMinimal ? (isMobile ? "44px" : "56px") : isMobile ? "40px" : "48px",
-                height: geminiMinimal ? (isMobile ? "44px" : "56px") : isMobile ? "40px" : "48px",
-                maxHeight: geminiMinimal ? "200px" : "150px",
+                minHeight: isMobile ? "40px" : "48px",
+                height: isMobile ? "40px" : "48px",
+                maxHeight: "150px",
                 fontFamily: "inherit",
-                boxShadow: geminiMinimal
-                  ? "none"
-                  : "0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
-                lineHeight: geminiMinimal ? "1.55" : "1.5",
+                boxShadow: "none",
+                outline: "none",
+                appearance: "none",
+                lineHeight: "1.55",
                 overflowY: "auto",
-                backdropFilter: geminiMinimal ? "none" : "blur(20px)",
-                WebkitBackdropFilter: geminiMinimal ? "none" : "blur(20px)",
-                transition: "all 0.2s ease",
+                backdropFilter: "none",
+                WebkitBackdropFilter: "none",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
               className="custom-textarea"
             />
@@ -7418,16 +7217,14 @@ ${contentPreview}
               disabled={isLoading || isGeneratingTest || isGeneratingExercise}
               title={isListening ? "Detener grabación" : "Hablar (mantén presionado)"}
                   style={{
-                width: geminiMinimal ? (isMobile ? "44px" : "48px") : (isMobile ? "40px" : "48px"),
-                height: geminiMinimal ? (isMobile ? "44px" : "48px") : (isMobile ? "40px" : "48px"),
-                minWidth: geminiMinimal ? (isMobile ? "44px" : "48px") : (isMobile ? "40px" : "48px"),
+                width: isMobile ? "48px" : "60px",
+                height: isMobile ? "48px" : "60px",
+                minWidth: isMobile ? "48px" : "60px",
                 padding: 0,
                 background: isListening
-                  ? (geminiMinimal ? "#ef4444" : "#dc2626")
-                  : geminiMinimal
-                  ? "transparent"
-                  : "rgba(99, 102, 241, 0.2)",
-                border: "none",
+                  ? (colorTheme === "light" ? "#ef4444" : "#dc2626")
+                    : "transparent",
+                  border: "none",
                 borderRadius: "50%",
                     cursor: (isLoading || isGeneratingTest) ? "not-allowed" : "pointer",
                 transition: "all 0.2s ease",
@@ -7435,42 +7232,30 @@ ${contentPreview}
                     alignItems: "center",
                     justifyContent: "center",
                 opacity: (isLoading || isGeneratingTest) ? 0.6 : 1,
-                boxShadow: geminiMinimal
-                  ? (isListening ? "0 0 0 4px rgba(239, 68, 68, 0.2)" : "none")
-                  : isListening
-                  ? "0 0 0 4px rgba(239, 68, 68, 0.2)"
-                  : "none",
+                  boxShadow: isListening ? "0 0 0 4px rgba(239, 68, 68, 0.2)" : "none",
                     flexShrink: 0,
                   }}
                   onMouseEnter={(e) => {
                 if (!isLoading && !isGeneratingTest && !isListening) {
-                  if (geminiMinimal) {
-                    e.currentTarget.style.background = "rgba(95, 99, 104, 0.06)";
-                  } else {
-                    e.currentTarget.style.background = "rgba(99, 102, 241, 0.3)";
-                  }
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.boxShadow = "none";
                     }
                   }}
                   onMouseLeave={(e) => {
                 if (!isLoading && !isGeneratingTest && !isListening) {
-                  if (geminiMinimal) {
-                    e.currentTarget.style.background = "transparent";
-                  } else {
-                    e.currentTarget.style.background = "rgba(99, 102, 241, 0.2)";
-                  }
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.boxShadow = "none";
                     }
                   }}
                 >
               <FaMicrophone 
-                size={geminiMinimal ? (isMobile ? 20 : 22) : isMobile ? 18 : 20} 
+                size={isMobile ? 22 : 24} 
                 color={
                   isListening
                     ? "white"
                     : (isLoading || isGeneratingTest)
-                    ? (geminiMinimal ? "rgba(95, 99, 104, 0.5)" : "rgba(255, 255, 255, 0.5)")
-                    : geminiMinimal
-                    ? "#5f6368"
-                    : "white"
+                    ? (colorTheme === "light" ? "rgba(26, 36, 52, 0.4)" : "rgba(255, 255, 255, 0.5)")
+                    : (colorTheme === "light" ? "#1a1a24" : "white")
                 } 
               />
                 </button>
@@ -7480,59 +7265,33 @@ ${contentPreview}
                 disabled={isLoading || isGeneratingTest || isGeneratingExercise || !input.trim()}
                 title="Enviar mensaje"
                 style={{
-                width: geminiMinimal ? (isMobile ? "44px" : "48px") : (isMobile ? "40px" : "48px"),
-                height: geminiMinimal ? (isMobile ? "44px" : "48px") : (isMobile ? "40px" : "48px"),
-                minWidth: geminiMinimal ? (isMobile ? "44px" : "48px") : (isMobile ? "40px" : "48px"),
+                width: isMobile ? "48px" : "60px",
+                height: isMobile ? "48px" : "60px",
+                minWidth: isMobile ? "48px" : "60px",
                 padding: 0,
                   background:
-                    (isLoading || isGeneratingTest || !input.trim())
-                    ? (geminiMinimal ? "rgba(60, 64, 67, 0.1)" : "rgba(99, 102, 241, 0.3)")
-                    : geminiMinimal
-                    ? geminiAccent
-                    : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                    (isLoading || isGeneratingTest || isGeneratingExercise || !input.trim())
+                    ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(99, 102, 241, 0.3)")
+                    : "#1A8CA1",
                 border: "none",
                 borderRadius: "50%",
-                  cursor: (isLoading || isGeneratingTest || !input.trim()) ? "not-allowed" : "pointer",
-                transition: "all 0.2s ease",
+                  cursor: (isLoading || isGeneratingTest || isGeneratingExercise || !input.trim()) ? "not-allowed" : "pointer",
+                transition: "none",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  opacity: (isLoading || isGeneratingTest || !input.trim()) ? 0.6 : 1,
-                boxShadow: geminiMinimal
-                  ? ((isLoading || isGeneratingTest || !input.trim()) ? "none" : "0 1px 3px rgba(30, 124, 143, 0.25)")
-                  : (isLoading || isGeneratingTest || !input.trim())
-                  ? "none"
-                  : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+                  opacity: (isLoading || isGeneratingTest || isGeneratingExercise || !input.trim()) ? 0.6 : 1,
+                boxShadow: "none",
                 flexShrink: 0,
                 position: "relative",
                 overflow: "hidden",
                 }}
-                onMouseEnter={(e) => {
-                  if (!isLoading && !isGeneratingTest && input.trim()) {
-                    e.currentTarget.style.transform = geminiMinimal ? "scale(1.04)" : "scale(1.06)";
-                    e.currentTarget.style.boxShadow = geminiMinimal
-                      ? "0 4px 12px rgba(30, 124, 143, 0.35)"
-                      : "0 6px 24px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                if (!isLoading && !isGeneratingTest && input.trim()) {
-                  e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.boxShadow = geminiMinimal
-                    ? "0 1px 3px rgba(30, 124, 143, 0.25)"
-                    : (isLoading || isGeneratingTest || !input.trim())
-                    ? "none"
-                    : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)";
-                }
-                }}
               >
               <SendIcon 
-                size={geminiMinimal ? (isMobile ? 20 : 22) : isMobile ? 18 : 20} 
+                size={isMobile ? 22 : 24} 
                 color={
-                  (isLoading || isGeneratingTest || !input.trim())
-                    ? (geminiMinimal ? "rgba(60, 64, 67, 0.35)" : "rgba(255, 255, 255, 0.5)")
-                    : geminiMinimal
-                    ? "#ffffff"
+                  (isLoading || isGeneratingTest || isGeneratingExercise || !input.trim())
+                    ? (colorTheme === "light" ? "rgba(26, 36, 52, 0.4)" : "rgba(255, 255, 255, 0.5)")
                     : "white"
                 } 
               />
@@ -7541,7 +7300,7 @@ ${contentPreview}
         </div>
         
         {/* Estadísticas Totales de Tokens y Costos - Debajo de la caja de input */}
-        {(totalStats.totalInputTokens > 0 || totalStats.totalOutputTokens > 0) && (
+        {showStats && (totalStats.totalInputTokens > 0 || totalStats.totalOutputTokens > 0) && (
           <div
             style={{
               padding: "1rem 1.5rem",
@@ -8369,13 +8128,13 @@ ${contentPreview}
         }
         
         /* Puntos de carga animados mejorados */
-        .loading-dots-enhanced {
+        :global(.loading-dots-enhanced) {
           display: inline-flex;
           gap: 3px;
           align-items: center;
         }
         
-        .loading-dots-enhanced span {
+        :global(.loading-dots-enhanced span) {
           display: inline-block;
           font-size: 1.5rem;
           line-height: 1;
@@ -8383,15 +8142,15 @@ ${contentPreview}
           font-weight: 700;
         }
         
-        .loading-dots-enhanced span:nth-child(1) {
+        :global(.loading-dots-enhanced span:nth-child(1)) {
           animation-delay: 0s;
         }
         
-        .loading-dots-enhanced span:nth-child(2) {
+        :global(.loading-dots-enhanced span:nth-child(2)) {
           animation-delay: 0.3s;
         }
         
-        .loading-dots-enhanced span:nth-child(3) {
+        :global(.loading-dots-enhanced span:nth-child(3)) {
           animation-delay: 0.6s;
         }
         
@@ -9193,20 +8952,15 @@ function NotesViewer({
   
   return (
     <div style={{
-      padding: "2rem",
-      background: bgColor,
-      borderRadius: "12px",
-      border: `1px solid ${borderColor}`,
-      boxShadow: colorTheme === "dark" ? "0 2px 8px rgba(0, 0, 0, 0.2)" : "0 2px 8px rgba(0, 0, 0, 0.08)",
+      padding: 0,
+      background: "transparent",
+      borderRadius: 0,
+      border: "none",
+      boxShadow: "none",
     }}>
       {/* Header similar a flashcards */}
       <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "1.5rem",
-        paddingBottom: "1rem",
-        borderBottom: `1px solid ${borderColor}`,
+        display: "none",
       }}>
         <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600, color: textColor }}>
           Resumen de Estudio
@@ -9278,19 +9032,27 @@ function NotesViewer({
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+        /* Gemini-like typography for notes */
+        .notes-viewer {
+          font-family: var(--font-display), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+          font-size: 1.25rem;
+          line-height: 1.8;
+          font-weight: 400;
+          color: ${colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"};
+        }
         .notes-viewer :global(h1) {
-          font-size: clamp(2rem, 5vw, 3rem);
-          font-weight: 700;
-          margin: 3rem 0 2rem;
+          font-size: 1.55rem;
+          font-weight: 800;
+          margin: 1.1rem 0 0.7rem;
           color: ${colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"};
           letter-spacing: -0.02em;
           line-height: 1.2;
           text-decoration: none !important;
         }
         .notes-viewer :global(h2) {
-          font-size: clamp(1.5rem, 4vw, 2rem);
-          font-weight: 600;
-          margin: 2.5rem 0 1.5rem;
+          font-size: 1.3rem;
+          font-weight: 750;
+          margin: 0.9rem 0 0.6rem;
           color: ${colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"};
           padding: 0.75rem 0;
           display: flex;
@@ -9299,53 +9061,52 @@ function NotesViewer({
           text-decoration: none !important;
         }
         .notes-viewer :global(h3) {
-          font-size: clamp(1.25rem, 3vw, 1.5rem);
-          font-weight: 600;
-          margin: 2rem 0 1rem;
+          font-size: 1.15rem;
+          font-weight: 700;
+          margin: 0.85rem 0 0.55rem;
           color: ${colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"};
           padding-left: 0.75rem;
-          border-left: 3px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"};
+          border-left: 3px solid ${colorTheme === "dark" ? "rgba(26, 140, 161, 0.35)" : "rgba(26, 140, 161, 0.45)"};
           text-decoration: none !important;
         }
         .notes-viewer :global(h4) {
-          font-size: clamp(1.1rem, 2.5vw, 1.3rem);
-          font-weight: 600;
-          margin: 1.5rem 0 0.75rem;
+          font-size: 1.05rem;
+          font-weight: 700;
+          margin: 0.8rem 0 0.5rem;
           color: ${colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"};
           text-decoration: none !important;
         }
         .notes-viewer :global(p) {
-          margin: 1.25rem 0;
-          line-height: 2;
-          font-size: 1.05rem;
-          color: ${colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"};
+          margin: 0.8rem 0;
+          line-height: 1.75;
+          font-size: inherit;
+          color: inherit;
         }
         .notes-viewer :global(ul), .notes-viewer :global(ol) {
-          margin: 1.5rem 0;
-          padding-left: 2.5rem;
+          margin: 0.85rem 0;
+          padding-left: 1.5rem;
         }
         .notes-viewer :global(li) {
-          margin: 0.75rem 0;
-          line-height: 2;
-          font-size: 1.05rem;
+          margin: 0.6rem 0;
+          line-height: 1.75;
+          font-size: inherit;
           position: relative;
         }
         .notes-viewer :global(ul li::marker) {
-          color: #6366f1;
+          color: #1A8CA1;
           font-weight: 700;
         }
         .notes-viewer :global(ol li::marker) {
-          color: #6366f1;
+          color: #1A8CA1;
           font-weight: 700;
         }
         .notes-viewer :global(strong) {
-          color: ${colorTheme === "dark" ? "#6366f1" : "#4f46e5"};
+          color: ${colorTheme === "dark" ? "#79e0dc" : "#1A8CA1"};
           font-weight: 700;
-          background: ${colorTheme === "dark" 
-            ? "rgba(99, 102, 241, 0.1)"
-            : "rgba(99, 102, 241, 0.15)"};
-          padding: 0.15rem 0.4rem;
-          border-radius: 4px;
+          /* Gemini-like: evita highlight lila tipo subrayado */
+          background: none;
+          padding: 0;
+          border-radius: 0;
           text-decoration: none !important;
         }
         .notes-viewer :global(strong *), .notes-viewer :global(* strong) {
@@ -9374,7 +9135,7 @@ function NotesViewer({
           border-radius: 0;
           font-family: ${jetbrainsMono.style.fontFamily};
           font-size: 0.95em;
-          color: ${colorTheme === "dark" ? "#22d3ee" : "#0891b2"};
+          color: ${colorTheme === "dark" ? "#79e0dc" : "#1A8CA1"};
           border: none !important;
         }
         .notes-viewer :global(pre) {
@@ -9402,18 +9163,18 @@ function NotesViewer({
           display: none;
         }
         .notes-viewer :global(blockquote) {
-          border-left: 5px solid #6366f1;
+          border-left: 5px solid #1A8CA1;
           padding: 1.25rem 1.5rem;
           margin: 1.5rem 0;
           background: ${colorTheme === "dark"
-            ? "linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(6, 182, 212, 0.05))"
-            : "linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(6, 182, 212, 0.05))"};
+            ? "linear-gradient(135deg, rgba(26, 140, 161, 0.12), rgba(121, 224, 220, 0.06))"
+            : "linear-gradient(135deg, rgba(26, 140, 161, 0.09), rgba(121, 224, 220, 0.05))"};
           border-radius: 0 12px 12px 0;
           color: ${colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"};
           font-style: italic;
           box-shadow: ${colorTheme === "dark"
-            ? "0 4px 12px rgba(99, 102, 241, 0.1)"
-            : "0 4px 12px rgba(99, 102, 241, 0.15)"};
+            ? "0 4px 12px rgba(26, 140, 161, 0.12)"
+            : "0 4px 12px rgba(26, 140, 161, 0.18)"};
           position: relative;
         }
         .notes-viewer :global(blockquote::before) {
@@ -9559,68 +9320,24 @@ function NotesViewer({
         <div
           ref={notesContainerRef}
           style={{
-            padding: "2rem",
-            background: bgColor,
-            borderRadius: "12px",
-            border: `1px solid ${borderColor}`,
-            boxShadow: colorTheme === "dark" ? "0 2px 8px rgba(0, 0, 0, 0.2)" : "0 2px 8px rgba(0, 0, 0, 0.08)",
+            padding: 0,
+            background: "transparent",
+            borderRadius: 0,
+            border: "none",
+            boxShadow: "none",
             maxWidth: "100%",
             width: "100%",
           }}
         >
           {/* Header similar a flashcards */}
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "1.5rem",
-            paddingBottom: "1rem",
-            borderBottom: `1px solid ${borderColor}`,
-          }}>
-            <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600, color: textColor }}>
-              Resumen de Estudio
-            </h3>
-            <button
-              onClick={handleDownloadPDF}
-              disabled={isGeneratingPDF}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.5rem 1rem",
-                background: "#6366f1",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "8px",
-                cursor: isGeneratingPDF ? "not-allowed" : "pointer",
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                transition: "all 0.2s ease",
-                opacity: isGeneratingPDF ? 0.6 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!isGeneratingPDF) {
-                  e.currentTarget.style.background = "#4f46e5";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isGeneratingPDF) {
-                  e.currentTarget.style.background = "#6366f1";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }
-              }}
-            >
-              <DownloadIcon size={16} color="#ffffff" />
-              {isGeneratingPDF ? "Generando..." : "PDF"}
-            </button>
-          </div>
+          <div style={{ display: "none" }} />
           <div
             style={{
               maxWidth: "100%",
               lineHeight: 1.8,
               color: textColor,
-              fontSize: "0.95rem",
+              /* Fijar tamaño para que los apuntes coincidan con el resto del chat */
+              fontSize: "1.15rem",
             }}
             className="notes-viewer"
           >
@@ -9631,26 +9348,11 @@ function NotesViewer({
                     h2: ({ ...props }) => (
                       <h2 {...props} style={{ display: "flex", alignItems: "center", gap: "0.75rem" }} />
                     ),
-                    h3: ({ ...props }) => {
-            // Usar un índice determinístico basado en el contenido para evitar problemas de hidratación
-            const icons = [
-              <SparkleIcon key="sparkle" size={18} color="#6366f1" />,
-              <StarIcon key="star" size={18} color="#6366f1" />,
-              <TargetIcon key="target" size={18} color="#6366f1" />,
-              <ZapIcon key="zap" size={18} color="#6366f1" />,
-            ];
-            // Usar el hash del contenido del texto para seleccionar un icono de forma determinística
-            const textContent = typeof props.children === 'string' ? props.children : 
-                               Array.isArray(props.children) ? props.children.join('') : '';
-            const iconIndex = textContent.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % icons.length;
-            const selectedIcon = icons[iconIndex];
-            return (
-              <h3 {...props} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                {selectedIcon}
-                {props.children}
-              </h3>
-            );
-          },
+                    h3: ({ ...props }) => (
+                      <h3 {...props} style={{ display: "block" }}>
+                        {props.children}
+                      </h3>
+                    ),
         p: ({ ...props }) => {
             const text = String(props.children || "");
             // Detectar patrones especiales para crear tarjetas visuales
@@ -12999,52 +12701,39 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
   if (!currentWord) {
     return (
       <div style={{
-        padding: "2rem",
-        background: bgColor,
-        borderRadius: "12px",
-        border: `1px solid ${borderColor}`,
+        padding: "1.25rem 1.25rem",
+        background: "transparent",
+        borderRadius: "16px",
+        border: "none",
         textAlign: "center",
         color: textColor,
-        animation: "fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        animation: "fadeInScale 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
       }}>
         {isLoading ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1.5rem", padding: "2rem" }}>
-            {/* Premium Loading Animation - Enhanced */}
-            <div className="premium-loading-indicator-enhanced" style={{ marginBottom: "0.5rem" }}>
-              <div className="loading-orb-container-enhanced">
-                <div className="loading-orb-enhanced orb-1-enhanced"></div>
-                <div className="loading-orb-enhanced orb-2-enhanced"></div>
-                <div className="loading-orb-enhanced orb-3-enhanced"></div>
-                <div className="loading-orb-enhanced orb-4-enhanced"></div>
-              </div>
-              <div className="loading-pulse-ring-enhanced ring-1"></div>
-              <div className="loading-pulse-ring-enhanced ring-2"></div>
-              <div className="loading-center-core"></div>
-            </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", padding: "0.25rem 0.25rem" }}>
+            <div
+              aria-hidden
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: colorTheme === "dark" ? "rgba(26, 140, 161, 0.95)" : "rgba(26, 140, 161, 0.8)",
+              }}
+            />
             <div style={{ 
               fontSize: "1rem",
-              fontWeight: 600,
+              fontWeight: 700,
               color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
               display: "flex",
               alignItems: "center",
-              gap: "0.75rem",
+              gap: "0.5rem",
             }}>
-              <span>Cargando palabras</span>
-              <span className="loading-dots-enhanced">
+              <span>Cargando flashcards</span>
+              <span className="loading-dots-enhanced" aria-hidden>
                 <span>.</span>
                 <span>.</span>
                 <span>.</span>
               </span>
-            </div>
-            {/* Premium Skeleton loader */}
-            <div style={{
-              width: "100%",
-              maxWidth: "300px",
-              marginTop: "1rem",
-            }}>
-              <div className="premium-skeleton-loader" style={{ height: "200px", marginBottom: "1rem", borderRadius: "12px" }}></div>
-              <div className="premium-skeleton-loader" style={{ height: "16px", width: "80%", margin: "0 auto 0.5rem", borderRadius: "8px" }}></div>
-              <div className="premium-skeleton-loader" style={{ height: "16px", width: "60%", margin: "0 auto", borderRadius: "8px" }}></div>
             </div>
           </div>
         ) : (
