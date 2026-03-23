@@ -1,0 +1,89 @@
+@keyframes studyGeminiSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Markdown / texto en modo minimal tipo Gemini (tema claro) */
+.study-chat-gemini-markdown .message-bubble-premium {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.65;
+}
+
+.study-chat-gemini-markdown .message-bubble-premium p {
+  margin: 0 0 0.75rem;
+}
+
+.study-chat-gemini-markdown .message-bubble-premium p:last-child {
+  margin-bottom: 0;
+}
+
+.study-chat-gemini-markdown .message-bubble-premium h1,
+.study-chat-gemini-markdown .message-bubble-premium h2,
+.study-chat-gemini-markdown .message-bubble-premium h3 {
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+  color: #1f1f1f;
+}
+
+.study-chat-gemini-markdown .message-bubble-premium h1:first-child,
+.study-chat-gemini-markdown .message-bubble-premium h2:first-child,
+.study-chat-gemini-markdown .message-bubble-premium h3:first-child {
+  margin-top: 0;
+}
+
+.study-chat-gemini-markdown .message-bubble-premium ul,
+.study-chat-gemini-markdown .message-bubble-premium ol {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 1.35rem;
+}
+
+.study-chat-gemini-markdown .message-bubble-premium li {
+  margin-bottom: 0.35rem;
+}
+
+.study-chat-gemini-markdown .message-bubble-premium code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  background: #f1f3f4;
+  color: #202124;
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+}
+
+.study-chat-gemini-markdown .message-bubble-premium pre {
+  background: #f8f9fa;
+  border: 1px solid #e8eaed;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+
+.study-chat-gemini-markdown .message-bubble-premium pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.study-chat-gemini-markdown .message-bubble-premium hr {
+  border: none;
+  border-top: 1px solid #e8eaed;
+  margin: 1rem 0;
+}
+
+.study-chat-gemini-markdown .message-bubble-premium a {
+  color: #1e7c8f;
+  text-decoration: none;
+}
+
+.study-chat-gemini-markdown .message-bubble-premium a:hover {
+  text-decoration: underline;
+}
+
+.study-chat-gemini-markdown .message-bubble-premium blockquote {
+  margin: 0.75rem 0;
+  padding-left: 1rem;
+  border-left: 3px solid #dadce0;
+  color: #5f6368;
+}

@@ -63,6 +63,7 @@ import { sql } from "@codemirror/lang-sql";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 import SectionBasedSchemaRenderer from "./SectionBasedSchemaRenderer";
+import "./study-chat-gemini.css";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import {
@@ -279,7 +280,14 @@ export default function StudyChat() {
   const exerciseImageInputRef = useRef<HTMLInputElement>(null);
   const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
   const [apiKeys, setApiKeys] = useState<{ openai: string } | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    // En promos exactas queremos capturar el chat "tipo pantalla" sin el menú lateral.
+    if (typeof window !== "undefined") {
+      const p = window.location?.pathname || "";
+      if (p.includes("/study-agents-promo/exact/")) return false;
+    }
+    return true;
+  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const currentChatIdRef = useRef<string | null>(null);
@@ -1195,7 +1203,13 @@ export default function StudyChat() {
     }
     return "light";
   });
-  const [isMounted, setIsMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const p = window.location?.pathname || "";
+    // En promos exactas queremos evitar el spinner inicial.
+    if (p.includes("/study-agents-promo/exact/")) return true;
+    return false;
+  });
   // Inicializar modelo solo en el cliente para evitar errores de hidratación
   const [selectedModel, setSelectedModel] = useState<string>(() => {
     // Solo leer de localStorage en el cliente
@@ -1236,6 +1250,11 @@ export default function StudyChat() {
       localStorage.setItem("study_agents_color_theme", colorTheme);
     }
   }, [colorTheme, isMounted]);
+
+  /** Tema claro: superficie tipo Gemini (blanco, poco adorno) */
+  const geminiMinimal = colorTheme === "light";
+  /** Acento tema claro (enviar, enlaces markdown, spinner) */
+  const geminiAccent = "#1E7C8F";
   
   // Guardar modelo cuando cambie (solo en el cliente)
   useEffect(() => {
@@ -1251,6 +1270,46 @@ export default function StudyChat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Restaurar estado para que StudyChat muestre ExerciseResultComponent al recargar
+  // (para promos exactas y para mejorar UX cuando el usuario vuelve a abrir un chat).
+  useEffect(() => {
+    if (!isMounted || !userId) return;
+    if (exerciseCorrection) return;
+
+    const lastExerciseResult = [...messages]
+      .reverse()
+      .find(
+        (m) =>
+          m.type === "exercise_result" &&
+          typeof m.content === "string" &&
+          m.content.trim().startsWith("{")
+      );
+
+    if (!lastExerciseResult) return;
+
+    try {
+      const parsed = JSON.parse(lastExerciseResult.content) as ExerciseCorrection;
+      setExerciseCorrection(parsed);
+
+      // ExerciseResultComponent usa solo `exercise.points` en la parte superior.
+      setCurrentExercise((prev) => {
+        if (prev) return prev;
+        return {
+          exercise_id: "promo-restored",
+          statement: "",
+          expected_answer: "",
+          hints: [],
+          points: 10,
+          difficulty: "",
+          topics: [],
+          solution_steps: [],
+        };
+      });
+    } catch {
+      // Si el JSON no es parseable, no hacemos nada.
+    }
+  }, [messages, userId, isMounted, exerciseCorrection]);
 
   // Detectar si el usuario está al final del chat
   useEffect(() => {
@@ -1505,6 +1564,107 @@ export default function StudyChat() {
       }, 100);
     }
   };
+
+  // Modo promo exacto: permite que el wrapper vaya empujando mensajes paso a paso
+  // (para que la grabación parezca interacción, no un "estado final" instantáneo).
+  useEffect(() => {
+    const onPromoPush = (e: Event) => {
+      const ce = e as CustomEvent;
+      const detail = ce.detail as
+        | { role: "user" | "assistant" | "system"; content: string; type: Message["type"] }
+        | undefined;
+      if (!detail?.role || typeof detail.content !== "string") return;
+      addMessage({
+        role: detail.role,
+        content: detail.content,
+        type: detail.type || "message",
+      });
+
+      // Simular "enviar" limpiando el composer cuando el push es del usuario.
+      if (detail.role === "user") {
+        setInput("");
+      }
+    };
+
+    // Solo activa en rutas de promo exacta.
+    if (typeof window !== "undefined") {
+      const p = window.location?.pathname || "";
+      if (p.includes("/study-agents-promo/exact/")) {
+        window.addEventListener("studyAgentsPromoPushMessage", onPromoPush);
+        // Avisar al wrapper para que empiece a empujar mensajes cuando el listener ya está activo.
+        window.dispatchEvent(new Event("studyAgentsPromoListenerReady"));
+        return () => window.removeEventListener("studyAgentsPromoPushMessage", onPromoPush);
+      }
+    }
+    return;
+  }, [addMessage]);
+
+  // Modo promo exacto: anima el composer para que "se vea" el usuario escribiendo.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let cancelled = false;
+    let typingTimeout: number | null = null;
+    let runId = 0;
+
+    const onPromoTyping = (e: Event) => {
+      const ce = e as CustomEvent;
+      const detail = ce.detail as { content?: string } | undefined;
+      const content = detail?.content;
+      if (typeof content !== "string") return;
+
+      runId += 1;
+      const myRun = runId;
+
+      cancelled = false;
+      setInput("");
+
+      // Focus inmediato para que se vea el cursor/textarea.
+      window.setTimeout(() => {
+        if (myRun !== runId) return;
+        textareaRef.current?.focus();
+      }, 50);
+
+      const charDelay = 45; // coincide aprox con typingMs del wrapper
+      let i = 0;
+
+      const tick = () => {
+        if (cancelled || myRun !== runId) return;
+        i += 1;
+        const next = content.slice(0, i);
+        setInput(next);
+
+        // Ajustar altura como en el onChange del textarea.
+        window.requestAnimationFrame(() => {
+          const ta = textareaRef.current;
+          if (!ta || myRun !== runId) return;
+          const baseH = geminiMinimal ? (isMobile ? 44 : 56) : isMobile ? 40 : 48;
+          ta.style.height = `${baseH}px`;
+          const scrollHeight = ta.scrollHeight;
+          if (scrollHeight > baseH) {
+            ta.style.height = `${Math.min(scrollHeight, geminiMinimal ? 200 : 150)}px`;
+          }
+        });
+
+        if (i < content.length) {
+          typingTimeout = window.setTimeout(tick, charDelay);
+        }
+      };
+
+      typingTimeout = window.setTimeout(tick, 120);
+    };
+
+    const p = window.location?.pathname || "";
+    if (!p.includes("/study-agents-promo/exact/")) return;
+
+    window.addEventListener("studyAgentsPromoTyping", onPromoTyping);
+    return () => {
+      cancelled = true;
+      runId += 1;
+      if (typingTimeout) window.clearTimeout(typingTimeout);
+      window.removeEventListener("studyAgentsPromoTyping", onPromoTyping);
+    };
+  }, [geminiMinimal, isMobile]);
   
   // Cargar niveles de mensajes existentes cuando cambian los mensajes
   useEffect(() => {
@@ -2012,9 +2172,11 @@ export default function StudyChat() {
 
     let userMessage = input.trim();
     setInput("");
-    // Resetear altura del textarea
+    // Resetear altura del textarea (alto base según tema / Gemini)
     if (textareaRef.current) {
-      textareaRef.current.style.height = "48px";
+      const baseH =
+        colorTheme === "light" ? (isMobile ? 44 : 56) : isMobile ? 40 : 48;
+      textareaRef.current.style.height = `${baseH}px`;
     }
     setIsLoading(true);
 
@@ -3929,7 +4091,8 @@ ${contentPreview}
         colorTheme={colorTheme}
         onCollapsedChange={setSidebarCollapsed}
       />
-      {/* Premium Background Effects - Full Screen (Fixed Position) */}
+      {/* Premium Background Effects - Full Screen (Fixed Position); off in tema claro tipo Gemini */}
+      {!geminiMinimal && (
       <div 
         style={{
           position: 'fixed',
@@ -4026,14 +4189,15 @@ ${contentPreview}
           );
         })}
       </div>
+      )}
 
       <div
         style={{
           marginLeft: isMobile ? "0" : (sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0"),
           transition: isMobile ? "none" : "margin-left 0.3s ease",
           minHeight: "calc(100vh - 50vh)",
-          background: colorTheme === "light" 
-            ? "linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)" 
+          background: geminiMinimal
+            ? "#ffffff"
             : "linear-gradient(180deg, rgba(18, 18, 26, 0.95) 0%, rgba(10, 10, 15, 0.95) 100%)",
           display: "flex",
           flexDirection: "column",
@@ -4064,16 +4228,22 @@ ${contentPreview}
         alignItems: "center",
         padding: "1rem 1.5rem",
         gap: "0.75rem",
-        background: colorTheme === "dark" 
+        background: geminiMinimal
+          ? "#ffffff"
+          : colorTheme === "dark" 
           ? "rgba(26, 26, 36, 0.6)" 
           : "rgba(255, 255, 255, 0.8)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderBottom: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.25)"}`,
+        backdropFilter: geminiMinimal ? "none" : "blur(20px)",
+        WebkitBackdropFilter: geminiMinimal ? "none" : "blur(20px)",
+        borderBottom: geminiMinimal
+          ? "1px solid #e8eaed"
+          : `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.25)"}`,
         flexWrap: "wrap",
         position: "relative",
         zIndex: 10,
-        boxShadow: colorTheme === "dark"
+        boxShadow: geminiMinimal
+          ? "none"
+          : colorTheme === "dark"
           ? "0 2px 8px rgba(0, 0, 0, 0.1)"
           : "0 2px 8px rgba(0, 0, 0, 0.05)",
       }}>
@@ -4385,7 +4555,7 @@ ${contentPreview}
         {/* Messages */}
         <div
           ref={messagesContainerRef}
-          className="messages-container-scroll"
+          className={`messages-container-scroll${geminiMinimal ? " study-chat-gemini-markdown" : ""}`}
           style={{
             flex: 1,
             overflowY: "auto",
@@ -5372,15 +5542,20 @@ ${contentPreview}
             </div>
           )}
 
-          {messages.map((message, index) => (
+          {messages.map((message, index) => {
+            const simpleBubble =
+              geminiMinimal && (!message.type || message.type === "message");
+            return (
             <div
               key={message.id}
               className={`message-container ${message.role === "user" ? "user-message-premium" : "assistant-message-premium"}`}
               style={{
                 display: "flex",
                 justifyContent: message.role === "user" ? "flex-end" : "flex-start",
-                marginBottom: "1.5rem",
-                animation: message.role === "user" 
+                marginBottom: simpleBubble ? "1.1rem" : "1.5rem",
+                animation: simpleBubble
+                  ? "none"
+                  : message.role === "user" 
                   ? `userMessageEnter 1.1s cubic-bezier(0.25, 0.1, 0.25, 1) ${index * 0.05}s forwards`
                   : `assistantMessageEnter 1.3s cubic-bezier(0.25, 0.1, 0.25, 1) ${index * 0.05}s forwards`,
               }}
@@ -5388,33 +5563,54 @@ ${contentPreview}
               <div
                 className="message-bubble-premium"
                 style={{
-                  maxWidth: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" ? "100%" : "85%",
+                  maxWidth: simpleBubble
+                    ? message.role === "user"
+                      ? "min(92%, 36rem)"
+                      : "100%"
+                    : message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning"
+                    ? "100%"
+                    : "85%",
                   width: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" ? "100%" : undefined,
-                  padding: "1.25rem 1.5rem",
-                  borderRadius: "12px",
-                  background:
-                    message.role === "user"
+                  padding: simpleBubble
+                    ? message.role === "user"
+                      ? "0.65rem 1.1rem"
+                      : "0.2rem 0"
+                    : "1.25rem 1.5rem",
+                  borderRadius: simpleBubble ? (message.role === "user" ? "1.5rem" : "0") : "12px",
+                  background: simpleBubble
+                    ? message.role === "user"
+                      ? "#e8eef4"
+                      : "transparent"
+                    : message.role === "user"
                       ? "#6366f1"
                       : colorTheme === "dark"
                       ? "rgba(26, 26, 36, 0.8)"
                       : "#ffffff",
-                  border:
-                    message.role === "assistant"
+                  border: simpleBubble
+                    ? "none"
+                    : message.role === "assistant"
                       ? `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)"}`
                       : "none",
-                  boxShadow: message.role === "user"
+                  boxShadow: simpleBubble
+                    ? "none"
+                    : message.role === "user"
                     ? "0 4px 16px rgba(99, 102, 241, 0.3), 0 2px 8px rgba(99, 102, 241, 0.2)"
                     : colorTheme === "dark"
                     ? "0 4px 16px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)"
                     : "0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08)",
-                  color: message.role === "user" ? "white" : (colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24"),
+                  color: simpleBubble
+                    ? "#202124"
+                    : message.role === "user"
+                    ? "white"
+                    : colorTheme === "dark"
+                    ? "var(--text-primary)"
+                    : "#1a1a24",
                   position: "relative",
-                  overflow: "hidden",
-                  willChange: "transform, opacity",
+                  overflow: simpleBubble ? "visible" : "hidden",
+                  willChange: simpleBubble ? "auto" : "transform, opacity",
                 }}
               >
-                {/* Efecto de entrada único para usuario - solo una vez */}
-                {message.role === "user" && (
+                {message.role === "user" && !simpleBubble && (
                   <div 
                     className="user-entry-effect"
                     style={{
@@ -5430,8 +5626,7 @@ ${contentPreview}
                   />
                 )}
                 
-                {/* Efecto de entrada único para asistente - solo una vez */}
-                {message.role === "assistant" && (
+                {message.role === "assistant" && !simpleBubble && (
                   <div 
                     className="assistant-entry-effect"
                     style={{
@@ -5983,7 +6178,8 @@ ${contentPreview}
                 )}
               </div>
             </div>
-          ))}
+          );
+          })}
 
           {(isLoading || isGeneratingTest || isGeneratingExercise) && (
             <div
@@ -5991,35 +6187,43 @@ ${contentPreview}
               style={{
                 display: "flex",
                 justifyContent: "flex-start",
-                marginBottom: "1.5rem",
-                animation: "loadingMessageEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                marginBottom: geminiMinimal ? "1rem" : "1.5rem",
+                animation: geminiMinimal ? "none" : "loadingMessageEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
                 opacity: 1,
               }}
             >
               <div
                 className="premium-loading-card"
                 style={{
-                  padding: "1.75rem 2.25rem",
-                  borderRadius: "20px",
-                  background: colorTheme === "dark" 
+                  padding: geminiMinimal ? "0.85rem 1.1rem" : "1.75rem 2.25rem",
+                  borderRadius: geminiMinimal ? "12px" : "20px",
+                  background: geminiMinimal
+                    ? "#f8f9fa"
+                    : colorTheme === "dark" 
                     ? "linear-gradient(135deg, rgba(26, 26, 36, 0.98), rgba(30, 30, 45, 0.95))"
                     : "linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(248, 250, 252, 0.98))",
-                  border: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.3)"}`,
-                  boxShadow: colorTheme === "dark"
+                  border: geminiMinimal
+                    ? "1px solid #e8eaed"
+                    : `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.3)"}`,
+                  boxShadow: geminiMinimal
+                    ? "none"
+                    : colorTheme === "dark"
                     ? "0 12px 48px rgba(99, 102, 241, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 60px rgba(99, 102, 241, 0.2)"
                     : "0 12px 48px rgba(99, 102, 241, 0.2), 0 0 0 1px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 60px rgba(99, 102, 241, 0.1)",
                   display: "flex",
                   alignItems: "center",
-                  gap: "1.75rem",
+                  gap: geminiMinimal ? "0.85rem" : "1.75rem",
                   position: "relative",
-                  overflow: "hidden",
-                  backdropFilter: "blur(24px)",
-                  WebkitBackdropFilter: "blur(24px)",
-                  minWidth: "360px",
+                  overflow: geminiMinimal ? "visible" : "hidden",
+                  backdropFilter: geminiMinimal ? "none" : "blur(24px)",
+                  WebkitBackdropFilter: geminiMinimal ? "none" : "blur(24px)",
+                  minWidth: geminiMinimal ? "auto" : "360px",
                   transform: "translateZ(0)",
-                  willChange: "transform, opacity",
+                  willChange: geminiMinimal ? "auto" : "transform, opacity",
                 }}
               >
+                {!geminiMinimal && (
+                <>
                 {/* Animated Background Glow - Multiple Layers - Fixed to prevent square flashes */}
                 <div 
                   className="loading-card-glow"
@@ -6068,12 +6272,28 @@ ${contentPreview}
                   <div className="loading-pulse-ring-enhanced ring-2"></div>
                   <div className="loading-center-core"></div>
                 </div>
+                </>
+                )}
+                {geminiMinimal && (
+                  <div
+                    aria-hidden
+                    style={{
+                      width: 20,
+                      height: 20,
+                      border: "2px solid #e8eaed",
+                      borderTopColor: geminiAccent,
+                      borderRadius: "50%",
+                      animation: "studyGeminiSpin 0.75s linear infinite",
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
                 
                 <div style={{ position: "relative", zIndex: 1, flex: 1 }}>
                   <div style={{ 
-                    fontSize: "1.125rem", 
-                    fontWeight: 700,
-                    color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
+                    fontSize: geminiMinimal ? "0.95rem" : "1.125rem", 
+                    fontWeight: geminiMinimal ? 500 : 700,
+                    color: geminiMinimal ? "#202124" : colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
                     marginBottom: "0.5rem",
                     display: "flex",
                     alignItems: "center",
@@ -6407,15 +6627,19 @@ ${contentPreview}
             bottom: 0,
             display: "flex",
             flexDirection: "column",
-            gap: isMobile ? "0.5rem" : isTablet ? "0.625rem" : "0.75rem",
-            padding: isMobile ? "0.625rem" : isTablet ? "0.875rem" : "1rem",
-            background: colorTheme === "light" ? "#ffffff" : "rgba(26, 26, 36, 0.95)",
-            borderRadius: isMobile ? "8px" : isTablet ? "10px" : "12px",
-            border: colorTheme === "light" 
-              ? "1px solid rgba(148, 163, 184, 0.3)" 
+            gap: geminiMinimal
+              ? (isMobile ? "0.75rem" : "1rem")
+              : isMobile ? "0.5rem" : isTablet ? "0.625rem" : "0.75rem",
+            padding: geminiMinimal
+              ? (isMobile ? "0.875rem 0.75rem" : isTablet ? "1.125rem 1.25rem" : "1.35rem 1.5rem")
+              : isMobile ? "0.625rem" : isTablet ? "0.875rem" : "1rem",
+            background: geminiMinimal ? "#ffffff" : "rgba(26, 26, 36, 0.95)",
+            borderRadius: geminiMinimal ? "0" : isMobile ? "8px" : isTablet ? "10px" : "12px",
+            border: geminiMinimal
+              ? "none"
               : "1px solid rgba(148, 163, 184, 0.2)",
-            boxShadow: colorTheme === "light"
-              ? "0 -4px 12px rgba(0, 0, 0, 0.1)"
+            boxShadow: geminiMinimal
+              ? "0 -1px 0 #e8eaed"
               : "0 -4px 12px rgba(0, 0, 0, 0.3)",
             zIndex: 100,
             marginTop: "auto",
@@ -7051,13 +7275,25 @@ ${contentPreview}
             )}
           </div>
 
-          {/* Text Input - Premium Design */}
+          {/* Text Input — barra tipo Gemini en tema claro (pill amplia, poco ruido) */}
           <div style={{ 
             display: "flex", 
-            gap: isMobile ? "0.5rem" : "0.75rem", 
-            alignItems: "stretch",
+            gap: geminiMinimal
+              ? (isMobile ? "0.65rem" : "1rem")
+              : isMobile ? "0.5rem" : "0.75rem", 
+            alignItems: geminiMinimal ? "center" : "stretch",
             position: "relative",
             zIndex: 10,
+            minHeight: geminiMinimal ? (isMobile ? "52px" : "60px") : undefined,
+            ...(geminiMinimal
+              ? {
+                  padding: isMobile ? "0.5rem 0.65rem" : "0.65rem 1rem 0.65rem 1.1rem",
+                  background: "#fafafa",
+                  borderRadius: "32px",
+                  border: "1px solid #e8eaed",
+                  boxShadow: "0 1px 2px rgba(60, 64, 67, 0.06)",
+                }
+              : {}),
           }}>
             {/* Botón Subir PDF - Premium */}
             <button
@@ -7065,60 +7301,63 @@ ${contentPreview}
               disabled={isLoading}
               title="Subir PDF"
               style={{
-                width: "48px",
-                height: "48px",
-                minWidth: "48px",
+                width: geminiMinimal ? (isMobile ? "44px" : "48px") : "48px",
+                height: geminiMinimal ? (isMobile ? "44px" : "48px") : "48px",
+                minWidth: geminiMinimal ? (isMobile ? "44px" : "48px") : "48px",
                 padding: 0,
                 background:
-                  isLoading
-                    ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(99, 102, 241, 0.3)")
-                    : (colorTheme === "light" 
-                        ? "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)" 
-                        : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"),
-                border: colorTheme === "light" && !isLoading
-                  ? `1px solid rgba(148, 163, 184, 0.25)`
-                  : "none",
+                  geminiMinimal
+                    ? (isLoading ? "rgba(148, 163, 184, 0.12)" : "transparent")
+                    : isLoading
+                    ? "rgba(99, 102, 241, 0.3)"
+                    : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                border: "none",
                 borderRadius: "50%",
                 cursor: isLoading ? "not-allowed" : "pointer",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                transition: "all 0.2s ease",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 opacity: isLoading ? 0.6 : 1,
-                boxShadow: isLoading
+                boxShadow: geminiMinimal || isLoading
                   ? "none"
-                  : (colorTheme === "light"
-                      ? "0 4px 12px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
-                      : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)"),
+                  : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
                 flexShrink: 0,
                 position: "relative",
                 overflow: "hidden",
               }}
               onMouseEnter={(e) => {
                 if (!isLoading) {
-                  e.currentTarget.style.transform = "scale(1.1)";
-                  e.currentTarget.style.boxShadow = colorTheme === "light"
-                    ? "0 6px 20px rgba(99, 102, 241, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9)"
-                    : "0 6px 24px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)";
+                  if (geminiMinimal) {
+                    e.currentTarget.style.background = "rgba(95, 99, 104, 0.06)";
+                  } else {
+                    e.currentTarget.style.transform = "scale(1.1)";
+                    e.currentTarget.style.boxShadow =
+                      "0 6px 24px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)";
+                  }
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isLoading) {
-                  e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.boxShadow = isLoading
-                    ? "none"
-                    : (colorTheme === "light"
-                        ? "0 4px 12px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
-                        : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)");
+                  if (geminiMinimal) {
+                    e.currentTarget.style.background = "transparent";
+                  } else {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow = isLoading
+                      ? "none"
+                      : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)";
+                  }
                 }
               }}
             >
               <UploadIcon 
-                size={isMobile ? 18 : 20} 
+                size={geminiMinimal ? (isMobile ? 20 : 22) : isMobile ? 18 : 20} 
                 color={
                   isLoading
-                    ? (colorTheme === "light" ? "rgba(26, 36, 52, 0.4)" : "rgba(255, 255, 255, 0.5)")
-                    : (colorTheme === "light" ? "#1a1a24" : "white")
+                    ? (geminiMinimal ? "rgba(95, 99, 104, 0.5)" : "rgba(255, 255, 255, 0.5)")
+                    : geminiMinimal
+                    ? "#5f6368"
+                    : "white"
                 } 
               />
             </button>
@@ -7129,10 +7368,11 @@ ${contentPreview}
                 setInput(e.target.value);
                 // Ajustar altura automáticamente
                 if (textareaRef.current) {
-                  textareaRef.current.style.height = "48px";
+                  const baseH = geminiMinimal ? (isMobile ? 44 : 56) : isMobile ? 40 : 48;
+                  textareaRef.current.style.height = `${baseH}px`;
                   const scrollHeight = textareaRef.current.scrollHeight;
-                  if (scrollHeight > 48) {
-                    textareaRef.current.style.height = `${Math.min(scrollHeight, 150)}px`;
+                  if (scrollHeight > baseH) {
+                    textareaRef.current.style.height = `${Math.min(scrollHeight, geminiMinimal ? 200 : 150)}px`;
                   }
                 }
               }}
@@ -7142,31 +7382,33 @@ ${contentPreview}
                   handleSend();
                 }
               }}
-              placeholder="Escribe tu mensaje..."
+              placeholder={geminiMinimal ? "Pregunta al asistente…" : "Escribe tu mensaje..."}
               disabled={isLoading}
               style={{
                 flex: 1,
-                padding: isMobile ? "0.5rem 0.75rem" : "0.5rem 1rem",
-                background: colorTheme === "dark" 
-                  ? "linear-gradient(135deg, rgba(26, 26, 36, 0.9), rgba(30, 30, 45, 0.8))" 
-                  : "linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95))",
-                border: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.25)" : "rgba(148, 163, 184, 0.3)"}`,
-                borderRadius: "24px",
-                color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-                fontSize: isMobile ? "0.875rem" : "1rem",
+                padding: geminiMinimal
+                  ? (isMobile ? "0.5rem 0.35rem" : "0.65rem 0.5rem")
+                  : (isMobile ? "0.5rem 0.75rem" : "0.5rem 1rem"),
+                background: geminiMinimal
+                  ? "transparent"
+                  : "linear-gradient(135deg, rgba(26, 26, 36, 0.9), rgba(30, 30, 45, 0.8))",
+                border: geminiMinimal ? "none" : "1px solid rgba(148, 163, 184, 0.25)",
+                borderRadius: geminiMinimal ? "8px" : "24px",
+                color: geminiMinimal ? "#202124" : "var(--text-primary)",
+                fontSize: geminiMinimal ? (isMobile ? "1rem" : "1.0625rem") : isMobile ? "0.875rem" : "1rem",
                 resize: "none",
-                minHeight: isMobile ? "40px" : "48px",
-                height: isMobile ? "40px" : "48px",
-                maxHeight: "150px",
+                minHeight: geminiMinimal ? (isMobile ? "44px" : "56px") : isMobile ? "40px" : "48px",
+                height: geminiMinimal ? (isMobile ? "44px" : "56px") : isMobile ? "40px" : "48px",
+                maxHeight: geminiMinimal ? "200px" : "150px",
                 fontFamily: "inherit",
-                boxShadow: colorTheme === "dark"
-                  ? "0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
-                  : "0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
-                lineHeight: "1.5",
+                boxShadow: geminiMinimal
+                  ? "none"
+                  : "0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
+                lineHeight: geminiMinimal ? "1.55" : "1.5",
                 overflowY: "auto",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                backdropFilter: geminiMinimal ? "none" : "blur(20px)",
+                WebkitBackdropFilter: geminiMinimal ? "none" : "blur(20px)",
+                transition: "all 0.2s ease",
               }}
               className="custom-textarea"
             />
@@ -7176,16 +7418,16 @@ ${contentPreview}
               disabled={isLoading || isGeneratingTest || isGeneratingExercise}
               title={isListening ? "Detener grabación" : "Hablar (mantén presionado)"}
                   style={{
-                width: isMobile ? "40px" : "48px",
-                height: isMobile ? "40px" : "48px",
-                minWidth: isMobile ? "40px" : "48px",
+                width: geminiMinimal ? (isMobile ? "44px" : "48px") : (isMobile ? "40px" : "48px"),
+                height: geminiMinimal ? (isMobile ? "44px" : "48px") : (isMobile ? "40px" : "48px"),
+                minWidth: geminiMinimal ? (isMobile ? "44px" : "48px") : (isMobile ? "40px" : "48px"),
                 padding: 0,
                 background: isListening
-                  ? (colorTheme === "light" ? "#ef4444" : "#dc2626")
-                  : (colorTheme === "light" ? "#ffffff" : "rgba(99, 102, 241, 0.2)"),
-                border: colorTheme === "light" && !isListening
-                  ? `1px solid rgba(148, 163, 184, 0.2)`
-                  : "none",
+                  ? (geminiMinimal ? "#ef4444" : "#dc2626")
+                  : geminiMinimal
+                  ? "transparent"
+                  : "rgba(99, 102, 241, 0.2)",
+                border: "none",
                 borderRadius: "50%",
                     cursor: (isLoading || isGeneratingTest) ? "not-allowed" : "pointer",
                 transition: "all 0.2s ease",
@@ -7193,8 +7435,8 @@ ${contentPreview}
                     alignItems: "center",
                     justifyContent: "center",
                 opacity: (isLoading || isGeneratingTest) ? 0.6 : 1,
-                boxShadow: colorTheme === "light" && !isListening
-                  ? "0 1px 3px rgba(0, 0, 0, 0.1)"
+                boxShadow: geminiMinimal
+                  ? (isListening ? "0 0 0 4px rgba(239, 68, 68, 0.2)" : "none")
                   : isListening
                   ? "0 0 0 4px rgba(239, 68, 68, 0.2)"
                   : "none",
@@ -7202,8 +7444,8 @@ ${contentPreview}
                   }}
                   onMouseEnter={(e) => {
                 if (!isLoading && !isGeneratingTest && !isListening) {
-                  if (colorTheme === "light") {
-                    e.currentTarget.style.background = "#f8f9fa";
+                  if (geminiMinimal) {
+                    e.currentTarget.style.background = "rgba(95, 99, 104, 0.06)";
                   } else {
                     e.currentTarget.style.background = "rgba(99, 102, 241, 0.3)";
                   }
@@ -7211,8 +7453,8 @@ ${contentPreview}
                   }}
                   onMouseLeave={(e) => {
                 if (!isLoading && !isGeneratingTest && !isListening) {
-                  if (colorTheme === "light") {
-                    e.currentTarget.style.background = "#ffffff";
+                  if (geminiMinimal) {
+                    e.currentTarget.style.background = "transparent";
                   } else {
                     e.currentTarget.style.background = "rgba(99, 102, 241, 0.2)";
                   }
@@ -7220,13 +7462,15 @@ ${contentPreview}
                   }}
                 >
               <FaMicrophone 
-                size={isMobile ? 18 : 20} 
+                size={geminiMinimal ? (isMobile ? 20 : 22) : isMobile ? 18 : 20} 
                 color={
                   isListening
                     ? "white"
                     : (isLoading || isGeneratingTest)
-                    ? (colorTheme === "light" ? "rgba(26, 36, 52, 0.4)" : "rgba(255, 255, 255, 0.5)")
-                    : (colorTheme === "light" ? "#1a1a24" : "white")
+                    ? (geminiMinimal ? "rgba(95, 99, 104, 0.5)" : "rgba(255, 255, 255, 0.5)")
+                    : geminiMinimal
+                    ? "#5f6368"
+                    : "white"
                 } 
               />
                 </button>
@@ -7236,60 +7480,60 @@ ${contentPreview}
                 disabled={isLoading || isGeneratingTest || isGeneratingExercise || !input.trim()}
                 title="Enviar mensaje"
                 style={{
-                width: isMobile ? "40px" : "48px",
-                height: isMobile ? "40px" : "48px",
-                minWidth: isMobile ? "40px" : "48px",
+                width: geminiMinimal ? (isMobile ? "44px" : "48px") : (isMobile ? "40px" : "48px"),
+                height: geminiMinimal ? (isMobile ? "44px" : "48px") : (isMobile ? "40px" : "48px"),
+                minWidth: geminiMinimal ? (isMobile ? "44px" : "48px") : (isMobile ? "40px" : "48px"),
                 padding: 0,
                   background:
                     (isLoading || isGeneratingTest || !input.trim())
-                    ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(99, 102, 241, 0.3)")
-                    : (colorTheme === "light" 
-                        ? "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)" 
-                        : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"),
-                border: colorTheme === "light" && (input.trim() && !isLoading && !isGeneratingTest)
-                  ? `1px solid rgba(148, 163, 184, 0.25)`
-                  : "none",
+                    ? (geminiMinimal ? "rgba(60, 64, 67, 0.1)" : "rgba(99, 102, 241, 0.3)")
+                    : geminiMinimal
+                    ? geminiAccent
+                    : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                border: "none",
                 borderRadius: "50%",
                   cursor: (isLoading || isGeneratingTest || !input.trim()) ? "not-allowed" : "pointer",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                transition: "all 0.2s ease",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   opacity: (isLoading || isGeneratingTest || !input.trim()) ? 0.6 : 1,
-                boxShadow: (isLoading || isGeneratingTest || !input.trim())
+                boxShadow: geminiMinimal
+                  ? ((isLoading || isGeneratingTest || !input.trim()) ? "none" : "0 1px 3px rgba(30, 124, 143, 0.25)")
+                  : (isLoading || isGeneratingTest || !input.trim())
                   ? "none"
-                  : (colorTheme === "light"
-                      ? "0 4px 12px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
-                      : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)"),
+                  : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
                 flexShrink: 0,
                 position: "relative",
                 overflow: "hidden",
                 }}
                 onMouseEnter={(e) => {
                   if (!isLoading && !isGeneratingTest && input.trim()) {
-                    e.currentTarget.style.transform = "scale(1.1)";
-                    e.currentTarget.style.boxShadow = colorTheme === "light"
-                      ? "0 6px 20px rgba(99, 102, 241, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9)"
+                    e.currentTarget.style.transform = geminiMinimal ? "scale(1.04)" : "scale(1.06)";
+                    e.currentTarget.style.boxShadow = geminiMinimal
+                      ? "0 4px 12px rgba(30, 124, 143, 0.35)"
                       : "0 6px 24px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)";
                   }
                 }}
                 onMouseLeave={(e) => {
                 if (!isLoading && !isGeneratingTest && input.trim()) {
                   e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.boxShadow = (isLoading || isGeneratingTest || !input.trim())
+                  e.currentTarget.style.boxShadow = geminiMinimal
+                    ? "0 1px 3px rgba(30, 124, 143, 0.25)"
+                    : (isLoading || isGeneratingTest || !input.trim())
                     ? "none"
-                    : (colorTheme === "light"
-                        ? "0 4px 12px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
-                        : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)");
+                    : "0 4px 16px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)";
                 }
                 }}
               >
               <SendIcon 
-                size={isMobile ? 18 : 20} 
+                size={geminiMinimal ? (isMobile ? 20 : 22) : isMobile ? 18 : 20} 
                 color={
                   (isLoading || isGeneratingTest || !input.trim())
-                    ? (colorTheme === "light" ? "rgba(26, 36, 52, 0.4)" : "rgba(255, 255, 255, 0.5)")
-                    : (colorTheme === "light" ? "#1a1a24" : "white")
+                    ? (geminiMinimal ? "rgba(60, 64, 67, 0.35)" : "rgba(255, 255, 255, 0.5)")
+                    : geminiMinimal
+                    ? "#ffffff"
+                    : "white"
                 } 
               />
               </button>

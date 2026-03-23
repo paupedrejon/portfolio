@@ -4,9 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:api": "cd study_agents/api && python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "record-promos": "node scripts/record-study-promos.mjs",
+    "record-promos:setup": "npx playwright install chromium",
+    "record-exact-promos": "node scripts/record-study-agents-exact-promos.mjs",
+    "record-exact-promos:setup": "npx playwright install chromium"
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.3",
@@ -57,6 +62,7 @@
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.5.0",
+    "playwright": "^1.58.2",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.12",
     "typescript": "^5"
