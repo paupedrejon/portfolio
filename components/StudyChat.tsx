@@ -3055,14 +3055,20 @@ ${contentPreview}
           }
         }
       } else {
-        // Fallback a simulación
+        // No es una respuesta real: el backend devolvió success=false.
+        // En vez de "simular", mostramos el error para que podamos corregir FASTAPI_URL / fallos de API.
+        const backendError =
+          typeof data?.error === "string" && data.error.trim()
+            ? data.error.trim()
+            : "Error al procesar la pregunta en el backend.";
+
         setTimeout(() => {
           addMessage({
             role: "assistant",
-            content: `Esta es una respuesta simulada a tu pregunta: "${question}".\n\nEn la versión completa, aquí obtendría información relevante de los documentos procesados y te daría una respuesta precisa y contextualizada.`,
+            content: `❌ No se pudo generar la respuesta.\n\n${backendError}`,
             type: "message",
           });
-        }, 1500);
+        }, 800);
       }
     } catch (error: unknown) {
       // Mostrar el error real en lugar de simulación
