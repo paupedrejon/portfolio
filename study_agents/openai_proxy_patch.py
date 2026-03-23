@@ -265,9 +265,18 @@ def patch_openai_client():
                 
                 @functools.wraps(_base_client.SyncHttpxClientWrapper._original_init)
                 def patched_sync_httpx_wrapper_init(self, *args, **kwargs):
-                    # ELIMINAR proxies antes de pasarlo a httpx.Client
-                    kwargs.pop('proxies', None)
-                    return _base_client.SyncHttpxClientWrapper._original_init(self, *args, **kwargs)
+                    # Algunos openai requieren `proxies` keyword-only y no traen default.
+                    # Nunca lo eliminamos: lo aseguramos a None y reintentamos sin él si fuera un "unexpected keyword".
+                    kwargs.setdefault('proxies', None)
+                    try:
+                        return _base_client.SyncHttpxClientWrapper._original_init(self, *args, **kwargs)
+                    except TypeError as e:
+                        msg = str(e)
+                        if "unexpected keyword argument 'proxies'" in msg or 'got an unexpected keyword argument' in msg:
+                            kwargs_no_proxies = dict(kwargs)
+                            kwargs_no_proxies.pop('proxies', None)
+                            return _base_client.SyncHttpxClientWrapper._original_init(self, *args, **kwargs_no_proxies)
+                        raise
                 
                 _base_client.SyncHttpxClientWrapper.__init__ = patched_sync_httpx_wrapper_init
                 _base_client.SyncHttpxClientWrapper._patched = True
@@ -279,9 +288,18 @@ def patch_openai_client():
                 
                 @functools.wraps(_base_client.AsyncHttpxClientWrapper._original_init)
                 def patched_async_httpx_wrapper_init(self, *args, **kwargs):
-                    # ELIMINAR proxies antes de pasarlo a httpx.AsyncClient
-                    kwargs.pop('proxies', None)
-                    return _base_client.AsyncHttpxClientWrapper._original_init(self, *args, **kwargs)
+                    # Algunos openai requieren `proxies` keyword-only y no traen default.
+                    # Nunca lo eliminamos: lo aseguramos a None y reintentamos sin él si fuera un "unexpected keyword".
+                    kwargs.setdefault('proxies', None)
+                    try:
+                        return _base_client.AsyncHttpxClientWrapper._original_init(self, *args, **kwargs)
+                    except TypeError as e:
+                        msg = str(e)
+                        if "unexpected keyword argument 'proxies'" in msg or 'got an unexpected keyword argument' in msg:
+                            kwargs_no_proxies = dict(kwargs)
+                            kwargs_no_proxies.pop('proxies', None)
+                            return _base_client.AsyncHttpxClientWrapper._original_init(self, *args, **kwargs_no_proxies)
+                        raise
                 
                 _base_client.AsyncHttpxClientWrapper.__init__ = patched_async_httpx_wrapper_init
                 _base_client.AsyncHttpxClientWrapper._patched = True
