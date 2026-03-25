@@ -3,7 +3,8 @@
     "softwareEngineer": "Software Engineer & Developer",
     "craftedWithPassion": "Hecho con pasión",
     "explore": "Explorar",
-    "viewAll": "Ver todos"
+    "viewAll": "Ver todos",
+    "downloadCv": "Descargar CV"
   },
   "nav": {
     "home": "Inicio",
@@ -13,7 +14,8 @@
     "education": "Educación",
     "about": "Sobre mí",
     "contact": "Contacto",
-    "cv": "CV"
+    "cv": "CV",
+    "signOut": "Cerrar sesión"
   },
   "home": {
     "title": "PAU PEDREJON",
@@ -132,6 +134,7 @@
   },
   "skills": {
     "badge": "Skills & Tecnologías",
+    "heroBadge": "Experiencia técnica",
     "title": "SKILLS",
     "tagline": "Una visión completa de mis habilidades técnicas y niveles de competencia.",
     "categoryLabel": "Categoría",
@@ -227,6 +230,26 @@
     "badge": "Contacto",
     "title": "CONTACTO",
     "tagline": "Conectemos y trabajemos juntos."
+  },
+  "auth": {
+    "title": "Study Agents",
+    "subtitle": "Inicia sesión para acceder a tu asistente de estudio",
+    "error": "Error al iniciar sesión. Por favor, intenta de nuevo.",
+    "continueWithGoogle": "Continuar con Google",
+    "legal": "Al iniciar sesión, aceptas nuestros términos de servicio y política de privacidad.",
+    "loading": "Cargando..."
+  },
+  "projectsList": {
+    "metaTitle": "Proyectos — CV",
+    "metaDescription": "Lista de proyectos destacados por relevancia para el currículum.",
+    "title": "Todos los proyectos",
+    "subtitle": "Filtrados por relevancia para el CV.",
+    "code": "Código",
+    "demo": "Demo"
+  },
+  "sectionPage": {
+    "technologiesUsed": "Tecnologías utilizadas",
+    "technologiesAria": "Tecnologías utilizadas en el proyecto"
   },
   "footer": {
     "craftedWithPassion": "Hecho con pasión"

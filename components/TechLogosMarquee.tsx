@@ -6,13 +6,19 @@ import { getTechLogoItems } from "@/lib/tech-logo-loop";
 interface TechLogosMarqueeProps {
   techString: string;
   className?: string;
+  /** Accessibility label for the marquee region (should be translated). */
+  ariaLabel?: string;
 }
 
 /**
  * Lightweight CSS-only marquee for tech logos. No RAF, no ResizeObserver.
  * Uses GPU-accelerated transform animation for smooth 60fps.
  */
-export default function TechLogosMarquee({ techString, className = "" }: TechLogosMarqueeProps) {
+export default function TechLogosMarquee({
+  techString,
+  className = "",
+  ariaLabel = "Technologies used",
+}: TechLogosMarqueeProps) {
   const items = getTechLogoItems(techString);
   if (items.length === 0) return null;
 
@@ -24,7 +30,7 @@ export default function TechLogosMarquee({ techString, className = "" }: TechLog
         maskImage: "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
         WebkitMaskImage: "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
       }}
-      aria-label="Technologies used"
+      aria-label={ariaLabel}
     >
       <div className="tech-logos-marquee__track">
         <div className="tech-logos-marquee__list">

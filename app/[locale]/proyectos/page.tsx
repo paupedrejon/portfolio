@@ -53,7 +53,7 @@ export default function ProjectsPage() {
     <>
       {/* Hero Section */}
       <section 
-        className="hero-section proyectos-hero" 
+        className="hero-section proyectos-hero w-full max-w-[100vw] overflow-x-hidden" 
         style={{ position: 'relative', overflow: 'hidden', background: '#000' }}
       >
         {/* Hyperspeed background - above ::before, below content */}
@@ -67,7 +67,7 @@ export default function ProjectsPage() {
         )}
 
         <div 
-          className={`relative z-10 flex flex-col items-center text-center px-6 ${mounted ? 'opacity-100' : 'opacity-0'}`}
+          className={`relative z-10 flex w-full min-w-0 flex-col items-center text-center px-4 sm:px-6 ${mounted ? 'opacity-100' : 'opacity-0'}`}
           style={{ transition: 'opacity 0.8s ease-out' }}
         >
           <div 

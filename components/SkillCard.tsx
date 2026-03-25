@@ -8,6 +8,7 @@ interface SkillCardProps {
 export function SkillCard({ skill, onOpen }: SkillCardProps) {
   return (
     <div
+      className="skill-card-responsive"
       onClick={() => onOpen(skill)}
       onMouseEnter={(e) => {
         const card = e.currentTarget;

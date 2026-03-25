@@ -337,7 +337,7 @@ export default function ConditionalHeader() {
                   e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.3)";
                 }}
               >
-                Cerrar Sesión
+                {t("signOut")}
               </button>
             </div>
           )}

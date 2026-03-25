@@ -94,7 +94,7 @@ export default function SkillsPage() {
     <>
       {/* Hero Section */}
       <section
-        className="hero-section skills-hero"
+        className="hero-section skills-hero w-full max-w-[100vw] overflow-x-hidden"
         style={{ position: "relative", overflow: "hidden", background: "#000000" }}
       >
         {mounted && (
@@ -113,7 +113,7 @@ export default function SkillsPage() {
         )}
 
         <div
-          className={`relative z-10 flex flex-col items-center text-center px-6 ${mounted ? "opacity-100" : "opacity-0"}`}
+          className={`relative z-10 flex w-full min-w-0 flex-col items-center text-center px-4 sm:px-6 ${mounted ? "opacity-100" : "opacity-0"}`}
           style={{ transition: "opacity 0.8s ease-out" }}
         >
           <div
@@ -148,7 +148,7 @@ export default function SkillsPage() {
               }}
             >
               <span style={{ position: "relative", zIndex: 1 }}>
-                Technical Expertise
+                {t("heroBadge")}
               </span>
               <div
                 style={{
@@ -214,8 +214,8 @@ export default function SkillsPage() {
             left: 0,
             right: 0,
             bottom: 0,
-            height: "55vh",
-            minHeight: "360px",
+            height: "clamp(200px, 45vh, 55vh)",
+            minHeight: "min(360px, 50vh)",
             background: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 25%, rgba(0,0,0,0.7) 55%, #000000 75%, #000000 100%)",
             pointerEvents: "none",
             zIndex: 4,
@@ -229,11 +229,11 @@ export default function SkillsPage() {
         className="skills-dark-section"
         style={{
           background: "#000000",
-          padding: "5rem 2rem",
+          padding: "clamp(2.5rem, 8vw, 5rem) clamp(1rem, 4vw, 2rem)",
           marginTop: "-1px",
         }}
       >
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+        <div className="mx-auto w-full min-w-0 max-w-[1100px]">
           {CATEGORY_KEYS.map((categoryKey, idx) => {
             const categoryTitle = t(`categories.${categoryKey}`);
             const categorySkills = skills.filter((s) => s.categoryKey === categoryKey);
@@ -271,17 +271,7 @@ export default function SkillsPage() {
                     {categoryTitle}
                   </h2>
                 </div>
-                <div
-                  className="skills-cards-grid"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: "16px",
-                    width: "100%",
-                    maxWidth: "900px",
-                    margin: "0 auto",
-                  }}
-                >
+                <div className="skills-cards-grid w-full">
                   {categorySkills.map((skill) => (
                     <SkillCard
                       key={skill.name}
@@ -318,11 +308,14 @@ export default function SkillsPage() {
               position: "relative",
               backgroundColor: "#0c0c14",
               border: "1px solid rgba(139,92,246,0.3)",
-              borderRadius: "28px",
-              padding: "64px",
+              borderRadius: "clamp(16px, 4vw, 28px)",
+              padding: "clamp(1.25rem, 5vw, 4rem)",
               maxWidth: "620px",
               width: "100%",
-              overflow: "hidden",
+              maxHeight: "min(90vh, 720px)",
+              overflowY: "auto",
+              overflowX: "hidden",
+              WebkitOverflowScrolling: "touch",
             }}
           >
             {/* Top glow */}
@@ -359,9 +352,11 @@ export default function SkillsPage() {
             <div
               style={{
                 display: "flex",
+                flexWrap: "wrap",
+                gap: "1rem",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "32px",
+                marginBottom: "clamp(1rem, 3vw, 2rem)",
                 position: "relative",
                 zIndex: 1,
               }}
@@ -369,8 +364,8 @@ export default function SkillsPage() {
               {/* Icon box */}
               <div
                 style={{
-                  width: "96px",
-                  height: "96px",
+                  width: "clamp(72px, 18vw, 96px)",
+                  height: "clamp(72px, 18vw, 96px)",
                   backgroundColor: "rgba(139,92,246,0.12)",
                   border: "1px solid rgba(139,92,246,0.3)",
                   borderRadius: "24px",
@@ -384,8 +379,8 @@ export default function SkillsPage() {
                     src={selectedSkill.icon}
                     alt={selectedSkill.name}
                     style={{
-                      width: "56px",
-                      height: "56px",
+                      width: "clamp(40px, 10vw, 56px)",
+                      height: "clamp(40px, 10vw, 56px)",
                       objectFit: "contain",
                       filter: "brightness(0) invert(1)",
                     }}
@@ -453,13 +448,14 @@ export default function SkillsPage() {
             <h2
               style={{
                 color: "white",
-                fontSize: "48px",
+                fontSize: "clamp(1.5rem, 7vw, 3rem)",
                 fontWeight: "800",
                 margin: "0 0 20px",
                 letterSpacing: "-1px",
                 lineHeight: 1.1,
                 position: "relative",
                 zIndex: 1,
+                wordBreak: "break-word",
               }}
             >
               {selectedSkill.name}
@@ -481,8 +477,8 @@ export default function SkillsPage() {
             <p
               style={{
                 color: "rgba(255,255,255,0.75)",
-                fontSize: "20px",
-                lineHeight: "1.9",
+                fontSize: "clamp(0.95rem, 3.5vw, 1.25rem)",
+                lineHeight: "1.75",
                 margin: 0,
                 fontWeight: "400",
                 position: "relative",

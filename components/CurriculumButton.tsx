@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 interface CurriculumButtonProps {
   href: string;
   label?: string;
@@ -25,10 +27,10 @@ function DownloadIcon({ size = 16 }: { size?: number }) {
   );
 }
 
-export default function CurriculumButton({ 
-  href, 
-  label = "Download CV"
-}: CurriculumButtonProps) {
+export default function CurriculumButton({ href, label }: CurriculumButtonProps) {
+  const t = useTranslations("common");
+  const displayLabel = label ?? t("downloadCv");
+
   return (
     <a
       href={href}
@@ -38,7 +40,7 @@ export default function CurriculumButton({
     >
       <span className="cv-btn-text">
         <DownloadIcon size={16} />
-        {label}
+        {displayLabel}
       </span>
     </a>
   );

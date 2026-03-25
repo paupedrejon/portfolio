@@ -4,8 +4,10 @@ import { signIn } from "next-auth/react";
 import { spaceGrotesk, outfit } from "@/app/fonts";
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 function SignInContent() {
+  const ta = useTranslations("auth");
   const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const callbackUrl = searchParams.get("callbackUrl") || "/study-agents";
@@ -64,7 +66,7 @@ function SignInContent() {
               marginBottom: "0.5rem",
             }}
           >
-            Study Agents
+            {ta("title")}
           </h1>
           <p
             className={outfit.className}
@@ -73,7 +75,7 @@ function SignInContent() {
               fontSize: "1rem",
             }}
           >
-            Inicia sesión para acceder a tu asistente de estudio
+            {ta("subtitle")}
           </p>
         </div>
 
@@ -144,7 +146,7 @@ function SignInContent() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Continuar con Google
+          {ta("continueWithGoogle")}
         </button>
 
         <p
@@ -156,28 +158,33 @@ function SignInContent() {
             lineHeight: 1.6,
           }}
         >
-          Al iniciar sesión, aceptas nuestros términos de servicio y política de privacidad.
+          {ta("legal")}
         </p>
       </div>
     </div>
   );
 }
 
+function SignInLoadingFallback() {
+  const ta = useTranslations("auth");
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #1a1a24 0%, #2d2d44 100%)",
+      }}
+    >
+      <div style={{ color: "white" }}>{ta("loading")}</div>
+    </div>
+  );
+}
+
 export default function SignInPage() {
   return (
-    <Suspense fallback={
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #1a1a24 0%, #2d2d44 100%)",
-        }}
-      >
-        <div style={{ color: "white" }}>Cargando...</div>
-      </div>
-    }>
+    <Suspense fallback={<SignInLoadingFallback />}>
       <SignInContent />
     </Suspense>
   );

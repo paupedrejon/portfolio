@@ -2,6 +2,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import ScrollReveal from "./ScrollReveal";
 import TechLogosMarquee from "./TechLogosMarquee";
 
@@ -65,6 +66,7 @@ export default function SectionPage({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   midTextColor,
 }: SectionPageProps) {
+  const t = useTranslations("sectionPage");
   const useSplit = !!solidBg || !!imageCard;
 
   // Normalize background URL
@@ -227,7 +229,7 @@ export default function SectionPage({
               fontWeight: 500,
             }}
           >
-            Technologies Used
+            {t("technologiesUsed")}
           </p>
           <div
             style={{
@@ -239,6 +241,7 @@ export default function SectionPage({
           >
             <TechLogosMarquee
               techString={typeof midText === "string" ? midText : ""}
+              ariaLabel={t("technologiesAria")}
             />
           </div>
         </div>
@@ -277,12 +280,12 @@ export default function SectionPage({
       >
         <div className="project-content" style={{ padding: '0' }}>
           {/* Text Content */}
-          <div className={`${imageSide === "left" ? "order-2 lg:order-2" : "order-2 lg:order-1"}`}>
+          <div className={`min-w-0 ${imageSide === "left" ? "order-2 lg:order-2" : "order-2 lg:order-1"}`}>
             {ContentBlock}
           </div>
 
           {/* Image */}
-          <div className={`${imageSide === "left" ? "order-1 lg:order-1" : "order-1 lg:order-2"}`}>
+          <div className={`min-w-0 ${imageSide === "left" ? "order-1 lg:order-1" : "order-1 lg:order-2"}`}>
             {imageCard && (
               <div
                 className="project-image"

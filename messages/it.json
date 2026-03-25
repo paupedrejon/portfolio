@@ -3,7 +3,8 @@
     "softwareEngineer": "Software Engineer & Developer",
     "craftedWithPassion": "Realizzato con passione",
     "explore": "Esplora",
-    "viewAll": "Vedi tutti"
+    "viewAll": "Vedi tutti",
+    "downloadCv": "Scarica CV"
   },
   "nav": {
     "home": "Home",
@@ -13,7 +14,8 @@
     "education": "Istruzione",
     "about": "Chi sono",
     "contact": "Contatto",
-    "cv": "CV"
+    "cv": "CV",
+    "signOut": "Esci"
   },
   "home": {
     "title": "PAU PEDREJON",
@@ -227,6 +229,26 @@
     "badge": "Contatto",
     "title": "CONTATTO",
     "tagline": "Connettiamoci e lavoriamo insieme."
+  },
+  "auth": {
+    "title": "Study Agents",
+    "subtitle": "Accedi per usare il tuo assistente di studio",
+    "error": "Accesso non riuscito. Riprova.",
+    "continueWithGoogle": "Continua con Google",
+    "legal": "Accedendo accetti i nostri termini di servizio e l’informativa sulla privacy.",
+    "loading": "Caricamento..."
+  },
+  "projectsList": {
+    "metaTitle": "Progetti — CV",
+    "metaDescription": "Progetti in evidenza per rilevanza sul curriculum.",
+    "title": "Tutti i progetti",
+    "subtitle": "Filtrati per rilevanza sul CV.",
+    "code": "Codice",
+    "demo": "Demo"
+  },
+  "sectionPage": {
+    "technologiesUsed": "Tecnologie utilizzate",
+    "technologiesAria": "Tecnologie utilizzate nel progetto"
   },
   "footer": {
     "craftedWithPassion": "Realizzato con passione"

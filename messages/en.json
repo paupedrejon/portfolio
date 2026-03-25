@@ -3,7 +3,8 @@
     "softwareEngineer": "Software Engineer & Developer",
     "craftedWithPassion": "Crafted with passion",
     "explore": "Explore",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "downloadCv": "Download CV"
   },
   "nav": {
     "home": "Home",
@@ -13,7 +14,8 @@
     "education": "Education",
     "about": "About",
     "contact": "Contact",
-    "cv": "CV"
+    "cv": "CV",
+    "signOut": "Sign out"
   },
   "home": {
     "title": "PAU PEDREJON",
@@ -132,6 +134,7 @@
   },
   "skills": {
     "badge": "Skills & Technologies",
+    "heroBadge": "Technical expertise",
     "title": "SKILLS",
     "tagline": "A comprehensive overview of my technical skills and proficiency levels.",
     "categoryLabel": "Category",
@@ -227,6 +230,26 @@
     "badge": "Contact",
     "title": "CONTACT",
     "tagline": "Let's connect and work together."
+  },
+  "auth": {
+    "title": "Study Agents",
+    "subtitle": "Sign in to access your study assistant",
+    "error": "Sign-in failed. Please try again.",
+    "continueWithGoogle": "Continue with Google",
+    "legal": "By signing in, you accept our terms of service and privacy policy.",
+    "loading": "Loading..."
+  },
+  "projectsList": {
+    "metaTitle": "Projects — CV",
+    "metaDescription": "Highlighted projects by relevance for my résumé.",
+    "title": "All projects",
+    "subtitle": "Filtered by relevance for my CV.",
+    "code": "Code",
+    "demo": "Demo"
+  },
+  "sectionPage": {
+    "technologiesUsed": "Technologies used",
+    "technologiesAria": "Technologies used in this project"
   },
   "footer": {
     "craftedWithPassion": "Crafted with passion"

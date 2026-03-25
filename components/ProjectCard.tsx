@@ -10,7 +10,15 @@ image?: string;
 }
 
 
-export default function ProjectCard({ project }: { project: Project }) {
+export default function ProjectCard({
+  project,
+  codeLabel = "Code",
+  demoLabel = "Demo",
+}: {
+  project: Project;
+  codeLabel?: string;
+  demoLabel?: string;
+}) {
 const { title, summary, tech, repo, demo, image } = project;
 return (
 <article className="group border border-white/10 rounded-2xl overflow-hidden hover:shadow-md transition-shadow bg-white/[0.02]">
@@ -31,12 +39,12 @@ return (
 <div className="mt-4 flex gap-3">
 {repo && (
 <a className="underline" href={repo} target="_blank" rel="noreferrer">
-Código
+{codeLabel}
 </a>
 )}
 {demo && (
 <a className="underline" href={demo} target="_blank" rel="noreferrer">
-Demo
+{demoLabel}
 </a>
 )}
 </div>
