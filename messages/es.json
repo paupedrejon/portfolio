@@ -148,41 +148,184 @@
       "hardware3d": "Hardware e Impresión 3D"
     },
     "items": {
-      "c_cpp": { "name": "C / C++", "description": "Utilizado ampliamente en desarrollo de juegos con Unreal Engine para networking multijugador, sistemas de juego y código crítico para rendimiento. También aplicado en programación de microcontroladores para el proyecto Simulador de Inflado de Neumáticos." },
-      "java": { "name": "Java", "description": "Aplicado en trabajos universitarios de programación orientada a objetos, estructuras de datos y patrones de diseño. Construí aplicaciones de escritorio y sistemas backend." },
-      "python": { "name": "Python", "description": "Lenguaje principal de la plataforma StudyAgents — backend FastAPI, integraciones LangChain y procesamiento de datos. También para scripting, automatización y experimentos ML/NLP." },
-      "sql": { "name": "SQL", "description": "Diseño de bases de datos y consultas para aplicaciones web y sistemas backend. PostgreSQL y MySQL para modelado relacional, optimizaciones e informes." },
-      "r": { "name": "R", "description": "Análisis estadístico y visualización de datos en proyectos académicos. Análisis exploratorio, modelos de regresión y gráficos para publicaciones." },
-      "html_css": { "name": "HTML / CSS", "description": "Construcción de interfaces web responsivas y accesibles. Usado en portfolio, StudyAgents y otros proyectos con CSS moderno (Flexbox, Grid, animaciones) y HTML semántico." },
-      "react_nextjs": { "name": "React / Next.js", "description": "Stack principal para desarrollo web — este portfolio, frontend de StudyAgents y varios proyectos personales. Experiencia con hooks, SSR, API routes y arquitectura de componentes." },
-      "tailwindcss": { "name": "TailwindCSS", "description": "CSS utility-first para desarrollo rápido de UI. Usado en portfolio, StudyAgents y otros proyectos Next.js para estilos consistentes y diseño responsivo." },
-      "nodejs": { "name": "Node.js", "description": "JavaScript del lado del servidor para APIs y herramientas. Usado con FastAPI (Python) en StudyAgents para features en tiempo real y con API routes de Next.js." },
-      "postgresql": { "name": "PostgreSQL", "description": "Base de datos relacional para almacenamiento persistente en aplicaciones web. Diseño de esquemas, migraciones y optimización de consultas." },
-      "mongodb": { "name": "MongoDB", "description": "Almacenamiento documental para modelos de datos flexibles. Usado en proyectos que requieren flexibilidad de esquema e iteración rápida." },
-      "llm": { "name": "LLM", "description": "Los Large Language Models impulsan el asistente StudyAgents — resumen, Q&A y generación de tests. Integración de OpenAI y modelos locales vía LangChain." },
-      "rag": { "name": "RAG", "description": "Retrieval-Augmented Generation en StudyAgents: ChromaDB, fragmentación de documentos y búsqueda semántica para fundamentar respuestas en PDFs subidos." },
-      "nlp": { "name": "NLP", "description": "Procesamiento de lenguaje natural para extracción de texto, resumen y question-answering. Aplicado en StudyAgents y experimentos académicos." },
-      "neural_networks": { "name": "Redes Neuronales", "description": "Comprensión de arquitecturas y entrenamiento. Aplicado en proyectos de curso y para interpretar el comportamiento de LLMs en StudyAgents." },
-      "exp": { "name": "ExP", "description": "Conceptos de aprendizaje basado en explicaciones aplicados a hacer las salidas de IA interpretables y educativas en StudyAgents." },
-      "autonomous_agents": { "name": "Agentes Autónomos", "description": "StudyAgents usa patrones agenticos — uso de herramientas, planificación y razonamiento multi-paso para asistencia al estudio, procesamiento de documentos y generación de tests." },
-      "unreal_engine": { "name": "Unreal Engine", "description": "Motor principal para proyectos de juegos: Salmon Infinite (shooter multijugador), DROVO, Circus VR y VR Experience. C++, Blueprints, networking y pipeline 3D." },
-      "unity": { "name": "Unity", "description": "Juego 2D FIB Lab y prototipado. Experiencia con C#, sistemas 2D y builds multiplataforma." },
-      "blender": { "name": "Blender", "description": "Modelado 3D, texturizado y animación para juegos e impresión 3D. Props de personajes, assets de entorno y UV unwrapping." },
-      "photoshop": { "name": "Photoshop", "description": "Texturas, assets UI y arte promocional para juegos y portfolio. Edición fotográfica y creación de assets 2D." },
-      "substance": { "name": "Substance", "description": "Substance Painter para materiales PBR y texturizado de assets de juegos. Superficies realistas para personajes y entornos." },
-      "after_effects": { "name": "After Effects", "description": "Motion graphics y edición de vídeo para trailers de juegos y presentaciones del portfolio." },
-      "git": { "name": "Git", "description": "Control de versiones para todos los proyectos — branching, rebasing y flujos colaborativos. Esencial para desarrollo en solitario y en equipo." },
-      "jira": { "name": "Jira", "description": "Gestión de proyectos ágil — sprints, backlogs e issue tracking en entornos de equipo." },
-      "trello": { "name": "Trello", "description": "Tableros de tareas para organización de proyectos personales y equipos pequeños. Workflow estilo Kanban." },
-      "3d_printing": { "name": "Impresión 3D", "description": "Impresión FDM con UltiMaker Cura — modelos a gran escala, optimización de soportes y post-procesado. Adapté modelos 3D complejos para imprimir." },
-      "proteus": { "name": "Proteus", "description": "Simulación de microcontroladores para el proyecto Tire Inflator. Diseño de circuitos y programación en C para sistemas embebidos." },
-      "computer_systems": { "name": "Sistemas Informáticos", "description": "Comprensión de sistemas operativos, redes y conceptos de bajo nivel. Aplicado en networking de juegos y programación de sistemas." }
+      "c_cpp": {
+        "name": "C / C++",
+        "description": "Utilizado ampliamente en desarrollo de juegos con Unreal Engine para networking multijugador, sistemas de juego y código crítico para rendimiento. También aplicado en programación de microcontroladores para el proyecto Simulador de Inflado de Neumáticos."
+      },
+      "java": {
+        "name": "Java",
+        "description": "Aplicado en trabajos universitarios de programación orientada a objetos, estructuras de datos y patrones de diseño. Construí aplicaciones de escritorio y sistemas backend."
+      },
+      "python": {
+        "name": "Python",
+        "description": "Lenguaje principal de la plataforma StudyAgents — backend FastAPI, integraciones LangChain y procesamiento de datos. También para scripting, automatización y experimentos ML/NLP."
+      },
+      "sql": {
+        "name": "SQL",
+        "description": "Diseño de bases de datos y consultas para aplicaciones web y sistemas backend. PostgreSQL y MySQL para modelado relacional, optimizaciones e informes."
+      },
+      "r": {
+        "name": "R",
+        "description": "Análisis estadístico y visualización de datos en proyectos académicos. Análisis exploratorio, modelos de regresión y gráficos para publicaciones."
+      },
+      "html_css": {
+        "name": "HTML / CSS",
+        "description": "Construcción de interfaces web responsivas y accesibles. Usado en portfolio, StudyAgents y otros proyectos con CSS moderno (Flexbox, Grid, animaciones) y HTML semántico."
+      },
+      "react_nextjs": {
+        "name": "React / Next.js",
+        "description": "Stack principal para desarrollo web — este portfolio, frontend de StudyAgents y varios proyectos personales. Experiencia con hooks, SSR, API routes y arquitectura de componentes."
+      },
+      "tailwindcss": {
+        "name": "TailwindCSS",
+        "description": "CSS utility-first para desarrollo rápido de UI. Usado en portfolio, StudyAgents y otros proyectos Next.js para estilos consistentes y diseño responsivo."
+      },
+      "nodejs": {
+        "name": "Node.js",
+        "description": "JavaScript del lado del servidor para APIs y herramientas. Usado con FastAPI (Python) en StudyAgents para features en tiempo real y con API routes de Next.js."
+      },
+      "postgresql": {
+        "name": "PostgreSQL",
+        "description": "Base de datos relacional para almacenamiento persistente en aplicaciones web. Diseño de esquemas, migraciones y optimización de consultas."
+      },
+      "mongodb": {
+        "name": "MongoDB",
+        "description": "Almacenamiento documental para modelos de datos flexibles. Usado en proyectos que requieren flexibilidad de esquema e iteración rápida."
+      },
+      "llm": {
+        "name": "LLM",
+        "description": "Los Large Language Models impulsan el asistente StudyAgents — resumen, Q&A y generación de tests. Integración de OpenAI y modelos locales vía LangChain."
+      },
+      "rag": {
+        "name": "RAG",
+        "description": "Retrieval-Augmented Generation en StudyAgents: ChromaDB, fragmentación de documentos y búsqueda semántica para fundamentar respuestas en PDFs subidos."
+      },
+      "nlp": {
+        "name": "NLP",
+        "description": "Procesamiento de lenguaje natural para extracción de texto, resumen y question-answering. Aplicado en StudyAgents y experimentos académicos."
+      },
+      "neural_networks": {
+        "name": "Redes Neuronales",
+        "description": "Comprensión de arquitecturas y entrenamiento. Aplicado en proyectos de curso y para interpretar el comportamiento de LLMs en StudyAgents."
+      },
+      "exp": {
+        "name": "ExP",
+        "description": "Conceptos de aprendizaje basado en explicaciones aplicados a hacer las salidas de IA interpretables y educativas en StudyAgents."
+      },
+      "autonomous_agents": {
+        "name": "Agentes Autónomos",
+        "description": "StudyAgents usa patrones agenticos — uso de herramientas, planificación y razonamiento multi-paso para asistencia al estudio, procesamiento de documentos y generación de tests."
+      },
+      "unreal_engine": {
+        "name": "Unreal Engine",
+        "description": "Motor principal para proyectos de juegos: Salmon Infinite (shooter multijugador), DROVO, Circus VR y VR Experience. C++, Blueprints, networking y pipeline 3D."
+      },
+      "unity": {
+        "name": "Unity",
+        "description": "Juego 2D FIB Lab y prototipado. Experiencia con C#, sistemas 2D y builds multiplataforma."
+      },
+      "blender": {
+        "name": "Blender",
+        "description": "Modelado 3D, texturizado y animación para juegos e impresión 3D. Props de personajes, assets de entorno y UV unwrapping."
+      },
+      "photoshop": {
+        "name": "Photoshop",
+        "description": "Texturas, assets UI y arte promocional para juegos y portfolio. Edición fotográfica y creación de assets 2D."
+      },
+      "substance": {
+        "name": "Substance",
+        "description": "Substance Painter para materiales PBR y texturizado de assets de juegos. Superficies realistas para personajes y entornos."
+      },
+      "after_effects": {
+        "name": "After Effects",
+        "description": "Motion graphics y edición de vídeo para trailers de juegos y presentaciones del portfolio."
+      },
+      "git": {
+        "name": "Git",
+        "description": "Control de versiones para todos los proyectos — branching, rebasing y flujos colaborativos. Esencial para desarrollo en solitario y en equipo."
+      },
+      "jira": {
+        "name": "Jira",
+        "description": "Gestión de proyectos ágil — sprints, backlogs e issue tracking en entornos de equipo."
+      },
+      "trello": {
+        "name": "Trello",
+        "description": "Tableros de tareas para organización de proyectos personales y equipos pequeños. Workflow estilo Kanban."
+      },
+      "3d_printing": {
+        "name": "Impresión 3D",
+        "description": "Impresión FDM con UltiMaker Cura — modelos a gran escala, optimización de soportes y post-procesado. Adapté modelos 3D complejos para imprimir."
+      },
+      "proteus": {
+        "name": "Proteus",
+        "description": "Simulación de microcontroladores para el proyecto Tire Inflator. Diseño de circuitos y programación en C para sistemas embebidos."
+      },
+      "computer_systems": {
+        "name": "Sistemas Informáticos",
+        "description": "Comprensión de sistemas operativos, redes y conceptos de bajo nivel. Aplicado en networking de juegos y programación de sistemas."
+      }
     }
   },
   "experience": {
     "badge": "Trayectoria",
     "title": "EXPERIENCIA",
-    "tagline": "Mi camino profesional en desarrollo de software y tecnología."
+    "tagline": "Mi camino profesional en desarrollo de software y tecnología.",
+    "timeline": {
+      "kicker": "Experiencia laboral",
+      "title": "Cronología"
+    },
+    "items": {
+      "owius": {
+        "title": "Prácticas en desarrollo de software",
+        "company": "Owius",
+        "years": "2025–2026*",
+        "summary": "Desarrollo web full-stack desde noviembre: productos con datos a escala, e‑commerce con pasarela de pago, paneles de gestión, WordPress y un SaaS en marcha para diseñar escape rooms virtuales.\n\nStack habitual: React, React Native, Node, Redsys, jobs con cron, SEO, i18n y optimización de rendimiento.",
+        "workBlocksTitle": "Proyectos y entregas",
+        "workBlocks": [
+          {
+            "title": "E‑commerce + panel de operaciones",
+            "points": [
+              "Proyecto grande ya en marcha al que me uní; hoy desplegado en producción.",
+              "Scraping diario automatizado (cron) sobre un dataset de más de 100.000 registros.",
+              "Agrupación, filtros y descarte de filas según criterios de negocio.",
+              "Tienda: Redsys y pago por transferencia con factura en PDF.",
+              "Backoffice tipo CRM para catálogo, pedidos y tareas internas.",
+              "Rendimiento, SEO e i18n."
+            ]
+          },
+          {
+            "title": "Web corporativa",
+            "points": [
+              "Intervención breve (~3 días): incidencias, ajustes y pequeñas features.",
+              "Integración con Meta y gestión de tokens."
+            ]
+          },
+          {
+            "title": "Escape room virtual",
+            "points": [
+              "Sustituir contenido fijo por un flujo editable sin desplegar código.",
+              "Textos, pantallas, preguntas y quizzes gestionados desde el backoffice."
+            ]
+          },
+          {
+            "title": "WordPress",
+            "points": [
+              "Maquetación responsive sobre plantilla existente.",
+              "Cambios en widget a medida (PHP)."
+            ]
+          },
+          {
+            "title": "SaaS — constructor de escape rooms (en curso)",
+            "points": [
+              "Producto nuevo desde cero: editor tipo diapositivas con interactividad (páginas, botones, quizzes, imagen y vídeo).",
+              "Portal con suscripción mensual: Redsys, cobro recurrente con tokenización y hardening.",
+              "Web de juego aparte: el jugador entra con un código de sala."
+            ]
+          }
+        ]
+      }
+    },
+    "yearsFootnote": "* Prácticas en curso; la fecha de fin puede ajustarse al calendario académico o contractual."
   },
   "education": {
     "badge": "Formación",
@@ -253,5 +396,61 @@
   },
   "footer": {
     "craftedWithPassion": "Hecho con pasión"
+  },
+  "labs": {
+    "metaTitle": "Labs — Experimentos",
+    "metaDescription": "Zona experimental con prototipos interactivos y videojuegos web.",
+    "badge": "Experimental",
+    "title": "Labs: prototipos jugables y cosas raras que me apetecía construir",
+    "subtitle": "Un espacio para experimentar con rendering, interacción y sistemas de juego. Aquí van ideas más ambiciosas que luego reutilizo en proyectos reales.",
+    "openMinecraft": "Abrir Mini-Minecraft",
+    "iterationTag": "Iteration 1 · World Gen + Advanced Movement",
+    "cards": {
+      "world": {
+        "title": "WORLD GENERATOR",
+        "body": "Terreno procedural por chunks (seeded), cache inteligente y carga/descarte dinámico para mantener buen rendimiento."
+      },
+      "movement": {
+        "title": "ADVANCED MOVEMENT",
+        "body": "Control en primera persona con dash, wall-run, glide, grapple y sprint-slide para una movilidad más agresiva que Minecraft clásico."
+      },
+      "graphics": {
+        "title": "3D SCROLL HERO",
+        "body": "Escena 3D fija al fondo de la página que rota con el scroll para reforzar el look de laboratorio visual."
+      }
+    },
+    "scrollBlock": {
+      "kicker": "Primer experimento",
+      "title": "Mini-Minecraft Web — sandbox voxel en progreso",
+      "body": "Este laboratorio prioriza sistemas base: mundo procedural, control del personaje y pipeline de render para iterar rápido en mecánicas.",
+      "cta": "Entrar al sandbox"
+    }
+  },
+  "minecraft": {
+    "metaTitle": "Labs — Mini-Minecraft Web",
+    "metaDescription": "Sandbox voxel con generación procedural y movilidad avanzada en primera persona.",
+    "title": "Mini-Minecraft Web",
+    "loading": "Inicializando mundo...",
+    "controlsTitle": "Controles",
+    "debugTitle": "Estado",
+    "hintPointerLock": "Haz click en el canvas para bloquear el cursor.",
+    "controls": {
+      "move": "Moverse",
+      "look": "Mirar",
+      "jumpGlide": "Saltar / planear",
+      "sprint": "Sprint",
+      "slide": "Slide",
+      "dash": "Dash",
+      "grapple": "Grapple",
+      "wallRunHint": "Wall-run automático al moverte junto a paredes en el aire"
+    },
+    "states": {
+      "sliding": "Sliding",
+      "wallRunning": "Wall-running",
+      "gliding": "Gliding",
+      "speed": "Velocidad",
+      "dashCd": "Dash CD",
+      "grappleCd": "Grapple CD"
+    }
   }
 }

@@ -1,0 +1,9 @@
+Hand model source:
+- File: hands.glb
+- Origin: https://github.com/serious-games-darmstadt/sign-visualizations
+- Path: handshapes/glb_models/1.glb
+- Download URL: https://raw.githubusercontent.com/serious-games-darmstadt/sign-visualizations/main/handshapes/glb_models/1.glb
+
+License:
+- See upstream repository license and asset usage terms.
+- If stricter attribution is required by upstream, keep this file with distributions.

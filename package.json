@@ -33,6 +33,7 @@
     "katex": "^0.16.28",
     "lucide-react": "^0.577.0",
     "mermaid": "^11.12.2",
+    "minecraft-assets": "^1.17.0",
     "motion": "^12.35.1",
     "next": "^15.5.9",
     "next-auth": "^5.0.0-beta.30",
@@ -49,7 +50,8 @@
     "react-syntax-highlighter": "^16.1.0",
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.3.1",
-    "three": "^0.183.2"
+    "three": "^0.183.2",
+    "three.quarks": "^0.17.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
