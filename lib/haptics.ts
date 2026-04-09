@@ -40,12 +40,13 @@ export function hapticTap(): void {
   const now = Date.now();
   if (now - lastTapAt < TAP_THROTTLE_MS) return;
   lastTapAt = now;
-  vibrate(24);
+  /* Single pulse ~50ms: short patterns are often imperceptible on some phones */
+  vibrate(52);
 }
 
 /** Call synchronously in the same tick as the user tap, before any await. */
 export function hapticPending(): void {
-  vibrate(20);
+  vibrate(48);
 }
 
 export function hapticSuccess(): void {
