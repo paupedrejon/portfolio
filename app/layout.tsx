@@ -1,6 +1,7 @@
 // app/layout.tsx
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Providers } from "./providers";
 import ConditionalHeader from "@/components/ConditionalHeader";
 import { spaceGrotesk, outfit, jetbrainsMono, leagueSpartan } from "./fonts";
@@ -90,6 +91,7 @@ export default async function RootLayout({
         </footer>
 
             <Analytics />
+            <SpeedInsights />
           </NextIntlClientProvider>
         </Providers>
       </body>
