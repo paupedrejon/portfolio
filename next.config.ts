@@ -10,16 +10,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  async headers() {
-    return [
-      {
-        source: "/:path*",
-        headers: [
-          { key: "Permissions-Policy", value: "vibrate=*" },
-        ],
-      },
-    ];
-  },
 };
 
 export default withNextIntl(nextConfig);
