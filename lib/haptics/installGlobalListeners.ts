@@ -86,7 +86,21 @@ export function findInteractiveFromElement(start: Element | null): HTMLElement |
   return null;
 }
 
+/**
+ * Walk the hit-test stack top-to-bottom. elementFromPoint alone misses links under
+ * canvas/overlays; elementsFromPoint finds the first interactive layer below them.
+ */
 export function findInteractiveFromPoint(clientX: number, clientY: number): HTMLElement | null {
+  if (typeof document.elementsFromPoint === "function") {
+    const stack = document.elementsFromPoint(clientX, clientY);
+    for (const raw of stack) {
+      if (!(raw instanceof Element)) continue;
+      const hit = findInteractiveFromElement(raw);
+      if (hit) return hit;
+    }
+    return null;
+  }
+
   let el = document.elementFromPoint(clientX, clientY);
   if (!el) return null;
   if (el.nodeType === Node.TEXT_NODE) el = el.parentElement;
@@ -95,11 +109,12 @@ export function findInteractiveFromPoint(clientX: number, clientY: number): HTML
 }
 
 export function pickInteractiveTarget(ev: Event): HTMLElement | null {
-  const fromTarget = findInteractiveFromElement(normalizeEventTarget(ev.target ?? null));
-  if (fromTarget) return fromTarget;
   const c = coordsFromEvent(ev);
-  if (!c) return null;
-  return findInteractiveFromPoint(c.x, c.y);
+  if (c) {
+    const fromPoint = findInteractiveFromPoint(c.x, c.y);
+    if (fromPoint) return fromPoint;
+  }
+  return findInteractiveFromElement(normalizeEventTarget(ev.target ?? null));
 }
 
 export function flashTouchTarget(el: HTMLElement): void {
@@ -139,14 +154,15 @@ function vibrateNow(pattern: number | number[]): boolean {
 }
 
 /**
- * Installs capture-phase listeners on `window`.
- * Returns an uninstall function (call on unmount).
+ * Installs capture-phase listeners on `window` only (avoid duplicate fires on document).
+ * Listeners always attach (visual flash); vibrate only if supportsVibrate().
  */
 export function installPortfolioHaptics(options: InstallHapticsOptions): () => void {
-  if (typeof window === "undefined" || !supportsVibrate()) {
+  if (typeof window === "undefined") {
     return () => {};
   }
 
+  const canVibrate = supportsVibrate();
   let lastAt = 0;
   let debugFirstDone = !options.debug;
 
@@ -163,17 +179,26 @@ export function installPortfolioHaptics(options: InstallHapticsOptions): () => v
     if (options.debug && !debugFirstDone) {
       debugFirstDone = true;
       lastAt = Date.now();
-      vibrateNow(DEBUG_PATTERN_MS);
-      if (process.env.NODE_ENV === "development") {
-        console.log("[haptics:debug] one-shot vibrate", DEBUG_PATTERN_MS, "ms");
+      if (canVibrate) {
+        const ok = vibrateNow(DEBUG_PATTERN_MS);
+        if (process.env.NODE_ENV === "development") {
+          console.log("[haptics:debug] one-shot vibrate", DEBUG_PATTERN_MS, "ms, ok=", ok);
+        }
       }
       return;
     }
 
     const hit = pickInteractiveTarget(ev);
-    if (!hit) return;
+    if (!hit) {
+      if (options.debug && process.env.NODE_ENV === "development") {
+        console.log("[haptics:debug] no interactive target for", ev.type);
+      }
+      return;
+    }
     if (!throttleOk()) return;
-    vibrateNow(BUZZ_MS);
+    if (canVibrate) {
+      vibrateNow(BUZZ_MS);
+    }
     flashTouchTarget(hit);
   }
 
