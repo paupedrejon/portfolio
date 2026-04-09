@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { hapticError, hapticSuccess } from "@/lib/haptics";
 import Stepper, { Step } from "./Stepper";
 import { X, Zap, Briefcase, Palette, HelpCircle, Sparkles, User, Mail, Send } from "lucide-react";
 
@@ -76,11 +75,9 @@ export default function ContactFormModal({ isOpen, onClose }: ContactFormModalPr
         throw new Error(data.error || "Failed to send");
       }
       setStatus("success");
-      hapticSuccess();
       setTimeout(() => { onClose(); setFormData({ reason: "", name: "", email: "", message: "" }); setStatus("idle"); }, 2500);
     } catch (err) {
       setStatus("error");
-      hapticError();
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong");
     }
   };
