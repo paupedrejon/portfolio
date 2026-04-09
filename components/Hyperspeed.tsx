@@ -337,11 +337,11 @@ export default function Hyperspeed({
       attribute vec3 aMetrics;
       attribute vec3 aColor;
       uniform float uTravelLength;
-      uniform float uTime;
-      varying vec2 vUv; 
+    uniform float uTime;
+    varying vec2 vUv;
       varying vec3 vColor; 
       #include <getDistortion_vertex>
-      void main() {
+    void main() {
         vec3 transformed = position.xyz;
         float radius = aMetrics.r;
         float myLength = aMetrics.g;
@@ -354,7 +354,7 @@ export default function Hyperspeed({
         transformed.xyz += getDistortion(progress);
         vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.);
         gl_Position = projectionMatrix * mvPosition;
-        vUv = uv;
+      vUv = uv;
         vColor = aColor;
         ${THREE.ShaderChunk["fog_vertex"]}
       }
@@ -406,10 +406,10 @@ export default function Hyperspeed({
       #define USE_FOG;
       varying vec2 vUv; 
       uniform vec3 uColor;
-      uniform float uTime;
+    uniform float uTime;
       #include <roadMarkings_vars>
       ${THREE.ShaderChunk["fog_pars_fragment"]}
-      void main() {
+    void main() {
         vec2 uv = vUv;
         vec3 color = vec3(uColor);
         #include <roadMarkings_fragment>
@@ -562,12 +562,12 @@ export default function Hyperspeed({
           new THREE.InstancedBufferAttribute(new Float32Array(aColor), 3, false)
         );
 
-        const material = new THREE.ShaderMaterial({
+    const material = new THREE.ShaderMaterial({
           fragmentShader: carLightsFragment,
           vertexShader: carLightsVertex,
           transparent: true,
-          uniforms: {
-            uTime: { value: 0 },
+      uniforms: {
+        uTime: { value: 0 },
             uTravelLength: { value: options.length },
             uFade: { value: this.fade },
             ...this.webgl.fogUniforms,
@@ -583,11 +583,11 @@ export default function Hyperspeed({
         };
 
         this.mesh = new THREE.Mesh(instanced, material);
-        this.mesh.frustumCulled = false;
+    this.mesh.frustumCulled = false;
         this.webgl.scene.add(this.mesh);
-      }
+  }
 
-      update(time: number) {
+  update(time: number) {
         (this.mesh.material as THREE.ShaderMaterial).uniforms.uTime.value = time;
       }
     }
@@ -681,7 +681,7 @@ export default function Hyperspeed({
 
       constructor(webgl: App, options: Options) {
         this.webgl = webgl;
-        this.options = options;
+    this.options = options;
       }
 
       createPlane(side: number, width: number, isRoad: boolean) {
@@ -757,8 +757,8 @@ export default function Hyperspeed({
       colors: NonNullable<typeof effectOptions.colors>;
     };
 
-    class App {
-      container: HTMLElement;
+class App {
+  container: HTMLElement;
       options: Options;
       renderer!: THREE.WebGLRenderer;
       composer!: EffectComposer;
@@ -783,7 +783,7 @@ export default function Hyperspeed({
       timeOffset = 0;
 
       constructor(container: HTMLElement, options: Options) {
-        this.container = container;
+    this.container = container;
         this.options = options;
         if (!options.distortion) {
           (options as { distortion: typeof distortions.turbulentDistortion }).distortion = {
@@ -798,7 +798,7 @@ export default function Hyperspeed({
         this.composer = new EffectComposer(this.renderer);
         container.append(this.renderer.domElement);
 
-        this.camera = new THREE.PerspectiveCamera(
+    this.camera = new THREE.PerspectiveCamera(
           options.fov,
           container.offsetWidth / container.offsetHeight,
           0.1,
@@ -911,7 +911,7 @@ export default function Hyperspeed({
         const height = this.container.offsetHeight;
         this.renderer.setSize(width, height);
         this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
+    this.camera.updateProjectionMatrix();
         this.composer.setSize(width, height);
       }
 
@@ -957,7 +957,7 @@ export default function Hyperspeed({
         this.rightCarLights.update(time);
         this.leftCarLights.update(time);
         this.leftSticks.update(time);
-        this.road.update(time);
+    this.road.update(time);
 
         let updateCamera = false;
         const fovChange = lerp(this.camera.fov, this.fovTarget, lerpPercentage);
@@ -995,9 +995,9 @@ export default function Hyperspeed({
         this.composer.render(delta);
         this.update(delta);
         requestAnimationFrame(this.tick);
-      };
+  };
 
-      dispose() {
+  dispose() {
         this.disposed = true;
         this.renderer?.dispose();
         this.composer?.dispose();
@@ -1050,7 +1050,7 @@ export default function Hyperspeed({
     return () => {
       if (appRef.current) {
         appRef.current.dispose();
-        appRef.current = null;
+      appRef.current = null;
       }
     };
   }, [effectOptions]);

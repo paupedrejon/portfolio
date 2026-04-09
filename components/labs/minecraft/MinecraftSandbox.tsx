@@ -281,7 +281,7 @@ function itemColor(item: ItemId): string {
   const block = fromBlockItem(item);
   if (block !== null) return colorForBlock(block).getStyle();
   switch (item) {
-    case "wanda_focus": return "#991b1b";
+    case "wanda_focus": return "#1e40af";
     case "stick": return "#c4a070";
     case "bow": return "#a47c4f";
     case "fire_bow": return "#ef4444";
@@ -699,6 +699,9 @@ export default function MinecraftSandbox() {
     let gunKick = 0;
     let wandaCharging = false;
     let wandaPrimaryBeamHold = false;
+    let wandaPrimaryBeamHoldTime = 0;
+    let wandaLmbDown = false;
+    let wandaLmbDownAt = 0;
     let wandaChargeTime = 0;
     let wandaShieldCd = 0;
     let wandaShieldTimer = 0;
@@ -706,6 +709,11 @@ export default function MinecraftSandbox() {
     let wandaUltCd = 0;
     let wandaUltCastTimer = 0;
     let wandaUltAfterTimer = 0;
+    let wandaRealityEditCooldown = 0;
+    let wandaRealityFlashTimer = 0;
+    let wandaDomainTimer = 0;
+    let wandaDomainWarpTick = 0;
+    const WANDA_DOMAIN_RADIUS = 30;
     const wandaUltCenter = new THREE.Vector3();
     let wandaEnergy = 100;
     let wandaFlyUp = false;
@@ -716,6 +724,11 @@ export default function MinecraftSandbox() {
     let wandaTkStrength = 24;
     let wandaTkRadius = 3.8;
     let wandaTkRange = 24;
+    let wandaMeteorProfile: "boss" | "nuke" = "nuke";
+    let playerWasOnGround = true;
+    let playerFallSpeed = 0;
+    let wandaSpaceDownAt = -1;
+    let wandaJumpBlastArmed = false;
     let wandaFlightLift = 0;
     let wandaFlightForward = 0;
     let wandaMode: "idle" | "charging" | "telek_hold" | "flying" | "shielding" | "ultimate_cast" = "idle";
@@ -990,6 +1003,14 @@ export default function MinecraftSandbox() {
       ttl: number; spreadCooldown: number;
       mesh: THREE.Group; emberOverlay: THREE.Mesh;
     }>();
+    const wandaRealityWarped = new Map<string, {
+      x: number;
+      y: number;
+      z: number;
+      original: number;
+      warped: number;
+      ttl: number;
+    }>();
 
     // Extended water splash type for expanding rings
     const waterSplashes: Array<{
@@ -1002,7 +1023,7 @@ export default function MinecraftSandbox() {
     const pendingWaterBursts: Array<{ timer: number; seeds: Array<{ x: number; y: number; z: number }> }> = [];
     const wandaBolts: Array<{
       mesh: THREE.Group;
-      trail: THREE.Line;
+      trail: THREE.Mesh;
       velocity: THREE.Vector3;
       life: number;
       damage: number;
@@ -1010,7 +1031,15 @@ export default function MinecraftSandbox() {
     }> = [];
     const wandaBursts: Array<{ mesh: THREE.Mesh; ttl: number; max: number; scale: number }> = [];
     const wandaRings: Array<{ mesh: THREE.Mesh; ttl: number; max: number; grow: number }> = [];
-    const wandaTethers: Array<{ mesh: THREE.Line; ttl: number; max: number }> = [];
+    const wandaTethers: Array<{ mesh: THREE.Line | THREE.Mesh; ttl: number; max: number }> = [];
+    const wandaRealityFractures: Array<{
+      mesh: THREE.Mesh;
+      ttl: number;
+      max: number;
+      spin: THREE.Vector3;
+      rise: number;
+      drift: THREE.Vector3;
+    }> = [];
     const handAuraL = new THREE.Mesh(
       new THREE.SphereGeometry(0.055, 12, 12),
       new THREE.MeshBasicMaterial({ color: "#9f1239", transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })
@@ -1116,6 +1145,43 @@ export default function MinecraftSandbox() {
     wandaShieldRingB.rotation.z = Math.PI / 2;
     wandaGroup.add(wandaShieldRingA);
     wandaGroup.add(wandaShieldRingB);
+    const wandaDomainDisk = new THREE.Mesh(
+      new THREE.RingGeometry(0.4, WANDA_DOMAIN_RADIUS, 96, 1),
+      new THREE.MeshBasicMaterial({
+        color: "#60a5fa",
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      })
+    );
+    wandaDomainDisk.rotation.x = -Math.PI / 2;
+    wandaGroup.add(wandaDomainDisk);
+    const wandaDomainEdge = new THREE.Mesh(
+      new THREE.TorusGeometry(WANDA_DOMAIN_RADIUS, 0.22, 16, 120),
+      new THREE.MeshBasicMaterial({
+        color: "#bfdbfe",
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      })
+    );
+    wandaDomainEdge.rotation.x = Math.PI / 2;
+    wandaGroup.add(wandaDomainEdge);
+    const wandaDomainDome = new THREE.Mesh(
+      new THREE.SphereGeometry(WANDA_DOMAIN_RADIUS, 40, 24, 0, Math.PI * 2, 0, Math.PI * 0.5),
+      new THREE.MeshBasicMaterial({
+        color: "#1d4ed8",
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      })
+    );
+    wandaGroup.add(wandaDomainDome);
     const wandaHeatWaves: Array<{ mesh: THREE.Mesh; ttl: number; max: number; baseScale: number }> = [];
     const sigilCanvas = document.createElement("canvas");
     sigilCanvas.width = 256;
@@ -1124,25 +1190,68 @@ export default function MinecraftSandbox() {
     if (sigilCtx) {
       sigilCtx.clearRect(0, 0, 256, 256);
       sigilCtx.translate(128, 128);
-      sigilCtx.strokeStyle = "rgba(180,30,40,0.92)";
-      sigilCtx.lineWidth = 2.2;
-      for (let i = 0; i < 3; i++) {
+
+      for (let ring = 0; ring < 4; ring++) {
+        const r = 40 + ring * 20;
+        const alpha = 0.9 - ring * 0.18;
         sigilCtx.beginPath();
-        sigilCtx.arc(0, 0, 52 + i * 20, 0, Math.PI * 2);
+        sigilCtx.arc(0, 0, r, 0, Math.PI * 2);
+        sigilCtx.strokeStyle = `rgba(56,130,255,${alpha})`;
+        sigilCtx.lineWidth = ring === 0 ? 2.8 : 1.6;
         sigilCtx.stroke();
       }
-      for (let i = 0; i < 10; i++) {
-        const a = (i / 10) * Math.PI * 2;
+
+      for (let triangle = 0; triangle < 2; triangle++) {
         sigilCtx.beginPath();
-        sigilCtx.moveTo(Math.cos(a) * 28, Math.sin(a) * 28);
-        sigilCtx.lineTo(Math.cos(a) * 92, Math.sin(a) * 92);
+        for (let p = 0; p < 3; p++) {
+          const a = (p / 3) * Math.PI * 2 + (triangle * Math.PI / 3);
+          const r = 72;
+          if (p === 0) sigilCtx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+          else sigilCtx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        sigilCtx.closePath();
+        sigilCtx.strokeStyle = `rgba(80,160,255,${0.88 - triangle * 0.1})`;
+        sigilCtx.lineWidth = 2.0;
         sigilCtx.stroke();
       }
-      sigilCtx.rotate(Math.PI / 10);
-      sigilCtx.strokeStyle = "rgba(140,28,36,0.82)";
+
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        const inner = i % 2 === 0 ? 32 : 42;
+        const outer = i % 2 === 0 ? 96 : 68;
+        sigilCtx.beginPath();
+        sigilCtx.moveTo(Math.cos(a) * inner, Math.sin(a) * inner);
+        sigilCtx.lineTo(Math.cos(a) * outer, Math.sin(a) * outer);
+        sigilCtx.strokeStyle = `rgba(100,180,255,${i % 2 === 0 ? 0.8 : 0.5})`;
+        sigilCtx.lineWidth = i % 2 === 0 ? 1.8 : 1.0;
+        sigilCtx.stroke();
+      }
+
+      for (let i = 0; i < 24; i++) {
+        const a = (i / 24) * Math.PI * 2;
+        const r = 60;
+        const tickLen = i % 4 === 0 ? 8 : 4;
+        sigilCtx.beginPath();
+        sigilCtx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+        sigilCtx.lineTo(Math.cos(a) * (r + tickLen), Math.sin(a) * (r + tickLen));
+        sigilCtx.strokeStyle = "rgba(130,200,255,0.7)";
+        sigilCtx.lineWidth = 1.2;
+        sigilCtx.stroke();
+      }
+
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        sigilCtx.beginPath();
+        sigilCtx.moveTo(0, 0);
+        sigilCtx.lineTo(Math.cos(a) * 22, Math.sin(a) * 22);
+        sigilCtx.strokeStyle = "rgba(160,210,255,0.85)";
+        sigilCtx.lineWidth = 1.5;
+        sigilCtx.stroke();
+      }
       sigilCtx.beginPath();
-      sigilCtx.arc(0, 0, 76, 0, Math.PI * 2);
-      sigilCtx.stroke();
+      sigilCtx.arc(0, 0, 5, 0, Math.PI * 2);
+      sigilCtx.fillStyle = "rgba(200,230,255,0.95)";
+      sigilCtx.fill();
     }
     const sigilTex = new THREE.CanvasTexture(sigilCanvas);
     sigilTex.colorSpace = THREE.SRGBColorSpace;
@@ -1157,8 +1266,12 @@ export default function MinecraftSandbox() {
     type BeamHit = ReturnType<typeof raycastVoxel>;
     type WandaBeamVisual = {
       curve: THREE.CatmullRomCurve3;
-      mesh: THREE.Mesh;
-      halo: THREE.Mesh;
+      coreMesh: THREE.Mesh;
+      strand1: THREE.Mesh;
+      strand2: THREE.Mesh;
+      strand3: THREE.Mesh;
+      glowMesh: THREE.Mesh;
+      crackleLines: THREE.Line[];
       breakKey: string;
       breakTimer: number;
       wigglePhase: number;
@@ -1166,88 +1279,216 @@ export default function MinecraftSandbox() {
       wiggleSpeed: number;
       wiggleSpeedB: number;
       wiggleAmp: number;
+      strandAngle: number;
     };
-    const makeWandaBeamShaderMaterial = () =>
-      new THREE.ShaderMaterial({
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        uniforms: {
-          uTime: { value: 0 },
-          uIntensity: { value: 0 },
-          uColorA: { value: new THREE.Color("#520014") },
-          uColorB: { value: new THREE.Color("#c1002f") },
-        },
-        vertexShader: `
-          uniform float uTime;
-          uniform float uIntensity;
-          varying vec2 vUv;
-          void main() {
-            vUv = uv;
-            vec3 p = position;
-            float wobble = sin((uv.y * 30.0) + uTime * 22.0) * 0.015 * uIntensity;
-            p.x += wobble;
-            p.y += cos((uv.y * 24.0) + uTime * 17.0) * 0.01 * uIntensity;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
-          }
-        `,
-        fragmentShader: `
-          uniform float uTime;
-          uniform float uIntensity;
-          uniform vec3 uColorA;
-          uniform vec3 uColorB;
-          varying vec2 vUv;
-          void main() {
-            float edge = abs(vUv.x - 0.5) * 2.0;
-            float core = smoothstep(1.0, 0.04, edge);
-            float smoke = 0.62 + 0.55 * sin((vUv.y * 18.0) - uTime * 7.0 + edge * 10.0);
-            float pulse = 0.65 + 0.35 * sin((vUv.y * 30.0) - uTime * 14.0);
-            vec3 col = mix(uColorA, uColorB, 0.35 + 0.55 * pulse);
-            float alpha = core * smoke * (0.44 + uIntensity * 1.35);
-            gl_FragColor = vec4(col, alpha);
-          }
-        `,
-      });
+    const makeWandaCoreShader = () => new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.FrontSide,
+      uniforms: {
+        uTime: { value: 0 },
+        uIntensity: { value: 0 },
+        uSeed: { value: Math.random() * 1000 },
+      },
+      vertexShader: `
+        uniform float uTime;
+        uniform float uIntensity;
+        varying vec2 vUv;
+        varying float vLen;
+        void main() {
+          vUv = uv;
+          vLen = uv.x;
+          vec3 p = position;
+          float pulse = sin(uv.x * 22.0 - uTime * 9.0) * (0.006 + uIntensity * 0.009);
+          float twist = cos(uv.x * 18.0 + uTime * 6.0) * 0.004;
+          p.x += pulse;
+          p.y += twist;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float uTime;
+        uniform float uIntensity;
+        uniform float uSeed;
+        varying vec2 vUv;
+        varying float vLen;
+        float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
+        float noise(vec2 p) {
+          vec2 i = floor(p); vec2 f = fract(p);
+          vec2 u = f*f*(3.0-2.0*f);
+          return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);
+        }
+        void main() {
+          float edge = abs(vUv.y - 0.5) * 2.0;
+          float body = smoothstep(1.0, 0.0, edge);
+          float streak = sin(vUv.x * 40.0 - uTime * 12.0 + noise(vec2(vUv.x*8.0, uSeed*0.01)) * 6.0) * 0.5 + 0.5;
+          streak = smoothstep(0.7, 1.0, streak);
+          float sparkle = smoothstep(0.93, 1.0, noise(vec2(vUv.x * 60.0 + uTime * 3.0, uSeed * 0.02)));
+          vec3 coreCol = vec3(0.55, 0.82, 1.0);
+          vec3 brightCol = vec3(0.88, 0.96, 1.0);
+          vec3 col = mix(coreCol, brightCol, streak * 0.7 + sparkle * 0.4);
+          float alpha = body * (0.55 + streak * 0.45 + sparkle * 0.3) * (0.5 + uIntensity * 0.7);
+          alpha *= smoothstep(0.0, 0.06, vLen) * smoothstep(1.0, 0.94, vLen);
+          gl_FragColor = vec4(col, alpha);
+        }
+      `,
+    });
+    const makeWandaStrandShader = (hueShift: number) => new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+      uniforms: {
+        uTime: { value: 0 },
+        uIntensity: { value: 0 },
+        uSeed: { value: Math.random() * 1000 + hueShift * 100 },
+        uHue: { value: hueShift },
+      },
+      vertexShader: `
+        uniform float uTime;
+        uniform float uIntensity;
+        uniform float uSeed;
+        varying vec2 vUv;
+        varying float vEdge;
+        void main() {
+          vUv = uv;
+          vec3 p = position;
+          float flow = uv.x * 6.28 + uSeed * 0.01;
+          float wobX = sin(flow * 3.1 + uTime * 5.8 + uSeed * 0.2) * (0.012 + uIntensity * 0.018);
+          float wobY = cos(flow * 2.4 - uTime * 4.2) * (0.008 + uIntensity * 0.014);
+          float squirm = sin(uv.x * 14.0 + uTime * 7.0 + uSeed * 0.15) * 0.005;
+          p.x += wobX + squirm;
+          p.y += wobY;
+          vEdge = abs(uv.y - 0.5) * 2.0;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float uTime;
+        uniform float uIntensity;
+        uniform float uSeed;
+        uniform float uHue;
+        varying vec2 vUv;
+        varying float vEdge;
+        float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+        float noise(vec2 p){vec2 i=floor(p);vec2 f=fract(p);vec2 u=f*f*(3.0-2.0*f);return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);}
+        float fbm(vec2 p){float v=0.0;float a=0.5;for(int i=0;i<4;i++){v+=a*noise(p);p=p*2.1+vec2(1.7,9.2);a*=0.5;}return v;}
+        void main() {
+          float body = smoothstep(1.0, 0.18, vEdge);
+          float smoky = fbm(vec2(vUv.x * 5.0 - uTime * 1.2 + uSeed * 0.01, vUv.y * 8.0 + uTime * 0.6));
+          float smoky2 = fbm(vec2(vUv.x * 9.0 + uTime * 0.8, vUv.y * 12.0 - uTime * 1.4 + uSeed * 0.008));
+          float energy = smoothstep(0.28, 0.85, smoky * 0.6 + smoky2 * 0.4);
+          float crackle = smoothstep(0.78, 1.0, sin(vUv.x * 28.0 - uTime * 8.0 + smoky * 5.0) * 0.5 + 0.5);
+          float wisp = smoothstep(0.85, 1.0, noise(vec2(vUv.x * 18.0 + uTime * 4.0, vUv.y * 6.0 + uSeed * 0.02)));
+          vec3 deepBlue = vec3(0.04 + uHue * 0.06, 0.08 + uHue * 0.04, 0.28 + uHue * 0.14);
+          vec3 midBlue  = vec3(0.08 + uHue * 0.08, 0.22 + uHue * 0.1, 0.72 + uHue * 0.12);
+          vec3 brightBlue = vec3(0.35 + uHue * 0.18, 0.68 + uHue * 0.14, 1.0);
+          vec3 col = mix(deepBlue, midBlue, energy);
+          col = mix(col, brightBlue, crackle * 0.7 + wisp * 0.5);
+          float alpha = body * (0.12 + energy * 0.55 + crackle * 0.45 + wisp * 0.35);
+          alpha *= 0.45 + uIntensity * 0.75;
+          alpha *= smoothstep(0.0, 0.05, vUv.x) * smoothstep(1.0, 0.95, vUv.x);
+          if (alpha < 0.015) discard;
+          gl_FragColor = vec4(col, alpha);
+        }
+      `,
+    });
+    const makeWandaGlowShader = () => new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+      uniforms: {
+        uTime: { value: 0 },
+        uIntensity: { value: 0 },
+        uSeed: { value: Math.random() * 1000 },
+      },
+      vertexShader: `
+        uniform float uTime;
+        uniform float uIntensity;
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          vec3 p = position;
+          float breathe = sin(uTime * 2.2) * (0.022 + uIntensity * 0.038);
+          p.x *= 1.0 + breathe * 0.4;
+          p.y *= 1.0 + breathe;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float uTime;
+        uniform float uIntensity;
+        uniform float uSeed;
+        varying vec2 vUv;
+        float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+        float noise(vec2 p){vec2 i=floor(p);vec2 f=fract(p);vec2 u=f*f*(3.0-2.0*f);return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);}
+        void main() {
+          float edge = abs(vUv.y - 0.5) * 2.0;
+          float rim = smoothstep(0.55, 1.0, edge);
+          float smoky = noise(vec2(vUv.x * 3.0 - uTime * 0.7, edge * 4.0 + uTime * 0.4));
+          float breathePulse = 0.55 + 0.45 * sin(uTime * 3.1 + vUv.x * 8.0);
+          vec3 glowCol = vec3(0.06, 0.14, 0.62) * breathePulse;
+          float alpha = rim * (0.06 + smoky * 0.08) * (0.35 + uIntensity * 0.65);
+          alpha *= smoothstep(0.0, 0.04, vUv.x) * smoothstep(1.0, 0.96, vUv.x);
+          gl_FragColor = vec4(glowCol, alpha);
+        }
+      `,
+    });
+    const makeWandaBeamShaderMaterial = makeWandaCoreShader;
     const makeBeamVisual = (): WandaBeamVisual => {
-      const curve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(),
-        new THREE.Vector3(0, 0, -1),
-        new THREE.Vector3(0, 0, -2),
-        new THREE.Vector3(0, 0, -3),
-      ]);
-      const mesh = new THREE.Mesh(
-        new THREE.TubeGeometry(curve, 36, 0.062, 12, false),
-        makeWandaBeamShaderMaterial()
+      const curve = new THREE.CatmullRomCurve3(
+        [new THREE.Vector3(), new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, 0, -2), new THREE.Vector3(0, 0, -3)],
+        false, "catmullrom", 0.35
       );
-      mesh.visible = false;
-      wandaGroup.add(mesh);
-      const halo = new THREE.Mesh(
-        new THREE.TubeGeometry(curve, 30, 0.118, 10, false),
-        new THREE.MeshBasicMaterial({ color: "#7a001f", transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })
-      );
-      halo.visible = false;
-      wandaGroup.add(halo);
+      const makeTube = (r: number, segs: number, mat: THREE.Material) => {
+        const m = new THREE.Mesh(new THREE.TubeGeometry(curve, segs, r, 12, false), mat);
+        m.visible = false;
+        wandaGroup.add(m);
+        return m;
+      };
+      const coreMesh = makeTube(0.028, 64, makeWandaCoreShader());
+      const strand1 = makeTube(0.018, 56, makeWandaStrandShader(0.0));
+      const strand2 = makeTube(0.016, 52, makeWandaStrandShader(0.4));
+      const strand3 = makeTube(0.014, 48, makeWandaStrandShader(0.8));
+      const glowMesh = makeTube(0.12, 32, makeWandaGlowShader());
+      const crackleLines: THREE.Line[] = [];
+      for (let i = 0; i < 5; i++) {
+        const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, -1)]);
+        const line = new THREE.Line(geo, new THREE.LineBasicMaterial({
+          color: i % 2 === 0 ? "#60a5fa" : "#c7d2fe",
+          transparent: true,
+          opacity: 0.72,
+        }));
+        line.visible = false;
+        wandaGroup.add(line);
+        crackleLines.push(line);
+      }
       return {
-        curve,
-        mesh,
-        halo,
-        breakKey: "",
-        breakTimer: 0,
+        curve, coreMesh, strand1, strand2, strand3, glowMesh, crackleLines,
+        breakKey: "", breakTimer: 0,
         wigglePhase: Math.random() * Math.PI * 2,
         wigglePhaseB: Math.random() * Math.PI * 2,
         wiggleSpeed: 5 + Math.random() * 16,
         wiggleSpeedB: 6 + Math.random() * 18,
         wiggleAmp: 0.1 + Math.random() * 0.2,
+        strandAngle: Math.random() * Math.PI * 2,
       };
     };
     const wandaBeamVisuals: WandaBeamVisual[] = [makeBeamVisual()];
     const ensureBeamVisualCount = (count: number) => {
       while (wandaBeamVisuals.length < count) wandaBeamVisuals.push(makeBeamVisual());
       for (let i = count; i < wandaBeamVisuals.length; i++) {
-        wandaBeamVisuals[i].mesh.visible = false;
-        wandaBeamVisuals[i].halo.visible = false;
-        wandaBeamVisuals[i].breakKey = "";
-        wandaBeamVisuals[i].breakTimer = 0;
+        const bv = wandaBeamVisuals[i];
+        bv.coreMesh.visible = false;
+        bv.strand1.visible = false;
+        bv.strand2.visible = false;
+        bv.strand3.visible = false;
+        bv.glowMesh.visible = false;
+        bv.crackleLines.forEach((l) => { l.visible = false; });
+        bv.breakKey = "";
+        bv.breakTimer = 0;
       }
     };
     const wandaBeamImpacts: Array<{ mesh: THREE.Mesh; ttl: number; max: number }> = [];
@@ -1297,7 +1538,7 @@ export default function MinecraftSandbox() {
         uniforms: {
           uTime: { value: 0 },
           uAlpha: { value: 0.35 },
-          uColor: { value: new THREE.Color("#9f1239") },
+          uColor: { value: new THREE.Color("#1d4ed8") },
         },
         vertexShader: `
           uniform float uTime;
@@ -1340,7 +1581,7 @@ export default function MinecraftSandbox() {
       if (obj.userData.wandaTkGlow) return;
       const g = new THREE.Mesh(
         new THREE.SphereGeometry(1, 14, 14),
-        new THREE.MeshBasicMaterial({ color: "#9f1239", transparent: true, opacity: 0.26, blending: THREE.AdditiveBlending, depthWrite: false })
+        new THREE.MeshBasicMaterial({ color: "#1d4ed8", transparent: true, opacity: 0.26, blending: THREE.AdditiveBlending, depthWrite: false })
       );
       g.scale.setScalar(scale);
       g.renderOrder = 2;
@@ -1369,9 +1610,13 @@ export default function MinecraftSandbox() {
     };
 
     const meteorVisualScale = (mass: number) =>
-      0.48 + Math.min(2.15, Math.pow(Math.max(1, mass), 0.3) * 0.34);
+      wandaMeteorProfile === "boss"
+        ? 0.5 + Math.min(1.2, Math.pow(Math.max(1, mass), 0.21) * 0.18)
+        : 0.56 + Math.min(2.05, Math.pow(Math.max(1, mass), 0.28) * 0.32);
     const meteorBlastRadius = (mass: number) =>
-      2.6 + Math.min(14, Math.pow(Math.max(1, mass), 0.48) * 2.35);
+      wandaMeteorProfile === "boss"
+        ? 2.2 + Math.min(8.5, Math.pow(Math.max(1, mass), 0.44) * 1.55)
+        : 3.4 + Math.min(18, Math.pow(Math.max(1, mass), 0.52) * 2.75);
 
     const rebuildMeteorHeldMesh = (held: TkMeteorHeld) => {
       removeWandaTkGlow(held.root);
@@ -1400,20 +1645,20 @@ export default function MinecraftSandbox() {
         );
         const phi = Math.acos(2 * Math.random() - 1);
         const theta = Math.random() * Math.PI * 2;
-        const rad = 0.14 + Math.cbrt(held.mass) * 0.15;
+        const rad = 0.12 + Math.cbrt(held.mass) * 0.11;
         m.position.set(rad * Math.sin(phi) * Math.cos(theta), rad * Math.sin(phi) * Math.sin(theta), rad * Math.cos(phi));
         m.rotation.set(Math.random() * 0.8, Math.random() * 0.8, Math.random() * 0.8);
         held.root.add(m);
       }
       if (held.root.children.length === 0 && held.mass > 0) {
         const m = new THREE.Mesh(
-          new THREE.IcosahedronGeometry(0.35 + Math.min(0.95, held.mass * 0.038), 1),
-          new THREE.MeshStandardMaterial({ color: "#5c0a12", roughness: 0.4, metalness: 0.1, emissive: new THREE.Color("#b91c1c"), emissiveIntensity: 0.45 })
+          new THREE.IcosahedronGeometry(0.34 + Math.min(0.78, held.mass * 0.028), 1),
+          new THREE.MeshStandardMaterial({ color: "#10295b", roughness: 0.4, metalness: 0.1, emissive: new THREE.Color("#2563eb"), emissiveIntensity: 0.45 })
         );
         held.root.add(m);
       }
       held.root.scale.setScalar(meteorVisualScale(held.mass));
-      addWandaTkGlow(held.root, 0.5 + Math.min(0.42, held.mass * 0.022));
+      addWandaTkGlow(held.root, 0.46 + Math.min(0.34, held.mass * 0.016));
     };
 
     const mergeDropIntoMeteor = (d: (typeof drops)[number]): boolean => {
@@ -1501,7 +1746,7 @@ export default function MinecraftSandbox() {
       opacity: 0.09,
       roughness: 0.12,
       metalness: 0.0,
-      attenuationColor: new THREE.Color("#5c0a12"),
+      attenuationColor: new THREE.Color("#0b2347"),
       attenuationDistance: 3.2,
       ior: 1.18,
       thickness: 0.55,
@@ -1570,24 +1815,32 @@ export default function MinecraftSandbox() {
       wandaGroup.add(ps.emitter);
       return { ps, mat };
     };
-    const quarkCharge = makeQuarkSystem(0, "rgba(220,60,55,0.92)", "rgba(120,20,28,0.78)", 0.04, 0.13);
-    const quarkTelek = makeQuarkSystem(0, "rgba(200,45,42,0.88)", "rgba(90,14,22,0.82)", 0.05, 0.16);
-    const quarkShield = makeQuarkSystem(0, "rgba(210,70,65,0.9)", "rgba(100,18,26,0.76)", 0.04, 0.12);
-    const quarkUlt = makeQuarkSystem(0, "rgba(235,85,72,0.95)", "rgba(140,24,32,0.82)", 0.08, 0.22);
-    const quarkBeamMuzzle = makeQuarkSystem(0, "rgba(230,75,62,0.94)", "rgba(110,20,28,0.84)", 0.05, 0.14);
-    const quarkBeamTrail = makeQuarkSystem(0, "rgba(200,55,48,0.9)", "rgba(95,16,24,0.78)", 0.03, 0.09);
+    const quarkCharge = makeQuarkSystem(0, "rgba(85,150,255,0.92)", "rgba(20,52,120,0.78)", 0.04, 0.13);
+    const quarkTelek = makeQuarkSystem(0, "rgba(72,132,245,0.88)", "rgba(16,42,102,0.82)", 0.05, 0.16);
+    const quarkShield = makeQuarkSystem(0, "rgba(108,170,255,0.9)", "rgba(22,58,128,0.76)", 0.04, 0.12);
+    const quarkUlt = makeQuarkSystem(0, "rgba(125,190,255,0.95)", "rgba(32,74,156,0.82)", 0.08, 0.22);
+    const quarkBeamMuzzle = makeQuarkSystem(0, "rgba(102,168,255,0.94)", "rgba(24,58,132,0.84)", 0.05, 0.14);
+    const quarkBeamTrail = makeQuarkSystem(0, "rgba(78,145,245,0.9)", "rgba(20,46,112,0.78)", 0.03, 0.09);
 
     const setQuarkRate = (sys: { ps: any }, rate: number) => {
       sys.ps.emissionOverTime = new Q.ConstantValue(rate);
     };
     const spawnBeamImpact = (pos: THREE.Vector3, power: number) => {
       const m = new THREE.Mesh(
-        new THREE.SphereGeometry(0.14 + power * 0.11, 12, 12),
-        new THREE.MeshBasicMaterial({ color: "#3f0a0e", transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false })
+        new THREE.SphereGeometry(0.1 + power * 0.09, 12, 12),
+        new THREE.MeshBasicMaterial({ color: "#bfdbfe", transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false })
       );
       m.position.copy(pos);
       wandaGroup.add(m);
-      wandaBeamImpacts.push({ mesh: m, ttl: 0.18 + power * 0.08, max: 0.18 + power * 0.08 });
+      wandaBeamImpacts.push({ mesh: m, ttl: 0.14 + power * 0.07, max: 0.14 + power * 0.07 });
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(0.18 + power * 0.12, 0.04, 8, 22),
+        new THREE.MeshBasicMaterial({ color: "#1d4ed8", transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false })
+      );
+      ring.position.copy(pos);
+      ring.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+      wandaGroup.add(ring);
+      wandaBeamImpacts.push({ mesh: ring, ttl: 0.12 + power * 0.05, max: 0.12 + power * 0.05 });
     };
     if (ENABLE_WANDA_HANDS) {
       loadHandsModel().then((base) => {
@@ -1663,55 +1916,113 @@ export default function MinecraftSandbox() {
 
     const spawnWandaBurst = (x: number, y: number, z: number, power = 1) => {
       const burst = new THREE.Mesh(
-        new THREE.SphereGeometry(0.32, 14, 14),
-        new THREE.ShaderMaterial({
+        new THREE.SphereGeometry(0.28 + power * 0.15, 16, 16),
+        new THREE.MeshBasicMaterial({
+          color: "#0c1a4a",
           transparent: true,
-          depthWrite: false,
+          opacity: 0.82,
           blending: THREE.AdditiveBlending,
-          uniforms: {
-            uColorA: { value: new THREE.Color("#7f1d1d") },
-            uColorB: { value: new THREE.Color("#dc2626") },
-            uIntensity: { value: 1.0 + power * 0.4 },
-          },
-          vertexShader: `
-            varying vec3 vNormalW;
-            varying vec3 vPosW;
-            void main() {
-              vNormalW = normalize(normalMatrix * normal);
-              vec4 worldPos = modelMatrix * vec4(position, 1.0);
-              vPosW = worldPos.xyz;
-              gl_Position = projectionMatrix * viewMatrix * worldPos;
-            }
-          `,
-          fragmentShader: `
-            varying vec3 vNormalW;
-            varying vec3 vPosW;
-            uniform vec3 uColorA;
-            uniform vec3 uColorB;
-            uniform float uIntensity;
-            void main() {
-              vec3 V = normalize(cameraPosition - vPosW);
-              float fres = pow(1.0 - abs(dot(V, normalize(vNormalW))), 2.2);
-              vec3 col = mix(uColorA, uColorB, fres);
-              float alpha = clamp((0.18 + fres * 0.9) * uIntensity * 0.55, 0.0, 1.0);
-              gl_FragColor = vec4(col, alpha);
-            }
-          `,
+          depthWrite: false,
         })
       );
       burst.position.set(x, y, z);
       wandaGroup.add(burst);
-      wandaBursts.push({ mesh: burst, ttl: 0.32 + power * 0.08, max: 0.32 + power * 0.08, scale: 1.4 + power * 1.8 });
-
-      const ring = new THREE.Mesh(
-        new THREE.TorusGeometry(0.18, 0.045, 8, 26),
-        new THREE.MeshBasicMaterial({ color: "#9f1239", transparent: true, opacity: 0.72, blending: THREE.AdditiveBlending, depthWrite: false })
+      wandaBursts.push({ mesh: burst, ttl: 0.28 + power * 0.08, max: 0.28 + power * 0.08, scale: 1.6 + power * 2.2 });
+      const flash = new THREE.Mesh(
+        new THREE.SphereGeometry(0.18 + power * 0.1, 14, 14),
+        new THREE.MeshBasicMaterial({
+          color: "#c7d2fe",
+          transparent: true,
+          opacity: 0.75,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        })
       );
-      ring.position.set(x, y, z);
-      ring.rotation.x = Math.PI / 2;
-      wandaGroup.add(ring);
-      wandaRings.push({ mesh: ring, ttl: 0.26 + power * 0.06, max: 0.26 + power * 0.06, grow: 1.4 + power * 1.5 });
-      spawnHeatWave(x, y, z, 0.8 + power * 0.4);
+      flash.position.set(x, y, z);
+      wandaGroup.add(flash);
+      wandaBursts.push({ mesh: flash, ttl: 0.14 + power * 0.04, max: 0.14 + power * 0.04, scale: 0.6 + power * 0.8 });
+      const ringAngles = [0, Math.PI / 4, Math.PI / 2, Math.PI * 3 / 4];
+      for (let ri = 0; ri < ringAngles.length; ri++) {
+        const ring = new THREE.Mesh(
+          new THREE.TorusGeometry(0.12 + ri * 0.04, 0.032 + power * 0.018, 8, 28),
+          new THREE.MeshBasicMaterial({
+            color: ri % 2 === 0 ? "#2563eb" : "#818cf8",
+            transparent: true,
+            opacity: 0.82 - ri * 0.1,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          })
+        );
+        ring.position.set(x, y, z);
+        ring.rotation.set(ringAngles[ri], ri * 0.7, ri * 0.4);
+        wandaGroup.add(ring);
+        wandaRings.push({ mesh: ring, ttl: 0.22 + power * 0.08 + ri * 0.04, max: 0.22 + power * 0.08 + ri * 0.04, grow: 1.2 + power * 1.6 + ri * 0.3 });
+      }
+      for (let t = 0; t < Math.ceil(4 + power * 5); t++) {
+        const ang = Math.random() * Math.PI * 2;
+        const elev = (Math.random() - 0.5) * Math.PI;
+        const len = 0.4 + Math.random() * power * 0.6;
+        const end = new THREE.Vector3(
+          x + Math.cos(ang) * Math.cos(elev) * len,
+          y + Math.sin(elev) * len,
+          z + Math.sin(ang) * Math.cos(elev) * len
+        );
+        const mid = new THREE.Vector3().lerpVectors(new THREE.Vector3(x, y, z), end, 0.5);
+        mid.x += (Math.random() - 0.5) * 0.12;
+        mid.y += (Math.random() - 0.5) * 0.12;
+        mid.z += (Math.random() - 0.5) * 0.12;
+        const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x, y, z), mid, end]);
+        const line = new THREE.Line(geo, new THREE.LineBasicMaterial({
+          color: Math.random() > 0.5 ? "#60a5fa" : "#818cf8",
+          transparent: true,
+          opacity: 0.85,
+        }));
+        wandaGroup.add(line);
+        wandaTethers.push({ mesh: line, ttl: 0.18 + Math.random() * 0.12, max: 0.3 });
+      }
+      spawnHeatWave(x, y, z, 0.7 + power * 0.4);
+    };
+
+    const spawnImpactDistortion = (x: number, y: number, z: number, power: number) => {
+      for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2;
+        spawnHeatWave(
+          x + Math.cos(a) * (0.1 + power * 0.12),
+          y + 0.08 + i * 0.06,
+          z + Math.sin(a) * (0.1 + power * 0.12),
+          1.2 + power * (0.7 + i * 0.25)
+        );
+      }
+    };
+
+    const spawnRealityFracture = (center: THREE.Vector3, radius: number, intensity: number) => {
+      const shard = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.1 + Math.random() * 0.22 + intensity * 0.08, 0),
+        new THREE.MeshBasicMaterial({
+          color: Math.random() > 0.45 ? "#dbeafe" : "#60a5fa",
+          transparent: true,
+          opacity: 0.68 + Math.random() * 0.2,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        })
+      );
+      const a = Math.random() * Math.PI * 2;
+      const r = 0.6 + Math.random() * Math.max(0.8, radius);
+      shard.position.set(
+        center.x + Math.cos(a) * r,
+        center.y + (Math.random() - 0.2) * 1.8,
+        center.z + Math.sin(a) * r
+      );
+      shard.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+      wandaGroup.add(shard);
+      wandaRealityFractures.push({
+        mesh: shard,
+        ttl: 0.38 + Math.random() * 0.36 + intensity * 0.2,
+        max: 0.7 + intensity * 0.28,
+        spin: new THREE.Vector3((Math.random() - 0.5) * 9, (Math.random() - 0.5) * 9, (Math.random() - 0.5) * 9),
+        rise: 0.7 + Math.random() * 1.8 + intensity * 0.6,
+        drift: new THREE.Vector3((Math.random() - 0.5) * 1.6, 0, (Math.random() - 0.5) * 1.6),
+      });
     };
 
     const castWandaBolt = (charge: number) => {
@@ -1720,47 +2031,24 @@ export default function MinecraftSandbox() {
       const mesh = new THREE.Group();
       const core = new THREE.Mesh(
         new THREE.SphereGeometry(0.09 + charge * 0.06, 12, 12),
-        new THREE.MeshBasicMaterial({ color: "#991b1b", transparent: true, opacity: 0.86, blending: THREE.AdditiveBlending, depthWrite: false })
+        new THREE.MeshBasicMaterial({ color: "#1e40af", transparent: true, opacity: 0.86, blending: THREE.AdditiveBlending, depthWrite: false })
       );
       const halo = new THREE.Mesh(
         new THREE.SphereGeometry(0.16 + charge * 0.1, 12, 12),
-        new THREE.MeshBasicMaterial({ color: "#7f1d1d", transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false })
+        new THREE.MeshBasicMaterial({ color: "#1e3a8a", transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false })
       );
       mesh.add(halo);
       mesh.add(core);
       mesh.position.copy(origin).addScaledVector(dir, 0.58);
       wandaGroup.add(mesh);
-      const trail = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([mesh.position.clone(), mesh.position.clone()]),
-        new THREE.ShaderMaterial({
-          transparent: true,
-          depthWrite: false,
-          blending: THREE.AdditiveBlending,
-          uniforms: {
-            uColorA: { value: new THREE.Color("#7f1d1d") },
-            uColorB: { value: new THREE.Color("#dc2626") },
-            uOpacity: { value: 0.68 },
-          },
-          vertexShader: `
-            varying float vT;
-            void main() {
-              vT = position.y;
-              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-          `,
-          fragmentShader: `
-            uniform vec3 uColorA;
-            uniform vec3 uColorB;
-            uniform float uOpacity;
-            varying float vT;
-            void main() {
-              vec3 col = mix(uColorA, uColorB, 0.65);
-              gl_FragColor = vec4(col, uOpacity);
-            }
-          `,
-        })
+      const back = mesh.position.clone().addScaledVector(dir, -0.55);
+      const trailCurve = new THREE.CatmullRomCurve3([mesh.position.clone(), mesh.position.clone().lerp(back, 0.33), mesh.position.clone().lerp(back, 0.66), back]);
+      const trail = new THREE.Mesh(
+        new THREE.TubeGeometry(trailCurve, 30, 0.028 + charge * 0.012, 12, false),
+        makeWandaStrandShader(0.7)
       );
       wandaGroup.add(trail);
+      (trail.material as THREE.ShaderMaterial).uniforms.uIntensity.value = 1.2 + charge * 0.8;
       wandaBolts.push({
         mesh,
         trail,
@@ -1920,6 +2208,35 @@ export default function MinecraftSandbox() {
       if (burningSet.has(k)) return;
       burningSet.add(k);
       burningQueue.push({ x, y, z });
+    };
+
+    const pickRealityWarpBlock = (original: number): BlockType => {
+      const palette: BlockType[] = [3, 6, 7, 8, 9, 11];
+      if (canBurnBlock(original)) return Math.random() < 0.5 ? 11 : 8;
+      const pick = palette[Math.floor(Math.random() * palette.length)] ?? 11;
+      return pick === original ? (palette[(palette.indexOf(pick) + 1) % palette.length] ?? 11) : pick;
+    };
+
+    const warpRealityCell = (x: number, y: number, z: number, intensity: number, duration: number) => {
+      const k = `${x},${y},${z}`;
+      const existing = wandaRealityWarped.get(k);
+      if (existing) {
+        existing.ttl = Math.max(existing.ttl, duration);
+        if (Math.random() < 0.18 + intensity * 0.16) {
+          const nextWarp = pickRealityWarpBlock(existing.original);
+          if (nextWarp !== existing.warped && world.setBlockWorld(x, y, z, nextWarp)) {
+            existing.warped = nextWarp;
+            markWorldPosDirty(x, z);
+          }
+        }
+        return;
+      }
+      const current = world.getBlockWorld(x, y, z);
+      if (current === 0 || current === 4) return;
+      const warped = pickRealityWarpBlock(current);
+      if (!world.setBlockWorld(x, y, z, warped)) return;
+      markWorldPosDirty(x, z);
+      wandaRealityWarped.set(k, { x, y, z, original: current, warped, ttl: duration });
     };
 
     const enqueueWater = (x: number, y: number, z: number) => {
@@ -2327,26 +2644,6 @@ export default function MinecraftSandbox() {
 
       if (item === "wanda_focus") {
         const g = new THREE.Group();
-        const orb = new THREE.Mesh(
-          new THREE.SphereGeometry(0.07, 14, 14),
-          new THREE.MeshStandardMaterial({
-            color: "#7f1d1d",
-            emissive: new THREE.Color("#991b1b"),
-            emissiveIntensity: 0.85,
-            roughness: 0.15,
-            metalness: 0.1,
-          })
-        );
-        g.add(orb);
-        const ringA = new THREE.Mesh(
-          new THREE.TorusGeometry(0.12, 0.012, 10, 30),
-          new THREE.MeshBasicMaterial({ color: "#9f1239", transparent: true, opacity: 0.72, blending: THREE.AdditiveBlending, depthWrite: false })
-        );
-        ringA.rotation.x = Math.PI / 3;
-        const ringB = ringA.clone();
-        ringB.rotation.y = Math.PI / 2;
-        g.add(ringA);
-        g.add(ringB);
         return g;
       }
 
@@ -2915,6 +3212,7 @@ export default function MinecraftSandbox() {
     };
 
     const applyPlayerDamage = (damage: number, source: "melee" | "projectile" | "dot" | "environment" = "projectile") => {
+      const maxHpNow = (inventoryRef.current[selectedSlotRef.current]?.item ?? null) === "wanda_focus" ? 50 : 20;
       let incoming = Math.max(0, damage);
       if (wandaShieldTimer > 0) {
         const flatBlock = source === "dot" ? 0.5 : 1.2;
@@ -2937,7 +3235,7 @@ export default function MinecraftSandbox() {
       if (next <= 0) {
         controller.position.copy(findSafeSpawn(world, Math.floor(controller.position.x), Math.floor(controller.position.z)));
         controller.velocity.set(0, 0, 0);
-        healthRef.current = 20; setHealth(20);
+        healthRef.current = maxHpNow; setHealth(maxHpNow);
       }
     };
     const hitPlayer = (damage: number) => applyPlayerDamage(damage, "projectile");
@@ -3008,8 +3306,11 @@ export default function MinecraftSandbox() {
         return;
       }
       if (selectedItem === "wanda_focus" && e.button === 0) {
+        wandaLmbDown = true;
+        wandaLmbDownAt = performance.now();
         wandaCharging = true;
-        wandaPrimaryBeamHold = true;
+        wandaPrimaryBeamHold = false;
+        wandaPrimaryBeamHoldTime = 0;
         wandaChargeTime = 0;
         wandaMode = "charging";
         wandaTone(140, 0.1, "sine", 0.04);
@@ -3228,11 +3529,23 @@ export default function MinecraftSandbox() {
       }
       if (e.button !== 0) return;
       smgHolding = false;
+      wandaLmbDown = false;
       wandaPrimaryBeamHold = false;
+      wandaPrimaryBeamHoldTime = 0;
       if (wandaCharging) {
+        const heldMs = performance.now() - wandaLmbDownAt;
         const charge = Math.max(0.08, Math.min(1, wandaChargeTime / 1.1));
-        spawnWandaBurst(controller.position.x, controller.position.y + 0.9, controller.position.z, 0.7 + charge * 0.8);
-        wandaTone(180 + charge * 120, 0.15, "sawtooth", 0.07);
+        if (heldMs < 180 && !wandaPrimaryBeamHold) {
+          const shots = 2 + Math.floor(charge * 2);
+          for (let i = 0; i < shots; i++) {
+            castWandaBolt(Math.min(1, charge * (0.8 + i * 0.12)));
+          }
+          spawnWandaBurst(controller.position.x, controller.position.y + 0.9, controller.position.z, 0.35 + charge * 0.5);
+          wandaTone(220 + charge * 140, 0.12, "triangle", 0.08);
+        } else {
+          spawnWandaBurst(controller.position.x, controller.position.y + 0.9, controller.position.z, 0.7 + charge * 0.8);
+          wandaTone(180 + charge * 120, 0.15, "sawtooth", 0.07);
+        }
         wandaCharging = false;
         wandaPrimaryBeamHold = false;
         wandaChargeTime = 0;
@@ -3282,6 +3595,7 @@ export default function MinecraftSandbox() {
         return;
       }
       if (e.code === "Space") wandaFlyUp = true;
+      if (e.code === "Space") wandaSpaceDownAt = performance.now();
       if (e.code === "ShiftLeft" || e.code === "ShiftRight") wandaDescend = true;
       if (e.code === "KeyQ") {
         const cur = inventoryRef.current[selectedSlotRef.current]?.item ?? null;
@@ -3298,12 +3612,35 @@ export default function MinecraftSandbox() {
         const cur = inventoryRef.current[selectedSlotRef.current]?.item ?? null;
         if (cur === "wanda_focus" && wandaUltCd <= 0 && wandaUltCastTimer <= 0 && wandaUltAfterTimer <= 0) {
           wandaUltCd = 18;
-          wandaUltCastTimer = 0.8; // windup
-          wandaUltAfterTimer = 0.45; // aftermath pulse
+          wandaUltCastTimer = 1.05; // reality collapse
+          wandaUltAfterTimer = 1.25; // unstable aftermath
+          wandaRealityEditCooldown = 0;
+          wandaDomainWarpTick = 0;
+          wandaDomainTimer = 8.5;
           wandaUltCenter.set(controller.position.x, controller.position.y + 0.9, controller.position.z);
           wandaMode = "ultimate_cast";
-          spawnWandaBurst(wandaUltCenter.x, wandaUltCenter.y, wandaUltCenter.z, 1.25);
-          wandaTone(72, 0.42, "sawtooth", 0.11);
+          spawnWandaBurst(wandaUltCenter.x, wandaUltCenter.y, wandaUltCenter.z, 1.6);
+          spawnImpactDistortion(wandaUltCenter.x, wandaUltCenter.y, wandaUltCenter.z, 1.45);
+          for (let i = 0; i < 7; i++) spawnRealityFracture(wandaUltCenter, 2.1, 0.8);
+          for (let i = 0; i < 42; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const r = 1.2 + Math.random() * 5.2;
+            const tx = Math.floor(wandaUltCenter.x + Math.cos(a) * r);
+            const tz = Math.floor(wandaUltCenter.z + Math.sin(a) * r);
+            const gy = findGroundY(tx, tz);
+            if (gy === null) continue;
+            warpRealityCell(tx, gy - 1, tz, 0.85, 1.7);
+          }
+          wandaTone(68, 0.5, "sawtooth", 0.13);
+        }
+      }
+      if (e.code === "KeyV") {
+        const cur = inventoryRef.current[selectedSlotRef.current]?.item ?? null;
+        if (cur === "wanda_focus") {
+          wandaMeteorProfile = wandaMeteorProfile === "boss" ? "nuke" : "boss";
+          wandaTone(wandaMeteorProfile === "boss" ? 132 : 88, 0.14, "triangle", 0.07);
+          spawnWandaBurst(controller.position.x, controller.position.y + 0.9, controller.position.z, wandaMeteorProfile === "boss" ? 0.44 : 0.66);
+          if (tkMeteorHeld && tkMeteorHeld.mass > 0) rebuildMeteorHeldMesh(tkMeteorHeld);
         }
       }
       if (e.code.startsWith("Digit")) {
@@ -3312,7 +3649,21 @@ export default function MinecraftSandbox() {
       }
     };
     const onKeyUp = (e: KeyboardEvent) => {
-      if (e.code === "Space") wandaFlyUp = false;
+      if (e.code === "Space") {
+        const tapMs = wandaSpaceDownAt > 0 ? performance.now() - wandaSpaceDownAt : 999;
+        const wandaEquippedNow = (inventoryRef.current[selectedSlotRef.current]?.item ?? null) === "wanda_focus";
+        if (wandaEquippedNow && tapMs <= 190 && !showInventoryRef.current) {
+          const look = controller.getCameraDirection(new THREE.Vector3()).normalize();
+          controller.velocity.y = Math.max(controller.velocity.y, 10.8);
+          controller.velocity.x += look.x * 3.8;
+          controller.velocity.z += look.z * 3.8;
+          wandaJumpBlastArmed = true;
+          spawnWandaBurst(controller.position.x, controller.position.y + 0.6, controller.position.z, 0.55);
+          wandaTone(160, 0.11, "triangle", 0.07);
+        }
+        wandaFlyUp = false;
+        wandaSpaceDownAt = -1;
+      }
       if (e.code === "ShiftLeft" || e.code === "ShiftRight") wandaDescend = false;
     };
     window.addEventListener("wheel", onWheelSlot, { passive: true });
@@ -3348,10 +3699,21 @@ export default function MinecraftSandbox() {
       if (wandaShieldCd > 0) wandaShieldCd = Math.max(0, wandaShieldCd - dt);
       if (wandaUltCd > 0) wandaUltCd = Math.max(0, wandaUltCd - dt);
       if (wandaShieldTimer > 0) wandaShieldTimer = Math.max(0, wandaShieldTimer - dt);
+      if (wandaDomainTimer > 0) wandaDomainTimer = Math.max(0, wandaDomainTimer - dt);
       if (wandaCharging) wandaChargeTime = Math.min(1.5, wandaChargeTime + dt);
+      if (wandaCharging && wandaLmbDown && !wandaPrimaryBeamHold && wandaChargeTime >= 0.16) {
+        wandaPrimaryBeamHold = true;
+      }
+      if (wandaPrimaryBeamHold && !showInventoryRef.current) wandaPrimaryBeamHoldTime = Math.min(3, wandaPrimaryBeamHoldTime + dt);
+      else wandaPrimaryBeamHoldTime = Math.max(0, wandaPrimaryBeamHoldTime - dt * 1.6);
       if (wandaShieldTimer <= 0 && wandaShieldAbsorb > 0) wandaShieldAbsorb = Math.max(0, wandaShieldAbsorb - dt * 8);
 
       const wandaEquipped = (inventoryRef.current[selectedSlotRef.current]?.item ?? null) === "wanda_focus";
+      const playerMaxHealth = wandaEquipped ? 50 : 20;
+      if (healthRef.current > playerMaxHealth) {
+        healthRef.current = playerMaxHealth;
+        setHealth(playerMaxHealth);
+      }
       if (wandaEquipped && !showInventoryRef.current) {
         if (wandaFlyUp && wandaEnergy > 0) wandaFlightActive = true;
         if (!wandaFlyUp && !wandaDescend && controller.debug.onGround) wandaFlightActive = false;
@@ -3380,30 +3742,133 @@ export default function MinecraftSandbox() {
       if (!wandaEquipped && wandaMode !== "ultimate_cast" && wandaMode !== "shielding") wandaMode = "idle";
       if (wandaShieldTimer <= 0 && wandaMode === "shielding") wandaMode = "idle";
 
+      if (!wandaFlightActive) {
+        if (!controller.debug.onGround) {
+          playerFallSpeed = Math.max(playerFallSpeed, -controller.velocity.y);
+        } else if (!playerWasOnGround) {
+          if (wandaJumpBlastArmed) {
+            const blastPos = new THREE.Vector3(controller.position.x, controller.position.y + 0.1, controller.position.z);
+            spawnWandaBurst(blastPos.x, blastPos.y, blastPos.z, 2.6);
+            spawnWandaBurst(blastPos.x, blastPos.y + 0.25, blastPos.z, 1.9);
+            spawnWandaBurst(blastPos.x, blastPos.y + 0.55, blastPos.z, 1.25);
+            spawnImpactDistortion(blastPos.x, blastPos.y, blastPos.z, 2.3);
+            spawnImpactDistortion(blastPos.x, blastPos.y + 0.2, blastPos.z, 1.6);
+            for (let rr = 0; rr < 5; rr++) {
+              const ring = new THREE.Mesh(
+                new THREE.TorusGeometry(0.4 + rr * 0.28, 0.055 + rr * 0.018, 10, 32),
+                new THREE.MeshBasicMaterial({ color: rr === 0 ? "#bfdbfe" : "#2563eb", transparent: true, opacity: 0.72 - rr * 0.16, blending: THREE.AdditiveBlending, depthWrite: false })
+              );
+              ring.position.set(blastPos.x, blastPos.y + 0.05 + rr * 0.05, blastPos.z);
+              ring.rotation.x = Math.PI / 2 + rr * 0.08;
+              wandaGroup.add(ring);
+              wandaRings.push({ mesh: ring, ttl: 0.28 + rr * 0.08, max: 0.28 + rr * 0.08, grow: 2.8 + rr * 1.45 });
+            }
+            for (let t = 0; t < 18; t++) {
+              const ang = Math.random() * Math.PI * 2;
+              const elev = (Math.random() - 0.35) * Math.PI * 0.7;
+              const len = 1.4 + Math.random() * 2.6;
+              const end = new THREE.Vector3(
+                blastPos.x + Math.cos(ang) * Math.cos(elev) * len,
+                blastPos.y + Math.sin(elev) * len,
+                blastPos.z + Math.sin(ang) * Math.cos(elev) * len
+              );
+              const mid = new THREE.Vector3().lerpVectors(blastPos, end, 0.5);
+              mid.x += (Math.random() - 0.5) * 0.3;
+              mid.y += (Math.random() - 0.5) * 0.3;
+              mid.z += (Math.random() - 0.5) * 0.3;
+              const geo = new THREE.BufferGeometry().setFromPoints([blastPos.clone(), mid, end]);
+              const line = new THREE.Line(geo, new THREE.LineBasicMaterial({
+                color: Math.random() > 0.4 ? "#60a5fa" : "#dbeafe",
+                transparent: true,
+                opacity: 0.92,
+              }));
+              wandaGroup.add(line);
+              wandaTethers.push({ mesh: line, ttl: 0.2 + Math.random() * 0.18, max: 0.38 });
+            }
+            const craterR = 2.4;
+            for (let dx = -3; dx <= 3; dx++) {
+              for (let dz = -3; dz <= 3; dz++) {
+                const dd = Math.hypot(dx, dz);
+                if (dd > craterR) continue;
+                const tx = Math.floor(blastPos.x) + dx;
+                const tz = Math.floor(blastPos.z) + dz;
+                const gy = findGroundY(tx, tz);
+                if (gy === null) continue;
+                const by = gy - 1;
+                const block = world.getBlockWorld(tx, by, tz);
+                if (block === 0 || block === 4) continue;
+                if (Math.random() < 0.72 - dd * 0.18) {
+                  if (world.setBlockWorld(tx, by, tz, 0)) markWorldPosDirty(tx, tz);
+                }
+              }
+            }
+            wandaTone(66, 0.24, "sawtooth", 0.12);
+            for (let mi = mobs.length - 1; mi >= 0; mi--) {
+              const d = mobs[mi].mesh.position.distanceTo(blastPos);
+              if (d > 8.2) continue;
+              const f = Math.max(0.15, 1 - d / 8.2);
+              mobs[mi].health -= Math.round(22 * f);
+              const push = mobs[mi].mesh.position.clone().sub(blastPos).normalize();
+              mobs[mi].velocity.addScaledVector(push, 24 * f);
+              mobs[mi].velocity.y += 8.8 * f;
+              if (mobs[mi].health <= 0) killMob(mi);
+            }
+            screenShakeTimer = Math.max(screenShakeTimer, 0.52);
+            screenShakeIntensity = Math.max(screenShakeIntensity, 0.2);
+            wandaJumpBlastArmed = false;
+          }
+          if (playerFallSpeed > 9.2) {
+            screenShakeTimer = Math.max(screenShakeTimer, 0.08 + Math.min(0.16, (playerFallSpeed - 8.6) * 0.012));
+            screenShakeIntensity = Math.max(screenShakeIntensity, 0.035 + Math.min(0.08, (playerFallSpeed - 8.6) * 0.005));
+          }
+          playerFallSpeed = 0;
+        }
+      } else {
+        playerFallSpeed = 0;
+      }
+      playerWasOnGround = controller.debug.onGround;
+
+      let tkEffectProgress = 0;
       if (wandaTelekHold && tkField.active && wandaEquipped) {
         wandaMode = "telek_hold";
         const targetPos = controller.getViewPosition(new THREE.Vector3()).addScaledVector(controller.getCameraDirection(new THREE.Vector3()), wandaTkDistance);
         tkField.center.lerp(targetPos, Math.min(1, dt * 7));
         tkField.releaseCharge = Math.min(1, tkField.releaseCharge + dt * 0.58);
+        const tkProgress = THREE.MathUtils.smoothstep(tkField.releaseCharge, 0.05, 1);
+        tkEffectProgress = tkProgress;
+        const tkCaptureRadius = tkField.radius + 1.2 + tkProgress * 2.4;
         tkFieldPreview.visible = true;
         tkFieldPreview.position.copy(tkField.center);
-        tkFieldPreview.scale.setScalar(tkField.radius * (1.45 + tkField.releaseCharge * 0.22));
-        (tkFieldPreview.material as THREE.MeshPhysicalMaterial).opacity = 0.07 + tkField.releaseCharge * 0.06;
+        tkFieldPreview.scale.setScalar(tkField.radius * (1.25 + tkProgress * 0.6));
+        (tkFieldPreview.material as THREE.MeshPhysicalMaterial).opacity = 0.06 + tkProgress * 0.11;
+        let mobCapturedCount = tkField.captured.reduce((n, t) => n + (t.kind === "mob" ? 1 : 0), 0);
+        let dropCapturedCount = tkField.captured.reduce((n, t) => n + (t.kind === "drop" ? 1 : 0), 0);
+        const maxMobCapture = Math.floor(2 + tkProgress * 22);
+        const maxDropCapture = Math.floor(4 + tkProgress * 54);
+        let meteorMergeBudget = Math.floor(1 + tkProgress * 4);
         for (const m of mobs) {
+          if (mobCapturedCount >= maxMobCapture) break;
           if (tkField.captured.some((t) => t.kind === "mob" && t.ref === m)) continue;
-          if (m.mesh.position.distanceTo(tkField.center) > tkField.radius + 2.4) continue;
+          if (m.mesh.position.distanceTo(tkField.center) > tkCaptureRadius) continue;
           tkField.captured.push({ kind: "mob", ref: m, anchor: new THREE.Vector3(), weight: 1 + Math.random() * 0.5 });
+          mobCapturedCount++;
         }
         for (let di = drops.length - 1; di >= 0; di--) {
+          if (dropCapturedCount >= maxDropCapture) break;
           const d = drops[di];
-          if (d.mesh.position.distanceTo(tkField.center) > tkField.radius + 2.8) continue;
+          if (d.mesh.position.distanceTo(tkField.center) > tkCaptureRadius + 0.5) continue;
           if (fromBlockItem(d.item) !== null && fromBlockItem(d.item) !== 4) {
-            if (mergeDropIntoMeteor(d)) continue;
+            if (meteorMergeBudget > 0 && mergeDropIntoMeteor(d)) {
+              meteorMergeBudget--;
+              continue;
+            }
           }
           if (tkField.captured.some((t) => t.kind === "drop" && t.ref === d)) continue;
           tkField.captured.push({ kind: "drop", ref: d, anchor: new THREE.Vector3(), weight: 0.45 + Math.random() * 0.35 });
+          dropCapturedCount++;
         }
-        for (let vacuum = 0; vacuum < 5; vacuum++) {
+        const vacuumPulls = Math.floor(1 + tkProgress * 5);
+        for (let vacuum = 0; vacuum < vacuumPulls; vacuum++) {
           const cx = Math.floor(tkField.center.x + (Math.random() - 0.5) * tkField.radius * 2.2);
           const cy = Math.floor(tkField.center.y + (Math.random() - 0.5) * tkField.radius * 1.25);
           const cz = Math.floor(tkField.center.z + (Math.random() - 0.5) * tkField.radius * 2.2);
@@ -3428,6 +3893,10 @@ export default function MinecraftSandbox() {
           tkMeteorHeld.root.rotation.x += dt * 0.9;
           tkMeteorHeld.root.rotation.y += dt * 1.35;
         }
+        if (Math.random() < 0.05 + tkProgress * 0.14) {
+          const j = new THREE.Vector3((Math.random() - 0.5) * tkField.radius * 0.9, (Math.random() - 0.1) * tkField.radius * 0.55, (Math.random() - 0.5) * tkField.radius * 0.9);
+          spawnWandaBurst(tkField.center.x + j.x, tkField.center.y + j.y, tkField.center.z + j.z, 0.12 + tkProgress * 0.2);
+        }
         const eye = controller.getViewPosition(new THREE.Vector3());
         const phase = clock.elapsedTime * 3.2;
         tkField.captured = tkField.captured.filter((t, idx) => {
@@ -3441,21 +3910,21 @@ export default function MinecraftSandbox() {
           );
           const holdPos = tkField.center.clone().add(ringOffset);
           const to = holdPos.sub(targetObj);
-          const spring = 18 + tkField.releaseCharge * 10;
+          const spring = 10 + tkProgress * 30;
           const damping = 0.85;
           if (t.kind === "mob") {
             t.ref.velocity.addScaledVector(to, spring * dt * t.weight);
             t.ref.velocity.multiplyScalar(damping);
-            t.ref.velocity.y += (1.1 + tkField.releaseCharge) * dt;
-            (t.ref.burnOverlay.material as THREE.MeshBasicMaterial).color = new THREE.Color("#9f1239");
-            (t.ref.burnOverlay.material as THREE.MeshBasicMaterial).opacity = 0.18 + tkField.releaseCharge * 0.28;
-            addWandaTkGlow(t.ref.mesh, 0.52 + Math.min(0.28, t.weight * 0.08));
+            t.ref.velocity.y += (0.8 + tkProgress * 1.8) * dt;
+            (t.ref.burnOverlay.material as THREE.MeshBasicMaterial).color = new THREE.Color("#1d4ed8");
+            (t.ref.burnOverlay.material as THREE.MeshBasicMaterial).opacity = 0.12 + tkProgress * 0.42;
+            addWandaTkGlow(t.ref.mesh, 0.44 + tkProgress * 0.28 + Math.min(0.1, t.weight * 0.05));
           } else {
             t.ref.velocity.addScaledVector(to, spring * dt * 0.8);
             t.ref.velocity.multiplyScalar(0.86);
-            t.ref.velocity.y += 0.65 * dt;
+            t.ref.velocity.y += (0.35 + tkProgress * 0.8) * dt;
             t.ref.mesh.scale.setScalar(1.05 + Math.sin(phase + idx) * 0.06);
-            addWandaTkGlow(t.ref.mesh, 0.4 + tkField.releaseCharge * 0.12);
+            addWandaTkGlow(t.ref.mesh, 0.32 + tkProgress * 0.24);
           }
           if (idx < 7) {
             const tether = new THREE.Line(
@@ -3465,9 +3934,9 @@ export default function MinecraftSandbox() {
                 depthWrite: false,
                 blending: THREE.AdditiveBlending,
                 uniforms: {
-                  uColorA: { value: new THREE.Color("#5c0a12") },
-                  uColorB: { value: new THREE.Color("#b91c1c") },
-                  uAlpha: { value: 0.48 + tkField.releaseCharge * 0.24 },
+                  uColorA: { value: new THREE.Color("#0b2347") },
+                  uColorB: { value: new THREE.Color("#2563eb") },
+                  uAlpha: { value: 0.38 + tkProgress * 0.42 },
                 },
                 vertexShader: "varying float vSeg; void main(){ vSeg = position.y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
                 fragmentShader: "uniform vec3 uColorA; uniform vec3 uColorB; uniform float uAlpha; varying float vSeg; void main(){ vec3 c = mix(uColorA,uColorB,0.55); gl_FragColor = vec4(c,uAlpha); }",
@@ -3504,9 +3973,9 @@ export default function MinecraftSandbox() {
         primaryBeamCurve ? primaryBeamCurve.getPoint(0.52) : handAuraR.position
       );
       setQuarkRate(quarkCharge, wandaCharging ? 28 + wandaChargeTime * 90 : 0);
-      setQuarkRate(quarkTelek, tkField.active ? 46 + tkField.releaseCharge * 84 : 0);
+      setQuarkRate(quarkTelek, tkField.active ? 24 + tkEffectProgress * 144 : 0);
       setQuarkRate(quarkShield, wandaShieldTimer > 0 ? 34 : 0);
-      setQuarkRate(quarkUlt, wandaUltCastTimer > 0 || wandaUltAfterTimer > 0 ? 68 : 0);
+      setQuarkRate(quarkUlt, wandaUltCastTimer > 0 || wandaUltAfterTimer > 0 || wandaDomainTimer > 0 ? 68 : 0);
       setQuarkRate(quarkBeamMuzzle, wandaBeamIntensity > 0.06 ? 10 + wandaBeamIntensity * 26 : 0);
       setQuarkRate(quarkBeamTrail, wandaBeamIntensity > 0.06 ? 8 + wandaBeamIntensity * 20 : 0);
       quarksRenderer.update(dt);
@@ -3552,80 +4021,254 @@ export default function MinecraftSandbox() {
 
       updateWeaponHud();
 
-      // Ultimate cast phases: windup -> burst -> aftermath
+      // Ultimate cast phases: reality collapse -> rupture -> unstable aftermath
       if (wandaUltCastTimer > 0) {
         wandaUltCastTimer = Math.max(0, wandaUltCastTimer - dt);
-        const hexRadius = 14.5;
+        wandaRealityEditCooldown = Math.max(0, wandaRealityEditCooldown - dt);
+        const phase = 1 - wandaUltCastTimer / 1.05;
+        const hexRadius = 12.5 + phase * 7.2;
+        if (Math.random() < 0.16 + phase * 0.25) {
+          const dome = new THREE.Mesh(
+            new THREE.TorusGeometry(0.9 + phase * 2.2, 0.045 + phase * 0.02, 10, 52),
+            new THREE.MeshBasicMaterial({
+              color: Math.random() > 0.45 ? "#93c5fd" : "#60a5fa",
+              transparent: true,
+              opacity: 0.76,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
+            })
+          );
+          dome.position.copy(wandaUltCenter).add(new THREE.Vector3(0, 0.28 + phase * 0.45, 0));
+          dome.rotation.set(Math.PI / 2 + (Math.random() - 0.5) * 0.5, Math.random() * Math.PI, (Math.random() - 0.5) * 0.35);
+          wandaGroup.add(dome);
+          wandaRings.push({ mesh: dome, ttl: 0.16 + phase * 0.22, max: 0.32 + phase * 0.28, grow: 1.1 + phase * 3.8 });
+        }
         for (let m = mobs.length - 1; m >= 0; m--) {
           const toC = wandaUltCenter.clone().sub(mobs[m].mesh.position);
           const d = toC.length();
           if (d > hexRadius) continue;
           const pull = Math.max(0.1, 1 - d / hexRadius);
-          mobs[m].velocity.addScaledVector(toC.normalize(), (8 + pull * 13) * dt);
-          mobs[m].velocity.y += (2.5 + pull * 2.8) * dt;
-          mobs[m].health -= dt * (4.5 + pull * 7.5);
-          mobs[m].mesh.scale.set(1.14, 0.88, 1.14);
+          mobs[m].velocity.addScaledVector(toC.normalize(), (11 + pull * 19) * dt);
+          mobs[m].velocity.x += (Math.random() - 0.5) * pull * 3.4 * dt;
+          mobs[m].velocity.z += (Math.random() - 0.5) * pull * 3.4 * dt;
+          mobs[m].velocity.y += (3.2 + pull * 4.4) * dt;
+          mobs[m].health -= dt * (6.8 + pull * 10.2);
+          mobs[m].mesh.scale.set(1.2, 0.8, 1.2);
           if (mobs[m].health <= 0) { killMob(m); continue; }
         }
         for (const mp of mobProjectiles) {
           const d = mp.mesh.position.distanceTo(wandaUltCenter);
-          if (d <= hexRadius) mp.captureKind = "telek";
+          if (d <= hexRadius) {
+            mp.captureKind = "telek";
+            const dir = wandaUltCenter.clone().sub(mp.mesh.position).normalize();
+            mp.velocity.addScaledVector(dir, (4.5 + (1 - d / hexRadius) * 8.5) * dt);
+          }
         }
-        if (Math.random() < 0.28) {
-          const jitter = new THREE.Vector3((Math.random() - 0.5) * 1.2, Math.random() * 0.8, (Math.random() - 0.5) * 1.2);
-          spawnWandaBurst(wandaUltCenter.x + jitter.x, wandaUltCenter.y + jitter.y, wandaUltCenter.z + jitter.z, 0.42);
+        if (Math.random() < 0.58) {
+          const jitter = new THREE.Vector3((Math.random() - 0.5) * hexRadius * 0.42, Math.random() * 1.25, (Math.random() - 0.5) * hexRadius * 0.42);
+          const p = wandaUltCenter.clone().add(jitter);
+          spawnWandaBurst(p.x, p.y, p.z, 0.38 + phase * 0.6);
+          spawnImpactDistortion(p.x, p.y, p.z, 0.36 + phase * 0.7);
+          spawnRealityFracture(wandaUltCenter, 1.6 + phase * 6.2, 0.5 + phase * 1.1);
+          if (Math.random() < 0.6) {
+            const tetherGeo = new THREE.BufferGeometry().setFromPoints([wandaUltCenter.clone(), p]);
+            const tether = new THREE.Line(
+              tetherGeo,
+              new THREE.LineBasicMaterial({ color: Math.random() > 0.5 ? "#60a5fa" : "#bfdbfe", transparent: true, opacity: 0.88 })
+            );
+            wandaGroup.add(tether);
+            wandaTethers.push({ mesh: tether, ttl: 0.14 + Math.random() * 0.14, max: 0.34 });
+          }
+        }
+        if (wandaRealityEditCooldown <= 0) {
+          wandaRealityEditCooldown = 0.045;
+          for (let s = 0; s < 22; s++) {
+            const a = Math.random() * Math.PI * 2;
+            const r = 1.1 + Math.random() * (hexRadius - 1.1);
+            const tx = Math.floor(wandaUltCenter.x + Math.cos(a) * r);
+            const tz = Math.floor(wandaUltCenter.z + Math.sin(a) * r);
+            const gy = findGroundY(tx, tz);
+            if (gy === null) continue;
+            const ty = gy - 1;
+            const b = world.getBlockWorld(tx, ty, tz);
+            if (b === 0 || b === 4) continue;
+            warpRealityCell(tx, ty, tz, 0.9 + phase * 1.25, 1.4 + phase * 0.95);
+            const fractureChance = 0.26 + phase * 0.55;
+            if (Math.random() < fractureChance) {
+              if (world.setBlockWorld(tx, ty, tz, 0)) {
+                markWorldPosDirty(tx, tz);
+                if (Math.random() < 0.34) spawnDrop(toBlockItem(b as BlockType), tx, ty, tz);
+              }
+            } else if (canBurnBlock(b) && Math.random() < 0.4 + phase * 0.35) {
+              enqueueBurn(tx, ty, tz);
+            }
+            if (Math.random() < 0.45) {
+              const anchor = new THREE.Vector3(tx + 0.5, ty + 0.3, tz + 0.5);
+              const tetherGeo = new THREE.BufferGeometry().setFromPoints([anchor, wandaUltCenter.clone()]);
+              const tether = new THREE.Line(
+                tetherGeo,
+                new THREE.LineBasicMaterial({ color: "#bfdbfe", transparent: true, opacity: 0.8 })
+              );
+              wandaGroup.add(tether);
+              wandaTethers.push({ mesh: tether, ttl: 0.09 + Math.random() * 0.12, max: 0.24 });
+            }
+          }
         }
         if (wandaUltCastTimer <= 0) {
-          const radius = 12.5;
-          spawnWandaBurst(wandaUltCenter.x, wandaUltCenter.y, wandaUltCenter.z, 2.8);
-          wandaTone(58, 0.62, "sawtooth", 0.14);
+          const radius = 18.5;
+          spawnWandaBurst(wandaUltCenter.x, wandaUltCenter.y, wandaUltCenter.z, 4.2);
+          spawnImpactDistortion(wandaUltCenter.x, wandaUltCenter.y, wandaUltCenter.z, 4.2);
+          wandaTone(42, 0.84, "sawtooth", 0.2);
+          wandaRealityFlashTimer = 0.08;
           for (let m = mobs.length - 1; m >= 0; m--) {
             const d = mobs[m].mesh.position.distanceTo(wandaUltCenter);
             if (d > radius) continue;
             const f = Math.max(0, 1 - d / radius);
-            mobs[m].health -= Math.ceil(36 * f);
+            mobs[m].health -= Math.ceil(72 * f);
             const push = mobs[m].mesh.position.clone().sub(wandaUltCenter).normalize();
-            mobs[m].velocity.addScaledVector(push, 19 * f);
-            mobs[m].velocity.y += 9.5 * f;
-            mobs[m].burnTimer = Math.max(mobs[m].burnTimer, 2.4 * f);
+            mobs[m].velocity.addScaledVector(push, 34 * f);
+            mobs[m].velocity.y += 14.5 * f;
+            mobs[m].burnTimer = Math.max(mobs[m].burnTimer, 4.2 * f);
             if (mobs[m].health <= 0) killMob(m);
           }
-          for (let i = 0; i < 18; i++) {
-            const a = (i / 18) * Math.PI * 2;
-            const r = 2.5 + Math.random() * 5.2;
+          for (let i = 0; i < 38; i++) {
+            const a = (i / 38) * Math.PI * 2;
+            const r = 2.2 + Math.random() * 8.4;
+            const px = wandaUltCenter.x + Math.cos(a) * r;
+            const pz = wandaUltCenter.z + Math.sin(a) * r;
             spawnWandaBurst(
-              wandaUltCenter.x + Math.cos(a) * r,
+              px,
               wandaUltCenter.y + 0.2 + Math.random() * 0.8,
-              wandaUltCenter.z + Math.sin(a) * r,
-              0.8
+              pz,
+              1.15
             );
+            if (Math.random() < 0.85) spawnImpactDistortion(px, wandaUltCenter.y + 0.2, pz, 1.05);
+            if (Math.random() < 0.8) spawnRealityFracture(new THREE.Vector3(px, wandaUltCenter.y + 0.2, pz), 1.8, 1.15);
           }
-          screenShakeTimer = 0.34;
-          screenShakeIntensity = 0.14;
+          for (let dx = -10; dx <= 10; dx++) {
+            for (let dz = -10; dz <= 10; dz++) {
+              const dd = Math.hypot(dx, dz);
+              if (dd > radius * 0.55) continue;
+              const tx = Math.floor(wandaUltCenter.x) + dx;
+              const tz = Math.floor(wandaUltCenter.z) + dz;
+              const gy = findGroundY(tx, tz);
+              if (gy === null) continue;
+              const ty = gy - 1;
+              const b = world.getBlockWorld(tx, ty, tz);
+              if (b === 0 || b === 4) continue;
+              warpRealityCell(tx, ty, tz, 1.35, 2.1);
+              const chance = Math.max(0.2, 0.8 - dd / (radius * 0.72));
+              if (Math.random() < chance) {
+                if (world.setBlockWorld(tx, ty, tz, 0)) {
+                  markWorldPosDirty(tx, tz);
+                  if (Math.random() < 0.28) spawnDrop(toBlockItem(b as BlockType), tx, ty, tz);
+                }
+              } else if (canBurnBlock(b) && Math.random() < 0.7) {
+                enqueueBurn(tx, ty, tz);
+              }
+            }
+          }
+          screenShakeTimer = 0.68;
+          screenShakeIntensity = 0.28;
         }
       }
       if (wandaUltAfterTimer > 0) {
         wandaUltAfterTimer = Math.max(0, wandaUltAfterTimer - dt);
-        const detRadius = 12.5;
+        wandaRealityEditCooldown = Math.max(0, wandaRealityEditCooldown - dt);
+        const remap = wandaUltAfterTimer / 1.25;
+        const detRadius = 18.5;
+        if (Math.random() < 0.24 + remap * 0.18) {
+          spawnRealityFracture(wandaUltCenter, 3.5 + remap * 7.5, 0.55 + remap * 0.8);
+        }
         for (let m = mobs.length - 1; m >= 0; m--) {
           const d = mobs[m].mesh.position.distanceTo(wandaUltCenter);
           if (d > detRadius) continue;
           const w = Math.max(0.15, 1 - d / detRadius);
-          mobs[m].health -= dt * (6 + w * 9);
-          mobs[m].velocity.addScaledVector(mobs[m].mesh.position.clone().sub(wandaUltCenter).normalize(), w * 10.5 * dt);
+          mobs[m].health -= dt * (9.6 + w * 12.8);
+          mobs[m].velocity.addScaledVector(mobs[m].mesh.position.clone().sub(wandaUltCenter).normalize(), w * 16.5 * dt);
+          mobs[m].velocity.y += w * 2.8 * dt;
           if (mobs[m].health <= 0) { killMob(m); continue; }
         }
-        if (Math.random() < 0.18) {
+        if (Math.random() < 0.48) {
           const a = Math.random() * Math.PI * 2;
-          const r = 1.4 + Math.random() * 2.4;
+          const r = 1.2 + Math.random() * 6.2;
           spawnWandaBurst(
             wandaUltCenter.x + Math.cos(a) * r,
             wandaUltCenter.y + Math.random() * 0.6,
             wandaUltCenter.z + Math.sin(a) * r,
-            0.45
+            0.74
           );
+          if (Math.random() < 0.65) {
+            spawnImpactDistortion(
+              wandaUltCenter.x + Math.cos(a) * r,
+              wandaUltCenter.y + Math.random() * 0.35,
+              wandaUltCenter.z + Math.sin(a) * r,
+              0.82
+            );
+          }
+        }
+        if (wandaRealityEditCooldown <= 0) {
+          wandaRealityEditCooldown = 0.08;
+          for (let s = 0; s < 10; s++) {
+            const a = Math.random() * Math.PI * 2;
+            const r = 1.5 + Math.random() * 8.2;
+            const tx = Math.floor(wandaUltCenter.x + Math.cos(a) * r);
+            const tz = Math.floor(wandaUltCenter.z + Math.sin(a) * r);
+            const gy = findGroundY(tx, tz);
+            if (gy === null) continue;
+            const ty = gy - 1;
+            const b = world.getBlockWorld(tx, ty, tz);
+            if (b === 0 || b === 4) continue;
+            warpRealityCell(tx, ty, tz, 0.85, 1.2);
+            if (Math.random() < 0.36) {
+              if (world.setBlockWorld(tx, ty, tz, 0)) markWorldPosDirty(tx, tz);
+            } else if (canBurnBlock(b) && Math.random() < 0.7) {
+              enqueueBurn(tx, ty, tz);
+            }
+          }
         }
         if (wandaUltAfterTimer <= 0 && wandaMode === "ultimate_cast") wandaMode = "idle";
+      }
+      if (wandaDomainTimer > 0) {
+        // Domain advantage: reality bends in your favor in a 30-block radius.
+        wandaEnergy = Math.min(100, wandaEnergy + 14 * dt);
+        if (healthRef.current < playerMaxHealth) {
+          const h = Math.min(playerMaxHealth, healthRef.current + dt * 1.2);
+          if (h !== healthRef.current) { healthRef.current = h; setHealth(h); }
+        }
+        for (let m = mobs.length - 1; m >= 0; m--) {
+          const md = mobs[m].mesh.position.distanceTo(wandaUltCenter);
+          if (md > WANDA_DOMAIN_RADIUS) continue;
+          const f = Math.max(0.08, 1 - md / WANDA_DOMAIN_RADIUS);
+          const pull = wandaUltCenter.clone().sub(mobs[m].mesh.position).normalize();
+          mobs[m].velocity.addScaledVector(pull, (2.6 + f * 7.2) * dt);
+          mobs[m].velocity.y += (0.7 + f * 1.8) * dt;
+          mobs[m].health -= dt * (1.6 + f * 3.1);
+          mobs[m].attackCooldown = Math.max(mobs[m].attackCooldown, 0.38 + (1 - f) * 0.25);
+          mobs[m].rangedCooldown = Math.max(mobs[m].rangedCooldown, 0.55 + (1 - f) * 0.3);
+          addWandaTkGlow(mobs[m].mesh, 0.3 + f * 0.28);
+          if (mobs[m].health <= 0) { killMob(m); continue; }
+        }
+        for (const mp of mobProjectiles) {
+          const pd = mp.mesh.position.distanceTo(wandaUltCenter);
+          if (pd > WANDA_DOMAIN_RADIUS) continue;
+          mp.captureKind = "telek";
+          const dir = wandaUltCenter.clone().sub(mp.mesh.position).normalize();
+          mp.velocity.addScaledVector(dir, dt * (4 + (1 - pd / WANDA_DOMAIN_RADIUS) * 9));
+        }
+        if (wandaDomainWarpTick <= 0) {
+          wandaDomainWarpTick = 0.07;
+          for (let i = 0; i < 26; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const r = 1.2 + Math.random() * (WANDA_DOMAIN_RADIUS - 1.2);
+            const tx = Math.floor(wandaUltCenter.x + Math.cos(a) * r);
+            const tz = Math.floor(wandaUltCenter.z + Math.sin(a) * r);
+            const gy = findGroundY(tx, tz);
+            if (gy === null) continue;
+            warpRealityCell(tx, gy - 1, tz, 0.7, 2.6);
+            if (Math.random() < 0.22) spawnRealityFracture(new THREE.Vector3(tx + 0.5, gy, tz + 0.5), 1.4, 0.55);
+          }
+        }
       }
 
       if (wandaAudioReady && wandaAudioCtx && wandaHumGain && wandaHumOsc) {
@@ -3766,13 +4409,14 @@ export default function MinecraftSandbox() {
       handSigilR.quaternion.copy(camera.quaternion);
       handSigilL.rotation.z += dt * 1.8;
       handSigilR.rotation.z -= dt * 2.1;
-      const auraPulse = (inventoryRef.current[selectedSlotRef.current]?.item === "wanda_focus")
-        ? 0.18 + (Math.sin(clock.elapsedTime * 10) * 0.5 + 0.5) * 0.5 + (wandaCharging ? 0.35 : 0)
+      const handSigilPulse = (inventoryRef.current[selectedSlotRef.current]?.item === "wanda_focus")
+        ? 0.2 + (Math.sin(clock.elapsedTime * 9) * 0.5 + 0.5) * 0.55 + (wandaCharging ? 0.25 : 0)
         : 0;
-      (handAuraL.material as THREE.MeshBasicMaterial).opacity = auraPulse;
-      (handAuraR.material as THREE.MeshBasicMaterial).opacity = auraPulse;
-      (handSigilL.material as THREE.MeshBasicMaterial).opacity = auraPulse * 0.7;
-      (handSigilR.material as THREE.MeshBasicMaterial).opacity = auraPulse * 0.7;
+      // Keep red aura spheres disabled, but restore the cool per-hand sigil meshes.
+      (handAuraL.material as THREE.MeshBasicMaterial).opacity = 0;
+      (handAuraR.material as THREE.MeshBasicMaterial).opacity = 0;
+      (handSigilL.material as THREE.MeshBasicMaterial).opacity = handSigilPulse * 0.78;
+      (handSigilR.material as THREE.MeshBasicMaterial).opacity = handSigilPulse * 0.78;
       wandaShieldBubble.position.set(controller.position.x, controller.position.y + 0.9, controller.position.z);
       wandaShieldRingA.position.copy(wandaShieldBubble.position);
       wandaShieldRingB.position.copy(wandaShieldBubble.position);
@@ -3793,17 +4437,41 @@ export default function MinecraftSandbox() {
         (wandaShieldRingA.material as THREE.ShaderMaterial).uniforms.uOpacity.value = 0;
         (wandaShieldRingB.material as THREE.ShaderMaterial).uniforms.uOpacity.value = 0;
       }
+      if (wandaDomainTimer > 0) {
+        wandaDomainWarpTick = Math.max(0, wandaDomainWarpTick - dt);
+        const domainPulse = 0.45 + (Math.sin(clock.elapsedTime * 5.8) * 0.5 + 0.5) * 0.55;
+        wandaDomainDisk.visible = true;
+        wandaDomainEdge.visible = true;
+        wandaDomainDome.visible = true;
+        wandaDomainDisk.position.set(wandaUltCenter.x, wandaUltCenter.y - 0.88, wandaUltCenter.z);
+        wandaDomainEdge.position.set(wandaUltCenter.x, wandaUltCenter.y - 0.66, wandaUltCenter.z);
+        wandaDomainDome.position.set(wandaUltCenter.x, wandaUltCenter.y - 0.7, wandaUltCenter.z);
+        wandaDomainDisk.rotation.z += dt * 0.18;
+        wandaDomainEdge.rotation.z -= dt * 0.42;
+        wandaDomainDome.rotation.y += dt * 0.08;
+        (wandaDomainDisk.material as THREE.MeshBasicMaterial).opacity = 0.12 + domainPulse * 0.16;
+        (wandaDomainEdge.material as THREE.MeshBasicMaterial).opacity = 0.36 + domainPulse * 0.36;
+        (wandaDomainDome.material as THREE.MeshBasicMaterial).opacity = 0.055 + domainPulse * 0.08;
+      } else {
+        wandaDomainDisk.visible = false;
+        wandaDomainEdge.visible = false;
+        wandaDomainDome.visible = false;
+      }
       wandaBeamActive = wandaEquippedNow && (wandaCharging || tkField.active || wandaMode === "ultimate_cast");
       wandaBeamActive = wandaBeamActive && (wandaPrimaryBeamHold || wandaMode === "ultimate_cast");
       wandaBeamIntensity = wandaBeamActive ? THREE.MathUtils.damp(wandaBeamIntensity, 0.38 + Math.min(1, wandaChargeTime) * 0.62 + (tkField.active ? 0.22 : 0), 8, dt) : THREE.MathUtils.damp(wandaBeamIntensity, 0, 10, dt);
+      wandaRealityFlashTimer = Math.max(0, wandaRealityFlashTimer - dt);
       bloomPass.threshold = 0.72;
       bloomPass.radius = 0.58;
-      bloomPass.strength = 0.36 + wandaBeamIntensity * 1.15 + (wandaMode === "ultimate_cast" ? 0.45 : 0);
+      const realityFlashBoost = wandaRealityFlashTimer > 0 ? (wandaRealityFlashTimer / 0.08) * 1.7 : 0;
+      bloomPass.strength = 0.3 + wandaBeamIntensity * 0.55 + (wandaMode === "ultimate_cast" ? 0.5 : 0) + (wandaDomainTimer > 0 ? 0.22 : 0) + realityFlashBoost;
       wandaBeamShaderTime += dt;
       for (const bv of wandaBeamVisuals) {
-        const bm = bv.mesh.material as THREE.ShaderMaterial;
-        bm.uniforms.uTime.value = wandaBeamShaderTime;
-        bm.uniforms.uIntensity.value = wandaBeamIntensity;
+        for (const m of [bv.coreMesh, bv.strand1, bv.strand2, bv.strand3, bv.glowMesh]) {
+          const sm = m.material as THREE.ShaderMaterial;
+          sm.uniforms.uTime.value = wandaBeamShaderTime;
+          sm.uniforms.uIntensity.value = wandaBeamIntensity;
+        }
       }
       if (wandaBeamIntensity > 0.02) {
         const origin = rightPos.clone().addScaledVector(camDir, 0.05);
@@ -3865,12 +4533,14 @@ export default function MinecraftSandbox() {
         }
         pushTarget(baseAim);
         targets.sort((a, b) => camPos.distanceTo(a.aim) - camPos.distanceTo(b.aim));
-        const activeTargetCount = Math.min(9, targets.length);
+        const activeTargetCount = Math.min(7, targets.length);
         ensureBeamVisualCount(activeTargetCount);
 
-        const beamDps = 24 + Math.min(1.2, wandaChargeTime) * 38;
+        const beamRamp = THREE.MathUtils.clamp(wandaPrimaryBeamHoldTime / 2.2, 0, 1);
+        const chargeFactor = Math.min(1.2, wandaChargeTime);
+        const beamDps = (7 + chargeFactor * 14) + beamRamp * (66 + chargeFactor * 42);
         const tickDamage = beamDps * dt;
-        const aoeRadius = 3.6;
+        const aoeRadius = 2 + beamRamp * 2.4;
         const mobDamage = new Map<number, number>();
 
         for (let i = 0; i < activeTargetCount; i++) {
@@ -3883,36 +4553,85 @@ export default function MinecraftSandbox() {
               : target.aim;
           visual.wigglePhase += dt * visual.wiggleSpeed;
           visual.wigglePhaseB += dt * visual.wiggleSpeedB;
+          visual.strandAngle += dt * (2.8 + i * 0.4);
           const dist = Math.max(0.25, origin.distanceTo(aim));
-          const dir = aim.clone().sub(origin).divideScalar(dist);
-          const binormal = new THREE.Vector3().crossVectors(camDir, dir);
-          if (binormal.lengthSq() < 1e-8) binormal.crossVectors(camUp, dir);
+          const mainDir = aim.clone().sub(origin).divideScalar(dist);
+          const binormal = new THREE.Vector3().crossVectors(camDir, mainDir);
+          if (binormal.lengthSq() < 1e-8) binormal.crossVectors(camUp, mainDir);
           binormal.normalize();
           const wa = visual.wiggleAmp * wandaBeamIntensity;
-          const arc = dist * (0.075 + 0.045 * wandaBeamIntensity);
+          const arc = dist * (0.025 + 0.032 * wandaBeamIntensity);
           const cp1 = origin.clone()
-            .addScaledVector(dir, dist * 0.44)
-            .addScaledVector(binormal, arc + Math.sin(visual.wigglePhase) * wa * dist * 0.22)
-            .addScaledVector(camRight, Math.sin(visual.wigglePhase * 0.88) * wa * dist * 0.16)
-            .addScaledVector(camUp, Math.cos(visual.wigglePhase * 0.62 + visual.wigglePhaseB) * wa * dist * 0.12);
-          const cp2 = aim.clone()
-            .addScaledVector(dir, -dist * 0.38)
-            .addScaledVector(binormal, -arc * 0.42 + Math.cos(visual.wigglePhaseB) * wa * dist * 0.2)
-            .addScaledVector(camRight, Math.cos(visual.wigglePhaseB * 0.79) * wa * dist * 0.14)
-            .addScaledVector(camUp, Math.sin(visual.wigglePhaseB * 0.55) * wa * dist * 0.1);
+            .addScaledVector(mainDir, dist * 0.33)
+            .addScaledVector(binormal, arc + Math.sin(visual.wigglePhase) * wa * dist * 0.1)
+            .addScaledVector(camRight, Math.sin(visual.wigglePhase * 0.9) * wa * dist * 0.07)
+            .addScaledVector(camUp, Math.cos(visual.wigglePhase * 0.65) * wa * dist * 0.06);
+          const cp2 = origin.clone()
+            .addScaledVector(mainDir, dist * 0.72)
+            .addScaledVector(binormal, -arc * 0.25 + Math.cos(visual.wigglePhaseB) * wa * dist * 0.09)
+            .addScaledVector(camRight, Math.cos(visual.wigglePhaseB * 0.8) * wa * dist * 0.06)
+            .addScaledVector(camUp, Math.sin(visual.wigglePhaseB * 0.6) * wa * dist * 0.05);
           const c = visual.curve;
           c.points[0].copy(origin);
           c.points[1].copy(cp1);
           c.points[2].copy(cp2);
           c.points[3].copy(aim);
-          visual.mesh.geometry.dispose();
-          visual.halo.geometry.dispose();
-          visual.mesh.geometry = new THREE.TubeGeometry(visual.curve, 36, 0.062, 12, false);
-          visual.halo.geometry = new THREE.TubeGeometry(visual.curve, 30, 0.118, 10, false);
-          visual.mesh.visible = true;
-          visual.halo.visible = true;
-          (visual.halo.material as THREE.MeshBasicMaterial).opacity = 0.22 + wandaBeamIntensity * 0.34;
-          if (Math.random() < 0.04 && aim.distanceTo(camPos) > 1.2) spawnBeamImpact(aim, wandaBeamIntensity);
+          const buildSpiral = (baseCurve: THREE.CatmullRomCurve3, angleSeed: number, radius: number, segments: number): THREE.TubeGeometry => {
+            const N = segments + 1;
+            const pts: THREE.Vector3[] = [];
+            const up2 = new THREE.Vector3(0, 1, 0);
+            for (let s = 0; s < N; s++) {
+              const t = s / segments;
+              const center = baseCurve.getPoint(t);
+              const tang = baseCurve.getTangent(t).normalize();
+              const norm2 = new THREE.Vector3().crossVectors(tang, up2);
+              if (norm2.lengthSq() < 1e-6) norm2.crossVectors(tang, new THREE.Vector3(1, 0, 0));
+              norm2.normalize();
+              const bino2 = new THREE.Vector3().crossVectors(tang, norm2).normalize();
+              const spiralAng = angleSeed + t * Math.PI * 4.0 + visual.strandAngle;
+              const turbulence = Math.sin(t * 22.0 + clock.elapsedTime * 6.0 + angleSeed * 3.0) * 0.012;
+              pts.push(center.clone()
+                .addScaledVector(norm2, Math.cos(spiralAng) * (radius + turbulence))
+                .addScaledVector(bino2, Math.sin(spiralAng) * (radius + turbulence))
+              );
+            }
+            const spiralCurve = new THREE.CatmullRomCurve3(pts, false, "catmullrom", 0.2);
+            return new THREE.TubeGeometry(spiralCurve, segments, 0.008 + wandaBeamIntensity * 0.006, 8, false);
+          };
+          visual.coreMesh.geometry.dispose();
+          const coreRadius = 0.018 + wandaBeamIntensity * 0.012;
+          visual.coreMesh.geometry = new THREE.TubeGeometry(c, 64, coreRadius, 14, false);
+          visual.coreMesh.visible = true;
+          const spiralR = 0.038 + wandaBeamIntensity * 0.022;
+          visual.strand1.geometry.dispose();
+          visual.strand1.geometry = buildSpiral(c, 0.0, spiralR, 52);
+          visual.strand1.visible = true;
+          visual.strand2.geometry.dispose();
+          visual.strand2.geometry = buildSpiral(c, (Math.PI * 2) / 3, spiralR, 48);
+          visual.strand2.visible = true;
+          visual.strand3.geometry.dispose();
+          visual.strand3.geometry = buildSpiral(c, (Math.PI * 4) / 3, spiralR, 44);
+          visual.strand3.visible = true;
+          visual.glowMesh.geometry.dispose();
+          visual.glowMesh.geometry = new THREE.TubeGeometry(c, 32, 0.1 + wandaBeamIntensity * 0.06, 10, false);
+          visual.glowMesh.visible = true;
+          visual.crackleLines.forEach((line, ci) => {
+            const t0 = (ci / visual.crackleLines.length);
+            const t1 = t0 + 0.18 + Math.random() * 0.12;
+            const p0 = c.getPoint(Math.min(t0, 0.98));
+            const p1 = c.getPoint(Math.min(t1, 0.99));
+            const mid = p0.clone().lerp(p1, 0.5);
+            const jitter = 0.04 + wandaBeamIntensity * 0.06;
+            mid.x += (Math.random() - 0.5) * jitter;
+            mid.y += (Math.random() - 0.5) * jitter;
+            mid.z += (Math.random() - 0.5) * jitter;
+            (line.geometry as THREE.BufferGeometry).setFromPoints([p0, mid, p1]);
+            (line.material as THREE.LineBasicMaterial).opacity = (0.35 + wandaBeamIntensity * 0.55) * (Math.random() > 0.4 ? 1 : 0);
+            line.visible = wandaBeamIntensity > 0.08;
+          });
+          if (Math.random() < 0.08 + beamRamp * 0.2 && aim.distanceTo(camPos) > 1.2) {
+            spawnBeamImpact(aim, wandaBeamIntensity * (0.72 + beamRamp * 0.48));
+          }
 
           if (!wandaPrimaryBeamHold) continue;
           for (let m = mobs.length - 1; m >= 0; m--) {
@@ -3961,6 +4680,14 @@ export default function MinecraftSandbox() {
           }
         }
       } else {
+        for (const bv of wandaBeamVisuals) {
+          bv.coreMesh.visible = false;
+          bv.strand1.visible = false;
+          bv.strand2.visible = false;
+          bv.strand3.visible = false;
+          bv.glowMesh.visible = false;
+          bv.crackleLines.forEach((l) => { l.visible = false; });
+        }
         ensureBeamVisualCount(0);
       }
 
@@ -4234,7 +4961,13 @@ export default function MinecraftSandbox() {
         const below = world.getBlockWorld(Math.floor(mpos.x), groundY, Math.floor(mpos.z));
         mob.jumpTimer -= dt;
         if (mob.velocity.y <= 0 && below !== 0 && below !== 4) {
+          const impactSpeed = -mob.velocity.y;
           mpos.y = groundY + 1.45; mob.velocity.y = 0;
+          if (impactSpeed > 8.8) {
+            const fallDamage = Math.max(1, Math.round((impactSpeed - 8.2) * 0.78));
+            mob.health -= fallDamage;
+            if (mob.health <= 0) { killMob(i); continue; }
+          }
           if (mob.jumpTimer <= 0) {
             mob.velocity.y = mob.kind === "slime" ? 4.8 : mob.kind === "shadow" || mob.kind === "storm" ? 5.5 : 4.1;
             mob.jumpTimer = 0.9 + Math.random() * 1.7;
@@ -4342,12 +5075,18 @@ export default function MinecraftSandbox() {
         }
         b.mesh.position.addScaledVector(b.velocity, dt);
         b.mesh.rotation.y += dt * 7;
+        const d = b.velocity.clone().normalize();
+        const p0 = b.mesh.position.clone();
+        const p3 = p0.clone().addScaledVector(d, -1.45);
+        const side = new THREE.Vector3(d.z, 0, -d.x).normalize();
+        const p1 = p0.clone().addScaledVector(d, -0.34).addScaledVector(side, 0.11 * Math.sin(clock.elapsedTime * 14 + i));
+        const p2 = p0.clone().addScaledVector(d, -0.86).addScaledVector(side, -0.09 * Math.cos(clock.elapsedTime * 11 + i * 0.8));
+        const c = new THREE.CatmullRomCurve3([p0, p1, p2, p3]);
         b.trail.geometry.dispose();
-        b.trail.geometry = new THREE.BufferGeometry().setFromPoints([
-          b.mesh.position.clone(),
-          b.mesh.position.clone().addScaledVector(b.velocity.clone().normalize(), -0.45),
-        ]);
-        (b.trail.material as THREE.ShaderMaterial).uniforms.uOpacity.value = Math.max(0.18, b.life * 0.65);
+        b.trail.geometry = new THREE.TubeGeometry(c, 28, 0.024 + Math.max(0, b.life) * 0.006, 12, false);
+        const bt = b.trail.material as THREE.ShaderMaterial;
+        bt.uniforms.uTime.value = wandaBeamShaderTime;
+        bt.uniforms.uIntensity.value = Math.max(0.95, Math.min(2.0, b.life * 1.15));
 
         const bx = Math.floor(b.mesh.position.x);
         const by = Math.floor(b.mesh.position.y);
@@ -4367,18 +5106,44 @@ export default function MinecraftSandbox() {
         }
 
         const block = world.getBlockWorld(bx, by, bz);
-        if (hitMob || (block !== 0 && block !== 4)) {
-          spawnWandaBurst(b.mesh.position.x, b.mesh.position.y, b.mesh.position.z, 0.9);
+        const hitBlock = block !== 0 && block !== 4;
+        if (hitMob || hitBlock) {
+          const burstPower = hitBlock ? 1.6 : 1.1;
+          spawnWandaBurst(b.mesh.position.x, b.mesh.position.y, b.mesh.position.z, burstPower);
+          spawnImpactDistortion(b.mesh.position.x, b.mesh.position.y, b.mesh.position.z, burstPower);
           const center = b.mesh.position.clone();
+          if (hitBlock) {
+            const breakR = 1.4 + b.splash * 0.9;
+            for (let dx = -Math.ceil(breakR); dx <= Math.ceil(breakR); dx++) {
+              for (let dy = -Math.ceil(breakR * 0.6); dy <= Math.ceil(breakR * 0.6); dy++) {
+                for (let dz = -Math.ceil(breakR); dz <= Math.ceil(breakR); dz++) {
+                  const tx = bx + dx, ty = by + dy, tz = bz + dz;
+                  const dd = Math.hypot(dx, dy * 1.2, dz);
+                  if (dd > breakR) continue;
+                  const tb = world.getBlockWorld(tx, ty, tz);
+                  if (tb === 0 || tb === 4) continue;
+                  const chance = Math.max(0.15, 1 - dd / breakR);
+                  if (Math.random() < chance * 0.55) {
+                    if (world.setBlockWorld(tx, ty, tz, 0)) {
+                      markWorldPosDirty(tx, tz);
+                      if (Math.random() < 0.45) spawnDrop(toBlockItem(tb as BlockType), tx, ty, tz);
+                    }
+                  }
+                }
+              }
+            }
+          }
           for (let m = mobs.length - 1; m >= 0; m--) {
             const d = mobs[m].mesh.position.distanceTo(center);
             if (d > b.splash) continue;
             const f = Math.max(0, 1 - d / b.splash);
-            mobs[m].health -= Math.ceil(5 * f);
-            mobs[m].velocity.addScaledVector(mobs[m].mesh.position.clone().sub(center).normalize(), 9 * f);
-            mobs[m].velocity.y += 4 * f;
+            mobs[m].health -= Math.ceil((hitBlock ? 10 : 6) * f);
+            mobs[m].velocity.addScaledVector(mobs[m].mesh.position.clone().sub(center).normalize(), (hitBlock ? 13 : 9) * f);
+            mobs[m].velocity.y += (hitBlock ? 6 : 4) * f;
             if (mobs[m].health <= 0) killMob(m);
           }
+          screenShakeTimer = Math.max(screenShakeTimer, hitBlock ? 0.26 : 0.14);
+          screenShakeIntensity = Math.max(screenShakeIntensity, hitBlock ? 0.11 : 0.06);
           wandaGroup.remove(b.mesh);
           wandaGroup.remove(b.trail);
           b.mesh.traverse((obj) => {
@@ -4420,13 +5185,54 @@ export default function MinecraftSandbox() {
       for (let i = wandaTethers.length - 1; i >= 0; i--) {
         const t = wandaTethers[i];
         t.ttl -= dt;
-        (t.mesh.material as THREE.ShaderMaterial).uniforms.uAlpha.value = Math.max(0, t.ttl / t.max) * 0.62;
+        const fade = Math.max(0, t.ttl / t.max) * 0.62;
+        if (t.mesh.material instanceof THREE.ShaderMaterial) {
+          t.mesh.material.uniforms.uAlpha.value = fade;
+        } else if (t.mesh.material instanceof THREE.LineBasicMaterial || t.mesh.material instanceof THREE.MeshBasicMaterial) {
+          t.mesh.material.opacity = fade;
+        }
         if (t.ttl <= 0) {
           wandaGroup.remove(t.mesh);
           (t.mesh.geometry as THREE.BufferGeometry).dispose();
           (t.mesh.material as THREE.Material).dispose();
           wandaTethers.splice(i, 1);
         }
+      }
+      for (let i = wandaRealityFractures.length - 1; i >= 0; i--) {
+        const f = wandaRealityFractures[i];
+        f.ttl -= dt;
+        const p = Math.max(0, f.ttl / Math.max(0.001, f.max));
+        f.mesh.position.addScaledVector(f.drift, dt * (0.35 + (1 - p) * 1.4));
+        f.mesh.position.y += dt * f.rise * (0.45 + (1 - p) * 0.7);
+        f.mesh.rotation.x += dt * f.spin.x;
+        f.mesh.rotation.y += dt * f.spin.y;
+        f.mesh.rotation.z += dt * f.spin.z;
+        const s = 0.45 + (1 - p) * 1.8;
+        f.mesh.scale.setScalar(s);
+        (f.mesh.material as THREE.MeshBasicMaterial).opacity = p * 0.82;
+        if (f.ttl <= 0) {
+          wandaGroup.remove(f.mesh);
+          (f.mesh.geometry as THREE.BufferGeometry).dispose();
+          (f.mesh.material as THREE.Material).dispose();
+          wandaRealityFractures.splice(i, 1);
+        }
+      }
+      const realityActive = wandaUltCastTimer > 0 || wandaUltAfterTimer > 0;
+      for (const [k, cell] of wandaRealityWarped) {
+        cell.ttl -= dt * (realityActive ? 0.42 : 1);
+        if (realityActive && Math.random() < dt * 8.5) {
+          const nextWarp = pickRealityWarpBlock(cell.original);
+          if (nextWarp !== cell.warped && world.setBlockWorld(cell.x, cell.y, cell.z, nextWarp)) {
+            cell.warped = nextWarp;
+            markWorldPosDirty(cell.x, cell.z);
+          }
+        }
+        if (cell.ttl > 0) continue;
+        const keepScar = Math.random() < 0.22;
+        const finalBlock = keepScar ? pickRealityWarpBlock(cell.original) : cell.original;
+        world.setBlockWorld(cell.x, cell.y, cell.z, finalBlock as BlockType);
+        markWorldPosDirty(cell.x, cell.z);
+        wandaRealityWarped.delete(k);
       }
 
       const wandaKey = `${Math.round(wandaEnergy)}|${wandaShieldCd.toFixed(1)}|${wandaUltCd.toFixed(1)}|${wandaShieldTimer > 0 ? 1 : 0}|${tkField.active ? 1 : 0}|${Math.min(1, wandaChargeTime).toFixed(2)}|${wandaEquipped ? 1 : 0}|${wandaMode}|${tkField.radius.toFixed(1)}|${tkField.captured.length}`;
@@ -4527,7 +5333,9 @@ export default function MinecraftSandbox() {
         }
         const blastR = meteorBlastRadius(m.mass);
         const innerHit = 1.02 + Math.min(2.5, m.mass * 0.03);
-        const dmgMax = Math.round(10 + m.mass * 1.05 + m.velocity.length() * 0.88);
+        const dmgMax = wandaMeteorProfile === "boss"
+          ? Math.round(30 + m.mass * 2.3 + m.velocity.length() * 1.7)
+          : Math.round(20 + m.mass * 1.35 + m.velocity.length() * 1.05);
         let explode = hitBlock || m.life > 11;
         if (!explode) {
           if (playerCenter.distanceTo(m.mesh.position) < innerHit) explode = true;
@@ -4542,26 +5350,74 @@ export default function MinecraftSandbox() {
         }
         if (explode) {
           const cx = m.mesh.position.x, cy = m.mesh.position.y, cz = m.mesh.position.z;
+          const breakRadius = Math.max(1.6, blastR * (wandaMeteorProfile === "boss" ? 0.62 : 0.84));
+          const burnRadius = Math.max(2.2, blastR * (wandaMeteorProfile === "boss" ? 0.76 : 0.95));
+          const minX = Math.floor(cx - breakRadius), maxX = Math.floor(cx + breakRadius);
+          const minY = Math.max(1, Math.floor(cy - breakRadius * 0.75)), maxY = Math.min(WORLD_HEIGHT - 2, Math.floor(cy + breakRadius * 0.85));
+          const minZ = Math.floor(cz - breakRadius), maxZ = Math.floor(cz + breakRadius);
+          for (let bx = minX; bx <= maxX; bx++) {
+            for (let by = minY; by <= maxY; by++) {
+              for (let bz = minZ; bz <= maxZ; bz++) {
+                const d = Math.hypot(bx + 0.5 - cx, by + 0.5 - cy, bz + 0.5 - cz);
+                if (d > breakRadius) continue;
+                const block = world.getBlockWorld(bx, by, bz);
+                if (block === 0 || block === 4) continue;
+                const proximity = Math.max(0, 1 - d / breakRadius);
+                const breakChance = 0.2 + proximity * (wandaMeteorProfile === "boss" ? 0.58 : 0.78);
+                if (Math.random() > breakChance) continue;
+                if (world.setBlockWorld(bx, by, bz, 0)) {
+                  markWorldPosDirty(bx, bz);
+                  if (Math.random() < 0.36 + proximity * 0.25) {
+                    spawnDrop(toBlockItem(block as BlockType), bx, by, bz);
+                  }
+                  if (canBurnBlock(block) && Math.random() < 0.45 + proximity * 0.35) {
+                    enqueueBurn(bx, by, bz);
+                  }
+                }
+              }
+            }
+          }
+          const burnRInt = Math.ceil(burnRadius);
+          const bcx = Math.floor(cx), bcz = Math.floor(cz);
+          for (let gx = bcx - burnRInt; gx <= bcx + burnRInt; gx++) {
+            for (let gz = bcz - burnRInt; gz <= bcz + burnRInt; gz++) {
+              const d = Math.hypot(gx + 0.5 - cx, gz + 0.5 - cz);
+              if (d > burnRadius) continue;
+              const gyTop = findGroundY(gx, gz);
+              if (gyTop === null) continue;
+              const groundY = gyTop - 1;
+              const gb = world.getBlockWorld(gx, groundY, gz);
+              if (!canBurnBlock(gb)) continue;
+              const heat = Math.max(0.1, 1 - d / burnRadius);
+              if (Math.random() < 0.22 + heat * 0.55) enqueueBurn(gx, groundY, gz);
+            }
+          }
           for (let mi = mobs.length - 1; mi >= 0; mi--) {
             const d = mobs[mi].mesh.position.distanceTo(m.mesh.position);
             if (d > blastR) continue;
-            const falloff = Math.max(0.1, 1 - d / blastR);
-            const dmg = Math.max(1, Math.round(dmgMax * falloff * falloff));
+            const falloff = Math.max(0.12, 1 - d / blastR);
+            const dmg = Math.max(
+              2,
+              Math.round(
+                dmgMax
+                * Math.pow(falloff, wandaMeteorProfile === "boss" ? 1.25 : 1.72)
+              )
+            );
             mobs[mi].health -= dmg;
             const push = mobs[mi].mesh.position.clone().sub(m.mesh.position);
-            if (push.lengthSq() > 1e-6) push.normalize().multiplyScalar(Math.min(26, 7 + dmg * 0.22));
+            if (push.lengthSq() > 1e-6) push.normalize().multiplyScalar(Math.min(wandaMeteorProfile === "boss" ? 30 : 40, 9 + dmg * (wandaMeteorProfile === "boss" ? 0.24 : 0.34)));
             mobs[mi].velocity.add(push);
             if (mobs[mi].health <= 0) killMob(mi);
           }
           const pd = playerCenter.distanceTo(m.mesh.position);
           if (pd <= blastR) {
-            const falloff = Math.max(0.1, 1 - pd / blastR);
-            applyPlayerDamage(Math.min(52, Math.round(dmgMax * falloff * falloff * 0.92)), "projectile");
+            const falloff = Math.max(0.12, 1 - pd / blastR);
+            applyPlayerDamage(Math.min(wandaMeteorProfile === "boss" ? 84 : 68, Math.round(dmgMax * Math.pow(falloff, wandaMeteorProfile === "boss" ? 1.3 : 1.68) * (wandaMeteorProfile === "boss" ? 1.05 : 0.98))), "projectile");
           }
-          spawnWandaBurst(cx, cy, cz, 0.85 + Math.min(2.8, m.mass * 0.07));
-          screenShakeTimer = Math.max(screenShakeTimer, 0.22 + Math.min(0.28, m.mass * 0.009));
-          screenShakeIntensity = Math.max(screenShakeIntensity, 0.09 + Math.min(0.2, m.mass * 0.005));
-          wandaTone(48, 0.22, "sawtooth", 0.12);
+          spawnWandaBurst(cx, cy, cz, wandaMeteorProfile === "boss" ? 1.4 + Math.min(3.2, m.mass * 0.085) : 1.65 + Math.min(4.5, m.mass * 0.11));
+          screenShakeTimer = Math.max(screenShakeTimer, wandaMeteorProfile === "boss" ? 0.34 + Math.min(0.42, m.mass * 0.01) : 0.45 + Math.min(0.5, m.mass * 0.014));
+          screenShakeIntensity = Math.max(screenShakeIntensity, wandaMeteorProfile === "boss" ? 0.15 + Math.min(0.28, m.mass * 0.006) : 0.2 + Math.min(0.35, m.mass * 0.009));
+          wandaTone(wandaMeteorProfile === "boss" ? 48 : 36, wandaMeteorProfile === "boss" ? 0.26 : 0.36, "sawtooth", wandaMeteorProfile === "boss" ? 0.13 : 0.17);
           disposeScatterTkMeteorFlying(m, cx, cy, cz, blastR);
           tkMeteorFlying.splice(i, 1);
         }
@@ -4670,11 +5526,11 @@ export default function MinecraftSandbox() {
       }
 
       // Regen
-      if (healthRef.current < 20) {
+      if (healthRef.current < playerMaxHealth) {
         regenTimer += dt;
         if (regenTimer >= 3.2) {
           regenTimer = 0;
-          const next = Math.min(20, healthRef.current + 1);
+          const next = Math.min(playerMaxHealth, healthRef.current + 1);
           if (next !== healthRef.current) { healthRef.current = next; setHealth(next); }
         }
       } else regenTimer = 0;
@@ -4801,6 +5657,15 @@ export default function MinecraftSandbox() {
         (t.mesh.geometry as THREE.BufferGeometry).dispose();
         (t.mesh.material as THREE.Material).dispose();
       }
+      for (const f of wandaRealityFractures) {
+        wandaGroup.remove(f.mesh);
+        (f.mesh.geometry as THREE.BufferGeometry).dispose();
+        (f.mesh.material as THREE.Material).dispose();
+      }
+      for (const [, cell] of wandaRealityWarped) {
+        world.setBlockWorld(cell.x, cell.y, cell.z, cell.original as BlockType);
+        markWorldPosDirty(cell.x, cell.z);
+      }
       disposeTkMeteorHeld();
       for (const mf of tkMeteorFlying) {
         mf.mesh.parent?.remove(mf.mesh);
@@ -4823,12 +5688,16 @@ export default function MinecraftSandbox() {
         (bi.mesh.material as THREE.Material).dispose();
       }
       for (const bv of wandaBeamVisuals) {
-        wandaGroup.remove(bv.mesh);
-        wandaGroup.remove(bv.halo);
-        (bv.mesh.geometry as THREE.BufferGeometry).dispose();
-        (bv.mesh.material as THREE.Material).dispose();
-        (bv.halo.geometry as THREE.BufferGeometry).dispose();
-        (bv.halo.material as THREE.Material).dispose();
+        for (const mesh of [bv.coreMesh, bv.strand1, bv.strand2, bv.strand3, bv.glowMesh]) {
+          wandaGroup.remove(mesh);
+          (mesh.geometry as THREE.BufferGeometry).dispose();
+          (mesh.material as THREE.Material).dispose();
+        }
+        for (const line of bv.crackleLines) {
+          wandaGroup.remove(line);
+          (line.geometry as THREE.BufferGeometry).dispose();
+          (line.material as THREE.Material).dispose();
+        }
       }
       wandaGroup.remove(tkFieldPreview);
       (tkFieldPreview.geometry as THREE.BufferGeometry).dispose();
@@ -4851,6 +5720,16 @@ export default function MinecraftSandbox() {
       sigilTex.dispose();
       wandaShieldBubble.geometry.dispose();
       (wandaShieldBubble.material as THREE.Material).dispose();
+      wandaShieldRingA.geometry.dispose();
+      (wandaShieldRingA.material as THREE.Material).dispose();
+      wandaShieldRingB.geometry.dispose();
+      (wandaShieldRingB.material as THREE.Material).dispose();
+      wandaDomainDisk.geometry.dispose();
+      (wandaDomainDisk.material as THREE.Material).dispose();
+      wandaDomainEdge.geometry.dispose();
+      (wandaDomainEdge.material as THREE.Material).dispose();
+      wandaDomainDome.geometry.dispose();
+      (wandaDomainDome.material as THREE.Material).dispose();
       if (wandaHumOsc) wandaHumOsc.stop();
       if (wandaAudioCtx) wandaAudioCtx.close();
       if (heldItemMesh) {
@@ -4887,9 +5766,9 @@ export default function MinecraftSandbox() {
       {/* Crosshair */}
       <div style={{ position: "fixed", inset: 0, zIndex: 10050, pointerEvents: "none", display: "grid", placeItems: "center" }}>
         <div style={{ width: 18, height: 18, position: "relative", filter: "drop-shadow(0 0 2px rgba(0,0,0,0.95))" }}>
-          <div style={{ position: "absolute", left: 1, right: 1, top: "50%", height: 2, transform: "translateY(-50%)", background: isWanda ? "#991b1b" : isThunderStaff ? "#facc15" : "#ffffff", borderRadius: 999, boxShadow: "0 0 0 1px rgba(0,0,0,0.6)" }} />
-          <div style={{ position: "absolute", top: 1, bottom: 1, left: "50%", width: 2, transform: "translateX(-50%)", background: isWanda ? "#991b1b" : isThunderStaff ? "#facc15" : "#ffffff", borderRadius: 999, boxShadow: "0 0 0 1px rgba(0,0,0,0.6)" }} />
-          <div style={{ position: "absolute", left: "50%", top: "50%", width: 3, height: 3, transform: "translate(-50%, -50%)", background: isWanda ? "#991b1b" : isThunderStaff ? "#facc15" : "#ffffff", borderRadius: "999px", boxShadow: "0 0 0 1px rgba(0,0,0,0.65)" }} />
+          <div style={{ position: "absolute", left: 1, right: 1, top: "50%", height: 2, transform: "translateY(-50%)", background: isWanda ? "#1e40af" : isThunderStaff ? "#facc15" : "#ffffff", borderRadius: 999, boxShadow: "0 0 0 1px rgba(0,0,0,0.6)" }} />
+          <div style={{ position: "absolute", top: 1, bottom: 1, left: "50%", width: 2, transform: "translateX(-50%)", background: isWanda ? "#1e40af" : isThunderStaff ? "#facc15" : "#ffffff", borderRadius: 999, boxShadow: "0 0 0 1px rgba(0,0,0,0.6)" }} />
+          <div style={{ position: "absolute", left: "50%", top: "50%", width: 3, height: 3, transform: "translate(-50%, -50%)", background: isWanda ? "#1e40af" : isThunderStaff ? "#facc15" : "#ffffff", borderRadius: "999px", boxShadow: "0 0 0 1px rgba(0,0,0,0.65)" }} />
         </div>
       </div>
 
@@ -4986,7 +5865,7 @@ export default function MinecraftSandbox() {
           fontWeight: 800,
           letterSpacing: "0.02em",
         }}>
-          <div style={{ marginBottom: "5px", color: "#dc2626" }}>Wanda Power</div>
+          <div style={{ marginBottom: "5px", color: "#3b82f6" }}>Wanda Power</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", rowGap: "4px", columnGap: "8px", fontSize: "10px" }}>
             <span>Energy</span><span>{Math.round(wandaHud.energy)}%</span>
             <span>Shield (Q)</span><span>{wandaHud.shieldActive ? "ACTIVE" : wandaHud.shieldCd > 0 ? `${wandaHud.shieldCd.toFixed(1)}s` : "READY"}</span>
@@ -4996,10 +5875,10 @@ export default function MinecraftSandbox() {
             <span>State</span><span>{wandaHud.mode}</span>
           </div>
           <div style={{ marginTop: "7px", height: "6px", borderRadius: "999px", background: "rgba(255,255,255,0.18)", overflow: "hidden" }}>
-            <div style={{ width: `${wandaHud.energy}%`, height: "100%", background: "linear-gradient(90deg, #7f1d1d, #b91c1c)", transition: "width 100ms linear" }} />
+            <div style={{ width: `${wandaHud.energy}%`, height: "100%", background: "linear-gradient(90deg, #1e3a8a, #2563eb)", transition: "width 100ms linear" }} />
           </div>
           <div style={{ marginTop: "6px", height: "5px", borderRadius: "999px", background: "rgba(255,255,255,0.14)", overflow: "hidden" }}>
-            <div style={{ width: `${Math.round(wandaHud.charging * 100)}%`, height: "100%", background: "linear-gradient(90deg, #991b1b, #dc2626)", transition: "width 60ms linear" }} />
+            <div style={{ width: `${Math.round(wandaHud.charging * 100)}%`, height: "100%", background: "linear-gradient(90deg, #1e40af, #3b82f6)", transition: "width 60ms linear" }} />
           </div>
         </div>
       )}

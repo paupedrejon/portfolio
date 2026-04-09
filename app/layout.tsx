@@ -8,6 +8,7 @@ import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { AiOutlineMail } from "react-icons/ai";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale, getTranslations } from "next-intl/server";
+import CustomCursor from "@/components/CustomCursor";
 
 export const metadata = {
   title: "Pau Pedrejon — Software Engineer & Developer",
@@ -50,6 +51,7 @@ export default async function RootLayout({
             <ConditionalHeader />
 
             <main className="pt-0 w-full">{children}</main>
+            <CustomCursor />
 
             {/* Footer */}
             <footer className="footer">
