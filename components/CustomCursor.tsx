@@ -22,6 +22,8 @@ export default function CustomCursor() {
 
     let pointerX = window.innerWidth / 2;
     let pointerY = window.innerHeight / 2;
+    let renderX = pointerX;
+    let renderY = pointerY;
     let hoveringInteractive = false;
     let mouseDown = false;
     let currentHoverElement: Element | null = null;
@@ -66,8 +68,10 @@ export default function CustomCursor() {
         const extra = mouseDown ? 4 : 8;
         const width = Math.max(28, rect.width + extra * 2);
         const height = Math.max(28, rect.height + extra * 2);
-        const x = rect.left + rect.width / 2;
-        const y = rect.top + rect.height / 2;
+        const targetX = rect.left + rect.width / 2;
+        const targetY = rect.top + rect.height / 2;
+        renderX += (targetX - renderX) * 0.42;
+        renderY += (targetY - renderY) * 0.42;
         const computed = window.getComputedStyle(currentHoverElement);
         const radius = computed.borderRadius || "14px";
 
@@ -77,18 +81,20 @@ export default function CustomCursor() {
         ring.style.marginLeft = `${-width / 2}px`;
         ring.style.marginTop = `${-height / 2}px`;
         ring.style.borderRadius = radius;
-        ring.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${mouseDown ? 0.98 : 1})`;
+        ring.style.transform = `translate3d(${renderX}px, ${renderY}px, 0) scale(${mouseDown ? 0.98 : 1})`;
         ring.style.opacity = "0.98";
         return;
       }
 
+      renderX += (pointerX - renderX) * 0.5;
+      renderY += (pointerY - renderY) * 0.5;
       ring.classList.remove("custom-cursor-wrap-mode");
       ring.style.width = "34px";
       ring.style.height = "34px";
       ring.style.marginLeft = "-17px";
       ring.style.marginTop = "-17px";
       ring.style.borderRadius = "999px";
-      ring.style.transform = `translate3d(${pointerX}px, ${pointerY}px, 0) scale(${mouseDown ? 0.9 : 1})`;
+      ring.style.transform = `translate3d(${renderX}px, ${renderY}px, 0) scale(${mouseDown ? 0.9 : 1})`;
       ring.style.opacity = "0.85";
     };
 
