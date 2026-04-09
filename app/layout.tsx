@@ -9,7 +9,7 @@ import { AiOutlineMail } from "react-icons/ai";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale, getTranslations } from "next-intl/server";
 import CustomCursor from "@/components/CustomCursor";
-import HapticFeedback from "@/components/HapticFeedback";
+import Script from "next/script";
 
 export const metadata = {
   title: "Pau Pedrejon — Software Engineer & Developer",
@@ -47,13 +47,13 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="overflow-x-hidden w-full" suppressHydrationWarning>
+        <Script src="/haptics-boot.js" strategy="beforeInteractive" />
         <Providers>
           <NextIntlClientProvider messages={messages} locale={locale}>
             <ConditionalHeader />
 
             <main className="pt-0 w-full">{children}</main>
             <CustomCursor />
-            <HapticFeedback />
 
             {/* Footer */}
             <footer className="footer">
