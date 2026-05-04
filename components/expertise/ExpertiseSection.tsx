@@ -133,7 +133,6 @@ export default function ExpertiseSection({
   const sectionRef = useRef<HTMLElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const [shouldRenderCanvas, setShouldRenderCanvas] = useState(false);
-  const canvasHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pointer, setPointer] = useState(new Vector2(0, 0));
   const [scrollProgress, setScrollProgress] = useState(0);
   const scrollProgressRef = useRef(0);
@@ -143,21 +142,11 @@ export default function ExpertiseSection({
     if (!section) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          if (canvasHideTimerRef.current) {
-            clearTimeout(canvasHideTimerRef.current);
-            canvasHideTimerRef.current = null;
-          }
-          setShouldRenderCanvas(true);
-          return;
-        }
-        // No desmontar el Canvas al instante: desmontar aborta el fetch del GLTF
-        // (useGLTF) y three/drei suele surfacarlo como "Failed to fetch".
-        if (canvasHideTimerRef.current) clearTimeout(canvasHideTimerRef.current);
-        canvasHideTimerRef.current = setTimeout(() => {
-          canvasHideTimerRef.current = null;
-          setShouldRenderCanvas(false);
-        }, 2500);
+        if (!entry.isIntersecting) return;
+        // Enganche unidireccional: no volver a false. Si desmontamos el Canvas mientras
+        // el GLTFLoader aún pide scene.bin / texturas, el abort rompe la carga
+        // ("Failed to fetch" / "Failed to load buffer scene.bin").
+        setShouldRenderCanvas(true);
       },
       {
         root: scrollRoot ?? null,
@@ -166,13 +155,7 @@ export default function ExpertiseSection({
       },
     );
     observer.observe(section);
-    return () => {
-      observer.disconnect();
-      if (canvasHideTimerRef.current) {
-        clearTimeout(canvasHideTimerRef.current);
-        canvasHideTimerRef.current = null;
-      }
-    };
+    return () => observer.disconnect();
   }, [scrollRoot]);
 
   useEffect(() => {

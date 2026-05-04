@@ -10,6 +10,7 @@ import { expertiseAreas } from "./data";
 import ExpertiseNav from "./ExpertiseNav";
 import ExpertiseSection from "./ExpertiseSection";
 import { ExpertiseSnapScrollerContext } from "./ExpertiseSnapScrollerContext";
+import { preloadExpertiseGltf } from "./preloadExpertiseGltf";
 import SideIndicator from "./SideIndicator";
 import type { ExpertiseAreaId, ExpertiseSceneId } from "./types";
 
@@ -128,6 +129,10 @@ export default function ExpertiseScrolly() {
     const onResize = () => ScrollTrigger.refresh();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    preloadExpertiseGltf();
   }, []);
 
   return (
