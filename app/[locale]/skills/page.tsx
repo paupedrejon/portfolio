@@ -63,6 +63,10 @@ const SKILLS_CONFIG: Array<{
   { key: "3d_printing", categoryKey: "hardware3d", icon: "https://cdn.simpleicons.org/printables/ffffff" },
   { key: "proteus", categoryKey: "hardware3d", icon: "https://cdn.simpleicons.org/proteus/ffffff" },
   { key: "computer_systems", categoryKey: "hardware3d", icon: "https://cdn.simpleicons.org/linux/ffffff" },
+  { key: "react_native_expo_router", categoryKey: "frontEnd", icon: "https://cdn.simpleicons.org/expo/ffffff" },
+  { key: "aws_cloud", categoryKey: "backEnd", icon: "https://cdn.simpleicons.org/amazonwebservices/ffffff" },
+  { key: "github_actions_ci", categoryKey: "versionControl", icon: "https://cdn.simpleicons.org/githubactions/ffffff" },
+  { key: "backend_dockerization", categoryKey: "backEnd", icon: "https://cdn.simpleicons.org/docker/ffffff" },
 ];
 
 export default function SkillsPage() {

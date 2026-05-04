@@ -1,0 +1,147 @@
+{
+  "version": "1.0.0",
+  "language": "es",
+  "updatedAt": "2026-05-02",
+  "skills": [
+    {
+      "id": "arquitectura-cliente-servidor",
+      "name": "Arquitectura cliente-servidor (app móvil + API REST)",
+      "category": "architecture",
+      "priority": "alta",
+      "tags": ["mobile", "api", "rest", "system-design"]
+    },
+    {
+      "id": "backend-por-capas",
+      "name": "Diseño backend por capas (routes/controllers/services/models)",
+      "category": "backend",
+      "priority": "alta",
+      "tags": ["clean-architecture", "maintainability", "node"]
+    },
+    {
+      "id": "react-native-expo-router",
+      "name": "Desarrollo móvil con React Native + Expo (Expo Router)",
+      "category": "mobile",
+      "priority": "alta",
+      "tags": ["react-native", "expo", "navigation"]
+    },
+    {
+      "id": "typescript-frontend",
+      "name": "TypeScript en frontend",
+      "category": "frontend",
+      "priority": "alta",
+      "tags": ["typescript", "react", "type-safety"]
+    },
+    {
+      "id": "google-oauth2",
+      "name": "Integración de autenticación con Google OAuth 2.0",
+      "category": "security",
+      "priority": "alta",
+      "tags": ["oauth2", "google", "auth"]
+    },
+    {
+      "id": "jwt-sesiones",
+      "name": "Gestión de sesiones/tokens con JWT",
+      "category": "security",
+      "priority": "alta",
+      "tags": ["jwt", "session", "access-token", "refresh-token"]
+    },
+    {
+      "id": "stripe-webhooks",
+      "name": "Integración de pagos con Stripe (incluyendo webhooks)",
+      "category": "payments",
+      "priority": "alta",
+      "tags": ["stripe", "webhooks", "checkout", "billing"]
+    },
+    {
+      "id": "aws-lambda",
+      "name": "Integración con AWS Lambda (serverless)",
+      "category": "cloud",
+      "priority": "media",
+      "tags": ["aws", "lambda", "serverless"]
+    },
+    {
+      "id": "aws-s3",
+      "name": "Integración con AWS S3 para almacenamiento de archivos",
+      "category": "cloud",
+      "priority": "media",
+      "tags": ["aws", "s3", "storage", "uploads"]
+    },
+    {
+      "id": "postgresql",
+      "name": "Diseño y uso de bases de datos PostgreSQL",
+      "category": "database",
+      "priority": "alta",
+      "tags": ["postgresql", "sql", "performance", "indexing"]
+    },
+    {
+      "id": "sql-migrations",
+      "name": "Modelado y versionado de esquema SQL (migraciones por scripts)",
+      "category": "database",
+      "priority": "alta",
+      "tags": ["migrations", "schema-versioning", "ddl", "rollbacks"]
+    },
+    {
+      "id": "jest-supertest",
+      "name": "Testing backend con Jest + Supertest",
+      "category": "testing",
+      "priority": "alta",
+      "tags": ["jest", "supertest", "integration-testing"]
+    },
+    {
+      "id": "github-actions-ci",
+      "name": "Integración continua con GitHub Actions (CI)",
+      "category": "devops",
+      "priority": "alta",
+      "tags": ["github-actions", "ci", "quality-gates"]
+    },
+    {
+      "id": "github-actions-cd",
+      "name": "Despliegue continuo a cloud con GitHub Actions (CD)",
+      "category": "devops",
+      "priority": "media",
+      "tags": ["github-actions", "cd", "deploy", "cloud"]
+    },
+    {
+      "id": "docker-backend",
+      "name": "Dockerización de servicios backend",
+      "category": "devops",
+      "priority": "alta",
+      "tags": ["docker", "containerization", "backend"]
+    },
+    {
+      "id": "apis-externas-axios",
+      "name": "Consumo de APIs externas (HTTP/axios)",
+      "category": "integration",
+      "priority": "alta",
+      "tags": ["axios", "http-client", "integration"]
+    },
+    {
+      "id": "geoespacial",
+      "name": "Funcionalidades geoespaciales (mapas, rutas, autonomia)",
+      "category": "product-features",
+      "priority": "media",
+      "tags": ["maps", "routing", "geospatial"]
+    },
+    {
+      "id": "env-config",
+      "name": "Manejo de variables de entorno y configuracion por entornos",
+      "category": "ops",
+      "priority": "alta",
+      "tags": ["env", "configuration", "secrets", "environments"]
+    },
+    {
+      "id": "linting-typing",
+      "name": "Linting y calidad de codigo (ESLint + chequeo de tipos)",
+      "category": "quality",
+      "priority": "alta",
+      "tags": ["eslint", "typescript", "static-analysis"]
+    },
+    {
+      "id": "git-flows-pipelines",
+      "name": "Trabajo con flujos Git y automatizacion de pipelines",
+      "category": "collaboration",
+      "priority": "alta",
+      "tags": ["git-flow", "branching", "automation", "pipelines"]
+    }
+  ]
+}

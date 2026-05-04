@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-snap-type: y proximity;
+}
+
+/* Lulo Clean — coloca los archivos en /public/fonts/ y descomenta o ajusta las rutas */
+@font-face {
+  font-family: "Lulo Clean";
+  src:
+    url("/fonts/lulo-clean-w01-bold.woff2") format("woff2"),
+    url("/fonts/lulo-clean-w01-bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+
 /* ============================================
    PROFESSIONAL PORTFOLIO - DESIGN SYSTEM
    ============================================ */

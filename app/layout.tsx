@@ -46,6 +46,12 @@ export default async function RootLayout({
       className={`${spaceGrotesk.variable} ${outfit.variable} ${jetbrainsMono.variable} ${leagueSpartan.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:wght@700;900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="overflow-x-hidden w-full" suppressHydrationWarning>
         <HapticsRoot />
         <Providers>

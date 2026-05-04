@@ -1,0 +1,8 @@
+Model Information:
+* title:	Glass Smartphone Design
+* source:	https://sketchfab.com/3d-models/glass-smartphone-design-d0b0c3c0d2064788934be731daeeb65b
+* author:	Jeferson Camargo Brasil (https://sketchfab.com/sidbeyond)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works

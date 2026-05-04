@@ -1,0 +1,11 @@
+Model Information:
+* title:	3D Printer
+* source:	https://sketchfab.com/3d-models/3d-printer-5e1465909b9e4b5e8d62fa9f93627efe
+* author:	AFX/CGMotion 3DModel Maker (https://sketchfab.com/afx_cgmotion)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "3D Printer" (https://sketchfab.com/3d-models/3d-printer-5e1465909b9e4b5e8d62fa9f93627efe) by AFX/CGMotion 3DModel Maker (https://sketchfab.com/afx_cgmotion) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

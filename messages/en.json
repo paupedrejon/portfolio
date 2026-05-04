@@ -54,11 +54,66 @@
       }
     }
   },
+  "expertise": {
+    "areas": {
+      "web": {
+        "title": "WEB",
+        "subtitle": "Building elegant high-performance web products with cinematic UI craft.",
+        "education": "Universitat Politècnica de Barcelona",
+        "experience": "Owius",
+        "portfolio": "turelojya.com",
+        "cta": "VIEW WEB PROJECTS"
+      },
+      "ai": {
+        "title": "AI",
+        "subtitle": "Machine Learning · Agents · LLMs",
+        "education": {
+          "line1": "Università degli Studi di Milano (Erasmus+)",
+          "line2": "Institute of Artificial Intelligence",
+          "line3": "10X Developer"
+        },
+        "portfolio": "paupedrejon.com/study-agents",
+        "cta": "VIEW AI PROJECT"
+      },
+      "mobile": {
+        "title": "MOBILE",
+        "subtitle": "React Native · Expo · iOS · Android",
+        "education": "Universitat Politècnica de Barcelona",
+        "cta": "VIEW MOBILE PROJECT"
+      },
+      "games": {
+        "title": "VIDEOGAMES",
+        "subtitle": "Unity · C# · VR · Multiplayer",
+        "education": "Universitat Politècnica de Barcelona",
+        "cta": "VIEW GAMES",
+        "portfolio": {
+          "salmon": "Realistic Online Game",
+          "fiblab": "FIB Lab (Unity)",
+          "circusvr": "Circus VR — Game Jam 2024",
+          "drovo": "DROVO",
+          "vr": "VR Experience"
+        }
+      },
+      "hardware": {
+        "title": "HARDWARE",
+        "subtitle": "3D Printing · IoT · Microcontrollers",
+        "education": "Universitat Politècnica de Barcelona",
+        "cta": "VIEW HARDWARE",
+        "portfolio": {
+          "tires": "Tire Inflator Simulator",
+          "maker": "3D Printing — Maker Project"
+        }
+      }
+    }
+  },
   "projects": {
     "badge": "Featured Work",
     "title": "PROJECTS",
     "tagline": "A collection of projects that showcase my passion for development and creative technology.",
-    "used": "USED"
+    "used": "USED",
+    "filterAll": "All",
+    "filterByArea": "Filter by area",
+    "filterEmpty": "No projects in this category yet."
   },
   "projectsData": {
     "study-agents": {
@@ -73,6 +128,13 @@
       "kicker": "2025 - Personal Project",
       "title2": "Web Application",
       "subtitle": "Interactive portfolio designed with Next.js and React to showcase my projects, skills and experience as a software engineer.",
+      "ctaText": ""
+    },
+    "ego": {
+      "title": "E-Go",
+      "kicker": "2025 - Universitat Politècnica de Barcelona",
+      "title2": "Sustainable Mobility App",
+      "subtitle": "Electric mobility platform with a mobile app and backend API. Includes Google login, station and service discovery, favorites, vehicle management, can-reach range estimation, Stripe subscriptions (including webhooks), admin routes, and location/maps integration.",
       "ctaText": ""
     },
     "shooter": {
@@ -145,7 +207,22 @@
       "artificialIntelligence": "Artificial Intelligence",
       "gameCreative": "Game & Creative Development",
       "versionControl": "Version Control & Tools",
-      "hardware3d": "Hardware & 3D Printing"
+      "hardware3d": "Hardware & 3D Printing",
+      "architecture": "Architecture",
+      "backend": "Layered Backend",
+      "mobile": "Mobile Development",
+      "frontend": "TypeScript Frontend",
+      "security": "Authentication & Security",
+      "payments": "Payments",
+      "cloud": "Cloud",
+      "database": "Database",
+      "testing": "Testing",
+      "devops": "DevOps & Deployment",
+      "integration": "Integrations",
+      "productFeatures": "Product Features",
+      "operations": "Operations & Configuration",
+      "quality": "Code Quality",
+      "collaboration": "Collaboration & Git"
     },
     "items": {
       "c_cpp": {
@@ -263,6 +340,90 @@
       "computer_systems": {
         "name": "Computer Systems",
         "description": "Understanding of operating systems, networking, and low-level concepts. Applied in game networking and systems programming."
+      },
+      "client_server_architecture": {
+        "name": "Client-server architecture (mobile app + REST API)",
+        "description": "Designing solutions with clear separation between mobile client and REST backend, with scalable API contracts."
+      },
+      "layered_backend_design": {
+        "name": "Layered backend design (routes/controllers/services/models)",
+        "description": "Structuring backend code by responsibility to improve maintainability, testability, and business-logic reuse."
+      },
+      "react_native_expo_router": {
+        "name": "React Native + Expo (Expo Router)",
+        "description": "Mobile development with route-based navigation, modular app structure, and fast iteration using Expo."
+      },
+      "typescript_frontend": {
+        "name": "TypeScript on frontend",
+        "description": "Static typing for UI and application logic to reduce runtime errors and improve long-term maintainability."
+      },
+      "google_oauth2": {
+        "name": "Google OAuth 2.0 integration",
+        "description": "Implementing secure social login with Google OAuth flows and identity handling across frontend/backend."
+      },
+      "jwt_sessions": {
+        "name": "Session/token management with JWT",
+        "description": "Authentication with access/refresh tokens, expiration control, and protection of private routes."
+      },
+      "stripe_payments_webhooks": {
+        "name": "Stripe payments (including webhooks)",
+        "description": "Stripe Checkout integration plus reliable payment event synchronization through signed webhooks."
+      },
+      "aws_lambda_serverless": {
+        "name": "AWS Lambda (serverless)",
+        "description": "Running backend logic without server management, with auto-scaling and pay-per-use cost model."
+      },
+      "aws_cloud": {
+        "name": "AWS Cloud (Lambda, S3, and more)",
+        "description": "Using AWS cloud services for backend and storage, including Lambda, S3, and other integrations based on project needs."
+      },
+      "aws_s3_storage": {
+        "name": "AWS S3 file storage",
+        "description": "Cloud file storage with bucket strategy, signed URLs, and access control."
+      },
+      "postgresql_database_design": {
+        "name": "PostgreSQL design and usage",
+        "description": "Relational modeling, performant SQL querying, and indexing for production workloads."
+      },
+      "sql_schema_migrations": {
+        "name": "SQL schema migrations (script-based)",
+        "description": "Schema versioning with reproducible migration scripts, controlled rollbacks, and traceability."
+      },
+      "backend_testing_jest_supertest": {
+        "name": "Backend testing with Jest + Supertest",
+        "description": "Integration testing for REST endpoints covering contracts, failure cases, and core business scenarios."
+      },
+      "github_actions_ci": {
+        "name": "GitHub Actions CI",
+        "description": "Automated lint, type-check, and test pipelines on push/PR to enforce continuous quality."
+      },
+      "github_actions_cd": {
+        "name": "GitHub Actions CD",
+        "description": "Automated cloud deployments with traceable workflows and environment-aware safeguards."
+      },
+      "backend_dockerization": {
+        "name": "Backend service containerization with Docker",
+        "description": "Packaging backend services in containers for consistent execution across local, CI, and production."
+      },
+      "external_api_consumption_axios": {
+        "name": "External API consumption (HTTP/axios)",
+        "description": "Robust HTTP integrations with error handling, timeouts, retries, and response normalization."
+      },
+      "geospatial_features": {
+        "name": "Geospatial features (maps, routes, autonomy)",
+        "description": "Implementing map-based features, route calculations, and location-aware product logic."
+      },
+      "env_vars_multienvironment_config": {
+        "name": "Environment variables and multi-environment config",
+        "description": "Configuration management across dev/staging/prod plus secure handling of secrets."
+      },
+      "linting_type_checking": {
+        "name": "Linting and type checking (ESLint + TS)",
+        "description": "Automated code-quality rules and static type validation to reduce technical debt."
+      },
+      "git_workflows_pipeline_automation": {
+        "name": "Git workflows and pipeline automation",
+        "description": "Branching, pull-request workflows, and CI/CD automation for efficient team collaboration."
       }
     }
   },
