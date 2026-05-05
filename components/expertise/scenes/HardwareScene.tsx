@@ -3,7 +3,7 @@
 import { ContactShadows, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef, type MutableRefObject } from "react";
-import { Group, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Vector2, type Material } from "three";
+import { Group, MathUtils, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, type Material } from "three";
 
 const MODEL = "/3d_printer/scene.gltf";
 /** GLTF muy grande en unidades internas — alejar encuadre con escala baja + cámara. */
@@ -12,8 +12,6 @@ const MOBILE_MODEL_FACTOR = 0.6;
 
 interface HardwareSceneProps {
   reducedMotion: boolean;
-  pointer: Vector2;
-  scrollProgress: number;
   scrollProgressRef: MutableRefObject<number>;
   isMobile: boolean;
 }
@@ -79,9 +77,6 @@ function HardwareModel({
 }
 
 export default function HardwareScene(props: HardwareSceneProps) {
-  void props.pointer;
-  void props.scrollProgress;
-
   return (
     <>
       <color attach="background" args={["#0f0800"]} />

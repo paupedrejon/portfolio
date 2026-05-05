@@ -3,7 +3,7 @@
 import { ContactShadows, useGLTF } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef, type MutableRefObject } from "react";
-import { Box3, Group, MathUtils, Vector2, Vector3 } from "three";
+import { Box3, Group, MathUtils, Vector3 } from "three";
 
 const MODEL = "/nes_controller_free/scene.gltf";
 /** El GLTF del NES viene muy grande en unidades internas. */
@@ -22,8 +22,6 @@ function GamesCameraRig() {
 
 interface GamesSceneProps {
   reducedMotion: boolean;
-  pointer: Vector2;
-  scrollProgress: number;
   scrollProgressRef: MutableRefObject<number>;
   isMobile: boolean;
 }
@@ -84,9 +82,6 @@ function GamesModel({
 }
 
 export default function GamesScene(props: GamesSceneProps) {
-  void props.pointer;
-  void props.scrollProgress;
-
   return (
     <>
       <GamesCameraRig />

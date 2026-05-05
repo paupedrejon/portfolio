@@ -18,8 +18,10 @@ const EDUCATION_CONFIG = [
 export default function EducationPage() {
   const t = useTranslations("education");
   const [mounted, setMounted] = useState(false);
-  const [hoveredEdu, setHoveredEdu] = useState<number | null>(null);
   const [selectedEdu, setSelectedEdu] = useState<{ key: string; icon: React.ReactNode; title: string; school: string; description: string; href: string; years: string; type: string; gradient: string } | null>(null);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [weakDevice, setWeakDevice] = useState(false);
 
   const educationItems = useMemo(
     () =>
@@ -38,6 +40,25 @@ export default function EducationPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      setReducedMotion(media.matches);
+      setIsMobile(window.innerWidth < 768);
+      const lowCpu = (navigator.hardwareConcurrency || 8) < 6;
+      const lowMem = "deviceMemory" in navigator && (navigator as Navigator & { deviceMemory?: number }).deviceMemory! <= 4;
+      setWeakDevice(lowCpu || !!lowMem);
+    };
+    update();
+    media.addEventListener("change", update);
+    window.addEventListener("resize", update);
+    return () => {
+      media.removeEventListener("change", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+  const showPrismatic = !reducedMotion && !weakDevice;
 
   return (
     <>
@@ -47,24 +68,26 @@ export default function EducationPage() {
 
         {/* PrismaticBurst Background */}
         <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}>
-          <PrismaticBurst
-            animationType="rotate3d"
-            intensity={2}
-            speed={0.5}
-            distort={0}
-            paused={false}
-            offset={{ x: 0, y: 0 }}
-            hoverDampness={0.25}
-            rayCount={0}
-            mixBlendMode="lighten"
-            colors={['#10b981', '#059669', '#ffffff']}
-          />
+          {showPrismatic ? (
+            <PrismaticBurst
+              animationType="rotate3d"
+              intensity={isMobile ? 1.2 : 2}
+              speed={isMobile ? 0.35 : 0.5}
+              distort={0}
+              paused={false}
+              offset={{ x: 0, y: 0 }}
+              hoverDampness={0.25}
+              rayCount={0}
+              mixBlendMode="lighten"
+              colors={['#10b981', '#059669', '#ffffff']}
+            />
+          ) : null}
         </div>
         
         {/* Animated Background Orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div 
-            className="absolute rounded-full blur-[120px] opacity-25"
+            className="absolute rounded-full opacity-25"
             style={{
               width: '600px',
               height: '600px',
@@ -72,10 +95,11 @@ export default function EducationPage() {
               top: "15%",
               left: "15%",
               animation: "floatOrb1 60s ease-in-out infinite",
+              filter: isMobile ? "blur(60px)" : "blur(120px)",
             }}
           />
           <div 
-            className="absolute rounded-full blur-[100px] opacity-20"
+            className="absolute rounded-full opacity-20"
             style={{
               width: '500px',
               height: '500px',
@@ -83,6 +107,7 @@ export default function EducationPage() {
               bottom: "20%",
               right: "20%",
               animation: "floatOrb2 70s ease-in-out infinite reverse",
+              filter: isMobile ? "blur(55px)" : "blur(100px)",
             }}
           />
           <div 
@@ -342,16 +367,17 @@ export default function EducationPage() {
             {educationItems.map((item, index) => (
               <div
                 key={index}
-                onMouseEnter={() => setHoveredEdu(index)}
-                onMouseLeave={() => setHoveredEdu(null)}
+                className="edu-item"
                 style={{
                   position: 'relative',
                   marginBottom: '2rem',
                   paddingLeft: '5rem',
+                  ["--edu-gradient" as string]: item.gradient,
                 }}
               >
                 {/* Timeline Dot */}
                 <div
+                  className="edu-dot"
                   style={{
                     position: 'absolute',
                     left: '1.5rem',
@@ -359,17 +385,18 @@ export default function EducationPage() {
                     width: '1rem',
                     height: '1rem',
                     borderRadius: '50%',
-                    background: hoveredEdu === index ? item.gradient : '#10b981',
+                    background: '#10b981',
                     border: '3px solid #12121a',
                     zIndex: 2,
                     transition: 'all 0.3s ease',
-                    transform: hoveredEdu === index ? 'scale(1.3)' : 'scale(1)',
-                    boxShadow: hoveredEdu === index ? `0 0 20px ${item.gradient.split(',')[0].replace('linear-gradient(135deg, ', '').replace(')', '')}` : 'none',
+                    transform: 'scale(1)',
+                    boxShadow: 'none',
                   }}
                 />
 
                 {/* Education Card */}
                 <div
+                  className="edu-card"
                   role="button"
                   tabIndex={0}
                   onClick={() => setSelectedEdu(item)}
@@ -379,23 +406,22 @@ export default function EducationPage() {
                     padding: '1.75rem 2rem',
                     borderRadius: '20px',
                     background: 'rgba(26, 26, 36, 0.9)',
-                    border: `1px solid ${hoveredEdu === index ? 'rgba(16, 185, 129, 0.5)' : 'rgba(255, 255, 255, 0.08)'}`,
-                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    backdropFilter: isMobile ? 'none' : 'blur(20px)',
                     cursor: 'pointer',
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    transform: hoveredEdu === index ? 'translateX(10px) scale(1.02)' : 'translateX(0) scale(1)',
-                    boxShadow: hoveredEdu === index 
-                      ? '0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.3)' 
-                      : '0 10px 30px -10px rgba(0, 0, 0, 0.3)',
+                    transform: 'translateX(0) scale(1)',
+                    boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.3)',
                   }}
                 >
                   {/* Gradient Overlay on Hover */}
                   <div
+                    className="edu-overlay"
                     style={{
                       position: 'absolute',
                       inset: 0,
                       background: item.gradient,
-                      opacity: hoveredEdu === index ? 0.1 : 0,
+                      opacity: 0,
                       borderRadius: '20px',
                       transition: 'opacity 0.4s ease',
                       pointerEvents: 'none',
@@ -411,6 +437,7 @@ export default function EducationPage() {
                   }}>
                     {/* Icon */}
                     <div
+                      className="edu-icon"
                       style={{
                         width: '56px',
                         height: '56px',
@@ -418,12 +445,12 @@ export default function EducationPage() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        background: hoveredEdu === index ? item.gradient : 'rgba(16, 185, 129, 0.2)',
-                        color: hoveredEdu === index ? 'white' : '#10b981',
+                        background: 'rgba(16, 185, 129, 0.2)',
+                        color: '#10b981',
                         flexShrink: 0,
                         transition: 'all 0.4s ease',
-                        transform: hoveredEdu === index ? 'rotate(-5deg) scale(1.1)' : 'rotate(0) scale(1)',
-                        boxShadow: hoveredEdu === index ? '0 10px 25px rgba(16, 185, 129, 0.4)' : 'none',
+                        transform: 'rotate(0) scale(1)',
+                        boxShadow: 'none',
                       }}
                     >
                       {item.icon}
@@ -463,11 +490,12 @@ export default function EducationPage() {
                         }}
                       >
                         <span
+                          className="edu-years-pill"
                           style={{
                             padding: '0.25rem 0.75rem',
                             borderRadius: '100px',
-                            background: hoveredEdu === index ? item.gradient : 'rgba(16, 185, 129, 0.2)',
-                            color: hoveredEdu === index ? 'white' : '#10b981',
+                            background: 'rgba(16, 185, 129, 0.2)',
+                            color: '#10b981',
                             fontWeight: 600,
                             transition: 'all 0.3s ease',
                           }}
@@ -479,16 +507,18 @@ export default function EducationPage() {
 
                     {/* Arrow */}
                     <svg 
+                      className="edu-arrow"
                       width="20" 
                       height="20" 
                       viewBox="0 0 24 24" 
                       fill="none" 
-                      stroke={hoveredEdu === index ? '#10b981' : '#64748b'}
+                      stroke="currentColor"
                       strokeWidth="2"
                       style={{
+                        color: '#64748b',
                         transition: 'all 0.3s ease',
-                        transform: hoveredEdu === index ? 'translateX(5px)' : 'translateX(0)',
-                        opacity: hoveredEdu === index ? 1 : 0.5,
+                        transform: 'translateX(0)',
+                        opacity: 0.5,
                       }}
                     >
                       <path d="M5 12h14M12 5l7 7-7 7" />

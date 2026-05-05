@@ -14,6 +14,7 @@ import { signOut, useSession } from "next-auth/react";
 export default function ConditionalHeader() {
   const pathname = usePathname();
   const isStudyAgentsPage = pathname?.startsWith("/study-agents");
+  const forceDarkProjectsTheme = pathname?.includes("/proyectos") || pathname?.includes("/projects");
   const [colorTheme, setColorTheme] = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -35,11 +36,15 @@ export default function ConditionalHeader() {
   // Guardar el tema en localStorage y aplicarlo al documento
   useEffect(() => {
     if (mounted && typeof window !== "undefined") {
+      if (forceDarkProjectsTheme) {
+        document.documentElement.setAttribute("data-theme", "dark");
+        return;
+      }
       localStorage.setItem("study_agents_color_theme", colorTheme);
       // Aplicar el tema al documento
       document.documentElement.setAttribute("data-theme", colorTheme);
     }
-  }, [colorTheme, mounted]);
+  }, [colorTheme, mounted, forceDarkProjectsTheme]);
 
   // Cerrar el menú cuando se hace click fuera
   useEffect(() => {

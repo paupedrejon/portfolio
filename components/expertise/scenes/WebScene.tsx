@@ -3,14 +3,12 @@
 import { Center, ContactShadows, Environment, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
-import { Color, Group, MathUtils, MeshStandardMaterial, Vector2, type Material, type Mesh } from "three";
+import { Color, Group, MathUtils, MeshStandardMaterial, type Material, type Mesh } from "three";
 
 const MOBILE_MODEL_FACTOR = 0.6;
 
 interface WebSceneProps {
   reducedMotion: boolean;
-  pointer: Vector2;
-  scrollProgress: number;
   scrollProgressRef: MutableRefObject<number>;
   isMobile: boolean;
 }
@@ -24,14 +22,12 @@ function shouldSkipScreenMaterialReplace(mesh: Mesh): boolean {
 
 function WebModel({
   reducedMotion,
-  pointer,
-  scrollProgress,
+  scrollProgressRef,
   isMobile,
   screenMatRef,
-}: Omit<WebSceneProps, "scrollProgressRef"> & {
+}: WebSceneProps & {
   screenMatRef: RefObject<MeshStandardMaterial | null>;
 }) {
-  void pointer;
   const groupRef = useRef<Group>(null);
   const { scene } = useGLTF("/old_computers/scene.gltf");
 
@@ -110,7 +106,7 @@ function WebModel({
       camera.position.z = MathUtils.lerp(camera.position.z, 14, 0.04);
       camera.lookAt(0, 0, 0);
     }
-    const targetRotY = (scrollProgress - 0.5) * 0.16;
+    const targetRotY = (scrollProgressRef.current - 0.5) * 0.16;
     g.rotation.y = MathUtils.lerp(g.rotation.y, reducedMotion ? 0 : targetRotY, 0.05);
     g.rotation.x = 0;
     g.rotation.z = 0;
@@ -131,7 +127,6 @@ function WebModel({
 }
 
 export default function WebScene(props: WebSceneProps) {
-  void props.scrollProgressRef;
   const screenMatRef = useRef<MeshStandardMaterial | null>(null);
   if (!screenMatRef.current) {
     screenMatRef.current = new MeshStandardMaterial({
@@ -159,8 +154,7 @@ export default function WebScene(props: WebSceneProps) {
 
       <WebModel
         reducedMotion={props.reducedMotion}
-        pointer={props.pointer}
-        scrollProgress={props.scrollProgress}
+        scrollProgressRef={props.scrollProgressRef}
         isMobile={props.isMobile}
         screenMatRef={screenMatRef}
       />

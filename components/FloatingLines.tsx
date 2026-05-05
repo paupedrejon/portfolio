@@ -279,6 +279,8 @@ export default function FloatingLines({
   const currentInfluenceRef = useRef(0);
   const targetParallaxRef = useRef(new Vector2(0, 0));
   const currentParallaxRef = useRef(new Vector2(0, 0));
+  const isInViewportRef = useRef(true);
+  const isTabVisibleRef = useRef(true);
 
   const getLineCount = (waveType: string) => {
     if (typeof lineCount === "number") return lineCount;
@@ -323,7 +325,11 @@ export default function FloatingLines({
     camera.position.z = 1;
 
     const renderer = new WebGLRenderer({ antialias: true, alpha: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    const maxDpr = isMobile ? 1.2 : 1.75;
+    const targetFps = isMobile ? 30 : 50;
+    const frameInterval = 1000 / targetFps;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxDpr));
     renderer.domElement.style.width = "100%";
     renderer.domElement.style.height = "100%";
     containerRef.current.appendChild(renderer.domElement);
@@ -431,6 +437,22 @@ export default function FloatingLines({
     if (ro && containerRef.current) {
       ro.observe(containerRef.current);
     }
+    const io =
+      typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            ([entry]) => {
+              isInViewportRef.current = entry?.isIntersecting ?? true;
+            },
+            { threshold: 0.08 },
+          )
+        : null;
+    if (io && containerRef.current) {
+      io.observe(containerRef.current);
+    }
+    const onVisibilityChange = () => {
+      isTabVisibleRef.current = document.visibilityState === "visible";
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     const handlePointerMove = (event: PointerEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
@@ -463,7 +485,18 @@ export default function FloatingLines({
     }
 
     let raf = 0;
+    let lastTs = 0;
     const renderLoop = () => {
+      if (!isInViewportRef.current || !isTabVisibleRef.current) {
+        raf = requestAnimationFrame(renderLoop);
+        return;
+      }
+      const now = performance.now();
+      if (lastTs !== 0 && now - lastTs < frameInterval) {
+        raf = requestAnimationFrame(renderLoop);
+        return;
+      }
+      lastTs = now;
       uniforms.iTime.value = clock.getElapsedTime();
 
       if (interactive) {
@@ -488,6 +521,10 @@ export default function FloatingLines({
 
     return () => {
       cancelAnimationFrame(raf);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (io && containerRef.current) {
+        io.disconnect();
+      }
       if (ro && containerRef.current) {
         ro.disconnect();
       }

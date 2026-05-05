@@ -114,6 +114,9 @@ export default function ProjectsPage() {
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [weakDevice, setWeakDevice] = useState(false);
 
   const activeSection = useMemo((): ExpertiseAreaId | null => {
     const raw = searchParams.get("section");
@@ -124,8 +127,27 @@ export default function ProjectsPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      setReducedMotion(media.matches);
+      setIsMobile(window.innerWidth < 768);
+      const lowCpu = (navigator.hardwareConcurrency || 8) < 6;
+      const lowMem = "deviceMemory" in navigator && (navigator as Navigator & { deviceMemory?: number }).deviceMemory! <= 4;
+      setWeakDevice(lowCpu || !!lowMem);
+    };
+    update();
+    media.addEventListener("change", update);
+    window.addEventListener("resize", update);
+    return () => {
+      media.removeEventListener("change", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
 
   const effectOptions = useMemo(() => hyperspeedPresets.one, []);
+  const showHeroFx = mounted && !reducedMotion && !weakDevice;
 
   const projects = useMemo(
     () =>
@@ -172,7 +194,7 @@ export default function ProjectsPage() {
         className="hero-section proyectos-hero w-full max-w-[100vw] overflow-x-hidden"
         style={{ position: "relative", overflow: "hidden", background: "#000" }}
       >
-        {mounted && (
+        {showHeroFx && (
           <div className="absolute inset-0 z-0 h-full w-full" style={{ minHeight: "100%" }}>
             <Hyperspeed effectOptions={effectOptions} />
           </div>
@@ -205,7 +227,7 @@ export default function ProjectsPage() {
                 background: "linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)",
                 border: "1px solid rgba(99, 102, 241, 0.2)",
                 borderRadius: "50px",
-                backdropFilter: "blur(10px)",
+                backdropFilter: isMobile ? "none" : "blur(10px)",
                 boxShadow:
                   "0 4px 20px rgba(99, 102, 241, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
                 position: "relative",

@@ -11,7 +11,6 @@ import {
   Mesh,
   MeshBasicMaterial,
   MeshPhysicalMaterial,
-  Vector2,
 } from "three";
 
 const MODEL = "/neural_networks_of_the_brain/scene.gltf";
@@ -19,8 +18,6 @@ const MOBILE_MODEL_FACTOR = 0.6;
 
 interface AISceneProps {
   reducedMotion: boolean;
-  pointer: Vector2;
-  scrollProgress: number;
   scrollProgressRef: MutableRefObject<number>;
   isMobile: boolean;
 }
@@ -98,8 +95,6 @@ function BrainModel({ reducedMotion, isMobile }: { reducedMotion: boolean; isMob
 }
 
 export default function AIScene(props: AISceneProps) {
-  void props.pointer;
-  void props.scrollProgress;
   void props.scrollProgressRef;
   return (
     <>

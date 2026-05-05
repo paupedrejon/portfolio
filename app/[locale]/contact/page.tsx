@@ -7,7 +7,16 @@ import LightRays from "@/components/LightRays";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { AiOutlineMail, AiFillPhone } from "react-icons/ai";
 
-const contactMethods = [
+type ContactMethod = {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  href: string;
+  color: string;
+  glow: string;
+};
+
+const contactMethods: ContactMethod[] = [
   {
     icon: <FaGithub size={32} />,
     title: "GitHub",
@@ -42,14 +51,169 @@ const contactMethods = [
   },
 ];
 
+function ContactMethodCard({ method, reduceEffects }: { method: ContactMethod; reduceEffects: boolean }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <a
+      href={method.href}
+      target={method.href.startsWith('http') ? '_blank' : undefined}
+      rel={method.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: 'relative',
+        padding: '2rem',
+        borderRadius: '24px',
+        background: 'var(--bg-card)',
+        border: `1px solid ${hovered ? method.glow : 'var(--border-subtle)'}`,
+        backdropFilter: reduceEffects ? 'none' : 'blur(20px)',
+        textDecoration: 'none',
+        overflow: 'hidden',
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        transform: hovered ? 'translateY(-10px) scale(1.03)' : 'translateY(0) scale(1)',
+        boxShadow: hovered
+          ? `0 30px 60px -15px rgba(0, 0, 0, 0.5), 0 0 40px ${method.glow}40`
+          : '0 10px 30px -10px rgba(0, 0, 0, 0.2)',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: method.color,
+          opacity: hovered ? 0.15 : 0,
+          transition: 'opacity 0.4s ease',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          inset: -2,
+          borderRadius: '24px',
+          background: method.color,
+          opacity: hovered ? 0.6 : 0,
+          filter: 'blur(10px)',
+          transition: 'opacity 0.4s ease',
+          zIndex: -1,
+        }}
+      />
+      <div
+        style={{
+          width: '80px',
+          height: '80px',
+          borderRadius: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: hovered ? method.color : 'rgba(99, 102, 241, 0.15)',
+          color: hovered ? 'white' : 'var(--accent-primary)',
+          margin: '0 auto 1.5rem',
+          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          transform: hovered ? 'rotate(-10deg) scale(1.15) translateY(-5px)' : 'rotate(0) scale(1) translateY(0)',
+          boxShadow: hovered ? `0 15px 35px ${method.glow}60, inset 0 0 20px rgba(255,255,255,0.2)` : 'none',
+          animation: hovered ? 'iconPulse 3s ease-in-out infinite' : 'none',
+        }}
+      >
+        {method.icon}
+      </div>
+      <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
+        <h3
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            marginBottom: '0.5rem',
+            transition: 'color 0.3s ease',
+          }}
+        >
+          {method.title}
+        </h3>
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '1rem',
+            color: 'var(--text-secondary)',
+            marginBottom: '1rem',
+          }}
+        >
+          {method.subtitle}
+        </p>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            color: hovered ? method.glow : 'var(--text-muted)',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            fontFamily: 'var(--font-mono)',
+            transition: 'all 0.3s ease',
+          }}
+        >
+          <span>Get in touch</span>
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2"
+            style={{
+              transition: 'transform 0.3s ease',
+              transform: hovered ? 'translateX(5px)' : 'translateX(0)',
+            }}
+          >
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: '-100%',
+          width: '100%',
+          height: '100%',
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+          transition: 'left 0.6s ease',
+          ...(hovered && { left: '100%' }),
+        }}
+      />
+    </a>
+  );
+}
+
 export default function ContactPage() {
   const [mounted, setMounted] = useState(false);
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [weakDevice, setWeakDevice] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      setReducedMotion(media.matches);
+      setIsMobile(window.innerWidth < 768);
+      const lowCpu = (navigator.hardwareConcurrency || 8) < 6;
+      const lowMem = "deviceMemory" in navigator && (navigator as Navigator & { deviceMemory?: number }).deviceMemory! <= 4;
+      setWeakDevice(lowCpu || !!lowMem);
+    };
+    update();
+    media.addEventListener("change", update);
+    window.addEventListener("resize", update);
+    return () => {
+      media.removeEventListener("change", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+  const showLightRays = !reducedMotion && !weakDevice;
 
   return (
     <div style={{ background: '#000' }}>
@@ -59,27 +223,29 @@ export default function ContactPage() {
 
         {/* LightRays Background */}
         <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1 }}>
-          <LightRays
-            raysOrigin="top-center"
-            raysColor="#ffffff"
-            raysSpeed={1}
-            lightSpread={0.5}
-            rayLength={3}
-            followMouse={true}
-            mouseInfluence={0.1}
-            noiseAmount={0}
-            distortion={0}
-            pulsating={false}
-            fadeDistance={1}
-            saturation={1}
-          />
+          {showLightRays ? (
+            <LightRays
+              raysOrigin="top-center"
+              raysColor="#ffffff"
+              raysSpeed={isMobile ? 0.75 : 1}
+              lightSpread={0.5}
+              rayLength={isMobile ? 2.2 : 3}
+              followMouse={!isMobile}
+              mouseInfluence={isMobile ? 0 : 0.1}
+              noiseAmount={0}
+              distortion={0}
+              pulsating={false}
+              fadeDistance={1}
+              saturation={1}
+            />
+          ) : null}
         </div>
         
         {/* Animated Background Orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Orb 1 - Moving */}
           <div 
-            className="absolute rounded-full blur-[100px] opacity-30"
+            className="absolute rounded-full opacity-30"
             style={{
               width: '400px',
               height: '400px',
@@ -87,11 +253,12 @@ export default function ContactPage() {
               top: '20%',
               left: '10%',
               animation: 'floatOrb1 60s ease-in-out infinite',
+              filter: isMobile ? "blur(55px)" : "blur(100px)",
             }}
           />
           {/* Orb 2 - Moving */}
           <div 
-            className="absolute rounded-full blur-[120px] opacity-25"
+            className="absolute rounded-full opacity-25"
             style={{
               width: '500px',
               height: '500px',
@@ -99,6 +266,7 @@ export default function ContactPage() {
               bottom: '15%',
               right: '15%',
               animation: 'floatOrb2 70s ease-in-out infinite',
+              filter: isMobile ? "blur(65px)" : "blur(120px)",
             }}
           />
           {/* Orb 3 - Following Mouse */}
@@ -262,7 +430,7 @@ export default function ContactPage() {
                 background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
                 border: '1px solid rgba(6, 182, 212, 0.2)',
                 borderRadius: '50px',
-                backdropFilter: 'blur(10px)',
+                backdropFilter: isMobile ? 'none' : 'blur(10px)',
                 boxShadow: '0 4px 20px rgba(6, 182, 212, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
                 position: 'relative',
                 overflow: 'hidden',
@@ -299,149 +467,7 @@ export default function ContactPage() {
             marginBottom: '4rem',
           }}>
             {contactMethods.map((method, index) => (
-              <a
-                key={index}
-                href={method.href}
-                target={method.href.startsWith('http') ? '_blank' : undefined}
-                rel={method.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                onMouseEnter={() => setHoveredCard(index)}
-                onMouseLeave={() => setHoveredCard(null)}
-                style={{
-                  position: 'relative',
-                  padding: '2rem',
-                  borderRadius: '24px',
-                  background: 'var(--bg-card)',
-                  border: `1px solid ${hoveredCard === index ? method.glow : 'var(--border-subtle)'}`,
-                  backdropFilter: 'blur(20px)',
-                  textDecoration: 'none',
-                  overflow: 'hidden',
-                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                  transform: hoveredCard === index ? 'translateY(-10px) scale(1.03)' : 'translateY(0) scale(1)',
-                  boxShadow: hoveredCard === index 
-                    ? `0 30px 60px -15px rgba(0, 0, 0, 0.5), 0 0 40px ${method.glow}40` 
-                    : '0 10px 30px -10px rgba(0, 0, 0, 0.2)',
-                }}
-              >
-                {/* Animated Gradient Background */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: method.color,
-                    opacity: hoveredCard === index ? 0.15 : 0,
-                    transition: 'opacity 0.4s ease',
-                  }}
-                />
-
-                {/* Glowing Border Effect */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: -2,
-                    borderRadius: '24px',
-                    background: method.color,
-                    opacity: hoveredCard === index ? 0.6 : 0,
-                    filter: 'blur(10px)',
-                    transition: 'opacity 0.4s ease',
-                    zIndex: -1,
-                  }}
-                />
-
-                {/* Animated Icon Container */}
-                <div
-                  style={{
-                    width: '80px',
-                    height: '80px',
-                    borderRadius: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: hoveredCard === index ? method.color : 'rgba(99, 102, 241, 0.15)',
-                    color: hoveredCard === index ? 'white' : 'var(--accent-primary)',
-                    margin: '0 auto 1.5rem',
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    transform: hoveredCard === index 
-                      ? 'rotate(-10deg) scale(1.15) translateY(-5px)' 
-                      : 'rotate(0) scale(1) translateY(0)',
-                    boxShadow: hoveredCard === index 
-                      ? `0 15px 35px ${method.glow}60, inset 0 0 20px rgba(255,255,255,0.2)` 
-                      : 'none',
-                    animation: hoveredCard === index ? 'iconPulse 3s ease-in-out infinite' : 'none',
-                  }}
-                >
-                  {method.icon}
-                </div>
-
-                {/* Content */}
-                <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
-                  <h3
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '1.5rem',
-                      fontWeight: 700,
-                      color: 'var(--text-primary)',
-                      marginBottom: '0.5rem',
-                      transition: 'color 0.3s ease',
-                    }}
-                  >
-                    {method.title}
-                  </h3>
-                  <p
-                    style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: '1rem',
-                      color: 'var(--text-secondary)',
-                      marginBottom: '1rem',
-                    }}
-                  >
-                    {method.subtitle}
-                  </p>
-                  
-                  {/* Animated Arrow */}
-                  <div
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      color: hoveredCard === index ? method.glow : 'var(--text-muted)',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      fontFamily: 'var(--font-mono)',
-                      transition: 'all 0.3s ease',
-                    }}
-                  >
-                    <span>Get in touch</span>
-                    <svg 
-                      width="16" 
-                      height="16" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2"
-                      style={{
-                        transition: 'transform 0.3s ease',
-                        transform: hoveredCard === index ? 'translateX(5px)' : 'translateX(0)',
-                      }}
-                    >
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* Shine Effect */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: '-100%',
-                    width: '100%',
-                    height: '100%',
-                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-                    transition: 'left 0.6s ease',
-                    ...(hoveredCard === index && { left: '100%' }),
-                  }}
-                />
-              </a>
+              <ContactMethodCard key={index} method={method} reduceEffects={isMobile || weakDevice} />
             ))}
           </div>
 
@@ -453,7 +479,7 @@ export default function ContactPage() {
               borderRadius: '24px',
               background: 'var(--bg-card)',
               border: '1px solid var(--border-subtle)',
-              backdropFilter: 'blur(20px)',
+              backdropFilter: isMobile ? 'none' : 'blur(20px)',
               position: 'relative',
               overflow: 'hidden',
             }}

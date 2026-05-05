@@ -5,7 +5,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { ComponentType, MutableRefObject } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import type { Vector2 } from "three";
 import { expertiseAreas } from "./data";
 import ExpertiseNav from "./ExpertiseNav";
 import ExpertiseSection from "./ExpertiseSection";
@@ -22,8 +21,6 @@ const HardwareScene = dynamic(() => import("./scenes/HardwareScene"), { ssr: fal
 
 type SceneComponentProps = {
   reducedMotion: boolean;
-  pointer: Vector2;
-  scrollProgress: number;
   scrollProgressRef: MutableRefObject<number>;
   isMobile: boolean;
 };
@@ -84,7 +81,9 @@ export default function ExpertiseScrolly() {
   );
 
   useEffect(() => {
-    const onScroll = () => {
+    let rafId = 0;
+    const runMeasurement = () => {
+      rafId = 0;
       const mid = window.innerHeight / 2;
       let matchedArea = false;
 
@@ -109,11 +108,22 @@ export default function ExpertiseScrolly() {
         }
       }
 
-      const container = containerRef.current;
-      if (container) {
-        const r = container.getBoundingClientRect();
-        setNavVisible(r.top < window.innerHeight && r.bottom > 0);
+      const webSection = document.getElementById(`section-${expertiseAreas[0]!.id}`);
+      const exploreSection = document.getElementById("explore-section");
+      if (!webSection || !exploreSection) {
+        setNavVisible(false);
+        return;
       }
+      const webRect = webSection.getBoundingClientRect();
+      const exploreRect = exploreSection.getBoundingClientRect();
+      // Visible solo desde WEB hasta justo antes de "Explore my work".
+      const reachedWeb = webRect.top <= window.innerHeight * 0.35;
+      const beforeExplore = exploreRect.top > window.innerHeight * 0.05;
+      setNavVisible(reachedWeb && beforeExplore);
+    };
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(runMeasurement);
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -122,6 +132,7 @@ export default function ExpertiseScrolly() {
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -153,7 +164,7 @@ export default function ExpertiseScrolly() {
             key={section.id}
             id={`section-${section.id}`}
             style={{
-              height: "100vh",
+              height: isMobile && section.id === "videogames" ? "120vh" : "100vh",
               overflow: "hidden",
               position: "relative",
               scrollSnapAlign: "start",

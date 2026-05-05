@@ -2,6 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Education timeline hover effects without React state rerenders */
+.edu-item:hover .edu-dot {
+  background: var(--edu-gradient) !important;
+  transform: scale(1.3) !important;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.55) !important;
+}
+.edu-item:hover .edu-card {
+  border-color: rgba(16, 185, 129, 0.5) !important;
+  transform: translateX(10px) scale(1.02) !important;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.3) !important;
+}
+.edu-item:hover .edu-overlay {
+  opacity: 0.1 !important;
+}
+.edu-item:hover .edu-icon {
+  background: var(--edu-gradient) !important;
+  color: white !important;
+  transform: rotate(-5deg) scale(1.1) !important;
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4) !important;
+}
+.edu-item:hover .edu-years-pill {
+  background: var(--edu-gradient) !important;
+  color: white !important;
+}
+.edu-item:hover .edu-arrow {
+  color: #10b981 !important;
+  transform: translateX(5px) !important;
+  opacity: 1 !important;
+}
+
 html {
   scroll-snap-type: y proximity;
 }

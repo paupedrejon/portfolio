@@ -11,7 +11,6 @@ import {
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   SRGBColorSpace,
-  Vector2,
   type Material,
 } from "three";
 
@@ -41,8 +40,6 @@ function dampenBodyMaterial(mat: Material) {
 
 interface MobileSceneProps {
   reducedMotion: boolean;
-  pointer: Vector2;
-  scrollProgress: number;
   scrollProgressRef: MutableRefObject<number>;
   isMobile: boolean;
 }
@@ -144,9 +141,6 @@ function MobileModel({
 }
 
 export default function MobileScene(props: MobileSceneProps) {
-  void props.pointer;
-  void props.scrollProgress;
-
   return (
     <>
       <color attach="background" args={["#050d12"]} />

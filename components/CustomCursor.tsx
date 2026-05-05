@@ -28,6 +28,9 @@ export default function CustomCursor() {
     let mouseDown = false;
     let currentHoverElement: Element | null = null;
     let rafId = 0;
+    const targetFps = 30;
+    const frameInterval = 1000 / targetFps;
+    let lastFrameTs = 0;
 
     const setHoverElement = (element: Element | null) => {
       if (currentHoverElement === element) return;
@@ -107,6 +110,8 @@ export default function CustomCursor() {
     const onMouseMove = (event: MouseEvent) => {
       pointerX = event.clientX;
       pointerY = event.clientY;
+      const hovered = event.target instanceof Element ? event.target : null;
+      updateHoverState(hovered);
     };
 
     const onMouseDown = () => {
@@ -136,9 +141,12 @@ export default function CustomCursor() {
       updateRing();
     };
 
-    const tick = () => {
-      const hovered = document.elementFromPoint(pointerX, pointerY);
-      updateHoverState(hovered);
+    const tick = (ts: number) => {
+      if (lastFrameTs !== 0 && ts - lastFrameTs < frameInterval) {
+        rafId = window.requestAnimationFrame(tick);
+        return;
+      }
+      lastFrameTs = ts;
       updateRing();
       rafId = window.requestAnimationFrame(tick);
     };

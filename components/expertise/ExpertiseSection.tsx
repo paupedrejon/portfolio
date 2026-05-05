@@ -3,7 +3,6 @@
 import { Canvas } from "@react-three/fiber";
 import { Bloom, ChromaticAberration, EffectComposer, Vignette } from "@react-three/postprocessing";
 import { Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
-import { Vector2 } from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Link } from "@/i18n/navigation";
@@ -13,8 +12,6 @@ import { useExpertiseSnapScroller } from "./ExpertiseSnapScrollerContext";
 
 interface SceneProps {
   reducedMotion: boolean;
-  pointer: Vector2;
-  scrollProgress: number;
   /** Lectura en useFrame sin depender del ritmo de re-renders de React. */
   scrollProgressRef: MutableRefObject<number>;
   isMobile: boolean;
@@ -133,8 +130,6 @@ export default function ExpertiseSection({
   const sectionRef = useRef<HTMLElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const [shouldRenderCanvas, setShouldRenderCanvas] = useState(false);
-  const [pointer, setPointer] = useState(new Vector2(0, 0));
-  const [scrollProgress, setScrollProgress] = useState(0);
   const scrollProgressRef = useRef(0);
 
   useEffect(() => {
@@ -173,7 +168,6 @@ export default function ExpertiseSection({
       },
       onUpdate: (self) => {
         scrollProgressRef.current = self.progress;
-        setScrollProgress(self.progress);
       },
     });
 
@@ -204,19 +198,8 @@ export default function ExpertiseSection({
     };
   }, [onActive, reducedMotion, scrollRoot]);
 
-  useEffect(() => {
-    if (reducedMotion) return;
-    const onMove = (event: MouseEvent) => {
-      const x = (event.clientX / window.innerWidth) * 2 - 1;
-      const y = (event.clientY / window.innerHeight) * 2 - 1;
-      setPointer(new Vector2(x, y));
-    };
-    window.addEventListener("mousemove", onMove, { passive: true });
-    return () => window.removeEventListener("mousemove", onMove);
-  }, [reducedMotion]);
-
   const showEffects = !reducedMotion && !isMobile && !weakDevice;
-  const finalDpr = isMobile ? 1 : 2;
+  const finalDpr = isMobile || weakDevice ? 1 : 1.6;
   const sectionOpacity = active ? 1 : 0.86;
 
   const headingStyles = useMemo(
@@ -315,7 +298,7 @@ export default function ExpertiseSection({
           zIndex: 0,
         }}
       >
-        {shouldRenderCanvas && !weakDevice ? (
+        {shouldRenderCanvas && !weakDevice && active ? (
           <Canvas
             style={{ width: "100%", height: "100%", display: "block" }}
             dpr={[1, finalDpr]}
@@ -330,8 +313,6 @@ export default function ExpertiseSection({
             <Suspense fallback={null}>
               <Scene
                 reducedMotion={reducedMotion}
-                pointer={pointer}
-                scrollProgress={scrollProgress}
                 scrollProgressRef={scrollProgressRef}
                 isMobile={isMobile}
               />
