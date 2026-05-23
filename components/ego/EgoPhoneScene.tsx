@@ -1,7 +1,6 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { EgoMobileStyleSceneContent } from "@/components/ego/EgoMobileStyleScene";
 import { ContactShadows, useGLTF, useTexture } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import {
@@ -192,11 +191,8 @@ export default function EgoPhoneCanvas({
   const narrow = useIsNarrow();
   const reducedMotion = usePrefersReducedMotion();
 
-  const singlePhone = variant === "hero" && narrow;
-
-  const camera = singlePhone
-    ? { position: [0, 0, 7] as [number, number, number], fov: 30 }
-    : variant === "banner"
+  const camera =
+    variant === "banner"
       ? {
           position: [0, 0.52, narrow ? 10.4 : 9.2] as [number, number, number],
           fov: narrow ? 36 : 34,
@@ -205,14 +201,7 @@ export default function EgoPhoneCanvas({
 
   const dpr: [number, number] = narrow ? [1, 1.5] : [1.25, 2];
 
-  const canvasClass = [
-    "ego-phone-canvas",
-    `ego-phone-canvas--${variant}`,
-    singlePhone ? "ego-phone-canvas--single" : "",
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const canvasClass = [`ego-phone-canvas`, `ego-phone-canvas--${variant}`, className].filter(Boolean).join(" ");
 
   return (
     <div className={canvasClass}>
@@ -227,7 +216,7 @@ export default function EgoPhoneCanvas({
         style={{ width: "100%", height: "100%", display: "block", background: "transparent" }}
       >
         <Suspense fallback={null}>
-          {singlePhone ? <EgoMobileStyleSceneContent /> : <EgoSceneContent />}
+          <EgoSceneContent />
         </Suspense>
       </Canvas>
       <style jsx>{`
@@ -239,9 +228,6 @@ export default function EgoPhoneCanvas({
         }
         .ego-phone-canvas--hero {
           min-height: clamp(280px, 52vh, 720px);
-        }
-        .ego-phone-canvas--hero.ego-phone-canvas--single {
-          min-height: 100%;
         }
         .ego-phone-canvas--banner {
           min-height: clamp(300px, 62vw, 460px);
