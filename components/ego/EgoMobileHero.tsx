@@ -14,7 +14,7 @@ gsap.registerPlugin(ScrollTrigger);
 const MOBILE_SECTION_BG =
   "radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 0.35) 0%, rgba(5, 13, 18, 0.96) 55%, #050d12 100%)";
 const MOBILE_VIGNETTE =
-  "radial-gradient(ellipse 55% 65% at center, transparent 8%, rgba(0,0,0,0.62) 55%, rgba(0,0,0,0.98) 100%)";
+  "radial-gradient(ellipse 55% 65% at center, transparent 8%, rgba(0,0,0,0.42) 55%, rgba(0,0,0,0.78) 100%)";
 const MOBILE_CAMERA = { position: [0, 0, 7] as [number, number, number], fov: 30 };
 
 type Props = {
