@@ -55,14 +55,27 @@
   height: clamp(300px, 58vh, 720px);
 }
 
-/* Hero móvil: mismo fondo que sección MOBILE en home */
+/* Hero móvil: fondo más oscuro para legibilidad del texto */
 .ego-page--mobile-hero {
-  background-color: #050d12;
+  background-color: #03080c;
   background-image: radial-gradient(
-    circle at 50% 45%,
+    circle at 50% 42%,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(3, 8, 12, 0.98) 50%,
+    #03080c 100%
+  );
+}
+
+.ego-mobile-hero__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
     rgba(0, 0, 0, 0.35) 0%,
-    rgba(5, 13, 18, 0.96) 55%,
-    #050d12 100%
+    rgba(0, 0, 0, 0.52) 45%,
+    rgba(0, 0, 0, 0.48) 100%
   );
 }
 
@@ -95,7 +108,7 @@
 
 .ego-mobile-hero__title {
   font-family: "Lulo Clean", "Bebas Neue", var(--font-league-spartan), sans-serif;
-  font-size: clamp(2.25rem, 10vw, 4.4rem);
+  font-size: clamp(3.25rem, 14vw, 5.75rem);
   line-height: 1.02;
   letter-spacing: 0.04em;
   margin: 0 0 1rem;
@@ -121,7 +134,7 @@
 
 .ego-hero__title {
   font-family: "Lulo Clean", "Bebas Neue", var(--font-league-spartan), sans-serif;
-  font-size: clamp(2.25rem, 10vw, 4.4rem);
+  font-size: clamp(2.75rem, 8vw, 5.5rem);
   line-height: 1.02;
   letter-spacing: 0.04em;
   margin: 0 0 1rem;

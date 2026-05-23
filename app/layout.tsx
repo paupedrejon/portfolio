@@ -2,13 +2,10 @@
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { Providers } from "./providers";
-import ConditionalHeader from "@/components/ConditionalHeader";
 import { spaceGrotesk, outfit, jetbrainsMono, leagueSpartan } from "./fonts";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { AiOutlineMail } from "react-icons/ai";
-import { NextIntlClientProvider } from "next-intl";
-import { getMessages, getLocale, getTranslations } from "next-intl/server";
-import CustomCursor from "@/components/CustomCursor";
+import { getLocale, getTranslations } from "next-intl/server";
 import HapticsRoot from "@/components/HapticsRoot";
 
 export const metadata = {
@@ -37,7 +34,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const locale = await getLocale();
-  const messages = await getMessages();
   const tFooter = await getTranslations("footer");
 
   return (
@@ -55,14 +51,10 @@ export default async function RootLayout({
       <body className="overflow-x-hidden w-full" suppressHydrationWarning>
         <HapticsRoot />
         <Providers>
-          <NextIntlClientProvider messages={messages} locale={locale}>
-            <ConditionalHeader />
+          {children}
 
-            <main className="pt-0 w-full">{children}</main>
-            <CustomCursor />
-
-            {/* Footer */}
-            <footer className="footer">
+          {/* Footer */}
+          <footer className="footer">
           <div className="footer-content">
             {/* Social Links */}
             <div className="footer-social">
@@ -97,8 +89,7 @@ export default async function RootLayout({
           </div>
         </footer>
 
-            <Analytics />
-          </NextIntlClientProvider>
+          <Analytics />
         </Providers>
       </body>
     </html>

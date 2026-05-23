@@ -26,7 +26,12 @@ export default function LanguageSwitcher() {
     setIsOpen(false);
     setIsChanging(true);
     router.replace(pathname, { locale: newLocale });
+    router.refresh();
   };
+
+  useEffect(() => {
+    setIsChanging(false);
+  }, [locale]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

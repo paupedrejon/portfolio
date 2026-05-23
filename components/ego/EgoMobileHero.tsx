@@ -14,7 +14,7 @@ gsap.registerPlugin(ScrollTrigger);
 const MOBILE_SECTION_BG =
   "radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 0.35) 0%, rgba(5, 13, 18, 0.96) 55%, #050d12 100%)";
 const MOBILE_VIGNETTE =
-  "radial-gradient(ellipse 60% 70% at center, transparent 20%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0.97) 100%)";
+  "radial-gradient(ellipse 55% 65% at center, transparent 8%, rgba(0,0,0,0.62) 55%, rgba(0,0,0,0.98) 100%)";
 const MOBILE_CAMERA = { position: [0, 0, 7] as [number, number, number], fov: 30 };
 
 type Props = {
@@ -148,16 +148,7 @@ export default function EgoMobileHero({ kicker, title, subtitle, downloadCta }: 
         }}
       />
 
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 11,
-          pointerEvents: "none",
-          background: "rgba(0,0,0,0.22)",
-        }}
-      />
+      <div className="ego-mobile-hero__scrim" aria-hidden />
 
       <div className="ego-mobile-hero__content">
         <p className="ego-mobile-hero__kicker">{kicker}</p>
