@@ -25,6 +25,19 @@
     "projectsHighlight": "Progetti in evidenza",
     "projectsSubtext": "Dai un'occhiata agli ultimi",
     "viewAllProjects": "Vedi tutti i progetti",
+    "egoBanner": {
+      "badge": "Novità",
+      "headline": "Mobilità elettrica",
+      "title": "Scarica e-Go",
+      "description": "Mappa live, percorsi con autonomia e classifica. La tua app di mobilità elettrica.",
+      "downloadCta": "Scarica APK",
+      "learnMore": "Vedi il progetto",
+      "stats": [
+        { "value": "2300+", "label": "Stazioni" },
+        { "value": "4", "label": "Lingue" },
+        { "value": "Android", "label": "Nativa" }
+      ]
+    },
     "exploreWork": "Esplora il mio lavoro",
     "exploreSubtext": "Scopri cosa faccio e come posso aiutarti a dare vita alle tue idee",
     "navCards": {
@@ -611,6 +624,65 @@
       "speed": "Velocità",
       "dashCd": "Dash CD",
       "grappleCd": "Grapple CD"
+    }
+  },
+  "egoPage": {
+    "hero": {
+      "kicker": "Universitat Politècnica de Barcelona",
+      "title": "E-Go",
+      "subtitle": "App mobile per conducenti di veicoli elettrici e ibridi: trova colonnine attive, pianifica i percorsi in base all'autonomia e guadagna ricompense mentre carichi.",
+      "downloadCta": "Scarica e-Go"
+    },
+    "about": {
+      "label": "Il progetto",
+      "title": "Mobilità elettrica",
+      "tagline": "Trova, ricarica e competi.",
+      "pillars": {
+        "stations": { "title": "2300+ punti", "desc": "Open data ICAEN" },
+        "routes": { "title": "Percorsi smart", "desc": "Autonomia + colonnina" },
+        "gamification": { "title": "Classifica", "desc": "Punti in tempo reale" },
+        "rewards": { "title": "Skin & Premium", "desc": "Senza annunci" }
+      }
+    },
+    "features": {
+      "label": "Funzioni",
+      "title": "Cosa fa e-Go",
+      "items": {
+        "map": { "title": "Mappa", "desc": "Stazioni live" },
+        "route": { "title": "Percorsi", "desc": "Con la batteria" },
+        "search": { "title": "Cerca", "desc": "Filtri e connettore" },
+        "report": { "title": "Segnalazioni", "desc": "Segnala guasti" },
+        "favorites": { "title": "Preferiti", "desc": "Le tue stazioni" },
+        "premium": { "title": "Premium", "desc": "Stripe, no ads" },
+        "ranking": { "title": "Ranking", "desc": "Competi" },
+        "events": { "title": "Eventi", "desc": "Vicino in carica" },
+        "i18n": { "title": "4 lingue", "desc": "es · ca · en · it" },
+        "vehicle": { "title": "La tua auto", "desc": "Profilo e presa" },
+        "ai": { "title": "Supporto IA", "desc": "Chat integrata" },
+        "accessibility": { "title": "Accessibile", "desc": "Modalità daltonici" }
+      }
+    },
+    "tech": {
+      "label": "Stack",
+      "title": "Sotto il cofano",
+      "blocks": {
+        "client": { "title": "Mobile", "pills": ["React Native", "Expo", "Android"] },
+        "server": { "title": "API", "pills": ["Node.js", "Express", "REST"] },
+        "cloud": { "title": "Cloud", "pills": ["AWS Lambda", "PostgreSQL", "S3"] },
+        "quality": { "title": "Qualità", "pills": ["Jest", "GitHub CI", "Sonar"] }
+      }
+    },
+    "methodology": {
+      "label": "Team",
+      "title": "Come lavoriamo",
+      "tags": [
+        { "label": "7 dev · Agile", "icon": "team" },
+        { "label": "Taiga", "icon": "team" },
+        { "label": "GitHub Actions", "icon": "git" },
+        { "label": "ISO 25010", "icon": "git" },
+        { "label": "Monorepo", "icon": "git" },
+        { "label": "Open Data", "icon": "team" }
+      ]
     }
   }
 }

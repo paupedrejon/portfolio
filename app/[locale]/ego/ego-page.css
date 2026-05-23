@@ -1,0 +1,112 @@
+.ego-page {
+  position: relative;
+  min-height: 100vh;
+  background-color: #030806;
+  background-image:
+    radial-gradient(ellipse 90% 55% at 18% 22%, rgba(16, 185, 129, 0.18) 0%, transparent 52%),
+    radial-gradient(ellipse 70% 50% at 88% 78%, rgba(5, 150, 105, 0.14) 0%, transparent 48%),
+    linear-gradient(165deg, #040a08 0%, #020403 42%, #010302 100%);
+  background-attachment: scroll;
+  color: #fff;
+  overflow-x: hidden;
+}
+
+@media (min-width: 900px) {
+  .ego-page {
+    background-attachment: fixed;
+  }
+}
+
+.ego-hero {
+  position: relative;
+  overflow: hidden;
+  padding-right: clamp(1rem, 4vw, 4rem);
+  padding-bottom: clamp(1.25rem, 4vw, 4rem);
+  padding-left: clamp(1rem, 4vw, 4rem);
+  /* Header fijo + safe area: evita solapamiento en móvil */
+  padding-top: calc(env(safe-area-inset-top, 0px) + 6.5rem);
+}
+
+@media (min-width: 900px) {
+  .ego-hero {
+    padding: clamp(1.25rem, 4vw, 4rem) clamp(1rem, 4vw, 4rem);
+  }
+}
+
+.ego-hero__glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 120% 80% at 50% -10%, rgba(16, 185, 129, 0.06) 0%, transparent 45%);
+}
+
+.ego-hero__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 3vw, 2rem);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.ego-hero__copy {
+  order: 1;
+  width: 100%;
+  max-width: 520px;
+  padding: 0 clamp(0.25rem, 2vw, 2rem);
+}
+
+.ego-hero__canvas-wrap {
+  order: 2;
+  width: 100%;
+  min-width: 0;
+  height: clamp(300px, 58vh, 720px);
+}
+
+.ego-hero__kicker {
+  font-family: var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 0.75rem;
+  font-size: clamp(0.65rem, 2vw, 0.75rem);
+}
+
+.ego-hero__title {
+  font-family: "Lulo Clean", "Bebas Neue", var(--font-league-spartan), sans-serif;
+  font-size: clamp(2.25rem, 10vw, 4.4rem);
+  line-height: 1.02;
+  letter-spacing: 0.04em;
+  margin: 0 0 1rem;
+}
+
+.ego-hero__subtitle {
+  font-family: var(--font-body);
+  font-size: clamp(0.95rem, 2.8vw, 1.35rem);
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 480px;
+  margin: 0 0 1.5rem;
+}
+
+@media (min-width: 900px) {
+  .ego-hero__inner {
+    display: grid;
+    grid-template-columns: minmax(300px, 1fr) minmax(360px, 1.2fr);
+    align-items: center;
+    gap: 2rem;
+    min-height: min(92vh, 1000px);
+  }
+
+  .ego-hero__copy {
+    order: unset;
+    padding-left: clamp(0.5rem, 2.5vw, 2.25rem);
+  }
+
+  .ego-hero__canvas-wrap {
+    order: unset;
+    height: min(85vh, 720px);
+  }
+}

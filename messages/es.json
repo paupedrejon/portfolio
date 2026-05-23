@@ -25,6 +25,19 @@
     "projectsHighlight": "Proyectos que destacan",
     "projectsSubtext": "Échale un vistazo a lo último",
     "viewAllProjects": "Ver todos los proyectos",
+    "egoBanner": {
+      "badge": "Novedad",
+      "headline": "Movilidad eléctrica",
+      "title": "Descarga e-Go",
+      "description": "Mapa en vivo, rutas con autonomía y ranking. Tu app de movilidad eléctrica.",
+      "downloadCta": "Descargar APK",
+      "learnMore": "Ver el proyecto",
+      "stats": [
+        { "value": "2300+", "label": "Estaciones" },
+        { "value": "4", "label": "Idiomas" },
+        { "value": "Android", "label": "Nativa" }
+      ]
+    },
     "exploreWork": "Explora mi trabajo",
     "exploreSubtext": "Descubre qué hago y cómo puedo ayudarte a dar vida a tus ideas",
     "navCards": {
@@ -612,6 +625,65 @@
       "speed": "Velocidad",
       "dashCd": "Dash CD",
       "grappleCd": "Grapple CD"
+    }
+  },
+  "egoPage": {
+    "hero": {
+      "kicker": "Universitat Politècnica de Barcelona",
+      "title": "E-Go",
+      "subtitle": "Aplicación móvil para conductores de vehículos eléctricos e híbridos: encuentra estaciones activas, planifica rutas según tu autonomía y gana recompensas mientras cargas.",
+      "downloadCta": "Descargar e-Go"
+    },
+    "about": {
+      "label": "El proyecto",
+      "title": "Movilidad eléctrica",
+      "tagline": "Encuentra, carga y compite.",
+      "pillars": {
+        "stations": { "title": "2300+ puntos", "desc": "Open data ICAEN" },
+        "routes": { "title": "Rutas inteligentes", "desc": "Autonomía + cargador" },
+        "gamification": { "title": "Ranking", "desc": "Puntos en tiempo real" },
+        "rewards": { "title": "Skins & Premium", "desc": "Sin anuncios" }
+      }
+    },
+    "features": {
+      "label": "Funciones",
+      "title": "Qué hace e-Go",
+      "items": {
+        "map": { "title": "Mapa", "desc": "Estaciones en vivo" },
+        "route": { "title": "Rutas", "desc": "Con tu batería" },
+        "search": { "title": "Buscar", "desc": "Filtros y conector" },
+        "report": { "title": "Incidencias", "desc": "Reporta fallos" },
+        "favorites": { "title": "Favoritos", "desc": "Tus estaciones" },
+        "premium": { "title": "Premium", "desc": "Stripe, sin ads" },
+        "ranking": { "title": "Ranking", "desc": "Compite con amigos" },
+        "events": { "title": "Eventos", "desc": "Cerca al cargar" },
+        "i18n": { "title": "4 idiomas", "desc": "es · ca · en · it" },
+        "vehicle": { "title": "Tu coche", "desc": "Perfil y conector" },
+        "ai": { "title": "Soporte IA", "desc": "Chat integrado" },
+        "accessibility": { "title": "Accesible", "desc": "Modo daltonismo" }
+      }
+    },
+    "tech": {
+      "label": "Stack",
+      "title": "Bajo el capó",
+      "blocks": {
+        "client": { "title": "Móvil", "pills": ["React Native", "Expo", "Android"] },
+        "server": { "title": "API", "pills": ["Node.js", "Express", "REST"] },
+        "cloud": { "title": "Cloud", "pills": ["AWS Lambda", "PostgreSQL", "S3"] },
+        "quality": { "title": "Calidad", "pills": ["Jest", "GitHub CI", "Sonar"] }
+      }
+    },
+    "methodology": {
+      "label": "Equipo",
+      "title": "Cómo trabajamos",
+      "tags": [
+        { "label": "7 devs · Agile", "icon": "team" },
+        { "label": "Taiga", "icon": "team" },
+        { "label": "GitHub Actions", "icon": "git" },
+        { "label": "ISO 25010", "icon": "git" },
+        { "label": "Monorepo", "icon": "git" },
+        { "label": "Open Data", "icon": "team" }
+      ]
     }
   }
 }

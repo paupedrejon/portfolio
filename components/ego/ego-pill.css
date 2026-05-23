@@ -1,0 +1,104 @@
+.ego-pill-wrap {
+  position: relative;
+  display: inline-flex;
+  border-radius: 999px;
+  max-width: 100%;
+}
+
+.ego-pill-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: inherit;
+  opacity: 0;
+  box-shadow:
+    0 0 20px 5px rgba(42, 185, 130, 0.6),
+    0 0 40px 12px rgba(42, 185, 130, 0.32),
+    0 0 72px 20px rgba(42, 185, 130, 0.14);
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ego-pill-wrap:has(.ego-pill-btn:hover)::before,
+.ego-pill-wrap:has(.ego-pill-btn:focus-visible)::before {
+  opacity: 1;
+}
+
+.ego-pill-btn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  width: 100%;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: none;
+  cursor: pointer;
+  text-decoration: none !important;
+  border-radius: 999px;
+  font: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ego-pill-btn:visited,
+.ego-pill-btn:hover,
+.ego-pill-btn:focus,
+.ego-pill-btn:active {
+  text-decoration: none !important;
+  color: inherit;
+}
+
+.ego-pill-btn__inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.9rem 1.75rem;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  border: 2px solid transparent;
+  transition: box-shadow 0.35s ease, transform 0.2s ease;
+  box-sizing: border-box;
+}
+
+.ego-pill-btn__inner--primary {
+  color: #0a0a0a !important;
+  background: #ffffff;
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.28);
+}
+
+.ego-pill-btn__inner--ghost {
+  color: rgba(255, 255, 255, 0.9) !important;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: none;
+}
+
+.ego-pill-btn:hover .ego-pill-btn__inner,
+.ego-pill-btn:focus-visible .ego-pill-btn__inner {
+  outline: none;
+  transform: translateY(-2px);
+  border-color: transparent;
+  box-shadow:
+    0 0 14px 3px rgba(42, 185, 130, 0.7),
+    0 0 28px 8px rgba(42, 185, 130, 0.4),
+    0 0 52px 14px rgba(42, 185, 130, 0.18);
+}
+
+.ego-pill-btn:active .ego-pill-btn__inner {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ego-pill-btn:hover .ego-pill-btn__inner,
+  .ego-pill-btn:focus-visible .ego-pill-btn__inner {
+    transform: none;
+  }
+}

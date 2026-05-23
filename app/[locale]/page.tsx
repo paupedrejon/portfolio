@@ -4,6 +4,7 @@ import { outfit, jetbrainsMono, leagueSpartan } from "../fonts";
 import ScrollButton from "@/components/ScrollButton";
 import CurriculumButton from "@/components/CurriculumButton";
 import FloatingLines from "@/components/FloatingLines";
+import EgoHomeBanner from "@/components/ego/EgoHomeBanner";
 import ExpertiseScrolly from "@/components/expertise/ExpertiseScrolly";
 import ExploreWorkSection from "@/components/expertise/ExploreWorkSection";
 import { useEffect, useState, useMemo } from "react";
@@ -252,6 +253,10 @@ export default function HomePage() {
             zIndex: 5,
           }}
         />
+      </section>
+
+      <section id="ego-news" style={{ background: "#0a0a0f", position: "relative", zIndex: 6 }}>
+        <EgoHomeBanner />
       </section>
 
       <section

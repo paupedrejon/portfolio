@@ -25,6 +25,19 @@
     "projectsHighlight": "Standout projects",
     "projectsSubtext": "Take a look at the latest",
     "viewAllProjects": "View all projects",
+    "egoBanner": {
+      "badge": "New",
+      "headline": "Electric mobility",
+      "title": "Download e-Go",
+      "description": "Live map, range-aware routes, and leaderboard. Your electric mobility app.",
+      "downloadCta": "Download APK",
+      "learnMore": "View project",
+      "stats": [
+        { "value": "2300+", "label": "Stations" },
+        { "value": "4", "label": "Languages" },
+        { "value": "Android", "label": "Native" }
+      ]
+    },
     "exploreWork": "Explore My Work",
     "exploreSubtext": "Discover what I do and how I can help bring your ideas to life",
     "navCards": {
@@ -612,6 +625,65 @@
       "speed": "Speed",
       "dashCd": "Dash CD",
       "grappleCd": "Grapple CD"
+    }
+  },
+  "egoPage": {
+    "hero": {
+      "kicker": "Universitat Politècnica de Barcelona",
+      "title": "E-Go",
+      "subtitle": "Mobile app for electric and hybrid drivers: find active chargers, plan trips around your range, and earn rewards while you charge.",
+      "downloadCta": "Download e-Go"
+    },
+    "about": {
+      "label": "The project",
+      "title": "Electric mobility",
+      "tagline": "Find, charge, and compete.",
+      "pillars": {
+        "stations": { "title": "2300+ points", "desc": "ICAEN open data" },
+        "routes": { "title": "Smart routes", "desc": "Range + charger" },
+        "gamification": { "title": "Leaderboard", "desc": "Live points" },
+        "rewards": { "title": "Skins & Premium", "desc": "Ad-free" }
+      }
+    },
+    "features": {
+      "label": "Features",
+      "title": "What e-Go does",
+      "items": {
+        "map": { "title": "Map", "desc": "Live stations" },
+        "route": { "title": "Routes", "desc": "Battery-aware" },
+        "search": { "title": "Search", "desc": "Filters & plugs" },
+        "report": { "title": "Reports", "desc": "Flag issues" },
+        "favorites": { "title": "Favorites", "desc": "Your spots" },
+        "premium": { "title": "Premium", "desc": "Stripe, no ads" },
+        "ranking": { "title": "Ranking", "desc": "Compete" },
+        "events": { "title": "Events", "desc": "While charging" },
+        "i18n": { "title": "4 languages", "desc": "es · ca · en · it" },
+        "vehicle": { "title": "Your car", "desc": "Profile & plug" },
+        "ai": { "title": "AI support", "desc": "Built-in chat" },
+        "accessibility": { "title": "Accessible", "desc": "Color-blind mode" }
+      }
+    },
+    "tech": {
+      "label": "Stack",
+      "title": "Under the hood",
+      "blocks": {
+        "client": { "title": "Mobile", "pills": ["React Native", "Expo", "Android"] },
+        "server": { "title": "API", "pills": ["Node.js", "Express", "REST"] },
+        "cloud": { "title": "Cloud", "pills": ["AWS Lambda", "PostgreSQL", "S3"] },
+        "quality": { "title": "Quality", "pills": ["Jest", "GitHub CI", "Sonar"] }
+      }
+    },
+    "methodology": {
+      "label": "Team",
+      "title": "How we work",
+      "tags": [
+        { "label": "7 devs · Agile", "icon": "team" },
+        { "label": "Taiga", "icon": "team" },
+        { "label": "GitHub Actions", "icon": "git" },
+        { "label": "ISO 25010", "icon": "git" },
+        { "label": "Monorepo", "icon": "git" },
+        { "label": "Open Data", "icon": "team" }
+      ]
     }
   }
 }
