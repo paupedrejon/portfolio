@@ -8,6 +8,7 @@ import {
   Group,
   MathUtils,
   Mesh,
+  MeshBasicMaterial,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   SRGBColorSpace,
@@ -19,20 +20,19 @@ const EGO_TEXTURE = "/ego.jpg";
 const MODEL_SCALE = 28;
 const MOBILE_MODEL_FACTOR = 0.6;
 
-function dampenBodyMaterial(mat: Material) {
+function dampenBodyMaterial(mat: Material, matte = false) {
   if (mat instanceof MeshStandardMaterial || mat instanceof MeshPhysicalMaterial) {
-    // Gris grafito claro: contraste frente a #050d12; los rim cian marcan el contorno
     mat.color = new Color("#5e6d7e");
-    mat.metalness = 0.45;
-    mat.roughness = 0.38;
+    mat.metalness = matte ? 0.12 : 0.45;
+    mat.roughness = matte ? 0.72 : 0.38;
     mat.envMapIntensity = 0;
     if (mat instanceof MeshPhysicalMaterial) {
       mat.transmission = 0;
       mat.thickness = 0;
       mat.transparent = false;
       mat.opacity = 1;
-      mat.clearcoat = 0.35;
-      mat.clearcoatRoughness = 0.4;
+      mat.clearcoat = matte ? 0 : 0.35;
+      mat.clearcoatRoughness = matte ? 1 : 0.4;
     }
     mat.needsUpdate = true;
   }
@@ -42,6 +42,8 @@ interface MobileSceneProps {
   reducedMotion: boolean;
   scrollProgressRef: MutableRefObject<number>;
   isMobile: boolean;
+  /** Sin emissive/clearcoat en pantalla y marco (p. ej. hero /ego móvil). */
+  mattePhone?: boolean;
 }
 
 function easeInOutQuad(p: number) {
@@ -52,10 +54,12 @@ function MobileModel({
   reducedMotion,
   scrollProgressRef,
   isMobile,
+  mattePhone,
 }: {
   reducedMotion: boolean;
   scrollProgressRef: MutableRefObject<number>;
   isMobile: boolean;
+  mattePhone: boolean;
 }) {
   const groupRef = useRef<Group>(null);
   const { scene } = useGLTF(MODEL);
@@ -84,15 +88,20 @@ function MobileModel({
         lowerName.includes("display");
 
       if (isScreen) {
-        obj.material = new MeshStandardMaterial({
-          map: egoTexture,
-          emissive: new Color("#ffffff"),
-          emissiveMap: egoTexture,
-          emissiveIntensity: 0.5,
-          roughness: 0.05,
-          metalness: 0,
-          toneMapped: false,
-        });
+        obj.material = mattePhone
+          ? new MeshBasicMaterial({
+              map: egoTexture,
+              toneMapped: false,
+            })
+          : new MeshStandardMaterial({
+              map: egoTexture,
+              emissive: new Color("#ffffff"),
+              emissiveMap: egoTexture,
+              emissiveIntensity: 0.5,
+              roughness: 0.05,
+              metalness: 0,
+              toneMapped: false,
+            });
         obj.material.needsUpdate = true;
         screenMeshes.add(obj);
       }
@@ -102,10 +111,10 @@ function MobileModel({
       if (!(obj instanceof Mesh) || screenMeshes.has(obj)) return;
       const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
       mats.forEach((mat) => {
-        if (mat) dampenBodyMaterial(mat);
+        if (mat) dampenBodyMaterial(mat, mattePhone);
       });
     });
-  }, [scene, egoTexture]);
+  }, [scene, egoTexture, mattePhone]);
 
   useFrame(() => {
     const g = groupRef.current;
@@ -141,33 +150,50 @@ function MobileModel({
 }
 
 export default function MobileScene(props: MobileSceneProps) {
+  const matte = props.mattePhone ?? false;
+
   return (
     <>
       <color attach="background" args={["#050d12"]} />
 
-      <pointLight position={[-4, 0, 1]} intensity={3} color="#06b6d4" distance={10} decay={2} />
-      <pointLight position={[4, 0, 1]} intensity={3} color="#06b6d4" distance={10} decay={2} />
-      <pointLight position={[0, 4, 0]} intensity={2} color="#ffffff" distance={8} decay={2} />
-      <pointLight position={[0, -3, 2]} intensity={1.5} color="#0891b2" distance={8} decay={2} />
+      <pointLight
+        position={[-4, 0, 1]}
+        intensity={matte ? 2 : 3}
+        color="#06b6d4"
+        distance={10}
+        decay={2}
+      />
+      <pointLight
+        position={[4, 0, 1]}
+        intensity={matte ? 2 : 3}
+        color="#06b6d4"
+        distance={10}
+        decay={2}
+      />
+      <pointLight position={[0, 4, 0]} intensity={matte ? 1.4 : 2} color="#ffffff" distance={8} decay={2} />
+      <pointLight position={[0, -3, 2]} intensity={matte ? 1 : 1.5} color="#0891b2" distance={8} decay={2} />
 
-      <ambientLight intensity={0.4} />
+      <ambientLight intensity={matte ? 0.55 : 0.4} />
 
-      <directionalLight position={[0, 0, 5]} intensity={0.3} color="#ffffff" />
+      <directionalLight position={[0, 0, 5]} intensity={matte ? 0.15 : 0.3} color="#ffffff" />
 
       <MobileModel
         reducedMotion={props.reducedMotion}
         scrollProgressRef={props.scrollProgressRef}
         isMobile={props.isMobile}
+        mattePhone={matte}
       />
 
-      <ContactShadows
-        position={[0, -3, 0]}
-        opacity={0.35}
-        blur={2.5}
-        far={4}
-        color="#000000"
-        resolution={512}
-      />
+      {!matte ? (
+        <ContactShadows
+          position={[0, -3, 0]}
+          opacity={0.35}
+          blur={2.5}
+          far={4}
+          color="#000000"
+          resolution={512}
+        />
+      ) : null}
     </>
   );
 }

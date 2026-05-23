@@ -106,7 +106,6 @@ export default function EgoMobileHero({ kicker, title, subtitle, downloadCta }: 
           <Canvas
             style={{ width: "100%", height: "100%", display: "block" }}
             dpr={[1, 1]}
-            shadows
             camera={MOBILE_CAMERA}
             gl={{ antialias: true, powerPreference: "high-performance", alpha: false }}
             onCreated={({ gl }) => {
@@ -118,6 +117,7 @@ export default function EgoMobileHero({ kicker, title, subtitle, downloadCta }: 
                 reducedMotion={reducedMotion}
                 scrollProgressRef={scrollProgressRef}
                 isMobile
+                mattePhone
               />
               {!reducedMotion ? (
                 <EffectComposer multisampling={0}>
