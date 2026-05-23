@@ -20,7 +20,8 @@ export default function EgoShowcasePage() {
             <p className="ego-hero__subtitle">{t("subtitle")}</p>
             <EgoDownloadButton label={t("downloadCta")} />
           </section>
-          <section className="ego-hero__canvas-wrap" aria-hidden={false}>
+          <div className="ego-hero__phone-glow" aria-hidden />
+          <section className="ego-hero__canvas-wrap" aria-hidden>
             <EgoPhoneCanvas variant="hero" />
           </section>
         </div>

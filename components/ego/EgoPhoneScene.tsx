@@ -45,10 +45,12 @@ function PhoneModel({
   screenTexture,
   position,
   rotation,
+  scale = MODEL_SCALE,
 }: {
   screenTexture: Texture;
   position: [number, number, number];
   rotation: [number, number, number];
+  scale?: number;
 }) {
   const { scene } = useGLTF(MODEL);
   const clonedScene = useMemo(() => scene.clone(true) as Object3D, [scene]);
@@ -89,7 +91,7 @@ function PhoneModel({
     });
   }, [clonedScene, screenTexture]);
 
-  return <primitive object={clonedScene} scale={MODEL_SCALE} position={position} rotation={rotation} />;
+  return <primitive object={clonedScene} scale={scale} position={position} rotation={rotation} />;
 }
 
 function PhoneScreen({
@@ -109,7 +111,7 @@ function PhoneScreen({
   );
 }
 
-export function EgoSceneContent() {
+export function EgoSceneContent({ single = false }: { single?: boolean }) {
   const [egoTex, ego2Tex] = useTexture([EGO_URL, EGO2_URL]);
   const egoPlaneTex = useMemo(() => egoTex.clone(), [egoTex]);
   const ego2PlaneTex = useMemo(() => ego2Tex.clone(), [ego2Tex]);
@@ -134,6 +136,27 @@ export function EgoSceneContent() {
       t.needsUpdate = true;
     }
   }, [egoTex, ego2Tex, egoPlaneTex, ego2PlaneTex]);
+
+  if (single) {
+    return (
+      <>
+        <ambientLight intensity={0.4} />
+        <pointLight position={[-3, 1, 4]} intensity={2.4} color="#ffffff" />
+        <pointLight position={[3, 0.5, 3]} intensity={1.8} color="#7dd3fc" />
+        <pointLight position={[0, 5, 1]} intensity={1.6} color="#ffffff" />
+
+        <PhoneModel
+          screenTexture={egoTex}
+          position={[0, -0.2, 0.55]}
+          rotation={[0.04, 0.1, -0.04]}
+          scale={MODEL_SCALE * 1.12}
+        />
+        <PhoneScreen texture={egoPlaneTex} position={[0, 0.18, 1.02]} rotation={[0.04, 0.1, -0.04]} />
+
+        <ContactShadows position={[0, -3.55, 0]} opacity={0.38} blur={2.8} far={7.5} color="#000000" />
+      </>
+    );
+  }
 
   return (
     <>
@@ -189,8 +212,11 @@ export default function EgoPhoneCanvas({
   const narrow = useIsNarrow();
   const reducedMotion = usePrefersReducedMotion();
 
-  const camera =
-    variant === "banner"
+  const singlePhone = variant === "hero" && narrow;
+
+  const camera = singlePhone
+    ? { position: [0, 0.45, 9.4] as [number, number, number], fov: 36 }
+    : variant === "banner"
       ? {
           position: [0, 0.52, narrow ? 10.4 : 9.2] as [number, number, number],
           fov: narrow ? 36 : 34,
@@ -199,8 +225,17 @@ export default function EgoPhoneCanvas({
 
   const dpr: [number, number] = narrow ? [1, 1.5] : [1.25, 2];
 
+  const canvasClass = [
+    "ego-phone-canvas",
+    `ego-phone-canvas--${variant}`,
+    singlePhone ? "ego-phone-canvas--single" : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className={`ego-phone-canvas ego-phone-canvas--${variant} ${className}`.trim()}>
+    <div className={canvasClass}>
       <Canvas
         camera={camera}
         dpr={dpr}
@@ -212,7 +247,7 @@ export default function EgoPhoneCanvas({
         style={{ width: "100%", height: "100%", display: "block", background: "transparent" }}
       >
         <Suspense fallback={null}>
-          <EgoSceneContent />
+          <EgoSceneContent single={singlePhone} />
         </Suspense>
       </Canvas>
       <style jsx>{`
@@ -224,6 +259,9 @@ export default function EgoPhoneCanvas({
         }
         .ego-phone-canvas--hero {
           min-height: clamp(280px, 52vh, 720px);
+        }
+        .ego-phone-canvas--hero.ego-phone-canvas--single {
+          min-height: 100%;
         }
         .ego-phone-canvas--banner {
           min-height: clamp(300px, 62vw, 460px);

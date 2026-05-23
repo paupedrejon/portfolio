@@ -149,7 +149,7 @@ export default function ExpertiseScrolly() {
   return (
     <ExpertiseSnapScrollerContext.Provider value={null}>
       <div ref={containerRef} id="expertise" style={{ position: "relative", background: "#000000" }}>
-        <ExpertiseNav activeId={activeId} visible={navVisible} />
+        <ExpertiseNav activeId={activeId} visible={navVisible && !isMobile} />
         <SideIndicator
           items={sections.map((section) => ({
             id: section.id,

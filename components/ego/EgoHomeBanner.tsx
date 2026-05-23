@@ -141,15 +141,14 @@ export default function EgoHomeBanner() {
           }
         }
         .ego-home-banner__visual {
-          position: relative;
-          width: 100%;
-          min-height: clamp(300px, 62vw, 420px);
-          margin: 0 -0.75rem;
-          order: 2;
+          display: none;
         }
         @media (min-width: 900px) {
           .ego-home-banner__visual {
+            display: block;
+            position: relative;
             order: 1;
+            width: 100%;
             margin: 0;
             min-height: 400px;
             height: 100%;

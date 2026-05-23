@@ -206,7 +206,7 @@ export default function HomePage() {
             className={`scroll-wrap ${mounted ? "animate-fade-in" : ""}`}
             style={{ animationDelay: "0.8s", animationFillMode: "both", marginTop: "4rem" }}
           >
-            <ScrollButton targetId="expertise" color="transparent" iconColor="rgba(255,255,255,0.9)" />
+            <ScrollButton targetId="ego-news" color="transparent" iconColor="rgba(255,255,255,0.9)" />
           </div>
         </div>
 
