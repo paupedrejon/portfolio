@@ -1,6 +1,7 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
+import { EgoMobileStyleSceneContent } from "@/components/ego/EgoMobileStyleScene";
 import { ContactShadows, useGLTF, useTexture } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import {
@@ -111,7 +112,7 @@ function PhoneScreen({
   );
 }
 
-export function EgoSceneContent({ single = false }: { single?: boolean }) {
+export function EgoSceneContent() {
   const [egoTex, ego2Tex] = useTexture([EGO_URL, EGO2_URL]);
   const egoPlaneTex = useMemo(() => egoTex.clone(), [egoTex]);
   const ego2PlaneTex = useMemo(() => ego2Tex.clone(), [ego2Tex]);
@@ -136,27 +137,6 @@ export function EgoSceneContent({ single = false }: { single?: boolean }) {
       t.needsUpdate = true;
     }
   }, [egoTex, ego2Tex, egoPlaneTex, ego2PlaneTex]);
-
-  if (single) {
-    return (
-      <>
-        <ambientLight intensity={0.4} />
-        <pointLight position={[-3, 1, 4]} intensity={2.4} color="#ffffff" />
-        <pointLight position={[3, 0.5, 3]} intensity={1.8} color="#7dd3fc" />
-        <pointLight position={[0, 5, 1]} intensity={1.6} color="#ffffff" />
-
-        <PhoneModel
-          screenTexture={egoTex}
-          position={[0, -0.2, 0.55]}
-          rotation={[0.04, 0.1, -0.04]}
-          scale={MODEL_SCALE * 1.12}
-        />
-        <PhoneScreen texture={egoPlaneTex} position={[0, 0.18, 1.02]} rotation={[0.04, 0.1, -0.04]} />
-
-        <ContactShadows position={[0, -3.55, 0]} opacity={0.38} blur={2.8} far={7.5} color="#000000" />
-      </>
-    );
-  }
 
   return (
     <>
@@ -215,7 +195,7 @@ export default function EgoPhoneCanvas({
   const singlePhone = variant === "hero" && narrow;
 
   const camera = singlePhone
-    ? { position: [0, 0.45, 9.4] as [number, number, number], fov: 36 }
+    ? { position: [0, 0, 7] as [number, number, number], fov: 30 }
     : variant === "banner"
       ? {
           position: [0, 0.52, narrow ? 10.4 : 9.2] as [number, number, number],
@@ -247,7 +227,7 @@ export default function EgoPhoneCanvas({
         style={{ width: "100%", height: "100%", display: "block", background: "transparent" }}
       >
         <Suspense fallback={null}>
-          <EgoSceneContent single={singlePhone} />
+          {singlePhone ? <EgoMobileStyleSceneContent /> : <EgoSceneContent />}
         </Suspense>
       </Canvas>
       <style jsx>{`
