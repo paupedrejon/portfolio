@@ -8,7 +8,8 @@ type Props = {
   className?: string;
 };
 
-const APK_HREF = "/e-Go.apk";
+const APK_HREF =
+  "https://github.com/paupedrejon/portfolio/releases/download/v1.0.0-ego/e-Go.apk";
 
 export default function EgoDownloadButton({
   href = APK_HREF,
