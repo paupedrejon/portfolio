@@ -1707,6 +1707,11 @@ body::after {
    CURSOS (React course) — tema claro #2a8ca0
    ============================================ */
 
+/* En /cursos: quitar el gradiente morado global del portfolio (body::before) */
+body:has(.cursos-page)::before {
+  display: none;
+}
+
 .cursos-page {
   --cursos-primary: #2a8ca0;
   --cursos-primary-dark: #1f6b7a;
@@ -1716,9 +1721,31 @@ body::after {
   --cursos-border: #e5e7eb;
   --cursos-surface: #ffffff;
   --cursos-surface-alt: #f8fafb;
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   background: var(--cursos-surface);
   color: var(--cursos-text);
+}
+
+/* Gradiente teal a pantalla completa desde la esquina superior izquierda */
+.cursos-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 140% 100% at 0% 0%,
+    rgba(42, 140, 160, 0.22) 0%,
+    rgba(42, 140, 160, 0.08) 40%,
+    transparent 70%
+  );
+}
+
+.cursos-page > * {
+  position: relative;
+  z-index: 1;
 }
 
 .cursos-hero {
@@ -1726,28 +1753,8 @@ body::after {
   z-index: 0;
   padding: 7rem 1.5rem 3.5rem;
   text-align: left;
-  overflow: hidden;
   max-width: 72rem;
   margin: 0 auto;
-}
-
-/* Gradiente a ancho completo (el hero está centrado con max-width) */
-.cursos-hero::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100vw;
-  max-width: 100vw;
-  background: radial-gradient(
-    ellipse 85% 75% at 0% 0%,
-    rgba(42, 140, 160, 0.18) 0%,
-    transparent 62%
-  );
-  pointer-events: none;
 }
 
 @media (min-width: 640px) {

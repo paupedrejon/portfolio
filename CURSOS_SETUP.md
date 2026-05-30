@@ -39,6 +39,18 @@ npm run check  ──envía resultado──▶  API /verify  ──guarda progre
 
 **El alumno solo necesita:** Node.js, el zip y conexión a internet para sincronizar con tu web.
 
+### Reiniciar progreso de todos los alumnos
+
+En local (con `.env.local` y service role):
+
+```bash
+node scripts/reset-cursos-progress.mjs
+```
+
+O en Supabase → SQL Editor, ejecuta `supabase/migrations/002_reset_react_progress.sql`.
+
+Borra `level_progress` y `diplomas` del curso React. **No** borra perfiles ni tokens.
+
 ### Snapshots del zip (mantenimiento)
 
 Los estados tras cada nivel viven en `templates/react-milestones/level-01` … `level-29`.  
