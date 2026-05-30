@@ -7,11 +7,13 @@ import { useTranslations } from "next-intl";
 import DownloadTemplateButton from "./DownloadTemplateButton";
 import TerminalSetupBlock from "./TerminalSetupBlock";
 import LevelPreview from "./LevelPreview";
+import StepHintPanel, { type HintStep } from "./StepHintPanel";
 
 export type CheckpointView = {
   id: string;
   label: string;
   hint: string;
+  hintSteps: HintStep[];
   passed: boolean;
 };
 
@@ -43,9 +45,12 @@ export default function LevelDetailClient({
   const [checkpoints, setCheckpoints] = useState(initialCheckpoints);
   const [status, setStatus] = useState(initialStatus);
   const [openHintId, setOpenHintId] = useState<string | null>(null);
-  const hintsRef = useRef(
-    Object.fromEntries(initialCheckpoints.map((c) => [c.id, c.hint]))
-  );
+  const hintsRef = useRef({
+    hints: Object.fromEntries(initialCheckpoints.map((c) => [c.id, c.hint])),
+    steps: Object.fromEntries(
+      initialCheckpoints.map((c) => [c.id, c.hintSteps ?? []])
+    ),
+  });
 
   const syncProgress = useCallback(async () => {
     if (!session) return;
@@ -60,7 +65,11 @@ export default function LevelDetailClient({
           level.checkpoints.map((cp: CheckpointView) => ({
             id: cp.id,
             label: cp.label,
-            hint: hintsRef.current[cp.id] ?? cp.hint ?? "",
+            hint: hintsRef.current.hints[cp.id] ?? cp.hint ?? "",
+            hintSteps:
+              hintsRef.current.steps[cp.id]?.length
+                ? hintsRef.current.steps[cp.id]
+                : cp.hintSteps ?? [],
             passed: cp.passed,
           }))
         );
@@ -179,8 +188,7 @@ export default function LevelDetailClient({
                 </button>
                 {isOpen && (
                   <div className="cursos-check-item__hint">
-                    <p className="cursos-check-item__hint-title">{t("hintLabel")}</p>
-                    <p className="cursos-check-item__hint-body">{cp.hint}</p>
+                    <StepHintPanel steps={cp.hintSteps} fallback={cp.hint} />
                   </div>
                 )}
               </li>

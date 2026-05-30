@@ -1,11 +1,19 @@
 import { levels, getLevelById, getLevelIds } from "../../courses/react/levels.js";
 import { COURSE_SLUG_REACT, TOTAL_LEVELS } from "./constants";
 
+export type HintStep = {
+  type: "file" | "code" | "tip" | "action";
+  text: string;
+  path?: string;
+  code?: string;
+};
+
 export type Checkpoint = {
   id: string;
   label: string;
   assert: string;
   hint?: string;
+  hintSteps?: HintStep[];
 };
 
 export type LevelPreview = {

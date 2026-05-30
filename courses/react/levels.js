@@ -1,4 +1,5 @@
-/** @typedef {{ id: string; label: string; assert: string; hint?: string }} Checkpoint */
+/** @typedef {{ type: 'file' | 'code' | 'tip' | 'action'; text: string; path?: string; code?: string }} HintStep */
+/** @typedef {{ id: string; label: string; assert: string; hint?: string; hintSteps?: HintStep[] }} Checkpoint */
 /** @typedef {{ title: string; description: string }} LevelPreview */
 /** @typedef {{ id: number; slug: string; title: string; block: string; description: string; objective: string; preview: LevelPreview; instructions?: string; checkpoints: Checkpoint[] }} Level */
 
@@ -22,25 +23,48 @@ export const levels = [
         id: "page-renders",
         label: "La página carga sin errores",
         assert: "app loads at base URL with HTTP 200 and no console errors",
-        hint: "PASO A PASO (muy detallado):\n\n1) Abre la carpeta donde descomprimiste el zip (react-portfolio-starter).\n2) Haz clic en la barra de ruta de arriba, escribe cmd y pulsa Enter (se abre la terminal en esa carpeta).\n3) Si no tienes Node/npm: ve a https://nodejs.org y descarga la versión LTS. Instala y reinicia la terminal.\n4) En la terminal escribe: npm install\n5) Espera a que termine (puede tardar 1-2 minutos).\n6) Luego escribe: npm run dev\n7) Se abrirá (o te dirá) una URL como http://localhost:5173 — ábrela en Chrome o Edge.\n8) Si ves tu página (aunque esté vacía o con texto de prueba) SIN mensajes rojos en la consola (F12 → Consola), este paso se marcará solo al guardar.",
+        hintSteps: [
+          { type: "tip", text: "Con npm run dev en marcha, abre la URL del navegador" },
+          { type: "action", text: "F12 → pestaña Consola → sin errores rojos" },
+          { type: "tip", text: "Al guardar en src/, este paso se marca solo" },
+        ],
       },
       {
         id: "h1-exists",
         label: "Existe un <h1> en la página",
         assert: "page has exactly one visible <h1>",
-        hint: "PASO A PASO:\n\n1) En tu proyecto abre el archivo: src/App.jsx (doble clic).\n2) Busca la función App y dentro del return (...).\n3) Borra lo que haya dentro del return si es confuso, y deja algo así:\n\n   return (\n     <div>\n       <h1>Hello World</h1>\n     </div>\n   );\n\n4) Guarda el archivo (Ctrl+S).\n5) Mira el navegador: debe aparecer UN solo título grande. Si ves dos títulos, borra uno.\n6) Al guardar, la web del curso actualizará este paso automáticamente.",
+        hintSteps: [
+          { type: "file", text: "Abre", path: "src/App.jsx" },
+          {
+            type: "code",
+            text: "Dentro del return:",
+            code: "return (\n  <div>\n    <h1>Hello World</h1>\n  </div>\n);",
+          },
+          { type: "tip", text: "Un solo <h1> visible en el navegador" },
+        ],
       },
       {
         id: "h1-text",
         label: 'El título dice "Hello World"',
         assert: "the <h1> textContent includes 'Hello World' (case-insensitive)",
-        hint: 'PASO A PASO:\n\n1) Abre src/App.jsx.\n2) Dentro del <h1> escribe exactamente: Hello World\n   Ejemplo completo: <h1>Hello World</h1>\n3) No pongas otras palabras dentro del h1 en este nivel.\n4) Guarda (Ctrl+S) y comprueba en el navegador que se lee "Hello World".',
+        hintSteps: [
+          { type: "file", text: "En", path: "src/App.jsx" },
+          { type: "code", text: "Texto del título:", code: "<h1>Hello World</h1>" },
+          { type: "tip", text: "Guarda y comprueba en el navegador" },
+        ],
       },
       {
         id: "h1-centered",
         label: "El título está centrado",
         assert: "computed text-align of the <h1> (or its container) is 'center'",
-        hint: 'PASO A PASO:\n\n1) Opción fácil: envuelve el h1 en un div con clase de Tailwind:\n\n   return (\n     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">\n       <h1 className="text-center text-white text-4xl">Hello World</h1>\n     </div>\n   );\n\n2) "text-center" centra el texto. "flex items-center justify-center" centra el bloque en pantalla.\n3) Guarda y mira el navegador: el título debe quedar en el medio.',
+        hintSteps: [
+          {
+            type: "code",
+            text: "Centra con Tailwind:",
+            code: '<div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">\n  <h1 className="text-center text-white text-4xl">Hello World</h1>\n</div>',
+          },
+          { type: "tip", text: "El título debe quedar en el centro de la pantalla" },
+        ],
       },
     ],
   },
@@ -62,25 +86,45 @@ export const levels = [
         id: "h1-still-present",
         label: "El h1 Hello World sigue presente",
         assert: "page has visible <h1> with Hello World",
-        hint: "PASO A PASO:\n\n1) Abre src/App.jsx.\n2) NO borres el <h1>Hello World</h1> del nivel 1.\n3) Si lo borraste sin querer, vuelve a ponerlo antes de seguir.\n4) Guarda y comprueba en el navegador que sigue viéndose Hello World.",
+        hintSteps: [
+          { type: "tip", text: "No borres el h1 del nivel anterior" },
+          { type: "code", text: "Debe seguir:", code: "<h1>Hello World</h1>" },
+        ],
       },
       {
         id: "subtitle-exists",
         label: "Existe un subtítulo <p> en el hero",
         assert: "hero section has a visible <p> with at least 10 characters",
-        hint: "PASO A PASO:\n\n1) Justo DEBAJO del <h1>, añade un párrafo:\n   <p className=\"text-gray-300 mt-4\">Desarrollador web en formación</p>\n2) Cambia el texto por algo sobre ti (mínimo 10 letras).\n3) Guarda (Ctrl+S) y mira el navegador.",
+        hintSteps: [
+          { type: "action", text: "Debajo del h1, añade un <p>" },
+          {
+            type: "code",
+            text: "Ejemplo:",
+            code: '<p className="text-gray-300 mt-4">Desarrollador web en formación</p>',
+          },
+        ],
       },
       {
         id: "cta-button-exists",
         label: "Existe un botón CTA",
         assert: "page has a visible <button> or <a> styled as CTA in hero",
-        hint: "PASO A PASO:\n\n1) Debajo del <p>, añade un botón:\n   <button type=\"button\">Ver proyectos</button>\n2) También vale un <a href=\"#\">Contáctame</a>.\n3) Debe verse claramente como un botón/enlace en el hero.\n4) Guarda y comprueba en el navegador.",
+        hintSteps: [
+          { type: "action", text: "Debajo del párrafo, añade un botón" },
+          { type: "code", text: "Ejemplo:", code: '<button type="button">Ver proyectos</button>' },
+        ],
       },
       {
         id: "cta-button-styled",
         label: "El botón CTA tiene padding y border-radius",
         assert: "CTA has padding >= 8px and border-radius >= 4px",
-        hint: "PASO A PASO:\n\n1) Al botón añade clases Tailwind:\n   className=\"mt-6 px-6 py-3 rounded-full bg-[#2a8ca0] text-white font-semibold hover:opacity-90\"\n2) px-6 py-3 = padding interno.\n3) rounded-full = bordes redondos.\n4) Guarda y mira que el botón se vea «gordo» y con esquinas redondeadas.",
+        hintSteps: [
+          {
+            type: "code",
+            text: "Estilo del botón:",
+            code: 'className="mt-6 px-6 py-3 rounded-full bg-[#2a8ca0] text-white font-semibold"',
+          },
+          { type: "tip", text: "Bordes redondos y buen padding" },
+        ],
       },
     ],
   },
@@ -102,25 +146,36 @@ export const levels = [
         id: "about-section-exists",
         label: 'Existe una sección "Sobre mí"',
         assert: "page has section#about or section with h2 containing 'Sobre mí'",
-        hint: "1) Debajo del hero, crea <section id=\"about\">...</section>.\n2) Dentro irá el título y los párrafos de tu bio.",
+        hintSteps: [
+          { type: "action", text: "Debajo del hero, nueva sección" },
+          { type: "code", text: "Estructura:", code: '<section id="about">\n  ...\n</section>' },
+        ],
       },
       {
         id: "about-heading",
         label: 'Hay un <h2> con "Sobre mí"',
         assert: "section has visible h2 with 'Sobre mí' (case-insensitive)",
-        hint: "1) Dentro de la sección, añade <h2>Sobre mí</h2>.\n2) Debe ser visible en la página.",
+        hintSteps: [
+          { type: "code", text: "Título de la sección:", code: "<h2>Sobre mí</h2>" },
+        ],
       },
       {
         id: "about-paragraph",
         label: "Hay al menos un párrafo con bio",
         assert: "about section has <p> with at least 50 characters",
-        hint: "1) Añade uno o más <p> con tu presentación.\n2) Escribe al menos 3 frases (50+ caracteres en total).",
+        hintSteps: [
+          { type: "action", text: "Añade 2–3 frases sobre ti" },
+          { type: "tip", text: "Mínimo ~50 caracteres en total" },
+        ],
       },
       {
         id: "about-mobile-readable",
         label: "La sección es legible en móvil (375px)",
         assert: "about section visible at 375px viewport without horizontal overflow",
-        hint: "1) Redimensiona el navegador a móvil (375px) o usa DevTools.\n2) Evita anchos fijos grandes; usa max-w y padding (px-4).",
+        hintSteps: [
+          { type: "tip", text: "DevTools → modo móvil 375px" },
+          { type: "tip", text: "Usa px-4 y max-w, sin anchos fijos enormes" },
+        ],
       },
     ],
   },
@@ -448,8 +503,10 @@ export const levels = [
   },
 ];
 
-const DEFAULT_CHECKPOINT_HINT =
-  "Sigue las instrucciones del nivel en tu proyecto. Cuando tu código cumpla este requisito, el punto se marcará automáticamente.";
+const DEFAULT_HINT_STEPS = [
+  { type: "tip", text: "Edita tu proyecto y guarda (Ctrl+S)" },
+  { type: "tip", text: "Este paso se marca solo al cumplir el requisito" },
+];
 
 for (const level of levels) {
   if (!level.objective) {
@@ -462,7 +519,7 @@ for (const level of levels) {
     };
   }
   for (const cp of level.checkpoints) {
-    if (!cp.hint) cp.hint = DEFAULT_CHECKPOINT_HINT;
+    if (!cp.hintSteps?.length) cp.hintSteps = DEFAULT_HINT_STEPS;
   }
 }
 

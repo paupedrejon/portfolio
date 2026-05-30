@@ -197,6 +197,7 @@ export function buildProgressPayload(
       id: cp.id,
       label: cp.label,
       hint: cp.hint ?? "",
+      hintSteps: cp.hintSteps ?? [],
       passed: completed[cp.id] === true,
     }));
     const passed = row?.passed === true;

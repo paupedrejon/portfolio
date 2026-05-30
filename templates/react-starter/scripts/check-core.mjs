@@ -1,11 +1,9 @@
 import { spawn } from "child_process";
+import { spawnVite, projectRoot } from "./spawn-vite.mjs";
 import { chromium } from "@playwright/test";
 import { getCheck } from "./checks/index.js";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-export const projectRoot = join(__dirname, "..");
+export { projectRoot };
 export const DEFAULT_PORT = 5173;
 
 const GREEN = "\x1b[32m";
@@ -40,12 +38,10 @@ export async function ensureDevServer(port = DEFAULT_PORT) {
   }
 
   return new Promise((resolve, reject) => {
-    const isWin = process.platform === "win32";
-    const proc = spawn(isWin ? "npm.cmd" : "npm", ["run", "dev:only"], {
-      cwd: projectRoot,
-      shell: false,
+    const proc = spawnVite({
       stdio: ["ignore", "pipe", "pipe"],
-      env: { ...process.env, FORCE_COLOR: "0", BROWSER: "none" },
+      env: { FORCE_COLOR: "0", BROWSER: "none" },
+      windowsHide: true,
     });
 
     let resolved = false;

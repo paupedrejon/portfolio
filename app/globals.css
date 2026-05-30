@@ -2439,26 +2439,101 @@ body::after {
 }
 
 .cursos-check-item__hint {
-  padding: 0 1.35rem 1.25rem 3.85rem;
+  padding: 0.75rem 1.25rem 1.15rem;
   border-top: 1px solid var(--cursos-border);
   background: var(--cursos-surface-alt);
 }
 
-.cursos-check-item__hint-title {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--cursos-primary);
-  margin: 1rem 0 0.5rem;
+.cursos-hint-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.cursos-check-item__hint-body {
-  font-size: 1rem;
-  line-height: 1.65;
-  color: var(--cursos-text-muted);
-  white-space: pre-line;
+.cursos-hint-step {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--cursos-surface);
+  border: 1px solid var(--cursos-border);
+}
+
+.cursos-hint-step--code {
+  border-color: rgba(42, 140, 160, 0.35);
+  background: var(--cursos-primary-soft);
+}
+
+.cursos-hint-step__icon {
+  font-size: 1.35rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.cursos-hint-step__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.cursos-hint-step__text {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cursos-text);
+  line-height: 1.4;
+}
+
+.cursos-hint-step__path {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.35rem;
+  background: #0f172a;
+  color: #7dd3fc;
+  font-size: 0.85rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+.cursos-hint-step__code-wrap {
+  position: relative;
+  margin-top: 0.35rem;
+}
+
+.cursos-hint-step__code {
   margin: 0;
+  padding: 0.75rem 4rem 0.75rem 0.85rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  overflow-x: auto;
+  white-space: pre;
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+.cursos-hint-step__copy {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  padding: 0.25rem 0.5rem;
+  border: none;
+  border-radius: 0.35rem;
+  background: var(--cursos-primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cursos-hint-fallback {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--cursos-text-muted);
+  line-height: 1.5;
 }
 
 .cursos-level-page__next {
