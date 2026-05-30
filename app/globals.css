@@ -2469,9 +2469,19 @@ body::after {
 }
 
 .cursos-hint-step__icon {
-  font-size: 1.35rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
   flex-shrink: 0;
+  border-radius: 0.5rem;
+  background: var(--cursos-primary-soft);
+  color: var(--cursos-primary);
+}
+
+.cursos-hint-step__icon-svg {
+  display: block;
 }
 
 .cursos-hint-step__body {

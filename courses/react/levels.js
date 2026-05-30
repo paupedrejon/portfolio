@@ -24,9 +24,11 @@ export const levels = [
         label: "La página carga sin errores",
         assert: "app loads at base URL with HTTP 200 and no console errors",
         hintSteps: [
-          { type: "tip", text: "Con npm run dev en marcha, abre la URL del navegador" },
-          { type: "action", text: "F12 → pestaña Consola → sin errores rojos" },
-          { type: "tip", text: "Al guardar en src/, este paso se marca solo" },
+          { type: "action", text: "En la terminal del proyecto: npm install (solo la 1ª vez)" },
+          { type: "action", text: "Luego: npm run dev" },
+          { type: "tip", text: "Abre http://localhost:5173 en el navegador" },
+          { type: "action", text: "Pulsa F12 → Consola: no debe haber líneas rojas" },
+          { type: "tip", text: "Guarda cualquier cambio en src/ y este paso se actualiza solo" },
         ],
       },
       {
@@ -34,13 +36,15 @@ export const levels = [
         label: "Existe un <h1> en la página",
         assert: "page has exactly one visible <h1>",
         hintSteps: [
-          { type: "file", text: "Abre", path: "src/App.jsx" },
+          { type: "file", text: "Abre el archivo", path: "src/App.jsx" },
+          { type: "action", text: "Busca la palabra return y los paréntesis ( )" },
+          { type: "action", text: "Dentro del return, crea un <div> y dentro un <h1> vacío" },
           {
             type: "code",
-            text: "Dentro del return:",
-            code: "return (\n  <div>\n    <h1>Hello World</h1>\n  </div>\n);",
+            text: "Por ahora solo esto (sin texto dentro del h1):",
+            code: "return (\n  <div>\n    <h1></h1>\n  </div>\n);",
           },
-          { type: "tip", text: "Un solo <h1> visible en el navegador" },
+          { type: "tip", text: "Guarda (Ctrl+S). Debes ver un título vacío o muy pequeño — solo 1 h1 en la página" },
         ],
       },
       {
@@ -48,9 +52,14 @@ export const levels = [
         label: 'El título dice "Hello World"',
         assert: "the <h1> textContent includes 'Hello World' (case-insensitive)",
         hintSteps: [
-          { type: "file", text: "En", path: "src/App.jsx" },
-          { type: "code", text: "Texto del título:", code: "<h1>Hello World</h1>" },
-          { type: "tip", text: "Guarda y comprueba en el navegador" },
+          { type: "file", text: "Mismo archivo", path: "src/App.jsx" },
+          { type: "action", text: "No cambies el <div>. Solo edita lo que va DENTRO del <h1>" },
+          {
+            type: "code",
+            text: "Sustituye el h1 vacío por:",
+            code: "<h1>Hello World</h1>",
+          },
+          { type: "tip", text: "Guarda y mira el navegador: debe decir Hello World" },
         ],
       },
       {
@@ -58,12 +67,18 @@ export const levels = [
         label: "El título está centrado",
         assert: "computed text-align of the <h1> (or its container) is 'center'",
         hintSteps: [
+          { type: "file", text: "Sigue en", path: "src/App.jsx" },
+          { type: "action", text: "Mantén <h1>Hello World</h1> — solo añadimos una clase" },
           {
             type: "code",
-            text: "Centra con Tailwind:",
-            code: '<div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">\n  <h1 className="text-center text-white text-4xl">Hello World</h1>\n</div>',
+            text: 'Añade className="text-center" al h1 (nada más por ahora):',
+            code: '<h1 className="text-center">Hello World</h1>',
           },
-          { type: "tip", text: "El título debe quedar en el centro de la pantalla" },
+          { type: "tip", text: "Guarda: el texto debe quedar centrado en horizontal" },
+          {
+            type: "tip",
+            text: "Opcional después: className=\"text-white text-4xl\" en el h1 y bg oscuro en el div",
+          },
         ],
       },
     ],
@@ -87,8 +102,9 @@ export const levels = [
         label: "El h1 Hello World sigue presente",
         assert: "page has visible <h1> with Hello World",
         hintSteps: [
-          { type: "tip", text: "No borres el h1 del nivel anterior" },
-          { type: "code", text: "Debe seguir:", code: "<h1>Hello World</h1>" },
+          { type: "file", text: "Abre", path: "src/App.jsx" },
+          { type: "tip", text: "Comprueba que tu h1 del nivel 1 sigue ahí" },
+          { type: "code", text: "Debe incluir:", code: '<h1 className="text-center">Hello World</h1>' },
         ],
       },
       {
@@ -96,11 +112,12 @@ export const levels = [
         label: "Existe un subtítulo <p> en el hero",
         assert: "hero section has a visible <p> with at least 10 characters",
         hintSteps: [
-          { type: "action", text: "Debajo del h1, añade un <p>" },
+          { type: "action", text: "Justo DEBAJO del </h1>, en la misma columna, añade una línea nueva" },
+          { type: "code", text: "Primero un párrafo simple:", code: "<p>Desarrollador web en formación</p>" },
+          { type: "action", text: "Guarda y comprueba que se ve debajo del título" },
           {
-            type: "code",
-            text: "Ejemplo:",
-            code: '<p className="text-gray-300 mt-4">Desarrollador web en formación</p>',
+            type: "tip",
+            text: 'Luego puedes añadir clases: className="text-gray-300 mt-4"',
           },
         ],
       },
@@ -109,8 +126,9 @@ export const levels = [
         label: "Existe un botón CTA",
         assert: "page has a visible <button> or <a> styled as CTA in hero",
         hintSteps: [
-          { type: "action", text: "Debajo del párrafo, añade un botón" },
-          { type: "code", text: "Ejemplo:", code: '<button type="button">Ver proyectos</button>' },
+          { type: "action", text: "Debajo del <p>, añade un botón sin estilos todavía" },
+          { type: "code", text: "Mínimo:", code: '<button type="button">Ver proyectos</button>' },
+          { type: "tip", text: "Guarda: debe verse un botón clicable en la página" },
         ],
       },
       {
@@ -118,12 +136,15 @@ export const levels = [
         label: "El botón CTA tiene padding y border-radius",
         assert: "CTA has padding >= 8px and border-radius >= 4px",
         hintSteps: [
+          { type: "action", text: "No cambies el texto del botón. Solo añade className" },
+          { type: "action", text: "Paso 1: añade padding → className=\"px-6 py-3\"" },
+          { type: "action", text: "Paso 2: añade bordes redondos → rounded-full" },
           {
             type: "code",
-            text: "Estilo del botón:",
-            code: 'className="mt-6 px-6 py-3 rounded-full bg-[#2a8ca0] text-white font-semibold"',
+            text: "Ejemplo completo:",
+            code: 'className="px-6 py-3 rounded-full bg-[#2a8ca0] text-white"',
           },
-          { type: "tip", text: "Bordes redondos y buen padding" },
+          { type: "tip", text: "Guarda: el botón debe verse más grande y con esquinas redondas" },
         ],
       },
     ],
@@ -147,8 +168,10 @@ export const levels = [
         label: 'Existe una sección "Sobre mí"',
         assert: "page has section#about or section with h2 containing 'Sobre mí'",
         hintSteps: [
-          { type: "action", text: "Debajo del hero, nueva sección" },
-          { type: "code", text: "Estructura:", code: '<section id="about">\n  ...\n</section>' },
+          { type: "file", text: "Abre", path: "src/App.jsx" },
+          { type: "action", text: "Debajo de todo el hero (h1, p, botón), añade una sección nueva" },
+          { type: "code", text: "Empieza vacía:", code: '<section id="about">\n</section>' },
+          { type: "tip", text: "Guarda: aún puede estar vacía por dentro, pero la sección debe existir" },
         ],
       },
       {
@@ -156,7 +179,9 @@ export const levels = [
         label: 'Hay un <h2> con "Sobre mí"',
         assert: "section has visible h2 with 'Sobre mí' (case-insensitive)",
         hintSteps: [
-          { type: "code", text: "Título de la sección:", code: "<h2>Sobre mí</h2>" },
+          { type: "action", text: "Dentro de <section id=\"about\">, primera línea:" },
+          { type: "code", text: "Añade solo el título:", code: "<h2>Sobre mí</h2>" },
+          { type: "tip", text: "Guarda y comprueba que se lee Sobre mí" },
         ],
       },
       {
@@ -164,8 +189,9 @@ export const levels = [
         label: "Hay al menos un párrafo con bio",
         assert: "about section has <p> with at least 50 characters",
         hintSteps: [
-          { type: "action", text: "Añade 2–3 frases sobre ti" },
-          { type: "tip", text: "Mínimo ~50 caracteres en total" },
+          { type: "action", text: "Debajo del h2, añade un <p> con tu presentación" },
+          { type: "tip", text: "Escribe 2 o 3 frases sobre ti (mínimo 50 letras en total)" },
+          { type: "code", text: "Ejemplo:", code: "<p>Soy estudiante de desarrollo web. Me gusta React y construir proyectos.</p>" },
         ],
       },
       {
@@ -173,8 +199,9 @@ export const levels = [
         label: "La sección es legible en móvil (375px)",
         assert: "about section visible at 375px viewport without horizontal overflow",
         hintSteps: [
-          { type: "tip", text: "DevTools → modo móvil 375px" },
-          { type: "tip", text: "Usa px-4 y max-w, sin anchos fijos enormes" },
+          { type: "action", text: "F12 → icono móvil → elige 375px de ancho" },
+          { type: "action", text: "A la sección about añade: className=\"px-4 max-w-2xl mx-auto\"" },
+          { type: "tip", text: "No debe aparecer barra de scroll horizontal" },
         ],
       },
     ],
