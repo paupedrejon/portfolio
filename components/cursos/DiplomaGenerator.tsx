@@ -10,6 +10,43 @@ type Props = {
   issuedAt: string;
 };
 
+const CERT_WIDTH = 800;
+const CERT_HEIGHT = 560;
+
+async function captureCertificate(node: HTMLDivElement) {
+  const logo = node.querySelector("img");
+  if (logo && !logo.complete) {
+    await new Promise<void>((resolve, reject) => {
+      logo.onload = () => resolve();
+      logo.onerror = () => reject(new Error("Logo load failed"));
+    });
+  }
+
+  const prev = {
+    width: node.style.width,
+    height: node.style.height,
+    maxWidth: node.style.maxWidth,
+  };
+  node.style.width = `${CERT_WIDTH}px`;
+  node.style.height = `${CERT_HEIGHT}px`;
+  node.style.maxWidth = `${CERT_WIDTH}px`;
+
+  try {
+    return await html2canvas(node, {
+      backgroundColor: "#ffffff",
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      width: CERT_WIDTH,
+      height: CERT_HEIGHT,
+    });
+  } finally {
+    node.style.width = prev.width;
+    node.style.height = prev.height;
+    node.style.maxWidth = prev.maxWidth;
+  }
+}
+
 export default function DiplomaGenerator({ displayName, issuedAt }: Props) {
   const t = useTranslations("cursos");
   const ref = useRef<HTMLDivElement>(null);
@@ -22,10 +59,7 @@ export default function DiplomaGenerator({ displayName, issuedAt }: Props) {
 
   async function downloadPng() {
     if (!ref.current) return;
-    const canvas = await html2canvas(ref.current, {
-      backgroundColor: "#0a0a0f",
-      scale: 2,
-    });
+    const canvas = await captureCertificate(ref.current);
     const link = document.createElement("a");
     link.download = `diploma-react-${displayName.replace(/\s+/g, "-")}.png`;
     link.href = canvas.toDataURL("image/png");
@@ -34,56 +68,62 @@ export default function DiplomaGenerator({ displayName, issuedAt }: Props) {
 
   async function downloadPdf() {
     if (!ref.current) return;
-    const canvas = await html2canvas(ref.current, {
-      backgroundColor: "#0a0a0f",
-      scale: 2,
-    });
+    const canvas = await captureCertificate(ref.current);
     const img = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [800, 560] });
-    pdf.addImage(img, "PNG", 0, 0, 800, 560);
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "px",
+      format: [CERT_WIDTH, CERT_HEIGHT],
+    });
+    pdf.addImage(img, "PNG", 0, 0, CERT_WIDTH, CERT_HEIGHT);
     pdf.save(`diploma-react-${displayName.replace(/\s+/g, "-")}.pdf`);
   }
 
   return (
-    <div className="flex flex-col items-center gap-8">
-      <div
-        ref={ref}
-        className="w-full max-w-3xl aspect-[800/560] rounded-2xl border-2 border-indigo-500/40 p-12 flex flex-col items-center justify-center text-center relative overflow-hidden"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 30%, rgba(99,102,241,0.15) 0%, #0a0a0f 70%)",
-        }}
-      >
-        <div
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(99,102,241,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.3) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-        <p className="text-sm uppercase tracking-[0.3em] text-indigo-400 relative z-10 mb-4">
-          Certificado de finalización
-        </p>
-        <h2 className="text-3xl md:text-4xl font-bold gradient-text relative z-10 mb-2">
-          Curso de REACT
-        </h2>
-        <p className="text-lg text-violet-300 relative z-10 mb-8">{t("diplomaSubtitle")}</p>
-        <p className="text-[var(--text-muted)] relative z-10 mb-2">Se certifica que</p>
-        <p className="text-4xl md:text-5xl font-bold text-white relative z-10 mb-8">
-          {displayName}
-        </p>
-        <p className="text-[var(--text-secondary)] relative z-10">
-          ha completado con éxito los 30 niveles del curso
-        </p>
-        <p className="text-sm text-[var(--text-muted)] relative z-10 mt-8">{dateStr}</p>
+    <div className="cursos-diploma-generator">
+      <div className="cursos-diploma-generator__preview">
+        <div ref={ref} className="cursos-diploma-cert">
+          <div className="cursos-diploma-cert__frame" aria-hidden />
+          <div className="cursos-diploma-cert__corner cursos-diploma-cert__corner--tl" aria-hidden />
+          <div className="cursos-diploma-cert__corner cursos-diploma-cert__corner--tr" aria-hidden />
+          <div className="cursos-diploma-cert__corner cursos-diploma-cert__corner--bl" aria-hidden />
+          <div className="cursos-diploma-cert__corner cursos-diploma-cert__corner--br" aria-hidden />
+
+          <img
+            src="/logo.svg"
+            alt=""
+            width={72}
+            height={72}
+            crossOrigin="anonymous"
+            className="cursos-diploma-cert__logo"
+          />
+
+          <p className="cursos-diploma-cert__label">Certificado de finalización</p>
+
+          <h2 className="cursos-diploma-cert__title">
+            Curso de <span>React</span>
+          </h2>
+
+          <p className="cursos-diploma-cert__issuer">{t("diplomaSubtitle")}</p>
+
+          <div className="cursos-diploma-cert__divider" aria-hidden />
+
+          <p className="cursos-diploma-cert__intro">Se certifica que</p>
+          <p className="cursos-diploma-cert__name">{displayName}</p>
+          <p className="cursos-diploma-cert__body">
+            ha completado con éxito los 30 niveles del curso
+          </p>
+
+          <p className="cursos-diploma-cert__date">{dateStr}</p>
+          <p className="cursos-diploma-cert__site">paupedrejon.com</p>
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 justify-center">
-        <button type="button" onClick={downloadPng} className="btn-primary">
+      <div className="cursos-diploma-generator__actions">
+        <button type="button" onClick={downloadPng} className="cursos-btn-primary">
           {t("diplomaDownloadPng")}
         </button>
-        <button type="button" onClick={downloadPdf} className="btn-secondary">
+        <button type="button" onClick={downloadPdf} className="cursos-btn-outline">
           {t("diplomaDownloadPdf")}
         </button>
       </div>

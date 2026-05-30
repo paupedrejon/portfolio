@@ -2469,6 +2469,248 @@ body:has(.cursos-page)::before {
   min-height: 12rem;
 }
 
+/* Diploma — colores fijos (#2a8ca0) para exportación PNG/PDF fiel */
+.cursos-diploma-page {
+  min-height: 100vh;
+  padding: 6rem 1.5rem 4rem;
+}
+
+.cursos-diploma-page__inner {
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.cursos-diploma-page__loading,
+.cursos-diploma-page__locked {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1.5rem;
+  color: var(--cursos-text-muted);
+}
+
+.cursos-diploma-page__back {
+  display: inline-block;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--cursos-primary);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.cursos-diploma-page__back:hover {
+  color: var(--cursos-primary-dark);
+}
+
+.cursos-diploma-page__header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.cursos-diploma-page__logo {
+  margin: 0 auto 1rem;
+  display: block;
+}
+
+.cursos-diploma-page__title {
+  font-family: var(--font-league-spartan), system-ui, sans-serif;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 800;
+  color: var(--cursos-text);
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.cursos-diploma-page__subtitle {
+  margin: 0;
+  color: var(--cursos-text-muted);
+  font-size: 1.05rem;
+}
+
+.cursos-diploma-generator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.cursos-diploma-generator__preview {
+  width: 100%;
+  max-width: 800px;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  box-shadow:
+    0 4px 24px rgba(42, 140, 160, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+}
+
+.cursos-diploma-generator__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.cursos-diploma-cert {
+  position: relative;
+  width: 800px;
+  height: 560px;
+  margin: 0 auto;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 3.5rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.cursos-diploma-cert__frame {
+  position: absolute;
+  inset: 18px;
+  border: 2px solid #2a8ca0;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.cursos-diploma-cert__corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: #2a8ca0;
+  border-style: solid;
+  pointer-events: none;
+}
+
+.cursos-diploma-cert__corner--tl {
+  top: 12px;
+  left: 12px;
+  border-width: 3px 0 0 3px;
+}
+
+.cursos-diploma-cert__corner--tr {
+  top: 12px;
+  right: 12px;
+  border-width: 3px 3px 0 0;
+}
+
+.cursos-diploma-cert__corner--bl {
+  bottom: 12px;
+  left: 12px;
+  border-width: 0 0 3px 3px;
+}
+
+.cursos-diploma-cert__corner--br {
+  bottom: 12px;
+  right: 12px;
+  border-width: 0 3px 3px 0;
+}
+
+.cursos-diploma-cert__logo {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 1.25rem;
+}
+
+.cursos-diploma-cert__label {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #2a8ca0;
+}
+
+.cursos-diploma-cert__title {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 0.35rem;
+  font-family: var(--font-league-spartan), system-ui, sans-serif;
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #0a0a0a;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.cursos-diploma-cert__title span {
+  color: #2a8ca0;
+}
+
+.cursos-diploma-cert__issuer {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 1.25rem;
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+.cursos-diploma-cert__divider {
+  position: relative;
+  z-index: 1;
+  width: 120px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #2a8ca0, transparent);
+  margin-bottom: 1.25rem;
+}
+
+.cursos-diploma-cert__intro {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.cursos-diploma-cert__name {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 0.75rem;
+  font-family: var(--font-league-spartan), system-ui, sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #0a0a0a;
+  line-height: 1.15;
+}
+
+.cursos-diploma-cert__body {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 1.5rem;
+  font-size: 1rem;
+  color: #4b5563;
+  max-width: 28rem;
+  line-height: 1.5;
+}
+
+.cursos-diploma-cert__date {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 0.35rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.cursos-diploma-cert__site {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #2a8ca0;
+}
+
 .cursos-mock {
   display: flex;
   flex-direction: column;
