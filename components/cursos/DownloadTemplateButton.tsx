@@ -5,7 +5,12 @@ import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-export default function DownloadTemplateButton() {
+type Props = {
+  /** Nivel en el que está el alumno: el zip incluye el código tras completar el nivel anterior */
+  levelId?: number;
+};
+
+export default function DownloadTemplateButton({ levelId = 1 }: Props) {
   const t = useTranslations("cursos");
   const { data: session, status } = useSession();
   const pathname = usePathname();
@@ -23,7 +28,11 @@ export default function DownloadTemplateButton() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/cursos/react/download", { method: "POST" });
+      const res = await fetch("/api/cursos/react/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ levelId }),
+      });
       if (res.status === 503) {
         setError(t("supabaseNotConfigured"));
         return;
@@ -36,7 +45,9 @@ export default function DownloadTemplateButton() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "react-portfolio-starter.zip";
+      const disp = res.headers.get("Content-Disposition");
+      const match = disp?.match(/filename="([^"]+)"/);
+      a.download = match?.[1] ?? `react-portfolio-nivel-${levelId}.zip`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {

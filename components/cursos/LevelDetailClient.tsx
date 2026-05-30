@@ -232,13 +232,15 @@ export default function LevelDetailClient({
                   <div className="cursos-check-item__hint">
                     {cp.id === "page-renders" && (
                       <>
-                        {levelId === 1 && (
-                          <div className="cursos-level-page__download cursos-level-page__download--inline">
-                            <h3>{t("downloadTemplate")}</h3>
-                            <p>{t("level1DownloadHint")}</p>
-                            <DownloadTemplateButton />
-                          </div>
-                        )}
+                        <div className="cursos-level-page__download cursos-level-page__download--inline">
+                          <h3>{t("downloadTemplate")}</h3>
+                          <p>
+                            {levelId === 1
+                              ? t("level1DownloadHint")
+                              : t("downloadAtLevelHint", { level: levelId })}
+                          </p>
+                          <DownloadTemplateButton levelId={levelId} />
+                        </div>
                         <TerminalSetupBlock embedded />
                       </>
                     )}

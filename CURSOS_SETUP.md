@@ -26,7 +26,9 @@ npm run check  ──envía resultado──▶  API /verify  ──guarda progre
 
 1. Entra en **https://www.paupedrejon.com/es/cursos/react**
 2. Inicia sesión con **Google** (igual que en Study Agents).
-3. Pulsa **Descargar plantilla** → descomprime el zip.
+3. Pulsa **Descargar plantilla** (en cualquier nivel) → descomprime el zip.
+   - **Nivel 1:** proyecto vacío (plantilla inicial).
+   - **Nivel N (N>1):** código como si hubieras terminado el nivel **N−1** (p. ej. nivel 5 → estado tras el 4).
 4. En esa carpeta:
    ```bash
    npm install
@@ -37,7 +39,18 @@ npm run check  ──envía resultado──▶  API /verify  ──guarda progre
 
 **El alumno solo necesita:** Node.js, el zip y conexión a internet para sincronizar con tu web.
 
+### Snapshots del zip (mantenimiento)
+
+Los estados tras cada nivel viven en `templates/react-milestones/level-01` … `level-29`.  
+Para regenerar tras cambiar el curriculum:
+
+```bash
+node scripts/generate-react-milestones.mjs
+node scripts/test-zip-milestones.mjs
+```
+
 ---
+
 
 ## Parte B — Lo que haces TÚ (una vez)
 
