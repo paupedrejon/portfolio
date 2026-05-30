@@ -360,6 +360,7 @@ export default function ConditionalHeader() {
     { label: t("education"), ariaLabel: "View my education", link: "/education" },
     { label: t("about"), ariaLabel: "Learn about me", link: "/about-me" },
     { label: t("contact"), ariaLabel: "Get in touch", link: "/contact" },
+    { label: t("cursos"), ariaLabel: "View courses", link: "/cursos" },
     { label: t("cv"), ariaLabel: "Download CV", link: "/PauPedrejonCV.pdf", external: true },
   ];
 
