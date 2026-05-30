@@ -9,7 +9,6 @@ export default function CursosLanding() {
   return (
     <div className="cursos-page">
       <header className="cursos-hero">
-        <p className="cursos-hero__eyebrow">{t("catalogEyebrow")}</p>
         <h1 className="cursos-hero__title">
           <span className="cursos-hero__title-line">{t("catalogTitle")}</span>
           <span className="cursos-hero__title-accent">{t("catalogTitleAccent")}</span>
@@ -28,7 +27,7 @@ export default function CursosLanding() {
               fontSize: "0.7rem",
               textTransform: "uppercase",
               letterSpacing: "0.15em",
-              color: "#a5b4fc",
+              color: "var(--cursos-primary)",
               fontWeight: 600,
             }}
           >
@@ -44,10 +43,17 @@ export default function CursosLanding() {
           >
             {t("reactCardTitle")}
           </h2>
-          <p style={{ color: "#94a3b8", fontSize: "1rem", margin: "0 0 1.5rem", lineHeight: 1.55 }}>
+          <p
+            style={{
+              color: "var(--cursos-text-muted)",
+              fontSize: "1rem",
+              margin: "0 0 1.5rem",
+              lineHeight: 1.55,
+            }}
+          >
             {t("reactCardDescription")}
           </p>
-          <span className="btn-primary" style={{ display: "inline-flex", borderRadius: "999px" }}>
+          <span className="cursos-btn-primary" style={{ display: "inline-flex" }}>
             {t("reactCta")} →
           </span>
         </Link>

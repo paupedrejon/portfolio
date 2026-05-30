@@ -196,6 +196,7 @@ export function buildProgressPayload(
     const checkpoints = (level.checkpoints ?? []).map((cp) => ({
       id: cp.id,
       label: cp.label,
+      hint: cp.hint ?? "",
       passed: completed[cp.id] === true,
     }));
     const passed = row?.passed === true;

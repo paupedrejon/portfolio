@@ -1,7 +1,8 @@
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getLevelById } from "@/lib/cursos/levels";
+import { TOTAL_LEVELS } from "@/lib/cursos/constants";
 import {
   buildProgressPayload,
   getProgressRows,
@@ -25,10 +26,11 @@ export default async function LevelPage({ params }: Props) {
   const level = getLevelById(levelId);
   if (!level) notFound();
 
-  let status = "locked";
+  let status = levelId === 1 ? "current" : "locked";
   let checkpoints = level.checkpoints.map((c) => ({
     id: c.id,
     label: c.label,
+    hint: c.hint ?? "",
     passed: false,
   }));
 
@@ -51,11 +53,17 @@ export default async function LevelPage({ params }: Props) {
       const levelState = progress.levels.find((l) => l.id === levelId);
       if (levelState) {
         status = levelState.status;
-        checkpoints = levelState.checkpoints;
+        checkpoints = level.checkpoints.map((c) => {
+          const fromProgress = levelState.checkpoints.find((p) => p.id === c.id);
+          return {
+            id: c.id,
+            label: c.label,
+            hint: c.hint ?? "",
+            passed: fromProgress?.passed ?? false,
+          };
+        });
       }
     }
-  } else {
-    status = levelId === 1 ? "current" : "locked";
   }
 
   return (
@@ -64,8 +72,9 @@ export default async function LevelPage({ params }: Props) {
       title={level.title}
       block={level.block}
       instructions={level.instructions}
-      checkpoints={checkpoints}
-      status={status}
+      initialCheckpoints={checkpoints}
+      initialStatus={status}
+      totalLevels={TOTAL_LEVELS}
     />
   );
 }

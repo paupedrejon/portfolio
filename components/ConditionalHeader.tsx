@@ -15,9 +15,8 @@ export default function ConditionalHeader() {
   const pathname = usePathname();
   const isStudyAgentsPage = pathname?.startsWith("/study-agents");
   const forceDarkProjectsTheme =
-    pathname?.includes("/proyectos") ||
-    pathname?.includes("/projects") ||
-    pathname?.includes("/cursos");
+    pathname?.includes("/proyectos") || pathname?.includes("/projects");
+  const forceLightCursosTheme = pathname?.includes("/cursos");
   const [colorTheme, setColorTheme] = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -39,6 +38,10 @@ export default function ConditionalHeader() {
   // Guardar el tema en localStorage y aplicarlo al documento
   useEffect(() => {
     if (mounted && typeof window !== "undefined") {
+      if (forceLightCursosTheme) {
+        document.documentElement.setAttribute("data-theme", "light");
+        return;
+      }
       if (forceDarkProjectsTheme) {
         document.documentElement.setAttribute("data-theme", "dark");
         return;
@@ -47,7 +50,7 @@ export default function ConditionalHeader() {
       // Aplicar el tema al documento
       document.documentElement.setAttribute("data-theme", colorTheme);
     }
-  }, [colorTheme, mounted, forceDarkProjectsTheme]);
+  }, [colorTheme, mounted, forceDarkProjectsTheme, forceLightCursosTheme]);
 
   // Cerrar el menú cuando se hace click fuera
   useEffect(() => {

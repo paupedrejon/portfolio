@@ -11,7 +11,7 @@ export type LevelState = {
   description: string;
   status: "locked" | "current" | "passed";
   passed: boolean;
-  checkpoints: { id: string; label: string; passed: boolean }[];
+  checkpoints: { id: string; label: string; hint?: string; passed: boolean }[];
 };
 
 type Props = {
@@ -101,7 +101,12 @@ export default function LevelRoadmap({ levels, onRefresh, refreshing }: Props) {
                           gap: "0.5rem",
                         }}
                       >
-                        <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                        <span
+                          style={{
+                            fontSize: "0.75rem",
+                            color: "var(--cursos-text-muted)",
+                          }}
+                        >
                           Nivel {level.id}
                         </span>
                         <span
@@ -112,16 +117,16 @@ export default function LevelRoadmap({ levels, onRefresh, refreshing }: Props) {
                             borderRadius: "999px",
                             background:
                               level.passed
-                                ? "rgba(16, 185, 129, 0.2)"
+                                ? "rgba(16, 185, 129, 0.15)"
                                 : level.status === "current"
-                                  ? "rgba(99, 102, 241, 0.25)"
-                                  : "rgba(100, 116, 139, 0.25)",
+                                  ? "rgba(42, 140, 160, 0.2)"
+                                  : "#f3f4f6",
                             color:
                               level.passed
-                                ? "#34d399"
+                                ? "#047857"
                                 : level.status === "current"
-                                  ? "#c7d2fe"
-                                  : "#94a3b8",
+                                  ? "#1f6b7a"
+                                  : "var(--cursos-text-muted)",
                           }}
                         >
                           {statusLabel(level.status)}
@@ -130,58 +135,23 @@ export default function LevelRoadmap({ levels, onRefresh, refreshing }: Props) {
                       <h4 style={{ fontWeight: 600, margin: 0 }}>{level.title}</h4>
                       <p
                         style={{
-                          fontSize: "0.8rem",
-                          color: "#94a3b8",
+                          fontSize: "0.9rem",
+                          color: "var(--cursos-text-muted)",
                           margin: 0,
                           lineHeight: 1.4,
                         }}
                       >
                         {level.description}
                       </p>
-                      <ul
-                        style={{
-                          listStyle: "none",
-                          padding: 0,
-                          margin: "0.5rem 0",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "0.35rem",
-                        }}
-                      >
-                        {level.checkpoints.map((cp) => (
-                          <li
-                            key={cp.id}
-                            style={{
-                              fontSize: "0.75rem",
-                              color: "#94a3b8",
-                              display: "flex",
-                              gap: "0.5rem",
-                              alignItems: "flex-start",
-                            }}
-                          >
-                            <span style={{ color: cp.passed ? "#34d399" : "#64748b" }}>
-                              {cp.passed ? "✓" : "○"}
-                            </span>
-                            <span
-                              style={
-                                cp.passed
-                                  ? { textDecoration: "line-through", opacity: 0.7 }
-                                  : undefined
-                              }
-                            >
-                              {cp.label}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
                       {!isLocked && (
                         <Link
                           href={`/cursos/react/nivel/${level.id}`}
+                          className="cursos-btn-primary"
                           style={{
                             fontSize: "0.875rem",
-                            color: "#a5b4fc",
-                            fontWeight: 500,
+                            padding: "0.5rem 1rem",
                             marginTop: "auto",
+                            alignSelf: "flex-start",
                           }}
                         >
                           {t("viewLevel")} →

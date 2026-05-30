@@ -1,4 +1,4 @@
-/** @typedef {{ id: string; label: string; assert: string }} Checkpoint */
+/** @typedef {{ id: string; label: string; assert: string; hint?: string }} Checkpoint */
 /** @typedef {{ id: number; slug: string; title: string; block: string; description: string; instructions: string; checkpoints: Checkpoint[] }} Level */
 
 /** @type {Level[]} */
@@ -29,21 +29,25 @@ Ejecuta \`npm run check\` cuando hayas terminado. El corrector arrancará tu app
         id: "page-renders",
         label: "La página carga sin errores",
         assert: "app loads at base URL with HTTP 200 and no console errors",
+        hint: "1) Abre la carpeta del zip descargado.\n2) En la terminal: npm install\n3) Luego: npm run dev\n4) Abre la URL que te indique (suele ser localhost:5173).\n5) Si ves la página sin errores rojos en consola, este punto se marcará.",
       },
       {
         id: "h1-exists",
         label: "Existe un <h1>",
         assert: "page has exactly one visible <h1>",
+        hint: "1) Abre src/App.jsx.\n2) Dentro del return, añade un único <h1>...</h1>.\n3) Guarda y mira el navegador: debe verse un solo título grande.",
       },
       {
         id: "h1-text",
         label: 'El título dice "Hello World"',
         assert: "the <h1> textContent includes 'Hello World' (case-insensitive)",
+        hint: '1) En el <h1>, escribe exactamente: Hello World\n2) Puede ser mayúsculas o minúsculas, pero el texto debe incluir esas palabras.',
       },
       {
         id: "h1-centered",
         label: "El título está centrado",
         assert: "computed text-align of the <h1> (or its container) is 'center'",
+        hint: "1) Al contenedor del h1 o al propio h1, añade la clase Tailwind text-center.\n2) Ejemplo: <div className=\"text-center\"><h1>Hello World</h1></div>",
       },
     ],
   },
@@ -76,21 +80,25 @@ Amplía el hero del nivel anterior.
         id: "h1-still-present",
         label: "El h1 Hello World sigue presente",
         assert: "page has visible <h1> with Hello World",
+        hint: "1) No borres el h1 del nivel anterior.\n2) Debe seguir visible con el texto Hello World.",
       },
       {
         id: "subtitle-exists",
         label: "Existe un subtítulo <p> en el hero",
         assert: "hero section has a visible <p> with at least 10 characters",
+        hint: "1) Debajo del h1, añade un <p> con una frase sobre ti.\n2) Mínimo 10 caracteres, por ejemplo: \"Desarrollador web en formación\".",
       },
       {
         id: "cta-button-exists",
         label: "Existe un botón CTA",
         assert: "page has a visible <button> or <a> styled as CTA in hero",
+        hint: "1) Añade un <button> o <a> en el hero.\n2) Texto ejemplo: \"Ver proyectos\" o \"Contáctame\".",
       },
       {
         id: "cta-button-styled",
         label: "El botón CTA tiene padding y border-radius",
         assert: "CTA has padding >= 8px and border-radius >= 4px",
+        hint: "1) Al botón añade clases Tailwind: px-6 py-3 rounded-full (o rounded-lg).\n2) Opcional: color de fondo con bg-[#2a8ca0] text-white.",
       },
     ],
   },
@@ -124,21 +132,25 @@ Debajo del hero, crea una sección **Sobre mí** con:
         id: "about-section-exists",
         label: 'Existe una sección "Sobre mí"',
         assert: "page has section#about or section with h2 containing 'Sobre mí'",
+        hint: "1) Debajo del hero, crea <section id=\"about\">...</section>.\n2) Dentro irá el título y los párrafos de tu bio.",
       },
       {
         id: "about-heading",
         label: 'Hay un <h2> con "Sobre mí"',
         assert: "section has visible h2 with 'Sobre mí' (case-insensitive)",
+        hint: "1) Dentro de la sección, añade <h2>Sobre mí</h2>.\n2) Debe ser visible en la página.",
       },
       {
         id: "about-paragraph",
         label: "Hay al menos un párrafo con bio",
         assert: "about section has <p> with at least 50 characters",
+        hint: "1) Añade uno o más <p> con tu presentación.\n2) Escribe al menos 3 frases (50+ caracteres en total).",
       },
       {
         id: "about-mobile-readable",
         label: "La sección es legible en móvil (375px)",
         assert: "about section visible at 375px viewport without horizontal overflow",
+        hint: "1) Redimensiona el navegador a móvil (375px) o usa DevTools.\n2) Evita anchos fijos grandes; usa max-w y padding (px-4).",
       },
     ],
   },
@@ -465,6 +477,15 @@ Debajo del hero, crea una sección **Sobre mí** con:
     ],
   },
 ];
+
+const DEFAULT_CHECKPOINT_HINT =
+  "Sigue las instrucciones del nivel en tu proyecto. Cuando tu código cumpla este requisito, el punto se marcará automáticamente.";
+
+for (const level of levels) {
+  for (const cp of level.checkpoints) {
+    if (!cp.hint) cp.hint = DEFAULT_CHECKPOINT_HINT;
+  }
+}
 
 export function getLevelById(id) {
   return levels.find((l) => l.id === id) ?? null;

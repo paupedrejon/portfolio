@@ -42,7 +42,13 @@ export default function ProfileNameForm({ initialName, onSaved }: Props) {
       <h3 style={{ fontSize: "1.125rem", fontWeight: 600, margin: "0 0 0.25rem" }}>
         {t("profileTitle")}
       </h3>
-      <p style={{ fontSize: "0.875rem", color: "#94a3b8", margin: "0 0 1rem" }}>
+      <p
+        style={{
+          fontSize: "0.875rem",
+          color: "var(--cursos-text-muted)",
+          margin: "0 0 1rem",
+        }}
+      >
         {t("profileHint")}
       </p>
       <div className="cursos-form-row">
@@ -56,11 +62,7 @@ export default function ProfileNameForm({ initialName, onSaved }: Props) {
           required
           className="cursos-input"
         />
-        <button
-          type="submit"
-          disabled={saving}
-          className="btn-primary"
-        >
+        <button type="submit" disabled={saving} className="cursos-btn-primary">
           {saving ? "..." : t("profileSave")}
         </button>
       </div>

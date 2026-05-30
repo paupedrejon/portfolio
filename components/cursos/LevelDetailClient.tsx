@@ -1,17 +1,28 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import DownloadTemplateButton from "./DownloadTemplateButton";
+
+export type CheckpointView = {
+  id: string;
+  label: string;
+  hint: string;
+  passed: boolean;
+};
 
 type Props = {
   levelId: number;
   title: string;
   block: string;
   instructions: string;
-  checkpoints: { id: string; label: string; passed?: boolean }[];
-  status: string;
+  initialCheckpoints: CheckpointView[];
+  initialStatus: string;
+  totalLevels: number;
 };
 
 export default function LevelDetailClient({
@@ -19,34 +30,77 @@ export default function LevelDetailClient({
   title,
   block,
   instructions,
-  checkpoints,
-  status,
+  initialCheckpoints,
+  initialStatus,
+  totalLevels,
 }: Props) {
   const t = useTranslations("cursos");
+  const { data: session } = useSession();
+  const [checkpoints, setCheckpoints] = useState(initialCheckpoints);
+  const [status, setStatus] = useState(initialStatus);
+  const [openHintId, setOpenHintId] = useState<string | null>(
+    initialCheckpoints.find((c) => !c.passed)?.id ?? null
+  );
+  const hintsRef = useRef(
+    Object.fromEntries(initialCheckpoints.map((c) => [c.id, c.hint]))
+  );
+
+  const syncProgress = useCallback(async () => {
+    if (!session) return;
+    try {
+      const res = await fetch("/api/me/progress?course=react");
+      if (!res.ok) return;
+      const data = await res.json();
+      const level = data.levels?.find((l: { id: number }) => l.id === levelId);
+      if (level) {
+        setStatus(level.status);
+        setCheckpoints(
+          level.checkpoints.map((cp: CheckpointView) => ({
+            id: cp.id,
+            label: cp.label,
+            hint: hintsRef.current[cp.id] ?? cp.hint ?? "",
+            passed: cp.passed,
+          }))
+        );
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [session, levelId]);
+
+  useEffect(() => {
+    syncProgress();
+  }, [syncProgress]);
+
+  useEffect(() => {
+    if (!session) return;
+    const id = setInterval(syncProgress, 4000);
+    return () => clearInterval(id);
+  }, [session, syncProgress]);
+
+  const passedCount = checkpoints.filter((c) => c.passed).length;
+  const allPassed = passedCount === checkpoints.length && checkpoints.length > 0;
+  const nextLevelId = levelId < totalLevels ? levelId + 1 : null;
+
+  const badgeClass =
+    status === "passed"
+      ? "cursos-level-page__badge cursos-level-page__badge--passed"
+      : status === "current"
+        ? "cursos-level-page__badge cursos-level-page__badge--current"
+        : "cursos-level-page__badge cursos-level-page__badge--locked";
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      <div className="max-w-3xl mx-auto px-6 py-16">
-        <Link
-          href="/cursos/react"
-          className="text-sm text-indigo-400 hover:text-indigo-300 mb-8 inline-block"
-        >
+    <div className="cursos-page">
+      <article className="cursos-level-page">
+        <Link href="/cursos/react/mapa" className="cursos-level-page__back">
           ← {t("levelPageBack")}
         </Link>
 
-        <p className="text-xs uppercase tracking-widest text-indigo-400 mb-2">{block}</p>
-        <h1 className="text-3xl font-bold mb-2">
+        <p className="cursos-level-page__block">{block}</p>
+        <h1 className="cursos-level-page__title">
           Nivel {levelId}: {title}
         </h1>
-        <span
-          className={`inline-block text-xs px-3 py-1 rounded-full mb-8 ${
-            status === "passed"
-              ? "bg-emerald-500/20 text-emerald-400"
-              : status === "current"
-                ? "bg-indigo-500/20 text-indigo-300"
-                : "bg-slate-500/20 text-slate-400"
-          }`}
-        >
+        <span className={badgeClass}>
           {status === "passed"
             ? t("levelPassed")
             : status === "current"
@@ -54,33 +108,79 @@ export default function LevelDetailClient({
               : t("levelLocked")}
         </span>
 
-        <div className="prose prose-invert prose-indigo max-w-none mb-10">
-          <h2 className="text-xl font-semibold text-[var(--text-primary)] not-prose mb-4">
-            {t("instructionsTitle")}
-          </h2>
+        {levelId === 1 && (
+          <div className="cursos-level-page__download">
+            <h3>{t("downloadTemplate")}</h3>
+            <p>{t("level1DownloadHint")}</p>
+            <DownloadTemplateButton />
+          </div>
+        )}
+
+        {session && (
+          <p className="cursos-level-page__sync">
+            <span className="cursos-level-page__sync-dot" aria-hidden />
+            {t("autoSyncHint")}
+          </p>
+        )}
+
+        <h2 className="cursos-level-page__section-title">{t("instructionsTitle")}</h2>
+        <div className="cursos-level-page__instructions">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{instructions}</ReactMarkdown>
         </div>
 
-        <div className="p-6 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)]">
-          <h3 className="font-semibold mb-4">Puntos a completar</h3>
-          <ul className="space-y-2">
-            {checkpoints.map((cp) => (
-              <li key={cp.id} className="flex items-center gap-3 text-sm">
-                <span className={cp.passed ? "text-emerald-400" : "text-slate-500"}>
-                  {cp.passed ? "✓" : "○"}
-                </span>
-                {cp.label}
+        <h2 className="cursos-level-page__section-title">{t("checkpointsTitle")}</h2>
+        <ul className="cursos-checklist">
+          {checkpoints.map((cp) => {
+            const isOpen = openHintId === cp.id;
+            return (
+              <li
+                key={cp.id}
+                className={`cursos-check-item${cp.passed ? " cursos-check-item--passed" : ""}`}
+              >
+                <button
+                  type="button"
+                  className="cursos-check-item__head"
+                  onClick={() => setOpenHintId(isOpen ? null : cp.id)}
+                  aria-expanded={isOpen}
+                >
+                  <span className="cursos-check-item__ring" aria-hidden>
+                    {cp.passed ? "✓" : ""}
+                  </span>
+                  <span className="cursos-check-item__label">{cp.label}</span>
+                  <span
+                    className={`cursos-check-item__chevron${isOpen ? " cursos-check-item__chevron--open" : ""}`}
+                    aria-hidden
+                  >
+                    ▾
+                  </span>
+                </button>
+                {isOpen && (
+                  <div className="cursos-check-item__hint">
+                    <p className="cursos-check-item__hint-title">{t("hintLabel")}</p>
+                    <p className="cursos-check-item__hint-body">{cp.hint}</p>
+                  </div>
+                )}
               </li>
-            ))}
-          </ul>
-          <p className="text-xs text-[var(--text-muted)] mt-6">
-            En la carpeta del proyecto ejecuta:{" "}
-            <code className="bg-[var(--bg-secondary)] px-2 py-1 rounded">
-              npm run check
-            </code>
-          </p>
-        </div>
-      </div>
+            );
+          })}
+        </ul>
+
+        {allPassed && nextLevelId && (
+          <div className="cursos-level-page__next">
+            <Link href={`/cursos/react/nivel/${nextLevelId}`} className="cursos-btn-primary">
+              {t("nextLevel")} →
+            </Link>
+          </div>
+        )}
+
+        {allPassed && !nextLevelId && (
+          <div className="cursos-level-page__next">
+            <Link href="/cursos/react/diploma" className="cursos-btn-primary">
+              {t("diplomaTitle")} →
+            </Link>
+          </div>
+        )}
+      </article>
     </div>
   );
 }

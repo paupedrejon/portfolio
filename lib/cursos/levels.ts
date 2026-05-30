@@ -5,6 +5,7 @@ export type Checkpoint = {
   id: string;
   label: string;
   assert: string;
+  hint?: string;
 };
 
 export type Level = {

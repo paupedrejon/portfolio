@@ -5,15 +5,7 @@ import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-type Props = {
-  className?: string;
-  compact?: boolean;
-};
-
-export default function DownloadTemplateButton({
-  className = "",
-  compact = false,
-}: Props) {
+export default function DownloadTemplateButton() {
   const t = useTranslations("cursos");
   const { data: session, status } = useSession();
   const pathname = usePathname();
@@ -23,7 +15,7 @@ export default function DownloadTemplateButton({
   async function handleDownload() {
     if (!session) {
       signIn("google", {
-        callbackUrl: pathname || "/es/cursos/react",
+        callbackUrl: pathname || "/es/cursos/react/nivel/1",
       });
       return;
     }
@@ -55,13 +47,12 @@ export default function DownloadTemplateButton({
   }
 
   return (
-    <div className={className}>
+    <div>
       <button
         type="button"
         onClick={handleDownload}
         disabled={loading || status === "loading"}
-        className={`btn-primary ${compact ? "" : "text-lg px-10 py-4"} disabled:opacity-60`}
-        style={compact ? { padding: "0.9rem 1.75rem", borderRadius: "999px" } : undefined}
+        className="cursos-btn-primary"
       >
         {loading
           ? t("downloading")
