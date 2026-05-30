@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import DownloadTemplateButton from "./DownloadTemplateButton";
+import TerminalSetupBlock from "./TerminalSetupBlock";
+import LevelPreview from "./LevelPreview";
 
 export type CheckpointView = {
   id: string;
@@ -19,7 +19,9 @@ type Props = {
   levelId: number;
   title: string;
   block: string;
-  instructions: string;
+  objective: string;
+  previewTitle: string;
+  previewDescription: string;
   initialCheckpoints: CheckpointView[];
   initialStatus: string;
   totalLevels: number;
@@ -29,7 +31,9 @@ export default function LevelDetailClient({
   levelId,
   title,
   block,
-  instructions,
+  objective,
+  previewTitle,
+  previewDescription,
   initialCheckpoints,
   initialStatus,
   totalLevels,
@@ -38,9 +42,7 @@ export default function LevelDetailClient({
   const { data: session } = useSession();
   const [checkpoints, setCheckpoints] = useState(initialCheckpoints);
   const [status, setStatus] = useState(initialStatus);
-  const [openHintId, setOpenHintId] = useState<string | null>(
-    initialCheckpoints.find((c) => !c.passed)?.id ?? null
-  );
+  const [openHintId, setOpenHintId] = useState<string | null>(null);
   const hintsRef = useRef(
     Object.fromEntries(initialCheckpoints.map((c) => [c.id, c.hint]))
   );
@@ -74,13 +76,15 @@ export default function LevelDetailClient({
 
   useEffect(() => {
     if (!session) return;
-    const id = setInterval(syncProgress, 4000);
+    const id = setInterval(syncProgress, 3000);
     return () => clearInterval(id);
   }, [session, syncProgress]);
 
   const passedCount = checkpoints.filter((c) => c.passed).length;
-  const allPassed = passedCount === checkpoints.length && checkpoints.length > 0;
+  const allPassed =
+    passedCount === checkpoints.length && checkpoints.length > 0;
   const nextLevelId = levelId < totalLevels ? levelId + 1 : null;
+  const currentStepIndex = checkpoints.findIndex((c) => !c.passed);
 
   const badgeClass =
     status === "passed"
@@ -116,6 +120,17 @@ export default function LevelDetailClient({
           </div>
         )}
 
+        <TerminalSetupBlock />
+
+        <LevelPreview
+          levelId={levelId}
+          title={previewTitle}
+          description={previewDescription}
+        />
+
+        <h2 className="cursos-level-page__section-title">{t("objectiveTitle")}</h2>
+        <p className="cursos-level-page__objective">{objective}</p>
+
         {session && (
           <p className="cursos-level-page__sync">
             <span className="cursos-level-page__sync-dot" aria-hidden />
@@ -123,19 +138,22 @@ export default function LevelDetailClient({
           </p>
         )}
 
-        <h2 className="cursos-level-page__section-title">{t("instructionsTitle")}</h2>
-        <div className="cursos-level-page__instructions">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{instructions}</ReactMarkdown>
-        </div>
+        <h2 className="cursos-level-page__section-title">
+          {t("stepsTitle")}{" "}
+          <span className="cursos-level-page__steps-count">
+            ({passedCount}/{checkpoints.length})
+          </span>
+        </h2>
 
-        <h2 className="cursos-level-page__section-title">{t("checkpointsTitle")}</h2>
         <ul className="cursos-checklist">
-          {checkpoints.map((cp) => {
+          {checkpoints.map((cp, index) => {
             const isOpen = openHintId === cp.id;
+            const isCurrent =
+              !cp.passed && index === (currentStepIndex >= 0 ? currentStepIndex : 0);
             return (
               <li
                 key={cp.id}
-                className={`cursos-check-item${cp.passed ? " cursos-check-item--passed" : ""}`}
+                className={`cursos-check-item${cp.passed ? " cursos-check-item--passed" : ""}${isCurrent ? " cursos-check-item--current" : ""}`}
               >
                 <button
                   type="button"
@@ -144,9 +162,14 @@ export default function LevelDetailClient({
                   aria-expanded={isOpen}
                 >
                   <span className="cursos-check-item__ring" aria-hidden>
-                    {cp.passed ? "✓" : ""}
+                    {cp.passed ? "✓" : index + 1}
                   </span>
-                  <span className="cursos-check-item__label">{cp.label}</span>
+                  <span className="cursos-check-item__label-wrap">
+                    <span className="cursos-check-item__step-num">
+                      Paso {index + 1}
+                    </span>
+                    <span className="cursos-check-item__label">{cp.label}</span>
+                  </span>
                   <span
                     className={`cursos-check-item__chevron${isOpen ? " cursos-check-item__chevron--open" : ""}`}
                     aria-hidden
@@ -167,7 +190,10 @@ export default function LevelDetailClient({
 
         {allPassed && nextLevelId && (
           <div className="cursos-level-page__next">
-            <Link href={`/cursos/react/nivel/${nextLevelId}`} className="cursos-btn-primary">
+            <Link
+              href={`/cursos/react/nivel/${nextLevelId}`}
+              className="cursos-btn-primary"
+            >
               {t("nextLevel")} →
             </Link>
           </div>

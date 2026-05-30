@@ -8,13 +8,20 @@ export type Checkpoint = {
   hint?: string;
 };
 
+export type LevelPreview = {
+  title: string;
+  description: string;
+};
+
 export type Level = {
   id: number;
   slug: string;
   title: string;
   block: string;
   description: string;
-  instructions: string;
+  objective: string;
+  preview: LevelPreview;
+  instructions?: string;
   checkpoints: Checkpoint[];
 };
 

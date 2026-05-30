@@ -1,5 +1,6 @@
 /** @typedef {{ id: string; label: string; assert: string; hint?: string }} Checkpoint */
-/** @typedef {{ id: number; slug: string; title: string; block: string; description: string; instructions: string; checkpoints: Checkpoint[] }} Level */
+/** @typedef {{ title: string; description: string }} LevelPreview */
+/** @typedef {{ id: number; slug: string; title: string; block: string; description: string; objective: string; preview: LevelPreview; instructions?: string; checkpoints: Checkpoint[] }} Level */
 
 /** @type {Level[]} */
 export const levels = [
@@ -9,45 +10,37 @@ export const levels = [
     title: "Hello World",
     block: "Fundamentos",
     description: "Crea tu primera página y un hero con un título centrado.",
-    instructions: `# Nivel 1 — Hello World
-
-Bienvenido al curso. Vas a construir tu portfolio personal paso a paso.
-
-## Objetivo
-Crea una página con un **hero** que contenga un título \`<h1>\` centrado con el texto **Hello World**.
-
-## Pasos
-1. Abre \`src/App.jsx\` y renderiza un \`<h1>Hello World</h1>\` dentro de un contenedor.
-2. Usa Tailwind para centrar el texto: \`text-center\` en el contenedor o en el h1.
-3. Mantén el fondo oscuro (\`bg-[#0a0a0f]\` o similar) en toda la página.
-
-## Comprobar
-Ejecuta \`npm run check\` cuando hayas terminado. El corrector arrancará tu app automáticamente.
-`,
+    objective:
+      "Crea una página con fondo oscuro y un hero que tenga un único título <h1> centrado con el texto Hello World.",
+    preview: {
+      title: "Así debería verse tu página",
+      description:
+        "Fondo oscuro a pantalla completa. En el centro, un solo título grande que dice Hello World.",
+    },
     checkpoints: [
       {
         id: "page-renders",
         label: "La página carga sin errores",
         assert: "app loads at base URL with HTTP 200 and no console errors",
-        hint: "1) Abre la carpeta del zip descargado.\n2) En la terminal: npm install\n3) Luego: npm run dev\n4) Abre la URL que te indique (suele ser localhost:5173).\n5) Si ves la página sin errores rojos en consola, este punto se marcará.",
+        hint: "PASO A PASO (muy detallado):\n\n1) Abre la carpeta donde descomprimiste el zip (react-portfolio-starter).\n2) Haz clic en la barra de ruta de arriba, escribe cmd y pulsa Enter (se abre la terminal en esa carpeta).\n3) Si no tienes Node/npm: ve a https://nodejs.org y descarga la versión LTS. Instala y reinicia la terminal.\n4) En la terminal escribe: npm install\n5) Espera a que termine (puede tardar 1-2 minutos).\n6) Luego escribe: npm run dev\n7) Se abrirá (o te dirá) una URL como http://localhost:5173 — ábrela en Chrome o Edge.\n8) Si ves tu página (aunque esté vacía o con texto de prueba) SIN mensajes rojos en la consola (F12 → Consola), este paso se marcará solo al guardar.",
       },
       {
         id: "h1-exists",
-        label: "Existe un <h1>",
+        label: "Existe un <h1> en la página",
         assert: "page has exactly one visible <h1>",
-        hint: "1) Abre src/App.jsx.\n2) Dentro del return, añade un único <h1>...</h1>.\n3) Guarda y mira el navegador: debe verse un solo título grande.",
+        hint: "PASO A PASO:\n\n1) En tu proyecto abre el archivo: src/App.jsx (doble clic).\n2) Busca la función App y dentro del return (...).\n3) Borra lo que haya dentro del return si es confuso, y deja algo así:\n\n   return (\n     <div>\n       <h1>Hello World</h1>\n     </div>\n   );\n\n4) Guarda el archivo (Ctrl+S).\n5) Mira el navegador: debe aparecer UN solo título grande. Si ves dos títulos, borra uno.\n6) Al guardar, la web del curso actualizará este paso automáticamente.",
       },
       {
         id: "h1-text",
         label: 'El título dice "Hello World"',
         assert: "the <h1> textContent includes 'Hello World' (case-insensitive)",
-        hint: '1) En el <h1>, escribe exactamente: Hello World\n2) Puede ser mayúsculas o minúsculas, pero el texto debe incluir esas palabras.',
+        hint: 'PASO A PASO:\n\n1) Abre src/App.jsx.\n2) Dentro del <h1> escribe exactamente: Hello World\n   Ejemplo completo: <h1>Hello World</h1>\n3) No pongas otras palabras dentro del h1 en este nivel.\n4) Guarda (Ctrl+S) y comprueba en el navegador que se lee "Hello World".',
       },
       {
         id: "h1-centered",
         label: "El título está centrado",
         assert: "computed text-align of the <h1> (or its container) is 'center'",
-        hint: "1) Al contenedor del h1 o al propio h1, añade la clase Tailwind text-center.\n2) Ejemplo: <div className=\"text-center\"><h1>Hello World</h1></div>",
+        hint: 'PASO A PASO:\n\n1) Opción fácil: envuelve el h1 en un div con clase de Tailwind:\n\n   return (\n     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">\n       <h1 className="text-center text-white text-4xl">Hello World</h1>\n     </div>\n   );\n\n2) "text-center" centra el texto. "flex items-center justify-center" centra el bloque en pantalla.\n3) Guarda y mira el navegador: el título debe quedar en el medio.',
       },
     ],
   },
@@ -57,48 +50,37 @@ Ejecuta \`npm run check\` cuando hayas terminado. El corrector arrancará tu app
     title: "Hero completo",
     block: "Fundamentos",
     description: "Añade subtítulo y un botón CTA con buen estilo.",
-    instructions: `# Nivel 2 — Hero completo
-
-Amplía el hero del nivel anterior.
-
-## Objetivo
-- Mantén el \`<h1>Hello World</h1>\` centrado.
-- Añade un **subtítulo** (\`<p>\`) debajo del título con una frase sobre ti (ej. "Desarrollador web en formación").
-- Añade un **botón CTA** con texto como "Ver proyectos" o "Contáctame".
-
-## Estilo del botón
-- Padding generoso (\`px-6 py-3\`)
-- Bordes redondeados (\`rounded-full\` o \`rounded-lg\`)
-- Color de acento (indigo/violeta)
-- Hover sutil
-
-## Comprobar
-\`npm run check\`
-`,
+    objective:
+      "Mantén el h1 Hello World centrado. Añade un subtítulo <p> debajo y un botón CTA con buen estilo (padding y bordes redondeados).",
+    preview: {
+      title: "Así debería verse tu hero",
+      description:
+        "Hello World centrado, un párrafo debajo presentándote, y un botón llamativo (por ejemplo «Ver proyectos»).",
+    },
     checkpoints: [
       {
         id: "h1-still-present",
         label: "El h1 Hello World sigue presente",
         assert: "page has visible <h1> with Hello World",
-        hint: "1) No borres el h1 del nivel anterior.\n2) Debe seguir visible con el texto Hello World.",
+        hint: "PASO A PASO:\n\n1) Abre src/App.jsx.\n2) NO borres el <h1>Hello World</h1> del nivel 1.\n3) Si lo borraste sin querer, vuelve a ponerlo antes de seguir.\n4) Guarda y comprueba en el navegador que sigue viéndose Hello World.",
       },
       {
         id: "subtitle-exists",
         label: "Existe un subtítulo <p> en el hero",
         assert: "hero section has a visible <p> with at least 10 characters",
-        hint: "1) Debajo del h1, añade un <p> con una frase sobre ti.\n2) Mínimo 10 caracteres, por ejemplo: \"Desarrollador web en formación\".",
+        hint: "PASO A PASO:\n\n1) Justo DEBAJO del <h1>, añade un párrafo:\n   <p className=\"text-gray-300 mt-4\">Desarrollador web en formación</p>\n2) Cambia el texto por algo sobre ti (mínimo 10 letras).\n3) Guarda (Ctrl+S) y mira el navegador.",
       },
       {
         id: "cta-button-exists",
         label: "Existe un botón CTA",
         assert: "page has a visible <button> or <a> styled as CTA in hero",
-        hint: "1) Añade un <button> o <a> en el hero.\n2) Texto ejemplo: \"Ver proyectos\" o \"Contáctame\".",
+        hint: "PASO A PASO:\n\n1) Debajo del <p>, añade un botón:\n   <button type=\"button\">Ver proyectos</button>\n2) También vale un <a href=\"#\">Contáctame</a>.\n3) Debe verse claramente como un botón/enlace en el hero.\n4) Guarda y comprueba en el navegador.",
       },
       {
         id: "cta-button-styled",
         label: "El botón CTA tiene padding y border-radius",
         assert: "CTA has padding >= 8px and border-radius >= 4px",
-        hint: "1) Al botón añade clases Tailwind: px-6 py-3 rounded-full (o rounded-lg).\n2) Opcional: color de fondo con bg-[#2a8ca0] text-white.",
+        hint: "PASO A PASO:\n\n1) Al botón añade clases Tailwind:\n   className=\"mt-6 px-6 py-3 rounded-full bg-[#2a8ca0] text-white font-semibold hover:opacity-90\"\n2) px-6 py-3 = padding interno.\n3) rounded-full = bordes redondos.\n4) Guarda y mira que el botón se vea «gordo» y con esquinas redondeadas.",
       },
     ],
   },
@@ -108,25 +90,13 @@ Amplía el hero del nivel anterior.
     title: 'Sección "Sobre mí"',
     block: "Fundamentos",
     description: 'Añade una sección "Sobre mí" debajo del hero.',
-    instructions: `# Nivel 3 — Sobre mí
-
-## Objetivo
-Debajo del hero, crea una sección **Sobre mí** con:
-- Un encabezado (\`<h2>\`) con texto "Sobre mí"
-- Al menos un párrafo con tu bio (3+ frases)
-- La sección debe ser legible en móvil (375px)
-
-## Estructura sugerida
-\`\`\`jsx
-<section id="about">
-  <h2>Sobre mí</h2>
-  <p>...</p>
-</section>
-\`\`\`
-
-## Comprobar
-\`npm run check\`
-`,
+    objective:
+      'Debajo del hero, crea una sección "Sobre mí" con h2, párrafos de bio (50+ caracteres) y diseño legible en móvil.',
+    preview: {
+      title: "Así debería verse con «Sobre mí»",
+      description:
+        "El hero de arriba se mantiene. Debajo, una sección con título Sobre mí y varias líneas de texto de presentación.",
+    },
     checkpoints: [
       {
         id: "about-section-exists",
@@ -482,6 +452,15 @@ const DEFAULT_CHECKPOINT_HINT =
   "Sigue las instrucciones del nivel en tu proyecto. Cuando tu código cumpla este requisito, el punto se marcará automáticamente.";
 
 for (const level of levels) {
+  if (!level.objective) {
+    level.objective = level.description;
+  }
+  if (!level.preview) {
+    level.preview = {
+      title: "Resultado esperado",
+      description: level.description,
+    };
+  }
   for (const cp of level.checkpoints) {
     if (!cp.hint) cp.hint = DEFAULT_CHECKPOINT_HINT;
   }
