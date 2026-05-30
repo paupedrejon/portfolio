@@ -325,15 +325,39 @@ export const levels4to30 = [
     "custom-hooks",
     "Custom hooks (useFetch)",
     "Routing y calidad",
-    "Hook useFetch reutilizable.",
-    "Extrae la lógica fetch a hooks/useFetch.js.",
-    "Hook reutilizable para peticiones.",
+    "Hook useFetch + store local para proyectos extra.",
+    "Extrae el fetch a useFetch.js, crea projectsStore.js y refactoriza Projects.jsx.",
+    "Projects carga con loading/error y mezcla datos del JSON con localStorage.",
     [
-      cp("file-usefetch", "Existe hooks/useFetch.js", [
-        { type: "file", text: "Crea", path: "src/hooks/useFetch.js" },
+      cp("file-usefetch", "Creas src/hooks/useFetch.js", [
+        { type: "file", text: "Crea la carpeta hooks si no existe", path: "src/hooks/useFetch.js" },
+        { type: "action", text: "Importa useEffect y useState de React" },
+        { type: "code", text: "Firma:", code: "export default function useFetch(url) { … }" },
       ]),
-      cp("usefetch-used", "useFetch usado en un componente", [
-        { type: "tip", text: "const { data, loading, error } = useFetch(url)" },
+      cp("usefetch-hook-states", "useFetch devuelve data, loading y error", [
+        { type: "action", text: "Estado inicial: data null, loading true si hay url, error null" },
+        { type: "code", text: "Return:", code: "return { data, loading, error };" },
+        { type: "tip", text: "En el catch guarda e.message en error" },
+      ]),
+      cp("file-projects-store", "Creas src/lib/projectsStore.js", [
+        { type: "file", text: "Crea", path: "src/lib/projectsStore.js" },
+        { type: "action", text: "Exporta getExtraProjects() leyendo localStorage" },
+        { type: "code", text: "Clave demo:", code: 'const STORAGE_KEY = "portfolio-projects-extra";' },
+      ]),
+      cp("usefetch-used", "Projects.jsx importa y usa useFetch", [
+        { type: "file", text: "Edita", path: "src/components/Projects.jsx" },
+        { type: "code", text: "Uso:", code: 'const { data: base, loading, error } = useFetch("/projects.json");' },
+        { type: "action", text: "Elimina el useEffect con fetch manual si lo tenías" },
+      ]),
+      cp("projects-loading-ui", "Muestras estados loading y error", [
+        { type: "action", text: "Si loading, muestra un párrafo con data-testid=\"loading\"" },
+        { type: "action", text: "Si error, muestra data-testid=\"error\" en rojo" },
+        { type: "tip", text: "Solo renderiza el grid cuando !loading && !error" },
+      ]),
+      cp("projects-merge-extras", "Mezclas JSON + proyectos extra de localStorage", [
+        { type: "action", text: "Importa getExtraProjects desde projectsStore.js" },
+        { type: "code", text: "Merge:", code: "const extras = getExtraProjects();\nconst projects = base ? [...base, ...extras] : extras;" },
+        { type: "tip", text: "Los proyectos del admin (nivel 22) aparecerán aquí" },
       ]),
     ]
   ),
@@ -342,15 +366,36 @@ export const levels4to30 = [
     "context-tema",
     "Context (tema global)",
     "Routing y calidad",
-    "ThemeContext para tema global.",
-    "Mueve el tema a React Context.",
-    "Tema disponible en toda la app.",
+    "ThemeContext elimina props de tema en Navbar.",
+    "Crea ThemeContext, envuelve la app y usa useTheme() en Navbar.",
+    "El toggle sol/luna funciona sin pasar props desde App.",
     [
-      cp("file-theme-context", "Existe ThemeContext.jsx", [
+      cp("file-theme-context", "Creas src/context/ThemeContext.jsx", [
         { type: "file", text: "Crea", path: "src/context/ThemeContext.jsx" },
+        { type: "action", text: "createContext(null) para el contexto del tema" },
       ]),
-      cp("theme-provider-wraps", "ThemeProvider envuelve la app", [
-        { type: "code", text: "Provider con value={{ dark, toggle }}", code: "<ThemeProvider><App /></ThemeProvider>" },
+      cp("theme-create-provider", "ThemeProvider guarda dark y toggle", [
+        { type: "action", text: "useState(true) para dark; toggle invierte el valor" },
+        { type: "code", text: "useEffect:", code: 'document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");' },
+        { type: "action", text: "Provider value={{ dark, toggle }}" },
+      ]),
+      cp("theme-hook-export", "Exportas hook useTheme()", [
+        { type: "code", text: "Hook:", code: "export function useTheme() {\n  const ctx = useContext(ThemeContext);\n  if (!ctx) throw new Error(...);\n  return ctx;\n}" },
+        { type: "tip", text: "Así cualquier componente accede al tema sin props" },
+      ]),
+      cp("theme-provider-wraps", "ThemeProvider envuelve App en main.jsx", [
+        { type: "file", text: "Edita", path: "src/main.jsx" },
+        { type: "code", text: "Árbol:", code: "<BrowserRouter>\n  <ThemeProvider>\n    <App />\n  </ThemeProvider>\n</BrowserRouter>" },
+      ]),
+      cp("navbar-use-theme", "Navbar usa useTheme() en lugar de props", [
+        { type: "file", text: "Edita", path: "src/components/Navbar.jsx" },
+        { type: "action", text: "const { dark, toggle } = useTheme();" },
+        { type: "action", text: "Quita props dark y onToggleTheme del componente" },
+      ]),
+      cp("app-no-theme-props", "App ya no pasa props de tema a Navbar", [
+        { type: "file", text: "Edita", path: "src/App.jsx" },
+        { type: "action", text: "Elimina useState del tema y props en <Navbar />" },
+        { type: "tip", text: "Debe quedar simplemente <Navbar />" },
       ]),
     ]
   ),
@@ -359,19 +404,35 @@ export const levels4to30 = [
     "accesibilidad-seo",
     "Accesibilidad + SEO básico",
     "Routing y calidad",
-    "Semántica HTML, alt, meta tags.",
-    "Mejora semántica, alt en imágenes y meta description.",
-    "HTML accesible y meta tags.",
+    "Semántica <main>, alt en imágenes y meta description.",
+    "Envuelve cada página en <main>, mejora index.html y revisa alt.",
+    "HTML accesible, lang=es y meta description en el head.",
     [
-      cp("semantic-main", "Usas <main>", [
-        { type: "tip", text: "El contenido principal dentro de <main>" },
+      cp("page-home-main", "HomePage usa <main>", [
+        { type: "file", text: "Edita", path: "src/pages/HomePage.jsx" },
+        { type: "code", text: "Estructura:", code: "<main>\n  <Hero />\n  <About />\n</main>" },
       ]),
-      cp("images-have-alt", "Todas las imágenes tienen alt", [
-        { type: "action", text: 'Añade alt="descripción" a cada <img>' },
+      cp("page-projects-main", "ProjectsPage usa <main>", [
+        { type: "file", text: "Edita", path: "src/pages/ProjectsPage.jsx" },
+        { type: "action", text: "PageHero + Projects dentro de <main>" },
+      ]),
+      cp("page-contact-main", "ContactPage usa <main>", [
+        { type: "file", text: "Edita", path: "src/pages/ContactPage.jsx" },
+        { type: "action", text: "PageHero + formulario dentro de <main>" },
       ]),
       cp("meta-description", "Meta description en index.html", [
         { type: "file", text: "Edita", path: "index.html" },
-        { type: "code", text: "Meta:", code: '<meta name="description" content="Portfolio de ..." />' },
+        { type: "code", text: "Meta:", code: '<meta name="description" content="Portfolio de desarrollo web — proyectos React y contacto." />' },
+      ]),
+      cp("index-lang-es", "Atributo lang=\"es\" en <html>", [
+        { type: "file", text: "Edita", path: "index.html" },
+        { type: "code", text: "Ejemplo:", code: '<html lang="es" data-theme="dark">' },
+        { type: "tip", text: "Ayuda a lectores de pantalla y buscadores" },
+      ]),
+      cp("images-have-alt", "Todas las imágenes tienen alt descriptivo", [
+        { type: "action", text: "Revisa ProjectCard, ProjectModal y Admin (si existe)" },
+        { type: "code", text: "Ejemplo:", code: '<img src={image} alt={imageAlt ?? title} />' },
+        { type: "tip", text: "Nunca dejes alt vacío en imágenes de contenido" },
       ]),
     ]
   ),
@@ -429,15 +490,34 @@ export const levels4to30 = [
     "supabase-proyectos",
     "Conectar Supabase",
     "Backend real",
-    "Proyectos desde Supabase en la app del alumno.",
-    "Conecta Supabase y lista proyectos (opcional con .env).",
-    "Datos desde Supabase.",
+    "Preparar cliente Supabase con variables de entorno.",
+    "Crea .env.example y lib/supabase.js sin pegar keys en el código.",
+    "Variables documentadas y stub listo para conectar Supabase.",
     [
-      cp("env-example-exists", "Existe .env.example", [
-        { type: "file", text: "Crea .env.example con VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY" },
+      cp("env-example-exists", "Creas .env.example en la raíz", [
+        { type: "file", text: "Crea", path: ".env.example" },
+        { type: "tip", text: "Copia a .env.local en tu máquina (no lo subas a git)" },
       ]),
-      cp("no-hardcoded-secrets", "Sin keys pegadas en el código", [
-        { type: "tip", text: "Usa import.meta.env.VITE_..." },
+      cp("env-supabase-url", "VITE_SUPABASE_URL en .env.example", [
+        { type: "code", text: "Variable:", code: "VITE_SUPABASE_URL=https://tu-proyecto.supabase.co" },
+        { type: "action", text: "Sustituye tu-proyecto por el ID real cuando tengas Supabase" },
+      ]),
+      cp("env-supabase-key", "VITE_SUPABASE_ANON_KEY en .env.example", [
+        { type: "code", text: "Variable:", code: "VITE_SUPABASE_ANON_KEY=tu-anon-key" },
+        { type: "tip", text: "La anon key es pública en el front; la service key nunca va aquí" },
+      ]),
+      cp("file-supabase-lib", "Creas src/lib/supabase.js", [
+        { type: "file", text: "Crea", path: "src/lib/supabase.js" },
+        { type: "action", text: "Lee url y anonKey desde import.meta.env" },
+        { type: "action", text: "Exporta isSupabaseConfigured() y fetchProjectsFromSupabase()" },
+      ]),
+      cp("supabase-uses-import-meta", "supabase.js usa import.meta.env (no keys fijas)", [
+        { type: "code", text: "Ejemplo:", code: "const url = import.meta.env.VITE_SUPABASE_URL;" },
+        { type: "tip", text: "Vite solo expone variables con prefijo VITE_" },
+      ]),
+      cp("no-hardcoded-secrets", "Ninguna key JWT pegada en el código", [
+        { type: "action", text: "Busca eyJ en src/ — no debe aparecer en strings" },
+        { type: "tip", text: "Si conectas Supabase de verdad: npm install @supabase/supabase-js" },
       ]),
     ]
   ),
@@ -446,12 +526,35 @@ export const levels4to30 = [
     "crud-proyectos",
     "CRUD de proyectos",
     "Backend real",
-    "Panel privado para añadir/editar proyectos.",
-    "Formulario para crear proyecto (demo local o Supabase).",
-    "Puedes añadir un proyecto nuevo.",
+    "Panel /admin para añadir proyectos a localStorage.",
+    "Crea AdminPage, ruta /admin y formulario que llama addProject().",
+    "Puedes añadir un proyecto y verlo en /proyectos.",
     [
-      cp("contact-section-exists", "Hay formulario para nuevo proyecto", [
-        { type: "tip", text: "Panel admin o formulario en /admin" },
+      cp("file-admin-page", "Creas src/pages/AdminPage.jsx", [
+        { type: "file", text: "Crea", path: "src/pages/AdminPage.jsx" },
+        { type: "action", text: "PageHero + formulario con título y descripción" },
+      ]),
+      cp("admin-route-app", "Ruta /admin en App.jsx", [
+        { type: "file", text: "Edita", path: "src/App.jsx" },
+        { type: "code", text: "Route:", code: '<Route path="/admin" element={<AdminPage />} />' },
+        { type: "action", text: "Importa AdminPage al inicio del archivo" },
+      ]),
+      cp("admin-form-title", "Formulario admin con campos título y descripción", [
+        { type: "action", text: "input id=\"admin-name\" controlado con useState" },
+        { type: "action", text: "textarea id=\"admin-desc\" para la descripción" },
+      ]),
+      cp("admin-uses-add-project", "Submit llama addProject de projectsStore", [
+        { type: "code", text: "Import:", code: 'import { addProject } from "../lib/projectsStore.js";' },
+        { type: "action", text: "En handleSubmit: addProject({ title, description, … })" },
+        { type: "tip", text: "Tras guardar, el proyecto debe aparecer en /proyectos" },
+      ]),
+      cp("admin-submit-button", "Botón Guardar proyecto en el formulario", [
+        { type: "action", text: "button type=\"submit\" con texto claro" },
+        { type: "tip", text: "Prueba en /admin: rellena y envía" },
+      ]),
+      cp("admin-page-renders", "La ruta /admin carga el panel", [
+        { type: "action", text: "Ve a http://localhost:5173/admin" },
+        { type: "tip", text: "Debes ver el formulario sin errores en consola" },
       ]),
     ]
   ),
@@ -460,12 +563,29 @@ export const levels4to30 = [
     "subida-imagenes",
     "Subida de imágenes",
     "Backend real",
-    "Upload de imágenes para proyectos.",
-    "Input type=file para subir imagen de proyecto.",
-    "Campo para subir imagen.",
+    "Input file + vista previa en el panel admin.",
+    "Añade type=file, accept image/* y preview con URL.createObjectURL.",
+    "Al elegir imagen ves la miniatura antes de guardar.",
     [
-      cp("file-input-image", "Input type=file para imagen", [
-        { type: "code", text: "Input:", code: '<input type="file" name="image" accept="image/*" />' },
+      cp("admin-file-input", "Input type=file en AdminPage", [
+        { type: "file", text: "Edita", path: "src/pages/AdminPage.jsx" },
+        { type: "code", text: "Input:", code: '<input id="admin-image" type="file" name="image" accept="image/*" />' },
+      ]),
+      cp("admin-file-accept", "accept=\"image/*\" en el input file", [
+        { type: "action", text: "Solo permite imágenes en el selector del SO" },
+        { type: "tip", text: "Evita PDFs o vídeos por error" },
+      ]),
+      cp("admin-file-handler", "handleFileChange guarda el archivo en estado", [
+        { type: "code", text: "Handler:", code: "const file = event.target.files?.[0];\nsetImageFile(file ?? null);" },
+        { type: "action", text: "onChange={handleFileChange} en el input file" },
+      ]),
+      cp("admin-image-preview", "Vista previa con URL.createObjectURL", [
+        { type: "code", text: "Preview:", code: "setPreview(file ? URL.createObjectURL(file) : \"\");" },
+        { type: "action", text: "Si preview existe, muestra <img src={preview} … />" },
+      ]),
+      cp("admin-preview-alt", "La imagen preview tiene alt descriptivo", [
+        { type: "code", text: "Alt:", code: 'alt="Vista previa del proyecto"' },
+        { type: "tip", text: "Accesibilidad también en previews temporales" },
       ]),
     ]
   ),
@@ -474,12 +594,31 @@ export const levels4to30 = [
     "contacto-real",
     "Contacto que guarda/envía",
     "Backend real",
-    "Formulario de contacto persistente.",
-    "El formulario de contacto envía o guarda el mensaje.",
-    "Contacto funcional.",
+    "contactStore.js persiste mensajes en localStorage.",
+    "Conecta ContactForm a saveContactMessage al enviar.",
+    "El contacto guarda mensajes (demo local) y muestra confirmación.",
     [
-      cp("contact-controlled-inputs", "Formulario de contacto completo", [
-        { type: "tip", text: "Conecta submit a API o Supabase" },
+      cp("file-contact-store", "Creas src/lib/contactStore.js", [
+        { type: "file", text: "Crea", path: "src/lib/contactStore.js" },
+        { type: "action", text: "Exporta saveContactMessage({ name, email, message })" },
+      ]),
+      cp("contact-store-localstorage", "Los mensajes se guardan en localStorage", [
+        { type: "code", text: "Patrón:", code: "const list = JSON.parse(localStorage.getItem(KEY) ?? \"[]\");\nlist.push({ ...msg, at: Date.now() });\nlocalStorage.setItem(KEY, JSON.stringify(list));" },
+      ]),
+      cp("contact-form-save-import", "ContactForm importa saveContactMessage", [
+        { type: "file", text: "Edita", path: "src/components/ContactForm.jsx" },
+        { type: "code", text: "Import:", code: 'import { saveContactMessage } from "../lib/contactStore.js";' },
+      ]),
+      cp("contact-form-on-submit", "handleSubmit llama saveContactMessage si valida", [
+        { type: "action", text: "Tras validate() OK: saveContactMessage({ name, email, message })" },
+        { type: "action", text: "Limpia los campos y muestra mensaje de éxito" },
+      ]),
+      cp("contact-sent-feedback", "Mensaje de confirmación tras enviar", [
+        { type: "code", text: "Estado:", code: 'const [sent, setSent] = useState(false);' },
+        { type: "action", text: "Muestra texto verde con role=\"status\" cuando sent es true" },
+      ]),
+      cp("contact-controlled-inputs", "Inputs controlados con value y onChange", [
+        { type: "tip", text: "name, email y message con useState + value={…} onChange={…}" },
       ]),
     ]
   ),
@@ -488,15 +627,28 @@ export const levels4to30 = [
     "env-seguridad",
     "Variables de entorno",
     "Backend real",
-    "Env vars y seguridad básica.",
-    "Documenta variables en .env.example.",
-    "Secrets en .env, no en código.",
+    "Documentar todas las VITE_ del proyecto.",
+    "Amplía .env.example con SITE_URL y ANALYTICS; revisa que no haya secrets en código.",
+    "Todas las variables listadas; secrets solo en .env.local.",
     [
-      cp("env-example-exists", "Archivo .env.example", [
-        { type: "file", text: "Lista todas las VITE_ necesarias" },
+      cp("env-site-url", "VITE_SITE_URL en .env.example", [
+        { type: "file", text: "Edita", path: ".env.example" },
+        { type: "code", text: "Variable:", code: "VITE_SITE_URL=http://localhost:5173" },
       ]),
-      cp("no-hardcoded-secrets", "Sin secrets en el código fuente", [
-        { type: "tip", text: "Revisa App.jsx y lib/" },
+      cp("env-analytics-var", "VITE_ANALYTICS_ID documentada (opcional)", [
+        { type: "code", text: "Variable:", code: "VITE_ANALYTICS_ID=" },
+        { type: "tip", text: "Déjala vacía en el ejemplo; rellénala en producción" },
+      ]),
+      cp("env-example-complete", ".env.example lista todas las VITE_ usadas", [
+        { type: "action", text: "Debe incluir: SUPABASE_URL, SUPABASE_ANON_KEY, SITE_URL, ANALYTICS_ID" },
+        { type: "tip", text: "Añade comentarios explicando cada variable" },
+      ]),
+      cp("env-example-exists", "El archivo .env.example existe", [
+        { type: "action", text: "Verifica que .env.local está en .gitignore (Vite lo ignora por defecto)" },
+      ]),
+      cp("no-hardcoded-secrets", "Revisión: sin keys en src/ ni en App.jsx", [
+        { type: "action", text: "grep o busca eyJ, sb_secret, service_role en el código" },
+        { type: "tip", text: "Solo import.meta.env.VITE_* en archivos del front" },
       ]),
     ]
   ),
@@ -505,13 +657,29 @@ export const levels4to30 = [
     "tests-vitest",
     "Tests con Vitest",
     "Backend real",
-    "Tests de un componente con RTL.",
-    "Añade Vitest y un test de ProjectCard.",
-    "npm test pasa.",
+    "Vitest + Testing Library para ProjectCard.",
+    "Instala Vitest, crea vitest.config.js y un test que renderice ProjectCard.",
+    "npm test pasa en local.",
     [
-      cp("test-file-exists", "Archivo .test.jsx", [
-        { type: "action", text: "npm install -D vitest @testing-library/react" },
-        { type: "file", text: "Crea test", path: "src/components/ProjectCard.test.jsx" },
+      cp("vitest-config-exists", "Creas vitest.config.js", [
+        { type: "file", text: "Crea", path: "vitest.config.js" },
+        { type: "code", text: "Mínimo:", code: 'test: { environment: "jsdom", globals: true }' },
+      ]),
+      cp("package-test-script", "Script test en package.json", [
+        { type: "file", text: "Edita", path: "package.json" },
+        { type: "action", text: "npm install -D vitest @testing-library/react jsdom" },
+        { type: "code", text: "Script:", code: '"test": "vitest run"' },
+      ]),
+      cp("test-file-exists", "Creas ProjectCard.test.jsx", [
+        { type: "file", text: "Crea", path: "src/components/ProjectCard.test.jsx" },
+      ]),
+      cp("test-imports-vitest", "El test importa describe, it, expect", [
+        { type: "code", text: "Imports:", code: 'import { describe, it, expect } from "vitest";' },
+        { type: "code", text: "RTL:", code: 'import { render, screen } from "@testing-library/react";' },
+      ]),
+      cp("test-render-projectcard", "El test renderiza ProjectCard y comprueba texto", [
+        { type: "code", text: "Assert:", code: 'expect(screen.getByText("Demo")).toBeTruthy();' },
+        { type: "action", text: "Ejecuta npm test — debe pasar en verde" },
       ]),
     ]
   ),
@@ -520,12 +688,29 @@ export const levels4to30 = [
     "optimizacion",
     "Optimización",
     "Pro y despliegue",
-    "Lazy loading, imágenes, Lighthouse.",
-    "React.lazy para una ruta o componente pesado.",
-    "Carga bajo demanda.",
+    "React.lazy + Suspense para Login y Admin.",
+    "Carga bajo demanda las rutas pesadas con fallback de loading.",
+    "Login y Admin se descargan solo al visitar esas rutas.",
     [
-      cp("lazy-suspense", "React.lazy + Suspense", [
-        { type: "code", text: "Ejemplo:", code: 'const Admin = lazy(() => import("./pages/Admin"));' },
+      cp("lazy-import-login", "LoginPage con React.lazy", [
+        { type: "file", text: "Edita", path: "src/App.jsx" },
+        { type: "code", text: "Lazy:", code: 'const LoginPage = lazy(() => import("./pages/LoginPage.jsx"));' },
+        { type: "action", text: "Importa lazy desde react" },
+      ]),
+      cp("lazy-import-admin", "AdminPage con React.lazy", [
+        { type: "code", text: "Lazy:", code: 'const AdminPage = lazy(() => import("./pages/AdminPage.jsx"));' },
+        { type: "tip", text: "Quita los imports estáticos de LoginPage y AdminPage" },
+      ]),
+      cp("lazy-suspense", "Routes envueltos en <Suspense>", [
+        { type: "code", text: "Estructura:", code: "<Suspense fallback={…}>\n  <Routes>…</Routes>\n</Suspense>" },
+      ]),
+      cp("lazy-fallback-ui", "Fallback visible mientras carga la ruta", [
+        { type: "code", text: "Fallback:", code: 'fallback={<p className="…">Cargando…</p>}' },
+        { type: "tip", text: "Al ir a /login verás un instante el fallback" },
+      ]),
+      cp("lazy-routes-load", "Las rutas lazy cargan sin error", [
+        { type: "action", text: "Navega a /login y /admin en el navegador" },
+        { type: "tip", text: "No debe haber error de chunk failed en consola" },
       ]),
     ]
   ),
@@ -534,12 +719,28 @@ export const levels4to30 = [
     "dominio-analytics",
     "Dominio + analytics",
     "Pro y despliegue",
-    "Analytics básico integrado.",
-    "Añade script de analytics o componente.",
-    "Analytics documentado.",
+    "README con URL pública y hook de analytics comentado.",
+    "Documenta scripts, URL de deploy y placeholder de analytics en index.html.",
+    "README completo y analytics preparado para producción.",
     [
-      cp("readme-deploy-url", "README con URL del sitio", [
-        { type: "tip", text: "Documenta también analytics si lo usas" },
+      cp("readme-exists", "Creas o completas README.md", [
+        { type: "file", text: "Crea", path: "README.md" },
+        { type: "action", text: "Título, descripción breve y sección Scripts" },
+      ]),
+      cp("readme-npm-scripts", "README documenta npm run dev, test y build", [
+        { type: "code", text: "Bloque:", code: "npm install\nnpm run dev\nnpm test\nnpm run build" },
+      ]),
+      cp("readme-deploy-url", "README incluye URL pública del deploy", [
+        { type: "action", text: "Pega https://tu-portfolio.vercel.app (o la URL real)" },
+        { type: "tip", text: "Actualízala tras desplegar en el nivel 30" },
+      ]),
+      cp("index-analytics-comment", "Comentario de analytics en index.html", [
+        { type: "file", text: "Edita", path: "index.html" },
+        { type: "code", text: "Ejemplo:", code: "<!-- Analytics: Plausible, GA, etc. -->" },
+        { type: "tip", text: "Deja el script comentado hasta tener dominio real" },
+      ]),
+      cp("readme-env-docs", "README explica copiar .env.example", [
+        { type: "action", text: "Sección Variables de entorno con .env.local" },
       ]),
     ]
   ),
@@ -548,12 +749,25 @@ export const levels4to30 = [
     "ci-github",
     "CI con GitHub Actions",
     "Pro y despliegue",
-    "Workflow build + tests.",
-    "Crea .github/workflows/ci.yml con npm ci && npm test && npm run build.",
-    "CI en GitHub.",
+    "Workflow que ejecuta npm ci, test y build.",
+    "Crea .github/workflows/ci.yml con Node 20.",
+    "CI verde en cada push a main.",
     [
-      cp("ci-workflow-exists", "Workflow ci.yml", [
-        { type: "file", text: "Crea", path: ".github/workflows/ci.yml" },
+      cp("ci-workflow-exists", "Creas .github/workflows/ci.yml", [
+        { type: "file", text: "Crea carpetas .github/workflows si no existen", path: ".github/workflows/ci.yml" },
+      ]),
+      cp("ci-triggers-push", "Workflow se dispara en push y pull_request", [
+        { type: "code", text: "on:", code: "push:\n  branches: [main]\npull_request:\n  branches: [main]" },
+      ]),
+      cp("ci-node-20", "Usa Node.js 20 en el workflow", [
+        { type: "code", text: "Setup:", code: 'node-version: "20"' },
+      ]),
+      cp("ci-runs-test", "El workflow ejecuta npm test", [
+        { type: "action", text: "Paso: run: npm ci y luego run: npm test" },
+      ]),
+      cp("ci-runs-build", "El workflow ejecuta npm run build", [
+        { type: "action", text: "Último paso: run: npm run build" },
+        { type: "tip", text: "Si build falla, CI debe fallar también" },
       ]),
     ]
   ),
@@ -562,17 +776,29 @@ export const levels4to30 = [
     "deploy",
     "Deploy a la nube",
     "Pro y despliegue",
-    "Deploy en Vercel u otra plataforma.",
-    "Despliega y documenta la URL en README.",
-    "Sitio público en la nube.",
+    "Despliega en Vercel/Netlify y verifica build local.",
+    "npm run build OK, README con URL real y variables en el panel del hosting.",
+    "Sitio público accesible con la URL en README.",
     [
-      cp("readme-deploy-url", "URL de deploy en README.md", [
-        { type: "action", text: "Despliega en Vercel/Netlify" },
-        { type: "action", text: "Pega la URL en README.md" },
+      cp("package-build-script", "Script build en package.json", [
+        { type: "file", text: "Verifica", path: "package.json" },
+        { type: "code", text: "Script:", code: '"build": "vite build"' },
       ]),
-      cp("ci-workflow-exists", "npm run build pasa en local", [
-        { type: "action", text: "Ejecuta npm run build en la terminal del proyecto" },
-        { type: "tip", text: "Si falla, corrige errores antes de desplegar" },
+      cp("build-passes-local", "npm run build pasa sin errores", [
+        { type: "action", text: "En terminal: npm run build" },
+        { type: "tip", text: "Corrige errores de TypeScript/imports antes de desplegar" },
+      ]),
+      cp("readme-deploy-url", "README.md tiene la URL pública final", [
+        { type: "action", text: "Despliega en Vercel o Netlify conectando el repo" },
+        { type: "action", text: "Copia la URL generada al README" },
+      ]),
+      cp("deploy-env-vars", "Variables VITE_ configuradas en el hosting", [
+        { type: "action", text: "En Vercel: Settings → Environment Variables" },
+        { type: "tip", text: "Mismas claves que .env.example (sin commitear valores reales)" },
+      ]),
+      cp("deploy-preview-check", "La URL pública carga la home sin error 404", [
+        { type: "action", text: "Abre la URL en el navegador y comprueba /proyectos y /contacto" },
+        { type: "tip", text: "SPA: configura rewrite /* → index.html si hace falta" },
       ]),
     ]
   ),

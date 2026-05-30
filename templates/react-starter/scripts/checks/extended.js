@@ -388,32 +388,129 @@ export const extendedChecks = {
     return { passed: true };
   },
 
-  // —— Nivel 17-30: archivos y patrones ——
+  // —— Nivel 17: useFetch ——
   "file-usefetch": async () => {
     if (!fileExists("src/hooks/useFetch.js") && !fileExists("src/hooks/useFetch.jsx")) {
       return { passed: false, hint: "crea src/hooks/useFetch.js" };
     }
     return { passed: true };
   },
-  "usefetch-used": async () => {
-    const projects = readProjectFile("src/components/Projects.jsx") ?? "";
-    const app = readProjectFile("src/App.jsx") ?? "";
-    const src = projects + app;
-    if (!src.includes("useFetch")) {
-      return { passed: false, hint: "importa y usa useFetch en Projects u otro componente" };
+  "usefetch-hook-states": async () => {
+    const src = readProjectFile("src/hooks/useFetch.js") ?? readProjectFile("src/hooks/useFetch.jsx") ?? "";
+    if (!src.includes("loading") || !src.includes("error")) {
+      return { passed: false, hint: "useFetch debe devolver { data, loading, error }" };
+    }
+    if (!src.includes("useEffect")) {
+      return { passed: false, hint: "usa useEffect para el fetch" };
     }
     return { passed: true };
   },
+  "file-projects-store": async () => {
+    if (!fileExists("src/lib/projectsStore.js")) {
+      return { passed: false, hint: "crea src/lib/projectsStore.js con getExtraProjects()" };
+    }
+    const src = readProjectFile("src/lib/projectsStore.js") ?? "";
+    if (!src.includes("getExtraProjects") || !src.includes("localStorage")) {
+      return { passed: false, hint: "projectsStore debe leer/escribir localStorage" };
+    }
+    return { passed: true };
+  },
+  "usefetch-used": async () => {
+    const projects = readProjectFile("src/components/Projects.jsx") ?? "";
+    if (!projects.includes("useFetch")) {
+      return { passed: false, hint: "importa y usa useFetch en Projects.jsx" };
+    }
+    return { passed: true };
+  },
+  "projects-loading-ui": async (page) => {
+    const src = readProjectFile("src/components/Projects.jsx") ?? "";
+    if (!src.includes("loading")) {
+      return { passed: false, hint: "muestra estado loading en Projects.jsx" };
+    }
+    if (!src.includes('data-testid="loading"') && !src.includes("data-testid='loading'")) {
+      return { passed: false, hint: 'añade data-testid="loading" al texto de carga' };
+    }
+    return { passed: true };
+  },
+  "projects-merge-extras": async () => {
+    const src = readProjectFile("src/components/Projects.jsx") ?? "";
+    if (!src.includes("getExtraProjects")) {
+      return { passed: false, hint: "mezcla getExtraProjects() con los datos del fetch" };
+    }
+    return { passed: true };
+  },
+
+  // —— Nivel 18: ThemeContext ——
   "file-theme-context": async () => {
     if (!fileExists("src/context/ThemeContext.jsx")) {
       return { passed: false, hint: "crea ThemeContext.jsx" };
     }
     return { passed: true };
   },
+  "theme-create-provider": async () => {
+    const src = readProjectFile("src/context/ThemeContext.jsx") ?? "";
+    if (!src.includes("createContext")) {
+      return { passed: false, hint: "usa createContext en ThemeContext.jsx" };
+    }
+    if (!src.includes("ThemeProvider") || !src.includes("toggle")) {
+      return { passed: false, hint: "ThemeProvider debe exponer dark y toggle" };
+    }
+    if (!src.includes("data-theme")) {
+      return { passed: false, hint: "actualiza data-theme en documentElement" };
+    }
+    return { passed: true };
+  },
+  "theme-hook-export": async () => {
+    const src = readProjectFile("src/context/ThemeContext.jsx") ?? "";
+    if (!src.includes("useTheme")) {
+      return { passed: false, hint: "exporta function useTheme()" };
+    }
+    return { passed: true };
+  },
   "theme-provider-wraps": async () => {
-    const main = readProjectFile("src/main.jsx") ?? readProjectFile("src/App.jsx") ?? "";
+    const main = readProjectFile("src/main.jsx") ?? "";
     if (!main.includes("ThemeProvider")) {
-      return { passed: false, hint: "envuelve la app con <ThemeProvider>" };
+      return { passed: false, hint: "envuelve la app con <ThemeProvider> en main.jsx" };
+    }
+    return { passed: true };
+  },
+  "navbar-use-theme": async () => {
+    const nav = readProjectFile("src/components/Navbar.jsx") ?? "";
+    if (!nav.includes("useTheme")) {
+      return { passed: false, hint: "Navbar debe importar useTheme()" };
+    }
+    return { passed: true };
+  },
+  "app-no-theme-props": async () => {
+    const app = readProjectFile("src/App.jsx") ?? "";
+    if (/dark=\{|onToggleTheme=|toggleTheme=/.test(app)) {
+      return { passed: false, hint: "App no debe pasar props de tema a Navbar" };
+    }
+    if (!app.includes("<Navbar")) {
+      return { passed: false, hint: "App debe renderizar <Navbar /> sin props de tema" };
+    }
+    return { passed: true };
+  },
+
+  // —— Nivel 19: a11y + SEO ——
+  "page-home-main": async () => {
+    const src = readProjectFile("src/pages/HomePage.jsx") ?? "";
+    if (!/<main[\s>]/.test(src)) {
+      return { passed: false, hint: "HomePage debe envolver contenido en <main>" };
+    }
+    return { passed: true };
+  },
+  "page-projects-main": async () => {
+    const src = readProjectFile("src/pages/ProjectsPage.jsx") ?? "";
+    if (!/<main[\s>]/.test(src)) {
+      return { passed: false, hint: "ProjectsPage debe usar <main>" };
+    }
+    return { passed: true };
+  },
+  "page-contact-main": async () => {
+    const src = readProjectFile("src/pages/ContactPage.jsx") ?? "";
+    if (!/<main[\s>]/.test(src)) {
+      return { passed: false, hint: "ContactPage debe usar <main>" };
     }
     return { passed: true };
   },
@@ -436,6 +533,13 @@ export const extendedChecks = {
   "meta-description": async (page) => {
     const desc = await page.locator("meta[name='description']").count();
     if (!desc) return { passed: false, hint: "añade <meta name=\"description\" …> en index.html" };
+    return { passed: true };
+  },
+  "index-lang-es": async () => {
+    const html = readProjectFile("index.html") ?? "";
+    if (!/lang=["']es["']/i.test(html)) {
+      return { passed: false, hint: 'añade lang="es" al tag <html>' };
+    }
     return { passed: true };
   },
   "login-page-exists": async (page) => {
@@ -523,16 +627,223 @@ export const extendedChecks = {
     }
     return { passed: true };
   },
+  "env-supabase-url": async () => {
+    const env = readProjectFile(".env.example") ?? "";
+    if (!env.includes("VITE_SUPABASE_URL")) {
+      return { passed: false, hint: "añade VITE_SUPABASE_URL a .env.example" };
+    }
+    return { passed: true };
+  },
+  "env-supabase-key": async () => {
+    const env = readProjectFile(".env.example") ?? "";
+    if (!env.includes("VITE_SUPABASE_ANON_KEY")) {
+      return { passed: false, hint: "añade VITE_SUPABASE_ANON_KEY a .env.example" };
+    }
+    return { passed: true };
+  },
+  "file-supabase-lib": async () => {
+    if (!fileExists("src/lib/supabase.js")) {
+      return { passed: false, hint: "crea src/lib/supabase.js" };
+    }
+    return { passed: true };
+  },
+  "supabase-uses-import-meta": async () => {
+    const src = readProjectFile("src/lib/supabase.js") ?? "";
+    if (!src.includes("import.meta.env")) {
+      return { passed: false, hint: "lee variables con import.meta.env en supabase.js" };
+    }
+    return { passed: true };
+  },
   "no-hardcoded-secrets": async () => {
+    const files = ["src/App.jsx", "src/lib/supabase.js", "src/pages/AdminPage.jsx"];
+    for (const f of files) {
+      const src = readProjectFile(f) ?? "";
+      if (/eyJ[A-Za-z0-9_-]{10,}/.test(src)) {
+        return { passed: false, hint: `no pegues JWT keys en ${f} — usa import.meta.env` };
+      }
+    }
+    return { passed: true };
+  },
+
+  // —— Nivel 22: Admin ——
+  "file-admin-page": async () => {
+    if (!fileExists("src/pages/AdminPage.jsx")) {
+      return { passed: false, hint: "crea src/pages/AdminPage.jsx" };
+    }
+    return { passed: true };
+  },
+  "admin-route-app": async () => {
     const app = readProjectFile("src/App.jsx") ?? "";
-    if (/supabase.*key.*=.*['"]eyJ/.test(app)) {
-      return { passed: false, hint: "no pegues keys en el código — usa import.meta.env" };
+    if (!app.includes("/admin") && !app.includes('path="/admin"')) {
+      return { passed: false, hint: 'añade Route path="/admin" en App.jsx' };
+    }
+    return { passed: true };
+  },
+  "admin-form-title": async () => {
+    const src = readProjectFile("src/pages/AdminPage.jsx") ?? "";
+    if (!src.includes("admin-name") && !src.includes('name="name"')) {
+      return { passed: false, hint: "formulario admin con input de título" };
+    }
+    if (!src.includes("textarea") && !src.includes("admin-desc")) {
+      return { passed: false, hint: "añade textarea de descripción en AdminPage" };
+    }
+    return { passed: true };
+  },
+  "admin-uses-add-project": async () => {
+    const src = readProjectFile("src/pages/AdminPage.jsx") ?? "";
+    if (!src.includes("addProject")) {
+      return { passed: false, hint: "AdminPage debe llamar addProject() al enviar" };
+    }
+    return { passed: true };
+  },
+  "admin-submit-button": async (page) => {
+    const origin = new URL(page.url()).origin;
+    await page.goto(`${origin}/admin`, { waitUntil: "domcontentloaded" });
+    try {
+      await page.waitForSelector('form button[type="submit"]', { timeout: 8000 });
+    } catch {
+      return { passed: false, hint: "botón submit en formulario /admin" };
+    }
+    return { passed: true };
+  },
+  "admin-page-renders": async (page) => {
+    const origin = new URL(page.url()).origin;
+    await page.goto(`${origin}/admin`, { waitUntil: "domcontentloaded" });
+    try {
+      await page.waitForSelector("#admin-name, input[name='name']", { timeout: 8000 });
+    } catch {
+      return { passed: false, hint: "/admin debe cargar el formulario del panel" };
+    }
+    return { passed: true };
+  },
+
+  // —— Nivel 23: upload ——
+  "admin-file-input": async (page) => {
+    const origin = new URL(page.url()).origin;
+    await page.goto(`${origin}/admin`, { waitUntil: "domcontentloaded" });
+    try {
+      await page.waitForSelector('input[type="file"]', { timeout: 8000 });
+    } catch {
+      return { passed: false, hint: "añade input type=file en AdminPage" };
+    }
+    return { passed: true };
+  },
+  "admin-file-accept": async () => {
+    const src = readProjectFile("src/pages/AdminPage.jsx") ?? "";
+    if (!src.includes('type="file"') && !src.includes("type='file'")) {
+      return { passed: false, hint: "input file en AdminPage" };
+    }
+    if (!src.includes("accept=") || !src.includes("image")) {
+      return { passed: false, hint: 'accept="image/*" en el input file' };
+    }
+    return { passed: true };
+  },
+  "admin-file-handler": async () => {
+    const src = readProjectFile("src/pages/AdminPage.jsx") ?? "";
+    if (!/handleFileChange|onChange.*file|files\?\.\[0\]/.test(src)) {
+      return { passed: false, hint: "handler onChange para el input file" };
+    }
+    return { passed: true };
+  },
+  "admin-image-preview": async () => {
+    const src = readProjectFile("src/pages/AdminPage.jsx") ?? "";
+    if (!src.includes("createObjectURL") && !src.includes("preview")) {
+      return { passed: false, hint: "vista previa con URL.createObjectURL o estado preview" };
+    }
+    return { passed: true };
+  },
+  "admin-preview-alt": async () => {
+    const src = readProjectFile("src/pages/AdminPage.jsx") ?? "";
+    if (src.includes("<img") && src.includes("preview") && !/alt=/.test(src)) {
+      return { passed: false, hint: "la imagen preview necesita atributo alt" };
     }
     return { passed: true };
   },
   "file-input-image": async (page) => {
+    const origin = new URL(page.url()).origin;
+    await page.goto(`${origin}/admin`, { waitUntil: "domcontentloaded" });
     if (!(await page.locator('input[type="file"]').count())) {
-      return { passed: false, hint: 'añade <input type="file" accept="image/*" />' };
+      return { passed: false, hint: 'añade <input type="file" accept="image/*" /> en /admin' };
+    }
+    return { passed: true };
+  },
+
+  // —— Nivel 24: contacto persist ——
+  "file-contact-store": async () => {
+    if (!fileExists("src/lib/contactStore.js")) {
+      return { passed: false, hint: "crea src/lib/contactStore.js" };
+    }
+    return { passed: true };
+  },
+  "contact-store-localstorage": async () => {
+    const src = readProjectFile("src/lib/contactStore.js") ?? "";
+    if (!src.includes("localStorage") || !src.includes("saveContactMessage")) {
+      return { passed: false, hint: "contactStore guarda mensajes en localStorage" };
+    }
+    return { passed: true };
+  },
+  "contact-form-save-import": async () => {
+    const src = readProjectFile("src/components/ContactForm.jsx") ?? "";
+    if (!src.includes("saveContactMessage")) {
+      return { passed: false, hint: "ContactForm importa saveContactMessage" };
+    }
+    return { passed: true };
+  },
+  "contact-form-on-submit": async () => {
+    const src = readProjectFile("src/components/ContactForm.jsx") ?? "";
+    if (!src.includes("handleSubmit") || !src.includes("saveContactMessage")) {
+      return { passed: false, hint: "handleSubmit debe llamar saveContactMessage" };
+    }
+    return { passed: true };
+  },
+  "contact-sent-feedback": async () => {
+    const src = readProjectFile("src/components/ContactForm.jsx") ?? "";
+    if (!src.includes("sent") && !src.includes("role=\"status\"") && !src.includes("role='status'")) {
+      return { passed: false, hint: "muestra confirmación tras enviar (sent + role=status)" };
+    }
+    return { passed: true };
+  },
+
+  // —— Nivel 25: env ——
+  "env-site-url": async () => {
+    const env = readProjectFile(".env.example") ?? "";
+    if (!env.includes("VITE_SITE_URL")) {
+      return { passed: false, hint: "añade VITE_SITE_URL a .env.example" };
+    }
+    return { passed: true };
+  },
+  "env-analytics-var": async () => {
+    const env = readProjectFile(".env.example") ?? "";
+    if (!env.includes("VITE_ANALYTICS_ID")) {
+      return { passed: false, hint: "añade VITE_ANALYTICS_ID a .env.example" };
+    }
+    return { passed: true };
+  },
+  "env-example-complete": async () => {
+    const env = readProjectFile(".env.example") ?? "";
+    const required = ["VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY", "VITE_SITE_URL"];
+    for (const key of required) {
+      if (!env.includes(key)) {
+        return { passed: false, hint: `falta ${key} en .env.example` };
+      }
+    }
+    return { passed: true };
+  },
+
+  // —— Nivel 26: Vitest ——
+  "vitest-config-exists": async () => {
+    if (!fileExists("vitest.config.js") && !fileExists("vitest.config.ts")) {
+      return { passed: false, hint: "crea vitest.config.js" };
+    }
+    return { passed: true };
+  },
+  "package-test-script": async () => {
+    const pkg = readProjectFile("package.json") ?? "";
+    if (!/"test"\s*:/.test(pkg)) {
+      return { passed: false, hint: 'añade "test": "vitest run" en package.json' };
+    }
+    if (!pkg.includes("vitest")) {
+      return { passed: false, hint: "instala vitest como devDependency" };
     }
     return { passed: true };
   },
@@ -542,16 +853,84 @@ export const extendedChecks = {
     }
     return { passed: true };
   },
-  "lazy-suspense": async () => {
-    const app = readProjectFile("src/App.jsx") ?? "";
-    if (!app.includes("lazy(") && !app.includes("React.lazy")) {
-      return { passed: false, hint: "usa React.lazy para cargar una ruta o componente" };
+  "test-imports-vitest": async () => {
+    const test =
+      readProjectFile("src/components/ProjectCard.test.jsx") ??
+      readProjectFile("src/App.test.jsx") ??
+      "";
+    if (!test.includes("describe") || !test.includes("expect")) {
+      return { passed: false, hint: "importa describe, it, expect de vitest" };
+    }
+    if (!test.includes("@testing-library/react") && !test.includes("render")) {
+      return { passed: false, hint: "usa @testing-library/react para render" };
     }
     return { passed: true };
   },
-  "ci-workflow-exists": async () => {
-    if (!fileExists(".github/workflows/ci.yml")) {
-      return { passed: false, hint: "crea .github/workflows/ci.yml" };
+  "test-render-projectcard": async () => {
+    const test = readProjectFile("src/components/ProjectCard.test.jsx") ?? "";
+    if (!test.includes("ProjectCard")) {
+      return { passed: false, hint: "el test debe renderizar ProjectCard" };
+    }
+    if (!test.includes("getByText") && !test.includes("screen")) {
+      return { passed: false, hint: "comprueba texto visible con screen.getByText" };
+    }
+    return { passed: true };
+  },
+
+  // —— Nivel 27: lazy ——
+  "lazy-import-login": async () => {
+    const app = readProjectFile("src/App.jsx") ?? "";
+    if (!/lazy\s*\(\s*\(\)\s*=>\s*import\s*\(\s*["'].*LoginPage/.test(app)) {
+      return { passed: false, hint: "LoginPage debe cargarse con lazy(() => import(...))" };
+    }
+    return { passed: true };
+  },
+  "lazy-import-admin": async () => {
+    const app = readProjectFile("src/App.jsx") ?? "";
+    if (!/lazy\s*\(\s*\(\)\s*=>\s*import\s*\(\s*["'].*AdminPage/.test(app)) {
+      return { passed: false, hint: "AdminPage debe cargarse con lazy(() => import(...))" };
+    }
+    return { passed: true };
+  },
+  "lazy-suspense": async () => {
+    const app = readProjectFile("src/App.jsx") ?? "";
+    if (!app.includes("Suspense")) {
+      return { passed: false, hint: "envuelve Routes en <Suspense>" };
+    }
+    if (!app.includes("lazy(") && !app.includes("React.lazy")) {
+      return { passed: false, hint: "usa React.lazy para Login o Admin" };
+    }
+    return { passed: true };
+  },
+  "lazy-fallback-ui": async () => {
+    const app = readProjectFile("src/App.jsx") ?? "";
+    if (!app.includes("fallback")) {
+      return { passed: false, hint: "Suspense necesita prop fallback={…}" };
+    }
+    return { passed: true };
+  },
+  "lazy-routes-load": async (page) => {
+    const origin = new URL(page.url()).origin;
+    await page.goto(`${origin}/login`, { waitUntil: "domcontentloaded" });
+    try {
+      await page.waitForSelector("#login-email, form input[type='email']", { timeout: 12000 });
+    } catch {
+      return { passed: false, hint: "ruta lazy /login no carga correctamente" };
+    }
+    return { passed: true };
+  },
+
+  // —— Nivel 28: README ——
+  "readme-exists": async () => {
+    if (!fileExists("README.md")) {
+      return { passed: false, hint: "crea README.md" };
+    }
+    return { passed: true };
+  },
+  "readme-npm-scripts": async () => {
+    const readme = readProjectFile("README.md") ?? "";
+    if (!readme.includes("npm run dev") || !readme.includes("npm run build")) {
+      return { passed: false, hint: "README debe documentar npm run dev y npm run build" };
     }
     return { passed: true };
   },
@@ -559,6 +938,92 @@ export const extendedChecks = {
     const readme = readProjectFile("README.md") ?? "";
     if (!/https?:\/\//.test(readme)) {
       return { passed: false, hint: "documenta la URL de deploy en README.md" };
+    }
+    return { passed: true };
+  },
+  "index-analytics-comment": async () => {
+    const html = readProjectFile("index.html") ?? "";
+    if (!/analytics|plausible|gtag/i.test(html)) {
+      return { passed: false, hint: "añade comentario o script de analytics en index.html" };
+    }
+    return { passed: true };
+  },
+  "readme-env-docs": async () => {
+    const readme = readProjectFile("README.md") ?? "";
+    if (!/\.env|variables de entorno|VITE_/i.test(readme)) {
+      return { passed: false, hint: "README debe explicar .env.example / .env.local" };
+    }
+    return { passed: true };
+  },
+
+  // —— Nivel 29: CI ——
+  "ci-workflow-exists": async () => {
+    if (!fileExists(".github/workflows/ci.yml")) {
+      return { passed: false, hint: "crea .github/workflows/ci.yml" };
+    }
+    return { passed: true };
+  },
+  "ci-triggers-push": async () => {
+    const yml = readProjectFile(".github/workflows/ci.yml") ?? "";
+    if (!yml.includes("push:") || !yml.includes("main")) {
+      return { passed: false, hint: "CI debe dispararse en push a main" };
+    }
+    return { passed: true };
+  },
+  "ci-node-20": async () => {
+    const yml = readProjectFile(".github/workflows/ci.yml") ?? "";
+    if (!yml.includes('"20"') && !yml.includes("'20'")) {
+      return { passed: false, hint: 'usa node-version: "20" en el workflow' };
+    }
+    return { passed: true };
+  },
+  "ci-runs-test": async () => {
+    const yml = readProjectFile(".github/workflows/ci.yml") ?? "";
+    if (!yml.includes("npm test")) {
+      return { passed: false, hint: "el workflow debe ejecutar npm test" };
+    }
+    return { passed: true };
+  },
+  "ci-runs-build": async () => {
+    const yml = readProjectFile(".github/workflows/ci.yml") ?? "";
+    if (!yml.includes("npm run build")) {
+      return { passed: false, hint: "el workflow debe ejecutar npm run build" };
+    }
+    return { passed: true };
+  },
+
+  // —— Nivel 30: deploy ——
+  "package-build-script": async () => {
+    const pkg = readProjectFile("package.json") ?? "";
+    if (!/"build"\s*:/.test(pkg)) {
+      return { passed: false, hint: 'añade script "build": "vite build"' };
+    }
+    return { passed: true };
+  },
+  "build-passes-local": async () => {
+    if (!fileExists("dist/index.html")) {
+      return {
+        passed: false,
+        hint: "ejecuta npm run build — debe generar carpeta dist/",
+      };
+    }
+    return { passed: true };
+  },
+  "deploy-env-vars": async () => {
+    const readme = readProjectFile("README.md") ?? "";
+    const env = readProjectFile(".env.example") ?? "";
+    if (!env.includes("VITE_")) {
+      return { passed: false, hint: "documenta variables VITE_ para el hosting" };
+    }
+    if (!/vercel|netlify|environment variable|variables de entorno/i.test(readme + env)) {
+      return { passed: false, hint: "README o .env.example deben mencionar config en el hosting" };
+    }
+    return { passed: true };
+  },
+  "deploy-preview-check": async () => {
+    const readme = readProjectFile("README.md") ?? "";
+    if (!/https?:\/\//.test(readme)) {
+      return { passed: false, hint: "añade URL pública desplegada al README" };
     }
     return { passed: true };
   },
