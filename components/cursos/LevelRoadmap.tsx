@@ -2,7 +2,6 @@
 
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
 
 export type LevelState = {
   id: number;
@@ -40,81 +39,129 @@ export default function LevelRoadmap({ levels, onRefresh, refreshing }: Props) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold">{t("levelsTitle")}</h2>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "2rem",
+          flexWrap: "wrap",
+          gap: "1rem",
+        }}
+      >
+        <h2 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>
+          {t("levelsTitle")}
+        </h2>
         {onRefresh && (
           <button
             type="button"
             onClick={onRefresh}
             disabled={refreshing}
-            className="btn-secondary text-sm py-2 px-4"
+            className="btn-secondary"
+            style={{ fontSize: "0.875rem", padding: "0.5rem 1rem" }}
           >
             {refreshing ? "..." : t("refreshProgress")}
           </button>
         )}
       </div>
 
-      <div className="space-y-12">
+      <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
         {BLOCKS.map((block) => {
           const blockLevels = levels.filter((l) => l.block === block);
           if (!blockLevels.length) return null;
           return (
-            <div key={block}>
-              <h3 className="text-sm uppercase tracking-widest text-indigo-400 mb-4 font-semibold">
-                {block}
-              </h3>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <section key={block}>
+              <h3 className="cursos-block-title">{block}</h3>
+              <div className="cursos-level-grid">
                 {blockLevels.map((level) => {
                   const isLocked = level.status === "locked" && !level.passed;
-                  const isCurrent = level.status === "current";
+                  const cardClass =
+                    level.passed
+                      ? "cursos-level-card cursos-level-card--passed"
+                      : level.status === "current"
+                        ? "cursos-level-card cursos-level-card--current"
+                        : isLocked
+                          ? "cursos-level-card cursos-level-card--locked"
+                          : "cursos-level-card";
+
                   return (
-                    <motion.div
-                      key={level.id}
-                      layout
-                      className={`relative p-5 rounded-xl border transition-colors ${
-                        level.passed
-                          ? "border-emerald-500/40 bg-emerald-500/5"
-                          : isCurrent
-                            ? "border-indigo-500/60 bg-indigo-500/10 ring-1 ring-indigo-500/30"
-                            : isLocked
-                              ? "border-[var(--border-subtle)] bg-[var(--bg-card)] opacity-60"
-                              : "border-[var(--border-subtle)] bg-[var(--bg-card)]"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className="text-xs text-[var(--text-muted)]">
+                    <article key={level.id} className={cardClass}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          gap: "0.5rem",
+                        }}
+                      >
+                        <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
                           Nivel {level.id}
                         </span>
                         <span
-                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                            level.passed
-                              ? "bg-emerald-500/20 text-emerald-400"
-                              : isCurrent
-                                ? "bg-indigo-500/20 text-indigo-300"
-                                : "bg-slate-500/20 text-slate-400"
-                          }`}
+                          style={{
+                            fontSize: "0.7rem",
+                            fontWeight: 600,
+                            padding: "0.2rem 0.5rem",
+                            borderRadius: "999px",
+                            background:
+                              level.passed
+                                ? "rgba(16, 185, 129, 0.2)"
+                                : level.status === "current"
+                                  ? "rgba(99, 102, 241, 0.25)"
+                                  : "rgba(100, 116, 139, 0.25)",
+                            color:
+                              level.passed
+                                ? "#34d399"
+                                : level.status === "current"
+                                  ? "#c7d2fe"
+                                  : "#94a3b8",
+                          }}
                         >
                           {statusLabel(level.status)}
                         </span>
                       </div>
-                      <h4 className="font-semibold mb-1">{level.title}</h4>
-                      <p className="text-xs text-[var(--text-secondary)] mb-3 line-clamp-2">
+                      <h4 style={{ fontWeight: 600, margin: 0 }}>{level.title}</h4>
+                      <p
+                        style={{
+                          fontSize: "0.8rem",
+                          color: "#94a3b8",
+                          margin: 0,
+                          lineHeight: 1.4,
+                        }}
+                      >
                         {level.description}
                       </p>
-                      <ul className="space-y-1 mb-3">
+                      <ul
+                        style={{
+                          listStyle: "none",
+                          padding: 0,
+                          margin: "0.5rem 0",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "0.35rem",
+                        }}
+                      >
                         {level.checkpoints.map((cp) => (
                           <li
                             key={cp.id}
-                            className="text-xs flex items-center gap-2 text-[var(--text-muted)]"
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "#94a3b8",
+                              display: "flex",
+                              gap: "0.5rem",
+                              alignItems: "flex-start",
+                            }}
                           >
-                            <span
-                              className={
-                                cp.passed ? "text-emerald-400" : "text-slate-500"
-                              }
-                            >
+                            <span style={{ color: cp.passed ? "#34d399" : "#64748b" }}>
                               {cp.passed ? "✓" : "○"}
                             </span>
-                            <span className={cp.passed ? "line-through opacity-70" : ""}>
+                            <span
+                              style={
+                                cp.passed
+                                  ? { textDecoration: "line-through", opacity: 0.7 }
+                                  : undefined
+                              }
+                            >
                               {cp.label}
                             </span>
                           </li>
@@ -123,16 +170,21 @@ export default function LevelRoadmap({ levels, onRefresh, refreshing }: Props) {
                       {!isLocked && (
                         <Link
                           href={`/cursos/react/nivel/${level.id}`}
-                          className="text-sm text-indigo-400 hover:text-indigo-300 font-medium"
+                          style={{
+                            fontSize: "0.875rem",
+                            color: "#a5b4fc",
+                            fontWeight: 500,
+                            marginTop: "auto",
+                          }}
                         >
                           {t("viewLevel")} →
                         </Link>
                       )}
-                    </motion.div>
+                    </article>
                   );
                 })}
               </div>
-            </div>
+            </section>
           );
         })}
       </div>

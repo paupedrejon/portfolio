@@ -14,19 +14,16 @@ export async function ensureProfile(
   avatarUrl?: string | null
 ) {
   const supabase = getSupabaseAdmin();
-  const { data: existing } = await supabase
-    .from("profiles")
-    .select("user_id")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (!existing) {
-    await supabase.from("profiles").insert({
+  const { error } = await supabase.from("profiles").upsert(
+    {
       user_id: userId,
       display_name: displayName ?? null,
       avatar_url: avatarUrl ?? null,
-    });
-  }
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" }
+  );
+  if (error) throw error;
 }
 
 export async function getProfile(userId: string) {

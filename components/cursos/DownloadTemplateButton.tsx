@@ -60,7 +60,7 @@ export default function DownloadTemplateButton() {
             ? t("downloadTemplate")
             : t("loginToDownload")}
       </button>
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && <p className="cursos-download-error">{error}</p>}
     </div>
   );
 }

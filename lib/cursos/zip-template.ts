@@ -1,11 +1,15 @@
 import { createReadStream, existsSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 import { PassThrough } from "stream";
-import type Archiver from "archiver";
+import archiver from "archiver";
 
 const TEMPLATE_DIR = join(process.cwd(), "templates", "react-starter");
 
-function addDirectory(archive: Archiver.Archiver, dirPath: string, zipPath: string) {
+function addDirectory(
+  archive: archiver.Archiver,
+  dirPath: string,
+  zipPath: string
+) {
   if (!existsSync(dirPath)) return;
 
   for (const entry of readdirSync(dirPath)) {
@@ -43,11 +47,6 @@ export async function buildTemplateZip(studentToken: string): Promise<Buffer> {
 
   const apiBaseUrl = getCourseApiBaseUrl();
   const courseConfig = JSON.stringify({ studentToken, apiBaseUrl }, null, 2);
-
-  const archiverModule = await import("archiver");
-  const archiver =
-    (archiverModule as { default: typeof archiverModule.default }).default ??
-    archiverModule;
 
   return new Promise((resolve, reject) => {
     const passthrough = new PassThrough();

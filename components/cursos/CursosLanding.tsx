@@ -7,31 +7,37 @@ export default function CursosLanding() {
   const t = useTranslations("cursos");
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      <section className="hero-section proyectos-hero">
-        <div className="hero-grid" aria-hidden />
-        <div className="relative z-10 max-w-4xl mx-auto px-6 py-24 text-center">
-          <p className="hero-subtitle text-[var(--text-muted)] mb-4">
-            {t("catalogTitle")}
-          </p>
-          <h1 className="hero-title gradient-text mb-6">{t("catalogTitle")}</h1>
-          <p className="hero-tagline mx-auto mb-12">{t("catalogSubtitle")}</p>
+    <div className="cursos-page">
+      <header className="cursos-hero">
+        <p className="cursos-hero__subtitle">{t("catalogTitle")}</p>
+        <h1 className="cursos-hero__title gradient-text">{t("catalogTitle")}</h1>
+        <p className="cursos-hero__tagline">{t("catalogSubtitle")}</p>
+      </header>
 
-          <Link
-            href="/cursos/react"
-            className="block max-w-lg mx-auto text-left p-8 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] backdrop-blur hover:border-[var(--border-accent)] transition-all hover:-translate-y-1"
+      <main className="cursos-main">
+        <Link href="/cursos/react" className="cursos-card" style={{ display: "block", textDecoration: "none", color: "inherit" }}>
+          <span
+            style={{
+              fontSize: "0.7rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.15em",
+              color: "#a5b4fc",
+              fontWeight: 600,
+            }}
           >
-            <span className="text-xs uppercase tracking-widest text-indigo-400 font-semibold">
-              Gratis · 30 niveles
-            </span>
-            <h2 className="text-2xl font-bold mt-2 mb-2">{t("reactCardTitle")}</h2>
-            <p className="text-[var(--text-secondary)] text-sm mb-6">
-              {t("reactCardDescription")}
-            </p>
-            <span className="btn-primary inline-block text-sm">{t("reactCta")}</span>
-          </Link>
-        </div>
-      </section>
+            Gratis · 30 niveles
+          </span>
+          <h2 style={{ fontSize: "1.5rem", fontWeight: 700, margin: "0.5rem 0" }}>
+            {t("reactCardTitle")}
+          </h2>
+          <p style={{ color: "#94a3b8", fontSize: "0.95rem", margin: "0 0 1.25rem" }}>
+            {t("reactCardDescription")}
+          </p>
+          <span className="btn-primary" style={{ display: "inline-flex" }}>
+            {t("reactCta")}
+          </span>
+        </Link>
+      </main>
     </div>
   );
 }

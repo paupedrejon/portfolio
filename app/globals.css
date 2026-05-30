@@ -1703,6 +1703,189 @@ body::after {
   outline-offset: 2px;
 }
 
+/* ============================================
+   CURSOS (React course)
+   ============================================ */
+
+.cursos-page {
+  min-height: 100vh;
+  background: #0a0a0f;
+  color: #f8fafc;
+}
+
+.cursos-hero {
+  position: relative;
+  padding: 7rem 1.5rem 3rem;
+  text-align: center;
+  overflow: hidden;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    rgba(99, 102, 241, 0.18) 0%,
+    transparent 65%
+  );
+}
+
+@media (min-width: 640px) {
+  .cursos-hero {
+    padding: 8rem 2rem 3.5rem;
+  }
+}
+
+.cursos-hero__title {
+  font-size: clamp(2.25rem, 6vw, 3.75rem);
+  font-weight: 800;
+  line-height: 1.05;
+  margin: 0 0 1rem;
+}
+
+.cursos-hero__subtitle {
+  font-size: 0.8rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #a5b4fc;
+  margin: 0 0 0.75rem;
+}
+
+.cursos-hero__tagline {
+  max-width: 40rem;
+  margin: 0 auto 2rem;
+  color: #94a3b8;
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.cursos-main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.cursos-card {
+  padding: 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(26, 26, 36, 0.85);
+  backdrop-filter: blur(12px);
+}
+
+.cursos-form-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .cursos-form-row {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.cursos-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: #12121a;
+  color: #f8fafc;
+  font-size: 1rem;
+}
+
+.cursos-input:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.55);
+}
+
+.cursos-form-row .btn-primary {
+  width: auto;
+  align-self: flex-start;
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .cursos-form-row .btn-primary {
+    align-self: center;
+  }
+}
+
+.cursos-progress-bar {
+  height: 0.65rem;
+  border-radius: 999px;
+  background: #12121a;
+  overflow: hidden;
+}
+
+.cursos-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  transition: width 0.4s ease;
+}
+
+.cursos-level-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .cursos-level-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .cursos-level-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.cursos-level-card {
+  padding: 1.25rem;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(18, 18, 26, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cursos-level-card--current {
+  border-color: rgba(99, 102, 241, 0.45);
+  background: rgba(99, 102, 241, 0.08);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
+}
+
+.cursos-level-card--passed {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.cursos-level-card--locked {
+  opacity: 0.55;
+}
+
+.cursos-block-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #a5b4fc;
+  margin: 0 0 1rem;
+}
+
+.cursos-download-error {
+  color: #f87171;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  max-width: 28rem;
+}
+
 /* What's New section - responsive */
 @media (max-width: 900px) {
   .whats-new-grid {

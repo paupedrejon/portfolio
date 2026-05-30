@@ -38,13 +38,14 @@ export default function ProfileNameForm({ initialName, onSaved }: Props) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="p-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] backdrop-blur"
-    >
-      <h3 className="text-lg font-semibold mb-1">{t("profileTitle")}</h3>
-      <p className="text-sm text-[var(--text-muted)] mb-4">{t("profileHint")}</p>
-      <div className="flex flex-col sm:flex-row gap-3">
+    <form onSubmit={handleSubmit} className="cursos-card">
+      <h3 style={{ fontSize: "1.125rem", fontWeight: 600, margin: "0 0 0.25rem" }}>
+        {t("profileTitle")}
+      </h3>
+      <p style={{ fontSize: "0.875rem", color: "#94a3b8", margin: "0 0 1rem" }}>
+        {t("profileHint")}
+      </p>
+      <div className="cursos-form-row">
         <input
           type="text"
           value={name}
@@ -53,20 +54,26 @@ export default function ProfileNameForm({ initialName, onSaved }: Props) {
           minLength={2}
           maxLength={80}
           required
-          className="flex-1 px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:outline-none focus:border-indigo-500"
+          className="cursos-input"
         />
         <button
           type="submit"
           disabled={saving}
-          className="btn-primary whitespace-nowrap disabled:opacity-50"
+          className="btn-primary"
         >
           {saving ? "..." : t("profileSave")}
         </button>
       </div>
       {saved && (
-        <p className="text-emerald-400 text-sm mt-2">{t("profileSaved")}</p>
+        <p style={{ color: "#34d399", fontSize: "0.875rem", marginTop: "0.75rem" }}>
+          {t("profileSaved")}
+        </p>
       )}
-      {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+      {error && (
+        <p style={{ color: "#f87171", fontSize: "0.875rem", marginTop: "0.75rem" }}>
+          {error}
+        </p>
+      )}
     </form>
   );
 }

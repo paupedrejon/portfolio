@@ -145,6 +145,34 @@ Guarda y haz **Redeploy** para que cojan las variables.
 | Mensaje | Causa | Solución |
 |---------|--------|----------|
 | *Supabase no configurado* (503) | Faltan variables en **Vercel** | Añade `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `COURSE_API_BASE_URL` en Vercel → Settings → Environment Variables → **Redeploy** |
+| *Invalid path* / tablas raras | `SUPABASE_URL` mal copiada | Debe ser `https://xxx.supabase.co` **sin** `/rest/v1/` al final |
+
+---
+
+## Confusión habitual: ¿qué URL va en cada sitio?
+
+Supabase te muestra **varias URLs distintas**. Solo una va en `SUPABASE_URL` del `.env`.
+
+| Lo que ves | ¿Abrir en Chrome? | ¿Va en `SUPABASE_URL`? |
+|------------|-------------------|-------------------------|
+| `https://xxx.supabase.co` | Verás `{"error":"requested path is invalid"}` — **normal** | **Sí, esta** |
+| `https://xxx.supabase.co/rest/v1/` | Verás `No API key found` — **normal** (falta la clave en la petición) | **No** — el SDK añade `/rest/v1` solo |
+| `postgresql://postgres:...@db.xxx.supabase.co:5432/postgres` | No es una URL web | **No** — solo para `SUPABASE_DB_URL` o clientes SQL |
+
+### Cómo encontrar la URL correcta
+
+1. Supabase → **Project Settings** (engranaje) → **API** (o **API Keys**).
+2. Arriba suele aparecer **Project URL** / **URL**: `https://aeguejuuknbnmblnbuuq.supabase.co`
+3. Esa es la que copias en `.env.local` y Vercel como `SUPABASE_URL`.
+
+El **Connection string** (`postgresql://...`) es la contraseña de la base de datos Postgres. Lo usas solo si ejecutas el SQL desde tu PC con:
+
+```bash
+# Opcional: añade SUPABASE_DB_URL con esa URI (sustituye [YOUR-PASSWORD])
+node scripts/apply-cursos-migration.mjs
+```
+
+Para el curso en Next.js **no necesitas** el connection string si ya pegaste el SQL en **SQL Editor**.
 | Descarga / progreso fallan en local pero la clave está en `.env.local` | **No ejecutaste el SQL** | SQL Editor → pegar `supabase/migrations/001_cursos.sql` → Run |
 | Token inválido al hacer check | Normal con token de prueba; descarga plantilla nueva desde la web |
 

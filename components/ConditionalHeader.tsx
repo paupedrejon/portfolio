@@ -14,7 +14,10 @@ import { signOut, useSession } from "next-auth/react";
 export default function ConditionalHeader() {
   const pathname = usePathname();
   const isStudyAgentsPage = pathname?.startsWith("/study-agents");
-  const forceDarkProjectsTheme = pathname?.includes("/proyectos") || pathname?.includes("/projects");
+  const forceDarkProjectsTheme =
+    pathname?.includes("/proyectos") ||
+    pathname?.includes("/projects") ||
+    pathname?.includes("/cursos");
   const [colorTheme, setColorTheme] = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);

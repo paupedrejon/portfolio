@@ -70,18 +70,15 @@ export default function ReactCourseClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      <section className="hero-section proyectos-hero">
-        <div className="hero-grid" aria-hidden />
-        <div className="relative z-10 max-w-5xl mx-auto px-6 py-20 text-center">
-          <p className="hero-subtitle text-indigo-400 mb-2">{t("heroSubtitle")}</p>
-          <h1 className="hero-title gradient-text mb-4">{t("heroTitle")}</h1>
-          <p className="hero-tagline mx-auto mb-10 max-w-2xl">{t("heroDescription")}</p>
-          <DownloadTemplateButton />
-        </div>
-      </section>
+    <div className="cursos-page">
+      <header className="cursos-hero">
+        <p className="cursos-hero__subtitle">{t("heroSubtitle")}</p>
+        <h1 className="cursos-hero__title gradient-text">{t("heroTitle")}</h1>
+        <p className="cursos-hero__tagline">{t("heroDescription")}</p>
+        <DownloadTemplateButton />
+      </header>
 
-      <section className="max-w-5xl mx-auto px-6 pb-24 space-y-12">
+      <main className="cursos-main">
         {session && (
           <ProfileNameForm
             initialName={progress?.displayName ?? session.user?.name ?? ""}
@@ -90,22 +87,30 @@ export default function ReactCourseClient() {
         )}
 
         {session && progress && (
-          <div>
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-[var(--text-secondary)]">{t("progressLabel")}</span>
-              <span className="font-medium">
-                {progress.passedCount}/{progress.totalLevels} ({progress.progressPercent}%)
+          <div className="cursos-card">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "0.5rem",
+                fontSize: "0.9rem",
+              }}
+            >
+              <span style={{ color: "#94a3b8" }}>{t("progressLabel")}</span>
+              <span>
+                {progress.passedCount}/{progress.totalLevels} (
+                {progress.progressPercent}%)
               </span>
             </div>
-            <div className="h-3 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
+            <div className="cursos-progress-bar">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500"
+                className="cursos-progress-fill"
                 style={{ width: `${progress.progressPercent}%` }}
               />
             </div>
             {progress.courseCompleted && (
-              <div className="mt-6 text-center">
-                <Link href="/cursos/react/diploma" className="btn-primary inline-block">
+              <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
+                <Link href="/cursos/react/diploma" className="btn-primary">
                   {t("diplomaTitle")} →
                 </Link>
               </div>
@@ -114,7 +119,9 @@ export default function ReactCourseClient() {
         )}
 
         {loading && session && (
-          <p className="text-center text-[var(--text-muted)]">Cargando progreso...</p>
+          <p style={{ textAlign: "center", color: "#64748b" }}>
+            Cargando progreso...
+          </p>
         )}
 
         {progress && (
@@ -126,17 +133,19 @@ export default function ReactCourseClient() {
         )}
 
         {!session && (
-          <p className="text-center text-[var(--text-muted)]">
+          <p style={{ textAlign: "center", color: "#94a3b8" }}>
             {t("loginToDownload")}
           </p>
         )}
-      </section>
+      </main>
 
       {showCelebration && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="bg-[var(--bg-card)] border border-indigo-500/40 rounded-2xl p-8 max-w-sm text-center">
-            <p className="text-4xl mb-4">🎉</p>
-            <h3 className="text-xl font-bold mb-4">{t("celebrationTitle")}</h3>
+          <div className="cursos-card" style={{ maxWidth: "24rem", textAlign: "center" }}>
+            <p style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>🎉</p>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1rem" }}>
+              {t("celebrationTitle")}
+            </h3>
             <button
               type="button"
               className="btn-primary"
