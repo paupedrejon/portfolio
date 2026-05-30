@@ -3,10 +3,17 @@ import { COURSE_SLUG_REACT, TOTAL_LEVELS, getLevelById, levels } from "@/lib/cur
 
 export type LevelProgressRow = {
   level_id: number;
-  completed_checkpoints: Record<string, boolean>;
+  completed_checkpoints: Record<string, boolean> | null;
   passed: boolean;
   passed_at: string | null;
 };
+
+function normalizeCheckpoints(
+  raw: unknown
+): Record<string, boolean> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  return raw as Record<string, boolean>;
+}
 
 export async function ensureProfile(
   userId: string,
@@ -23,7 +30,16 @@ export async function ensureProfile(
     },
     { onConflict: "user_id" }
   );
-  if (error) throw error;
+  if (error) {
+    console.error("ensureProfile:", error.message, error.code);
+    throw new Error(
+      error.code === "PGRST205" || error.message.includes("schema cache")
+        ? "Tabla profiles no encontrada. Ejecuta supabase/migrations/001_cursos.sql en Supabase."
+        : error.message.includes("Invalid API key")
+          ? "SUPABASE_SERVICE_ROLE_KEY inválida. Usa la secret key (sb_secret_...), no la publishable."
+          : error.message
+    );
+  }
 }
 
 export async function getProfile(userId: string) {
@@ -41,12 +57,25 @@ export async function getProgressRows(
   courseSlug = COURSE_SLUG_REACT
 ): Promise<LevelProgressRow[]> {
   const supabase = getSupabaseAdmin();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("level_progress")
     .select("level_id, completed_checkpoints, passed, passed_at")
     .eq("user_id", userId)
     .eq("course_slug", courseSlug);
-  return (data ?? []) as LevelProgressRow[];
+
+  if (error) {
+    console.error("getProgressRows:", error.message, error.code);
+    throw new Error(
+      error.code === "PGRST205" || error.message.includes("schema cache")
+        ? "Tablas del curso no encontradas. Ejecuta supabase/migrations/001_cursos.sql en Supabase."
+        : error.message
+    );
+  }
+
+  return (data ?? []).map((row) => ({
+    ...row,
+    completed_checkpoints: normalizeCheckpoints(row.completed_checkpoints),
+  })) as LevelProgressRow[];
 }
 
 export async function getCurrentLevelId(
@@ -92,7 +121,14 @@ export async function createStudentToken(
     .select("token")
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("createStudentToken:", error.message, error.code);
+    throw new Error(
+      error.code === "23503"
+        ? "Perfil de usuario no encontrado. Vuelve a iniciar sesión."
+        : error.message
+    );
+  }
   return data.token as string;
 }
 
@@ -156,10 +192,11 @@ export function buildProgressPayload(
 
   const levelStates = levels.map((level) => {
     const row = rowMap.get(level.id);
-    const checkpoints = level.checkpoints.map((cp) => ({
+    const completed = normalizeCheckpoints(row?.completed_checkpoints);
+    const checkpoints = (level.checkpoints ?? []).map((cp) => ({
       id: cp.id,
       label: cp.label,
-      passed: row?.completed_checkpoints?.[cp.id] === true,
+      passed: completed[cp.id] === true,
     }));
     const passed = row?.passed === true;
     const status: "locked" | "current" | "passed" = passed

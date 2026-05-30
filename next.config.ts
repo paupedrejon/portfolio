@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
       "./templates/react-starter/**/*",
       "./courses/react/levels.js",
     ],
+    "/api/me/progress": ["./courses/react/levels.js"],
+    "/api/me/profile": ["./courses/react/levels.js"],
+    "/api/cursos/react/current-level": ["./courses/react/levels.js"],
+    "/api/cursos/react/diploma": ["./courses/react/levels.js"],
+    "/api/cursos/react/levels/[levelId]/verify": ["./courses/react/levels.js"],
   },
 };
 

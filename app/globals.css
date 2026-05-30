@@ -1715,43 +1715,140 @@ body::after {
 
 .cursos-hero {
   position: relative;
-  padding: 7rem 1.5rem 3rem;
-  text-align: center;
+  padding: 7rem 1.5rem 3.5rem;
+  text-align: left;
   overflow: hidden;
+  max-width: 72rem;
+  margin: 0 auto;
   background: radial-gradient(
-    ellipse 80% 60% at 50% 0%,
-    rgba(99, 102, 241, 0.18) 0%,
-    transparent 65%
+    ellipse 90% 70% at 20% 0%,
+    rgba(99, 102, 241, 0.22) 0%,
+    transparent 60%
   );
 }
 
 @media (min-width: 640px) {
   .cursos-hero {
-    padding: 8rem 2rem 3.5rem;
+    padding: 8.5rem 2rem 4rem;
   }
 }
 
-.cursos-hero__title {
-  font-size: clamp(2.25rem, 6vw, 3.75rem);
-  font-weight: 800;
-  line-height: 1.05;
-  margin: 0 0 1rem;
-}
-
-.cursos-hero__subtitle {
-  font-size: 0.8rem;
-  letter-spacing: 0.25em;
+.cursos-hero__eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: #a5b4fc;
-  margin: 0 0 0.75rem;
+  margin: 0 0 1.25rem;
+  font-weight: 600;
+}
+
+.cursos-hero__title {
+  font-family: var(--font-league-spartan), system-ui, sans-serif;
+  font-size: clamp(2.75rem, 7.5vw, 5.25rem);
+  font-weight: 800;
+  line-height: 1.02;
+  margin: 0 0 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.cursos-hero__title-line {
+  display: block;
+  color: #f8fafc;
+}
+
+.cursos-hero__title-accent {
+  display: block;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .cursos-hero__tagline {
-  max-width: 40rem;
-  margin: 0 auto 2rem;
+  max-width: 36rem;
+  margin: 0 0 2.25rem;
+  color: #cbd5e1;
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  line-height: 1.7;
+  font-weight: 400;
+}
+
+.cursos-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.cursos-hero__actions .btn-primary {
+  width: auto;
+  font-size: 1rem;
+  padding: 0.9rem 1.75rem;
+  border-radius: 999px;
+}
+
+.cursos-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 1.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(248, 250, 252, 0.35);
+  color: #f8fafc;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.cursos-btn-outline:hover {
+  border-color: rgba(99, 102, 241, 0.65);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.cursos-feature-row {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 2rem;
+}
+
+@media (min-width: 768px) {
+  .cursos-feature-row {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0 2rem 2.5rem;
+  }
+}
+
+.cursos-feature-card {
+  padding: 1.75rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(30, 30, 46, 0.75);
+}
+
+.cursos-feature-card__icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-bottom: 1rem;
+  color: var(--accent-primary);
+}
+
+.cursos-feature-card h3 {
+  font-family: var(--font-league-spartan), system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  color: #f8fafc;
+}
+
+.cursos-feature-card p {
+  margin: 0;
   color: #94a3b8;
-  font-size: 1.05rem;
-  line-height: 1.65;
+  font-size: 0.95rem;
+  line-height: 1.55;
 }
 
 .cursos-main {
@@ -1846,13 +1943,20 @@ body::after {
 }
 
 .cursos-level-card {
-  padding: 1.25rem;
-  border-radius: 0.875rem;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: rgba(18, 18, 26, 0.9);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(30, 30, 46, 0.8);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.65rem;
+  min-height: 11rem;
+}
+
+.cursos-level-card h4 {
+  font-family: var(--font-league-spartan), system-ui, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
 }
 
 .cursos-level-card--current {

@@ -3,7 +3,16 @@ import { join } from "path";
 import { PassThrough } from "stream";
 import archiver from "archiver";
 
-const TEMPLATE_DIR = join(process.cwd(), "templates", "react-starter");
+function resolveTemplateDir(): string {
+  const candidates = [
+    join(process.cwd(), "templates", "react-starter"),
+    join(process.cwd(), ".next", "standalone", "templates", "react-starter"),
+  ];
+  for (const dir of candidates) {
+    if (existsSync(dir)) return dir;
+  }
+  return candidates[0];
+}
 
 function addDirectory(
   archive: archiver.Archiver,
@@ -41,6 +50,7 @@ export function getCourseApiBaseUrl(): string {
 }
 
 export async function buildTemplateZip(studentToken: string): Promise<Buffer> {
+  const TEMPLATE_DIR = resolveTemplateDir();
   if (!existsSync(TEMPLATE_DIR)) {
     throw new Error(`Plantilla no encontrada: ${TEMPLATE_DIR}`);
   }

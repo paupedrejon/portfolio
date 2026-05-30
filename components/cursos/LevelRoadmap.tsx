@@ -49,7 +49,14 @@ export default function LevelRoadmap({ levels, onRefresh, refreshing }: Props) {
           gap: "1rem",
         }}
       >
-        <h2 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>
+        <h2
+          style={{
+            fontSize: "1.75rem",
+            fontWeight: 700,
+            margin: 0,
+            fontFamily: "var(--font-league-spartan), system-ui, sans-serif",
+          }}
+        >
           {t("levelsTitle")}
         </h2>
         {onRefresh && (

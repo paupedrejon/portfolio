@@ -2,9 +2,18 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 let adminClient: SupabaseClient | null = null;
 
+/** Normaliza URL de Supabase (sin /rest/v1 ni barra final). */
+export function normalizeSupabaseUrl(raw?: string): string | null {
+  if (!raw?.trim()) return null;
+  return raw
+    .trim()
+    .replace(/\/$/, "")
+    .replace(/\/rest\/v1\/?$/i, "");
+}
+
 export function getSupabaseAdmin(): SupabaseClient {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = normalizeSupabaseUrl(process.env.SUPABASE_URL);
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 
   if (!url || !key) {
     throw new Error(

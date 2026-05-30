@@ -5,7 +5,15 @@ import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-export default function DownloadTemplateButton() {
+type Props = {
+  className?: string;
+  compact?: boolean;
+};
+
+export default function DownloadTemplateButton({
+  className = "",
+  compact = false,
+}: Props) {
   const t = useTranslations("cursos");
   const { data: session, status } = useSession();
   const pathname = usePathname();
@@ -47,12 +55,13 @@ export default function DownloadTemplateButton() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className={className}>
       <button
         type="button"
         onClick={handleDownload}
         disabled={loading || status === "loading"}
-        className="btn-primary text-lg px-10 py-4 disabled:opacity-60"
+        className={`btn-primary ${compact ? "" : "text-lg px-10 py-4"} disabled:opacity-60`}
+        style={compact ? { padding: "0.9rem 1.75rem", borderRadius: "999px" } : undefined}
       >
         {loading
           ? t("downloading")
