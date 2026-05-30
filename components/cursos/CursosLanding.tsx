@@ -2,8 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { REACT_COURSE } from "@/lib/cursos/courses-meta";
+import { COURSES } from "@/lib/cursos/courses-meta";
 import { formatEstimatedMinutes } from "@/lib/cursos/format-duration";
+import { CourseFinalPreviewMock } from "./level-previews/LevelPreviewMocks";
 
 export default function CursosLanding() {
   const t = useTranslations("cursos");
@@ -18,50 +19,31 @@ export default function CursosLanding() {
         <p className="cursos-hero__tagline">{t("catalogSubtitle")}</p>
       </header>
 
-      <main className="cursos-main">
-        <Link
-          href="/cursos/react"
-          className="cursos-feature-card"
-          style={{ display: "block", textDecoration: "none", color: "inherit" }}
-        >
-          <span
-            style={{
-              fontSize: "0.7rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.15em",
-              color: "var(--cursos-primary)",
-              fontWeight: 600,
-            }}
+      <main className="cursos-main cursos-catalog">
+        {COURSES.map((course) => (
+          <Link
+            key={course.slug}
+            href={`/cursos/${course.slug}`}
+            className="cursos-course-card"
           >
-            {t("courseCardEyebrow", {
-              levels: REACT_COURSE.totalLevels,
-              duration: formatEstimatedMinutes(REACT_COURSE.estimatedMinutes),
-            })}
-          </span>
-          <h2
-            style={{
-              fontFamily: "var(--font-league-spartan), system-ui, sans-serif",
-              fontSize: "1.75rem",
-              fontWeight: 700,
-              margin: "0.75rem 0 0.5rem",
-            }}
-          >
-            {t("reactCardTitle")}
-          </h2>
-          <p
-            style={{
-              color: "var(--cursos-text-muted)",
-              fontSize: "1rem",
-              margin: "0 0 1.5rem",
-              lineHeight: 1.55,
-            }}
-          >
-            {t("reactCardDescription")}
-          </p>
-          <span className="cursos-btn-primary" style={{ display: "inline-flex" }}>
-            {t("reactCta")} →
-          </span>
-        </Link>
+            <div className="cursos-course-card__cover" aria-hidden>
+              <CourseFinalPreviewMock view="home" compact />
+            </div>
+            <div className="cursos-course-card__body">
+              <span className="cursos-course-card__eyebrow">
+                {t("courseCardEyebrow", {
+                  levels: course.totalLevels,
+                  duration: formatEstimatedMinutes(course.estimatedMinutes),
+                })}
+              </span>
+              <h2 className="cursos-course-card__title">{t(`${course.slug}CardTitle`)}</h2>
+              <p className="cursos-course-card__desc">{t(`${course.slug}CardDescription`)}</p>
+              <span className="cursos-btn-primary cursos-course-card__cta">
+                {t(`${course.slug}Cta`)} →
+              </span>
+            </div>
+          </Link>
+        ))}
       </main>
     </div>
   );

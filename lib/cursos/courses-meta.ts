@@ -5,12 +5,14 @@ export type CourseMeta = {
   slug: string;
   totalLevels: number;
   estimatedMinutes: number;
+  resultPath: string;
 };
 
 export const REACT_COURSE: CourseMeta = {
   slug: COURSE_SLUG_REACT,
   totalLevels: TOTAL_LEVELS,
   estimatedMinutes: REACT_COURSE_ESTIMATED_MINUTES,
+  resultPath: "/cursos/react/resultado",
 };
 
 export const COURSES: CourseMeta[] = [REACT_COURSE];

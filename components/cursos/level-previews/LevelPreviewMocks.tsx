@@ -106,6 +106,65 @@ function MockBrowserBar({ path = "/" }: { path?: string }) {
   );
 }
 
+export type CourseFinalView = "home" | "projects" | "contact";
+
+/** Vista del portfolio completo al terminar el curso (nivel 30). */
+export function CourseFinalPreviewMock({
+  view = "home",
+  compact = false,
+}: {
+  view?: CourseFinalView;
+  compact?: boolean;
+}) {
+  const path =
+    view === "home" ? "/" : view === "projects" ? "/proyectos" : "/contacto";
+
+  return (
+    <div
+      className={`cursos-final-preview${compact ? " cursos-final-preview--compact" : ""}`}
+    >
+      <div className="cursos-final-preview__frame">
+        <MockBrowserBar path={path} />
+        <MockNav themeToggle loginLink />
+        {view === "home" && (
+          <div className="cursos-mock cursos-mock--stack">
+            <div className="cursos-mock cursos-mock--dark cursos-mock--hero-band">
+              <h1 className="cursos-mock__h1">Hello World</h1>
+              <p className="cursos-mock__sub">Desarrollador web en formación</p>
+              <span className="cursos-mock__btn">Ver proyectos</span>
+            </div>
+            <div className="cursos-mock cursos-mock--light cursos-mock--about-band">
+              <h2 className="cursos-mock__h2">Sobre mí</h2>
+              <p className="cursos-mock__bio">
+                Presentación personal, stack y objetivos profesionales.
+              </p>
+            </div>
+          </div>
+        )}
+        {view === "projects" && (
+          <div className="cursos-mock cursos-mock--light cursos-mock--compact">
+            <h2 className="cursos-mock__h2">Proyectos</h2>
+            <div className="cursos-mock__grid">
+              <MockProjectCard image tags={["React", "Tailwind"]} />
+              <MockProjectCard title="App de tareas" image tags={["React"]} />
+              <MockProjectCard title="Landing SaaS" image tags={["Vite"]} />
+            </div>
+          </div>
+        )}
+        {view === "contact" && (
+          <div className="cursos-mock cursos-mock--light cursos-mock--compact">
+            <h2 className="cursos-mock__h2">Contacto</h2>
+            <MockForm
+              labels={["Nombre", "Email", "Mensaje"]}
+              success="Mensaje guardado (demo local)."
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function LevelPreviewMock({ levelId }: { levelId: number }) {
   switch (levelId) {
     case 1:
@@ -356,13 +415,7 @@ export function LevelPreviewMock({ levelId }: { levelId: number }) {
         </div>
       );
     case 30:
-      return (
-        <div className="cursos-mock cursos-mock--light cursos-mock--generic">
-          <span className="cursos-mock__globe">🌐</span>
-          <p className="cursos-mock__code-hint">https://mi-portfolio.vercel.app</p>
-          <p className="cursos-mock__sub">Deploy en Vercel / Netlify</p>
-        </div>
-      );
+      return <CourseFinalPreviewMock view="home" />;
     default:
       return (
         <div className="cursos-mock cursos-mock--light cursos-mock--generic">

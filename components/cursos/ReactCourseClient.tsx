@@ -63,11 +63,14 @@ export default function ReactCourseClient() {
       </div>
 
       <main className="cursos-main" style={{ paddingTop: 0 }}>
-        <p style={{ textAlign: "center" }}>
+        <div className="cursos-course-actions">
           <Link href="/cursos/react/mapa" className="cursos-btn-outline">
             {t("viewAllLevels")}
           </Link>
-        </p>
+          <Link href={REACT_COURSE.resultPath} className="cursos-btn-outline">
+            {t("viewFinalResult")}
+          </Link>
+        </div>
       </main>
     </div>
   );
