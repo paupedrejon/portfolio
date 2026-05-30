@@ -1,4 +1,9 @@
-import { getTextAlign, hasHorizontalOverflow } from "./helpers.js";
+import {
+  getTextAlign,
+  hasHorizontalOverflow,
+  getHeroVerticalStack,
+  getHeroColumnCentered,
+} from "./helpers.js";
 
 /** @type {Record<string, (page: import('@playwright/test').Page) => Promise<{ passed: boolean; hint?: string; skipped?: boolean }>>} */
 export const checks = {
@@ -51,6 +56,22 @@ export const checks = {
     if (!text?.toLowerCase().includes("hello world")) {
       return { passed: false, hint: `h1: "${text?.trim() ?? "ausente"}"` };
     }
+    const align = await getTextAlign(page, "h1");
+    if (align !== "center") {
+      return { passed: false, hint: `h1 no centrado (text-align: ${align})` };
+    }
+    return { passed: true };
+  },
+
+  "hero-layout-column": async (page) => {
+    const col = await getHeroColumnCentered(page);
+    if (!col.ok) return { passed: false, hint: col.reason };
+    return { passed: true };
+  },
+
+  "hero-vertical-stack": async (page) => {
+    const stack = await getHeroVerticalStack(page);
+    if (!stack.ok) return { passed: false, hint: stack.reason };
     return { passed: true };
   },
 
@@ -146,6 +167,24 @@ export const checks = {
     const about = page.locator("section#about, section h2").filter({ hasText: /sobre mí/i });
     if (!(await about.count())) {
       return { passed: false, hint: "Sección about no visible en móvil" };
+    }
+    return { passed: true };
+  },
+
+  "hero-from-level2-intact": async (page) => {
+    const text = await page.locator("h1").first().textContent();
+    if (!text?.toLowerCase().includes("hello world")) {
+      return { passed: false, hint: "falta h1 Hello World del hero" };
+    }
+    const stack = await getHeroVerticalStack(page);
+    if (!stack.ok) return { passed: false, hint: stack.reason };
+    const paragraphs = await page.locator("p").count();
+    if (paragraphs < 1) {
+      return { passed: false, hint: "falta el subtítulo del nivel 2" };
+    }
+    const btnCount = await page.locator("button, a").count();
+    if (btnCount < 1) {
+      return { passed: false, hint: "falta el botón CTA del nivel 2" };
     }
     return { passed: true };
   },

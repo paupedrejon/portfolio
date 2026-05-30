@@ -40,10 +40,12 @@ function PreviewLevel2() {
 function PreviewLevel3() {
   return (
     <div className="cursos-mock cursos-mock--stack">
-      <div className="cursos-mock cursos-mock--dark cursos-mock--compact">
-        <h1 className="cursos-mock__h1 cursos-mock__h1--sm">Hello World</h1>
+      <div className="cursos-mock cursos-mock--dark cursos-mock--hero-band">
+        <h1 className="cursos-mock__h1">Hello World</h1>
+        <p className="cursos-mock__sub">Desarrollador web en formación</p>
+        <span className="cursos-mock__btn">Ver proyectos</span>
       </div>
-      <div className="cursos-mock cursos-mock--light">
+      <div className="cursos-mock cursos-mock--light cursos-mock--about-band">
         <h2 className="cursos-mock__h2">Sobre mí</h2>
         <p className="cursos-mock__bio">
           Texto de presentación con varias frases sobre ti y tu camino en

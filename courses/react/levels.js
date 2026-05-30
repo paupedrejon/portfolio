@@ -14,7 +14,7 @@ export const levels = [
     objective:
       "Crea una página con fondo oscuro y un hero que tenga un único título <h1> centrado con el texto Hello World.",
     preview: {
-      title: "Así debería verse tu página",
+      title: "Así debería verse tu web al finalizar este nivel",
       description:
         "Fondo oscuro a pantalla completa. En el centro, un solo título grande que dice Hello World.",
     },
@@ -92,15 +92,15 @@ export const levels = [
     objective:
       "Mantén el h1 Hello World centrado. Añade un subtítulo <p> debajo y un botón CTA con buen estilo (padding y bordes redondeados).",
     preview: {
-      title: "Así debería verse tu hero",
+      title: "Así debería verse tu web al finalizar este nivel",
       description:
-        "Hello World centrado, un párrafo debajo presentándote, y un botón llamativo (por ejemplo «Ver proyectos»).",
+        "Hello World centrado, un párrafo debajo presentándote, y un botón llamativo (por ejemplo «Ver proyectos»). Todo en columna, sin solaparse.",
     },
     checkpoints: [
       {
         id: "h1-still-present",
-        label: "El h1 Hello World sigue presente",
-        assert: "page has visible <h1> with Hello World",
+        label: "El h1 Hello World sigue presente y centrado",
+        assert: "page has visible centered <h1> with Hello World",
         hintSteps: [
           { type: "file", text: "Abre", path: "src/App.jsx" },
           { type: "tip", text: "Comprueba que tu h1 del nivel 1 sigue ahí" },
@@ -108,27 +108,48 @@ export const levels = [
         ],
       },
       {
+        id: "hero-layout-column",
+        label: "El hero usa columna centrada (flex flex-col items-center)",
+        assert: "hero wrapper uses flex column with centered items",
+        hintSteps: [
+          { type: "action", text: "Envuelve h1, p y botón en un <div> contenedor" },
+          {
+            type: "code",
+            text: "Añade al contenedor (no al h1 suelto):",
+            code: 'className="flex flex-col items-center justify-center min-h-screen bg-gray-950"',
+          },
+          { type: "tip", text: "Guarda: los elementos deben alinearse en columna al centro, no en fila" },
+        ],
+      },
+      {
         id: "subtitle-exists",
-        label: "Existe un subtítulo <p> en el hero",
-        assert: "hero section has a visible <p> with at least 10 characters",
+        label: "Existe un subtítulo <p> debajo del h1",
+        assert: "hero has visible <p> with at least 10 characters below h1",
         hintSteps: [
           { type: "action", text: "Justo DEBAJO del </h1>, en la misma columna, añade una línea nueva" },
           { type: "code", text: "Primero un párrafo simple:", code: "<p>Desarrollador web en formación</p>" },
-          { type: "action", text: "Guarda y comprueba que se ve debajo del título" },
-          {
-            type: "tip",
-            text: 'Luego puedes añadir clases: className="text-gray-300 mt-4"',
-          },
+          { type: "action", text: "Guarda y comprueba que se ve debajo del título (no al lado)" },
+          { type: "tip", text: 'Opcional: className="text-gray-300 mt-4 text-center"' },
         ],
       },
       {
         id: "cta-button-exists",
-        label: "Existe un botón CTA",
-        assert: "page has a visible <button> or <a> styled as CTA in hero",
+        label: "Existe un botón CTA debajo del párrafo",
+        assert: "page has a visible CTA button below subtitle",
         hintSteps: [
-          { type: "action", text: "Debajo del <p>, añade un botón sin estilos todavía" },
+          { type: "action", text: "Debajo del <p>, añade un botón (nueva línea, no al lado del h1)" },
           { type: "code", text: "Mínimo:", code: '<button type="button">Ver proyectos</button>' },
-          { type: "tip", text: "Guarda: debe verse un botón clicable en la página" },
+          { type: "tip", text: "Guarda: el botón debe quedar bajo el texto, no pegado a Hello World" },
+        ],
+      },
+      {
+        id: "hero-vertical-stack",
+        label: "h1, párrafo y botón van en vertical (sin solaparse)",
+        assert: "h1, p and CTA are stacked vertically without horizontal overlap",
+        hintSteps: [
+          { type: "tip", text: "Si el botón tapa el título, falta flex-col o hay elementos en la misma fila" },
+          { type: "action", text: "Orden correcto dentro del div: h1 → p → button" },
+          { type: "code", text: "Estructura:", code: "<div className=\"flex flex-col items-center ...\">\n  <h1>...</h1>\n  <p>...</p>\n  <button>...</button>\n</div>" },
         ],
       },
       {
@@ -137,14 +158,14 @@ export const levels = [
         assert: "CTA has padding >= 8px and border-radius >= 4px",
         hintSteps: [
           { type: "action", text: "No cambies el texto del botón. Solo añade className" },
-          { type: "action", text: "Paso 1: añade padding → className=\"px-6 py-3\"" },
-          { type: "action", text: "Paso 2: añade bordes redondos → rounded-full" },
+          { type: "action", text: "Paso 1: padding → className=\"px-6 py-3\"" },
+          { type: "action", text: "Paso 2: bordes redondos → rounded-full" },
           {
             type: "code",
             text: "Ejemplo completo:",
-            code: 'className="px-6 py-3 rounded-full bg-[#2a8ca0] text-white"',
+            code: 'className="px-6 py-3 rounded-full bg-[#2a8ca0] text-white mt-6"',
           },
-          { type: "tip", text: "Guarda: el botón debe verse más grande y con esquinas redondas" },
+          { type: "tip", text: "Guarda: botón grande, redondo y separado del párrafo" },
         ],
       },
     ],
@@ -158,11 +179,20 @@ export const levels = [
     objective:
       'Debajo del hero, crea una sección "Sobre mí" con h2, párrafos de bio (50+ caracteres) y diseño legible en móvil.',
     preview: {
-      title: "Así debería verse con «Sobre mí»",
+      title: "Así debería verse tu web al finalizar este nivel",
       description:
-        "El hero de arriba se mantiene. Debajo, una sección con título Sobre mí y varias líneas de texto de presentación.",
+        "El hero completo del nivel 2 se mantiene arriba. Debajo, una sección clara con título Sobre mí y varias líneas de presentación.",
     },
     checkpoints: [
+      {
+        id: "hero-from-level2-intact",
+        label: "El hero del nivel 2 sigue intacto (h1, p y botón en columna)",
+        assert: "hero from level 2 still present with vertical stack",
+        hintSteps: [
+          { type: "tip", text: "No borres el hero al añadir «Sobre mí». Solo añade contenido debajo." },
+          { type: "action", text: "Comprueba: Hello World, subtítulo y botón CTA siguen visibles y centrados" },
+        ],
+      },
       {
         id: "about-section-exists",
         label: 'Existe una sección "Sobre mí"',
@@ -535,15 +565,31 @@ const DEFAULT_HINT_STEPS = [
   { type: "tip", text: "Este paso se marca solo al cumplir el requisito" },
 ];
 
+const PAGE_RENDERS_CHECKPOINT = {
+  id: "page-renders",
+  label: "La página carga sin errores",
+  assert: "app loads at base URL with HTTP 200 and no console errors",
+  hintSteps: [
+    { type: "action", text: "Abre la carpeta del zip en la terminal del proyecto" },
+    { type: "action", text: "Ejecuta npm install (solo la primera vez)" },
+    { type: "action", text: "Luego npm run dev y abre http://localhost:5173" },
+    { type: "tip", text: "F12 → Consola: no debe haber errores en rojo" },
+    { type: "tip", text: "Al guardar en src/, este paso se actualiza solo" },
+  ],
+};
+
 for (const level of levels) {
   if (!level.objective) {
     level.objective = level.description;
   }
   if (!level.preview) {
     level.preview = {
-      title: "Resultado esperado",
+      title: "Así debería verse tu web al finalizar este nivel",
       description: level.description,
     };
+  }
+  if (!level.checkpoints.some((c) => c.id === "page-renders")) {
+    level.checkpoints.unshift({ ...PAGE_RENDERS_CHECKPOINT });
   }
   for (const cp of level.checkpoints) {
     if (!cp.hintSteps?.length) cp.hintSteps = DEFAULT_HINT_STEPS;

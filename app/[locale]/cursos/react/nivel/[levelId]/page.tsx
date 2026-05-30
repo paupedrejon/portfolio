@@ -74,7 +74,6 @@ export default async function LevelPage({ params }: Props) {
       title={level.title}
       block={level.block}
       objective={level.objective}
-      previewTitle={level.preview.title}
       previewDescription={level.preview.description}
       initialCheckpoints={checkpoints}
       initialStatus={status}

@@ -6,7 +6,11 @@ import { useTranslations } from "next-intl";
 const COMMANDS = `npm install
 npm run dev`;
 
-export default function TerminalSetupBlock() {
+type Props = {
+  embedded?: boolean;
+};
+
+export default function TerminalSetupBlock({ embedded = false }: Props) {
   const t = useTranslations("cursos");
   const [copied, setCopied] = useState(false);
 
@@ -21,7 +25,9 @@ export default function TerminalSetupBlock() {
   }
 
   return (
-    <div className="cursos-terminal-block">
+    <div
+      className={`cursos-terminal-block${embedded ? " cursos-terminal-block--embedded" : ""}`}
+    >
       <h3 className="cursos-terminal-block__title">{t("terminalSetupTitle")}</h3>
       <p className="cursos-terminal-block__intro">{t("terminalSetupIntro")}</p>
       <p className="cursos-terminal-block__npm">{t("terminalNpmHint")}</p>

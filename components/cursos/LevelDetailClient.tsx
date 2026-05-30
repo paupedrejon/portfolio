@@ -8,6 +8,10 @@ import DownloadTemplateButton from "./DownloadTemplateButton";
 import TerminalSetupBlock from "./TerminalSetupBlock";
 import LevelPreview from "./LevelPreview";
 import StepHintPanel, { type HintStep } from "./StepHintPanel";
+import {
+  LevelCompleteCelebration,
+  StepPassedBurst,
+} from "./CursosCelebration";
 
 export type CheckpointView = {
   id: string;
@@ -22,7 +26,6 @@ type Props = {
   title: string;
   block: string;
   objective: string;
-  previewTitle: string;
   previewDescription: string;
   initialCheckpoints: CheckpointView[];
   initialStatus: string;
@@ -34,7 +37,6 @@ export default function LevelDetailClient({
   title,
   block,
   objective,
-  previewTitle,
   previewDescription,
   initialCheckpoints,
   initialStatus,
@@ -45,12 +47,18 @@ export default function LevelDetailClient({
   const [checkpoints, setCheckpoints] = useState(initialCheckpoints);
   const [status, setStatus] = useState(initialStatus);
   const [openHintId, setOpenHintId] = useState<string | null>(null);
+  const [burstCheckpointId, setBurstCheckpointId] = useState<string | null>(null);
+  const [showLevelCelebrate, setShowLevelCelebrate] = useState(false);
   const hintsRef = useRef({
     hints: Object.fromEntries(initialCheckpoints.map((c) => [c.id, c.hint])),
     steps: Object.fromEntries(
       initialCheckpoints.map((c) => [c.id, c.hintSteps ?? []])
     ),
   });
+  const passedByIdRef = useRef(
+    Object.fromEntries(initialCheckpoints.map((c) => [c.id, c.passed]))
+  );
+  const prevStatusRef = useRef(initialStatus);
 
   const syncProgress = useCallback(async () => {
     if (!session) return;
@@ -89,6 +97,39 @@ export default function LevelDetailClient({
     return () => clearInterval(id);
   }, [session, syncProgress]);
 
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    for (const cp of checkpoints) {
+      const wasPassed = passedByIdRef.current[cp.id];
+      if (cp.passed && !wasPassed) {
+        setBurstCheckpointId(cp.id);
+        timer = setTimeout(() => setBurstCheckpointId(null), 700);
+      }
+      passedByIdRef.current[cp.id] = cp.passed;
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [checkpoints]);
+
+  useEffect(() => {
+    if (status === "passed" && prevStatusRef.current !== "passed") {
+      setShowLevelCelebrate(true);
+    }
+    prevStatusRef.current = status;
+  }, [status]);
+
+  const didAutoOpenRef = useRef(false);
+  useEffect(() => {
+    if (didAutoOpenRef.current) return;
+    const firstOpen =
+      checkpoints.find((c) => !c.passed)?.id ?? checkpoints[0]?.id ?? null;
+    if (firstOpen) {
+      setOpenHintId(firstOpen);
+      didAutoOpenRef.current = true;
+    }
+  }, [checkpoints]);
+
   const passedCount = checkpoints.filter((c) => c.passed).length;
   const allPassed =
     passedCount === checkpoints.length && checkpoints.length > 0;
@@ -104,6 +145,12 @@ export default function LevelDetailClient({
 
   return (
     <div className="cursos-page">
+      <LevelCompleteCelebration
+        open={showLevelCelebrate}
+        levelId={levelId}
+        onClose={() => setShowLevelCelebrate(false)}
+      />
+
       <article className="cursos-level-page">
         <Link href="/cursos/react/mapa" className="cursos-level-page__back">
           ← {t("levelPageBack")}
@@ -121,19 +168,9 @@ export default function LevelDetailClient({
               : t("levelLocked")}
         </span>
 
-        {levelId === 1 && (
-          <div className="cursos-level-page__download">
-            <h3>{t("downloadTemplate")}</h3>
-            <p>{t("level1DownloadHint")}</p>
-            <DownloadTemplateButton />
-          </div>
-        )}
-
-        <TerminalSetupBlock />
-
         <LevelPreview
           levelId={levelId}
-          title={previewTitle}
+          title={t("previewLevelEndTitle")}
           description={previewDescription}
         />
 
@@ -158,11 +195,13 @@ export default function LevelDetailClient({
           {checkpoints.map((cp, index) => {
             const isOpen = openHintId === cp.id;
             const isCurrent =
-              !cp.passed && index === (currentStepIndex >= 0 ? currentStepIndex : 0);
+              !cp.passed &&
+              index === (currentStepIndex >= 0 ? currentStepIndex : 0);
+            const justPassed = burstCheckpointId === cp.id;
             return (
               <li
                 key={cp.id}
-                className={`cursos-check-item${cp.passed ? " cursos-check-item--passed" : ""}${isCurrent ? " cursos-check-item--current" : ""}`}
+                className={`cursos-check-item${cp.passed ? " cursos-check-item--passed" : ""}${isCurrent ? " cursos-check-item--current" : ""}${justPassed ? " cursos-check-item--celebrate" : ""}`}
               >
                 <button
                   type="button"
@@ -170,8 +209,11 @@ export default function LevelDetailClient({
                   onClick={() => setOpenHintId(isOpen ? null : cp.id)}
                   aria-expanded={isOpen}
                 >
-                  <span className="cursos-check-item__ring" aria-hidden>
-                    {cp.passed ? "✓" : index + 1}
+                  <span className="cursos-check-item__ring-wrap">
+                    <StepPassedBurst active={justPassed} />
+                    <span className="cursos-check-item__ring" aria-hidden>
+                      {cp.passed ? "✓" : index + 1}
+                    </span>
                   </span>
                   <span className="cursos-check-item__label-wrap">
                     <span className="cursos-check-item__step-num">
@@ -188,6 +230,18 @@ export default function LevelDetailClient({
                 </button>
                 {isOpen && (
                   <div className="cursos-check-item__hint">
+                    {cp.id === "page-renders" && (
+                      <>
+                        {levelId === 1 && (
+                          <div className="cursos-level-page__download cursos-level-page__download--inline">
+                            <h3>{t("downloadTemplate")}</h3>
+                            <p>{t("level1DownloadHint")}</p>
+                            <DownloadTemplateButton />
+                          </div>
+                        )}
+                        <TerminalSetupBlock embedded />
+                      </>
+                    )}
                     <StepHintPanel steps={cp.hintSteps} fallback={cp.hint} />
                   </div>
                 )}

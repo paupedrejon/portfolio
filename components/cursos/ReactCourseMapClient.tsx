@@ -62,12 +62,22 @@ export default function ReactCourseMapClient() {
 
   return (
     <div className="cursos-page">
-      <div className="cursos-level-page" style={{ maxWidth: "72rem" }}>
+      <header className="cursos-hero cursos-hero--map">
         <Link href="/cursos/react" className="cursos-level-page__back">
           ← {t("backToCourse")}
         </Link>
-        <h1 className="cursos-level-page__title">{t("levelsTitle")}</h1>
+        <h1 className="cursos-hero__title">
+          <span className="cursos-hero__title-line">{t("levelsTitle")}</span>
+        </h1>
+        {session && progress && (
+          <p className="cursos-hero__tagline">
+            {progress.passedCount}/{progress.totalLevels} niveles ·{" "}
+            {progress.progressPercent}% {t("progressLabel").toLowerCase()}
+          </p>
+        )}
+      </header>
 
+      <div className="cursos-map-body">
         {session && (
           <ProfileNameForm
             initialName={progress?.displayName ?? session.user?.name ?? ""}
@@ -80,18 +90,10 @@ export default function ReactCourseMapClient() {
         )}
 
         {session && progress && (
-          <div className="cursos-card" style={{ marginBottom: "2rem" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: "0.5rem",
-              }}
-            >
-              <span style={{ color: "var(--cursos-text-muted)" }}>
-                {t("progressLabel")}
-              </span>
-              <span style={{ fontWeight: 700 }}>
+          <div className="cursos-card cursos-map-progress">
+            <div className="cursos-map-progress__row">
+              <span>{t("progressLabel")}</span>
+              <span className="cursos-map-progress__value">
                 {progress.passedCount}/{progress.totalLevels} (
                 {progress.progressPercent}%)
               </span>
@@ -103,7 +105,7 @@ export default function ReactCourseMapClient() {
               />
             </div>
             {progress.courseCompleted && (
-              <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
+              <div className="cursos-map-progress__diploma">
                 <Link href="/cursos/react/diploma" className="cursos-btn-primary">
                   {t("diplomaTitle")} →
                 </Link>
@@ -113,19 +115,27 @@ export default function ReactCourseMapClient() {
         )}
 
         {loading && session && (
-          <p style={{ color: "var(--cursos-text-muted)" }}>Cargando...</p>
+          <p className="cursos-map-loading">Cargando...</p>
         )}
 
         {progress && (
           <LevelRoadmap
             levels={progress.levels}
-            onRefresh={session ? () => { setRefreshing(true); fetchProgress(); } : undefined}
+            large
+            onRefresh={
+              session
+                ? () => {
+                    setRefreshing(true);
+                    fetchProgress();
+                  }
+                : undefined
+            }
             refreshing={refreshing}
           />
         )}
 
         {!session && (
-          <p style={{ color: "var(--cursos-text-muted)" }}>{t("loginToDownload")}</p>
+          <p className="cursos-map-login-hint">{t("loginToDownload")}</p>
         )}
       </div>
     </div>
