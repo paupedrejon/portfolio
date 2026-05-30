@@ -140,7 +140,22 @@ Guarda y haz **Redeploy** para que cojan las variables.
 3. Descomprime, `npm install`, `npm run check`.
 4. En la web, el nivel 1 debería poder marcarse en verde cuando pasen todos los puntos.
 
-Si ves *“Supabase no configurado”*: faltan las variables o no reiniciaste el servidor / Vercel.
+### Errores frecuentes
+
+| Mensaje | Causa | Solución |
+|---------|--------|----------|
+| *Supabase no configurado* (503) | Faltan variables en **Vercel** | Añade `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `COURSE_API_BASE_URL` en Vercel → Settings → Environment Variables → **Redeploy** |
+| Descarga / progreso fallan en local pero la clave está en `.env.local` | **No ejecutaste el SQL** | SQL Editor → pegar `supabase/migrations/001_cursos.sql` → Run |
+| Token inválido al hacer check | Normal con token de prueba; descarga plantilla nueva desde la web |
+
+### Aplicar el SQL (obligatorio, una vez)
+
+**Opción A — En el navegador (recomendado)**  
+Supabase → **SQL Editor** → New query → copia todo `supabase/migrations/001_cursos.sql` → **Run**.
+
+**Opción B — Desde tu PC** (si tienes la connection string de la BD)  
+Añade `SUPABASE_DB_URL=postgresql://...` a `.env.local` y ejecuta:  
+`node scripts/apply-cursos-migration.mjs`
 
 ---
 
