@@ -10,6 +10,14 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  async rewrites() {
+    return [
+      {
+        source: "/cursos/react-demo/:path*",
+        destination: "/cursos/react-demo/index.html",
+      },
+    ];
+  },
   // Incluir plantilla del curso en el bundle de la API en Vercel
   outputFileTracingIncludes: {
     "/api/cursos/react/download": [

@@ -2014,7 +2014,7 @@ body:has(.cursos-page)::before {
 }
 
 .cursos-result-page__inner {
-  max-width: 56rem;
+  max-width: 72rem;
   margin: 0 auto;
 }
 
@@ -2060,6 +2060,19 @@ body:has(.cursos-page)::before {
   border: 1px solid var(--cursos-border);
   box-shadow: 0 8px 32px rgba(42, 140, 160, 0.12);
   background: #fff;
+}
+
+.cursos-result-page__iframe {
+  display: block;
+  width: 100%;
+  height: min(80vh, 720px);
+  border: 0;
+  background: #fff;
+}
+
+.cursos-result-page__tab--external {
+  text-decoration: none;
+  margin-left: auto;
 }
 
 .cursos-result-page__note {

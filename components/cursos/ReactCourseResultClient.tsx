@@ -1,18 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import {
-  CourseFinalPreviewMock,
-  type CourseFinalView,
-} from "./level-previews/LevelPreviewMocks";
 
-const VIEWS: CourseFinalView[] = ["home", "projects", "contact"];
+const DEMO_BASE = "/cursos/react-demo";
+
+type DemoView = "home" | "projects" | "contact";
+
+const VIEW_PATH: Record<DemoView, string> = {
+  home: "",
+  projects: "/proyectos",
+  contact: "/contacto",
+};
+
+const VIEWS: DemoView[] = ["home", "projects", "contact"];
 
 export default function ReactCourseResultClient() {
   const t = useTranslations("cursos");
-  const [view, setView] = useState<CourseFinalView>("home");
+  const [view, setView] = useState<DemoView>("home");
+
+  const iframeSrc = useMemo(
+    () => `${DEMO_BASE}${VIEW_PATH[view]}`,
+    [view]
+  );
 
   return (
     <div className="cursos-page cursos-result-page">
@@ -39,10 +50,24 @@ export default function ReactCourseResultClient() {
               {t(`finalResultTab_${v}`)}
             </button>
           ))}
+          <a
+            href={`${DEMO_BASE}/`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cursos-result-page__tab cursos-result-page__tab--external"
+          >
+            {t("finalResultOpenFull")} ↗
+          </a>
         </div>
 
         <div className="cursos-result-page__preview">
-          <CourseFinalPreviewMock view={view} />
+          <iframe
+            key={iframeSrc}
+            title={t("finalResultIframeTitle")}
+            src={iframeSrc}
+            className="cursos-result-page__iframe"
+            loading="lazy"
+          />
         </div>
 
         <p className="cursos-result-page__note">{t("finalResultNote")}</p>

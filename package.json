@@ -7,7 +7,8 @@
     "dev": "next dev",
     "dev:clean": "npm run clean && next dev",
     "dev:api": "cd study_agents/api && python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000",
-    "build": "next build",
+    "build": "node scripts/build-react-demo.mjs && next build",
+    "build:react-demo": "node scripts/build-react-demo.mjs",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "echo \"npm install OK\""

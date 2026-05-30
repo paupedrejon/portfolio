@@ -11,7 +11,8 @@ export default function middleware(request: NextRequest) {
   if (
     pathname.startsWith("/api") ||
     pathname.startsWith("/auth") ||
-    pathname.startsWith("/study-agents")
+    pathname.startsWith("/study-agents") ||
+    pathname.startsWith("/cursos/react-demo")
   ) {
     return NextResponse.next();
   }
@@ -20,5 +21,7 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|auth|study-agents|_next|_vercel|.*\\..*).*)"],
+  matcher: [
+    "/((?!api|auth|study-agents|cursos/react-demo|_next|_vercel|.*\\..*).*)",
+  ],
 };

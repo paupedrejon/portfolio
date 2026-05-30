@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="App de tareas">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="100%" stop-color="#134e4a"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect x="160" y="50" width="320" height="260" rx="20" fill="#111827" stroke="#2a8ca0" stroke-width="2" opacity="0.95"/>
+  <rect x="190" y="90" width="200" height="14" rx="7" fill="#334155"/>
+  <rect x="190" y="130" width="260" height="14" rx="7" fill="#1f2937"/>
+  <rect x="190" y="170" width="240" height="14" rx="7" fill="#1f2937"/>
+  <rect x="190" y="210" width="220" height="14" rx="7" fill="#1f2937"/>
+  <circle cx="205" cy="137" r="10" fill="none" stroke="#2a8ca0" stroke-width="2"/>
+  <path d="M200 137 l4 4 l8-8" stroke="#2a8ca0" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <circle cx="205" cy="177" r="10" fill="none" stroke="#64748b" stroke-width="2"/>
+  <circle cx="205" cy="217" r="10" fill="none" stroke="#64748b" stroke-width="2"/>
+  <text x="320" y="310" text-anchor="middle" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="18">App de tareas</text>
+</svg>

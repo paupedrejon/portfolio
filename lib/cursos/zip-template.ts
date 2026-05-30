@@ -99,6 +99,23 @@ export function getCourseApiBaseUrl(): string {
   return "http://localhost:3000";
 }
 
+/** Materializa la plantilla del curso (starter + milestones) en un directorio. */
+export function materializeCourseTemplate(
+  destRoot: string,
+  options: { afterLevel?: number } = {}
+): void {
+  const TEMPLATE_DIR = resolveTemplateDir();
+  if (!existsSync(TEMPLATE_DIR)) {
+    throw new Error(`Plantilla no encontrada: ${TEMPLATE_DIR}`);
+  }
+
+  const afterLevel = options.afterLevel ?? 0;
+  const milestoneUpTo = Math.max(0, Math.min(29, afterLevel - 1));
+
+  copyDirRecursive(TEMPLATE_DIR, destRoot);
+  applyMilestonesToDir(destRoot, milestoneUpTo);
+}
+
 /**
  * @param studentToken Token del alumno
  * @param options.afterLevel Nivel del curso en el que descarga: zip = estado tras completar (afterLevel - 1). Default 0 = starter vacío.
@@ -121,8 +138,7 @@ export async function buildTemplateZip(
   );
 
   try {
-    copyDirRecursive(TEMPLATE_DIR, tempRoot);
-    applyMilestonesToDir(tempRoot, milestoneUpTo);
+    materializeCourseTemplate(tempRoot, { afterLevel });
 
     const apiBaseUrl = getCourseApiBaseUrl();
     const courseConfig = JSON.stringify(
