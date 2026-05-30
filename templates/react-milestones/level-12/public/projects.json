@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "title": "Portfolio personal",
+    "description": "Mi sitio hecho con React y Tailwind."
+  },
+  {
+    "id": 2,
+    "title": "App de tareas",
+    "description": "Lista de tareas con useState."
+  }
+]

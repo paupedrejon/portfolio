@@ -1,6 +1,6 @@
-export default function App() {
+export default function Hero() {
   return (
-    <main className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-4 md:px-6">
+    <main className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-4 md:px-6 pt-20">
       <h1 className="text-center text-white text-4xl md:text-5xl font-bold">Hello World</h1>
       <p className="text-gray-300 mt-4 text-center max-w-md">Desarrollador web en formación</p>
       <button

@@ -1,0 +1,17 @@
+export const projects = [
+  {
+    id: 1,
+    title: "Portfolio personal",
+    description: "Mi sitio hecho con React y Tailwind, con secciones y formulario de contacto.",
+  },
+  {
+    id: 2,
+    title: "App de tareas",
+    description: "Lista de tareas con useState y filtros por estado completado.",
+  },
+  {
+    id: 3,
+    title: "Clon de landing",
+    description: "Réplica mobile-first de una landing para practicar maquetación.",
+  },
+];

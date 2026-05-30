@@ -5,6 +5,7 @@ import {
   getHeroColumnCentered,
 } from "./helpers.js";
 import { level1Checks } from "./level1.js";
+import { level2Checks } from "./level2.js";
 import { extendedChecks } from "./extended.js";
 
 /** @type {Record<string, (page: import('@playwright/test').Page) => Promise<{ passed: boolean; hint?: string; skipped?: boolean }>>} */
@@ -73,56 +74,27 @@ export const checks = {
     return { passed: true };
   },
 
-  "hero-vertical-stack": async (page) => {
-    const stack = await getHeroVerticalStack(page);
-    if (!stack.ok) return { passed: false, hint: stack.reason };
-    return { passed: true };
-  },
+  ...level2Checks,
 
+  // Compatibilidad con ids antiguos
   "subtitle-exists": async (page) => {
-    const main = page.locator("main, [class*='hero'], body").first();
-    const paragraphs = main.locator("p");
-    const count = await paragraphs.count();
-    for (let i = 0; i < count; i++) {
-      const t = await paragraphs.nth(i).textContent();
-      if (t && t.trim().length >= 10) return { passed: true };
-    }
-    return { passed: false, hint: "No hay <p> con al menos 10 caracteres en el hero" };
+    const fn = level2Checks["subtitle-text-length"];
+    return fn(page);
   },
-
   "cta-button-exists": async (page) => {
-    const btn = page.locator("main button, main a[class*='btn'], main a.rounded, button, a.inline-block").first();
-    if ((await page.locator("button, a").count()) === 0) {
-      return { passed: false, hint: "No hay botón ni enlace CTA" };
-    }
-    const visible = await page.locator("button, a").filter({ hasText: /.+/ }).first().isVisible().catch(() => false);
-    if (!visible) {
-      return { passed: false, hint: "CTA no visible" };
-    }
-    return { passed: true };
+    const fn = level2Checks["cta-plain-exists"];
+    return fn(page);
   },
-
   "cta-button-styled": async (page) => {
-    const el = page.locator("button, a").filter({ hasText: /.+/ }).first();
-    if (!(await el.count())) {
-      return { passed: false, hint: "Sin botón CTA" };
-    }
-    const styles = await el.evaluate((node) => {
-      const s = window.getComputedStyle(node);
-      return {
-        paddingTop: parseFloat(s.paddingTop) || 0,
-        paddingBottom: parseFloat(s.paddingBottom) || 0,
-        borderRadius: parseFloat(s.borderRadius) || 0,
-      };
-    });
-    const pad = styles.paddingTop + styles.paddingBottom;
-    if (pad < 8) {
-      return { passed: false, hint: `padding vertical: ${pad}px (mín. 8)` };
-    }
-    if (styles.borderRadius < 4) {
-      return { passed: false, hint: `border-radius: ${styles.borderRadius}px (mín. 4)` };
-    }
-    return { passed: true };
+    const pad = await level2Checks["cta-padding"](page);
+    if (!pad.passed) return pad;
+    const round = await level2Checks["cta-rounded"](page);
+    if (!round.passed) return round;
+    return level2Checks["cta-teal-style"](page);
+  },
+  "hero-vertical-stack": async (page) => {
+    const fn = level2Checks["hero-vertical-stack-final"];
+    return fn(page);
   },
 
   // —— Nivel 3 ——
