@@ -12,7 +12,7 @@ export const levels = [
     block: "Fundamentos",
     description: "Crea tu primera página y un hero con un título centrado.",
     objective:
-      "Crea una página con fondo oscuro y un hero que tenga un único título <h1> centrado con el texto Hello World.",
+      "Crea una página con fondo oscuro a pantalla completa y un único <h1> centrado que diga Hello World, grande, en blanco y en negrita (como en la vista previa).",
     preview: {
       title: "Así debería verse tu web al finalizar este nivel",
       description:
@@ -71,14 +71,26 @@ export const levels = [
           { type: "action", text: "Mantén <h1>Hello World</h1> — solo añadimos una clase" },
           {
             type: "code",
-            text: 'Añade className="text-center" al h1 (nada más por ahora):',
+            text: 'Añade className="text-center" al h1:',
             code: '<h1 className="text-center">Hello World</h1>',
           },
           { type: "tip", text: "Guarda: el texto debe quedar centrado en horizontal" },
+        ],
+      },
+      {
+        id: "h1-hero-styled",
+        label: "Fondo oscuro a pantalla completa y título grande en blanco",
+        assert: "dark full-screen hero with large bold white h1 matching preview",
+        hintSteps: [
+          { type: "action", text: "Borra el párrafo «Empieza por el nivel 1 — edita este archivo»" },
+          { type: "action", text: "Deja solo el <h1> dentro de <main> (como en la vista previa del curso)" },
           {
-            type: "tip",
-            text: "Opcional después: className=\"text-white text-4xl\" en el h1 y bg oscuro en el div",
+            type: "code",
+            text: "Sustituye todo el return por esto:",
+            code: 'return (\n  <main className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center">\n    <h1 className="text-center text-white text-4xl md:text-5xl font-bold">\n      Hello World\n    </h1>\n  </main>\n);',
           },
+          { type: "tip", text: "text-4xl + font-bold + text-white = título grande y blanco; min-h-screen = pantalla completa" },
+          { type: "tip", text: "Guarda y compáralo con «Así debería verse tu web al finalizar este nivel»" },
         ],
       },
     ],

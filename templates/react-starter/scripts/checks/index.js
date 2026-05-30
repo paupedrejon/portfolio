@@ -50,6 +50,111 @@ export const checks = {
     return { passed: true };
   },
 
+  "h1-hero-styled": async (page) => {
+    const result = await page.evaluate(() => {
+      const problems = [];
+
+      const starter = Array.from(document.querySelectorAll("p")).find((p) =>
+        /empieza por el nivel/i.test(p.textContent || "")
+      );
+      if (starter) {
+        problems.push("elimina el párrafo «Empieza por el nivel 1» del template");
+      }
+
+      const h1List = document.querySelectorAll("h1");
+      if (h1List.length !== 1) {
+        problems.push(`debe haber exactamente 1 h1 (hay ${h1List.length})`);
+        return problems;
+      }
+
+      const h1 = h1List[0];
+      const text = h1.textContent?.trim().toLowerCase() || "";
+      if (!text.includes("hello world")) {
+        problems.push('el h1 debe decir "Hello World"');
+      }
+
+      const hs = window.getComputedStyle(h1);
+      const fontSize = parseFloat(hs.fontSize);
+      const fontWeight = parseInt(hs.fontWeight, 10) || 400;
+      if (fontSize < 28) {
+        problems.push(
+          `título demasiado pequeño (${Math.round(fontSize)}px). Usa text-4xl o text-5xl`
+        );
+      }
+      if (fontWeight < 700) {
+        problems.push("usa font-bold (700) o font-extrabold en el h1");
+      }
+
+      const colorParts = hs.color.match(/\d+(\.\d+)?/g);
+      if (colorParts && colorParts.length >= 3) {
+        const [r, g, b] = colorParts.map(Number);
+        if (r + g + b < 520) {
+          problems.push("el título debe ser blanco o muy claro (text-white)");
+        }
+      }
+
+      const shell =
+        document.querySelector("main") ||
+        h1.closest("[class*='min-h']") ||
+        h1.parentElement;
+      if (!shell) {
+        problems.push("envuelve el h1 en un <main> o div contenedor");
+        return problems;
+      }
+
+      const ss = window.getComputedStyle(shell);
+      const bgParts = ss.backgroundColor.match(/\d+(\.\d+)?/g);
+      if (bgParts && bgParts.length >= 3) {
+        const bgSum = bgParts.slice(0, 3).map(Number).reduce((a, b) => a + b, 0);
+        if (bgSum > 180) {
+          problems.push(
+            "fondo oscuro en el contenedor (ej. bg-[#0a0a0f] o bg-gray-950)"
+          );
+        }
+      } else {
+        problems.push("añade fondo oscuro al contenedor del hero");
+      }
+
+      const minH = parseFloat(ss.minHeight);
+      const vh = window.innerHeight;
+      if (Number.isFinite(minH) && minH < vh * 0.85) {
+        problems.push("usa min-h-screen en el contenedor para pantalla completa");
+      }
+
+      const isFlex = ss.display === "flex" || ss.display === "inline-flex";
+      const centeredFlex =
+        isFlex &&
+        (ss.alignItems === "center" || ss.justifyContent === "center");
+      const h1Rect = h1.getBoundingClientRect();
+      const verticallyCentered =
+        Math.abs(h1Rect.top + h1Rect.height / 2 - vh / 2) < vh * 0.2;
+      if (!centeredFlex && !verticallyCentered) {
+        problems.push(
+          "centra el título en pantalla (flex items-center justify-center)"
+        );
+      }
+
+      const align = hs.textAlign;
+      const parentAlign = h1.parentElement
+        ? window.getComputedStyle(h1.parentElement).textAlign
+        : "";
+      if (
+        align !== "center" &&
+        parentAlign !== "center" &&
+        !(isFlex && ss.alignItems === "center")
+      ) {
+        problems.push("el título debe estar centrado (text-center)");
+      }
+
+      return problems;
+    });
+
+    if (result.length > 0) {
+      return { passed: false, hint: result[0] };
+    }
+    return { passed: true };
+  },
+
   // —— Nivel 2 ——
   "h1-still-present": async (page) => {
     const text = await page.locator("h1").first().textContent();
