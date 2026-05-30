@@ -3,6 +3,8 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import StartCourseButton from "./StartCourseButton";
+import { REACT_COURSE } from "@/lib/cursos/courses-meta";
+import { formatEstimatedMinutes } from "@/lib/cursos/format-duration";
 
 export default function ReactCourseClient() {
   const t = useTranslations("cursos");
@@ -14,6 +16,12 @@ export default function ReactCourseClient() {
           <span className="cursos-hero__title-line">{t("heroTitle")}</span>
           <span className="cursos-hero__title-accent">{t("heroTitleAccent")}</span>
         </h1>
+        <p className="cursos-hero__tagline">
+          {t("courseMetaLine", {
+            levels: REACT_COURSE.totalLevels,
+            duration: formatEstimatedMinutes(REACT_COURSE.estimatedMinutes),
+          })}
+        </p>
         <div className="cursos-hero__actions">
           <StartCourseButton />
         </div>

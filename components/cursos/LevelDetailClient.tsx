@@ -12,6 +12,7 @@ import {
   LevelCompleteCelebration,
   StepPassedBurst,
 } from "./CursosCelebration";
+import { formatEstimatedMinutes } from "@/lib/cursos/format-duration";
 
 export type CheckpointView = {
   id: string;
@@ -27,6 +28,7 @@ type Props = {
   block: string;
   objective: string;
   previewDescription: string;
+  estimatedMinutes: number;
   initialCheckpoints: CheckpointView[];
   initialStatus: string;
   totalLevels: number;
@@ -38,6 +40,7 @@ export default function LevelDetailClient({
   block,
   objective,
   previewDescription,
+  estimatedMinutes,
   initialCheckpoints,
   initialStatus,
   totalLevels,
@@ -160,6 +163,11 @@ export default function LevelDetailClient({
         <h1 className="cursos-level-page__title">
           Nivel {levelId}: {title}
         </h1>
+        <p className="cursos-level-page__duration">
+          {t("levelEstimatedTime", {
+            duration: formatEstimatedMinutes(estimatedMinutes),
+          })}
+        </p>
         <span className={badgeClass}>
           {status === "passed"
             ? t("levelPassed")

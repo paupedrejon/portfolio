@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { REACT_COURSE } from "@/lib/cursos/courses-meta";
+import { formatEstimatedMinutes } from "@/lib/cursos/format-duration";
 
 export default function CursosLanding() {
   const t = useTranslations("cursos");
@@ -31,7 +33,10 @@ export default function CursosLanding() {
               fontWeight: 600,
             }}
           >
-            Gratis · 30 niveles
+            {t("courseCardEyebrow", {
+              levels: REACT_COURSE.totalLevels,
+              duration: formatEstimatedMinutes(REACT_COURSE.estimatedMinutes),
+            })}
           </span>
           <h2
             style={{

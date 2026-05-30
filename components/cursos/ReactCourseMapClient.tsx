@@ -6,12 +6,15 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import ProfileNameForm from "./ProfileNameForm";
 import LevelRoadmap, { type LevelState } from "./LevelRoadmap";
+import { REACT_COURSE } from "@/lib/cursos/courses-meta";
+import { formatEstimatedMinutes } from "@/lib/cursos/format-duration";
 
 type ProgressPayload = {
   passedCount: number;
   totalLevels: number;
   progressPercent: number;
   courseCompleted: boolean;
+  profileNameLocked: boolean;
   displayName: string | null;
   levels: LevelState[];
 };
@@ -72,7 +75,17 @@ export default function ReactCourseMapClient() {
         {session && progress && (
           <p className="cursos-hero__tagline">
             {progress.passedCount}/{progress.totalLevels} niveles ·{" "}
-            {progress.progressPercent}% {t("progressLabel").toLowerCase()}
+            {progress.progressPercent}% {t("progressLabel").toLowerCase()} ·{" "}
+            {t("courseEstimatedTime", {
+              duration: formatEstimatedMinutes(REACT_COURSE.estimatedMinutes),
+            })}
+          </p>
+        )}
+        {!session && (
+          <p className="cursos-hero__tagline">
+            {t("courseEstimatedTime", {
+              duration: formatEstimatedMinutes(REACT_COURSE.estimatedMinutes),
+            })}
           </p>
         )}
       </header>
@@ -81,6 +94,7 @@ export default function ReactCourseMapClient() {
         {session && (
           <ProfileNameForm
             initialName={progress?.displayName ?? session.user?.name ?? ""}
+            locked={progress?.profileNameLocked}
             onSaved={() => fetchProgress()}
           />
         )}

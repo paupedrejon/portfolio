@@ -24,7 +24,7 @@ export default function StartCourseButton() {
         type="button"
         className="cursos-btn-primary"
         onClick={() =>
-          signIn("google", { callbackUrl: pathname || "/es/cursos/react/nivel/1" })
+          signIn("google", { callbackUrl: pathname || "/es/cursos/react/mapa" })
         }
       >
         {t("startCourse")}
@@ -33,7 +33,7 @@ export default function StartCourseButton() {
   }
 
   return (
-    <Link href="/cursos/react/nivel/1" className="cursos-btn-primary">
+    <Link href="/cursos/react/mapa" className="cursos-btn-primary">
       {t("startCourse")}
     </Link>
   );

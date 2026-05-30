@@ -2,6 +2,7 @@
 
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { formatEstimatedMinutes } from "@/lib/cursos/format-duration";
 
 export type LevelState = {
   id: number;
@@ -9,6 +10,7 @@ export type LevelState = {
   title: string;
   block: string;
   description: string;
+  estimatedMinutes: number;
   status: "locked" | "current" | "passed";
   passed: boolean;
   checkpoints: { id: string; label: string; hint?: string; passed: boolean }[];
@@ -91,11 +93,18 @@ export default function LevelRoadmap({
                         <span className="cursos-level-card__num">
                           Nivel {level.id}
                         </span>
-                        <span
-                          className={`cursos-level-card__badge cursos-level-card__badge--${level.status}`}
-                        >
-                          {statusLabel(level.status)}
-                        </span>
+                        <div className="cursos-level-card__meta">
+                          <span className="cursos-level-card__time">
+                            {t("levelEstimatedTime", {
+                              duration: formatEstimatedMinutes(level.estimatedMinutes),
+                            })}
+                          </span>
+                          <span
+                            className={`cursos-level-card__badge cursos-level-card__badge--${level.status}`}
+                          >
+                            {statusLabel(level.status)}
+                          </span>
+                        </div>
                       </div>
                       <h4 className="cursos-level-card__title">{level.title}</h4>
                       <p className="cursos-level-card__desc">

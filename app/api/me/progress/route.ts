@@ -6,6 +6,7 @@ import {
   ensureProfile,
   getProfile,
   getProgressRows,
+  getDiploma,
 } from "@/lib/cursos/progress";
 import { COURSE_SLUG_REACT } from "@/lib/cursos/constants";
 
@@ -35,17 +36,19 @@ export async function GET(request: Request) {
       session.user.image
     );
 
-    const [rows, profile] = await Promise.all([
+    const [rows, profile, diploma] = await Promise.all([
       getProgressRows(session.user.id, courseSlug),
       getProfile(session.user.id),
+      getDiploma(session.user.id, courseSlug),
     ]);
 
-    return NextResponse.json(
-      buildProgressPayload(
+    return NextResponse.json({
+      ...buildProgressPayload(
         rows,
         profile?.display_name ?? session.user.name ?? null
-      )
-    );
+      ),
+      profileNameLocked: !!diploma,
+    });
   } catch (error) {
     console.error("GET /api/me/progress:", error);
     const message =

@@ -1,22 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 type Props = {
   initialName: string;
+  locked?: boolean;
   onSaved?: (name: string) => void;
 };
 
-export default function ProfileNameForm({ initialName, onSaved }: Props) {
+export default function ProfileNameForm({ initialName, locked = false, onSaved }: Props) {
   const t = useTranslations("cursos");
   const [name, setName] = useState(initialName);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    setName(initialName);
+  }, [initialName]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (locked) return;
     setSaving(true);
     setError(null);
     setSaved(false);
@@ -49,7 +55,7 @@ export default function ProfileNameForm({ initialName, onSaved }: Props) {
           margin: "0 0 1rem",
         }}
       >
-        {t("profileHint")}
+        {locked ? t("profileLockedHint") : t("profileHint")}
       </p>
       <div className="cursos-form-row">
         <input
@@ -60,13 +66,18 @@ export default function ProfileNameForm({ initialName, onSaved }: Props) {
           minLength={2}
           maxLength={80}
           required
+          disabled={locked}
+          readOnly={locked}
           className="cursos-input"
+          aria-readonly={locked}
         />
-        <button type="submit" disabled={saving} className="cursos-btn-primary">
-          {saving ? "..." : t("profileSave")}
-        </button>
+        {!locked && (
+          <button type="submit" disabled={saving} className="cursos-btn-primary">
+            {saving ? "..." : t("profileSave")}
+          </button>
+        )}
       </div>
-      {saved && (
+      {saved && !locked && (
         <p style={{ color: "#34d399", fontSize: "0.875rem", marginTop: "0.75rem" }}>
           {t("profileSaved")}
         </p>

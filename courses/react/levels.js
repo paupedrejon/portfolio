@@ -1,9 +1,10 @@
 /** @typedef {{ type: 'file' | 'code' | 'tip' | 'action'; text: string; path?: string; code?: string }} HintStep */
 /** @typedef {{ id: string; label: string; assert: string; hint?: string; hintSteps?: HintStep[] }} Checkpoint */
 /** @typedef {{ title: string; description: string }} LevelPreview */
-/** @typedef {{ id: number; slug: string; title: string; block: string; description: string; objective: string; preview: LevelPreview; instructions?: string; checkpoints: Checkpoint[] }} Level */
+/** @typedef {{ id: number; slug: string; title: string; block: string; description: string; objective: string; preview: LevelPreview; instructions?: string; estimatedMinutes: number; checkpoints: Checkpoint[] }} Level */
 
 import { levels4to30 } from "./levels-4-30.js";
+import { ESTIMATED_MINUTES_BY_LEVEL } from "./estimated-minutes.js";
 
 /** @type {Level[]} */
 export const levels = [
@@ -385,6 +386,7 @@ for (const level of levels) {
   for (const cp of level.checkpoints) {
     if (!cp.hintSteps?.length) cp.hintSteps = DEFAULT_HINT_STEPS;
   }
+  level.estimatedMinutes = ESTIMATED_MINUTES_BY_LEVEL[level.id] ?? 30;
 }
 
 export function getLevelById(id) {

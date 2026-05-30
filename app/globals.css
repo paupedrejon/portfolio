@@ -2062,6 +2062,25 @@ body:has(.cursos-page)::before {
   gap: 0.5rem;
 }
 
+.cursos-level-card__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+
+.cursos-level-card__time {
+  font-size: 0.68rem;
+  color: var(--cursos-text-muted);
+  white-space: nowrap;
+}
+
+.cursos-level-page__duration {
+  margin: 0.35rem 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--cursos-text-muted);
+}
+
 .cursos-level-card__num {
   font-size: 0.8rem;
   color: var(--cursos-text-muted);

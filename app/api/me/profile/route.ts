@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isSupabaseConfigured, getSupabaseAdmin } from "@/lib/supabase/admin";
+import { COURSE_SLUG_REACT } from "@/lib/cursos/constants";
 
 export async function GET() {
   if (!isSupabaseConfigured()) {
@@ -57,6 +58,21 @@ export async function PATCH(request: Request) {
   }
 
   const supabase = getSupabaseAdmin();
+
+  const { data: diploma } = await supabase
+    .from("diplomas")
+    .select("user_id")
+    .eq("user_id", session.user.id)
+    .eq("course_slug", COURSE_SLUG_REACT)
+    .maybeSingle();
+
+  if (diploma) {
+    return NextResponse.json(
+      { error: "No puedes cambiar el nombre: ya tienes el diploma del curso." },
+      { status: 403 }
+    );
+  }
+
   const { error } = await supabase.from("profiles").upsert(
     {
       user_id: session.user.id,

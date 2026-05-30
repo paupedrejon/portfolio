@@ -215,6 +215,7 @@ export function buildProgressPayload(
       title: level.title,
       block: level.block,
       description: level.description,
+      estimatedMinutes: level.estimatedMinutes,
       status,
       passed,
       passedAt: row?.passed_at ?? null,

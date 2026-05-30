@@ -30,6 +30,7 @@ export type Level = {
   objective: string;
   preview: LevelPreview;
   instructions?: string;
+  estimatedMinutes: number;
   checkpoints: Checkpoint[];
 };
 
