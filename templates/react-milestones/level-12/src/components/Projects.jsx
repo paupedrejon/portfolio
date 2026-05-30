@@ -23,17 +23,20 @@ export default function Projects({ onOpenProject }) {
   }, []);
 
   return (
-    <section id="projects" className="px-4 md:px-6 py-16 max-w-5xl mx-auto">
-      <h2 className="text-3xl font-bold mb-8 text-white">Proyectos</h2>
-      {loading && <p data-testid="loading">Cargando…</p>}
-      {error && <p data-testid="error" className="text-red-400">{error}</p>}
+    <section id="projects" className="px-4 md:px-6 py-16 max-w-5xl mx-auto section-anchor">
+      <h2 className="text-3xl font-bold mb-8 theme-text">Proyectos</h2>
+      {loading && <p data-testid="loading" className="theme-text-muted">Cargando…</p>}
+      {error && <p data-testid="error" className="text-red-500">{error}</p>}
       {!loading && !error && (
-        <div className="grid gap-4 md:grid-cols-2" data-testid="projects-grid">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" data-testid="projects-grid">
           {projects.map((p) => (
             <ProjectCard
               key={p.id}
               title={p.title}
               description={p.description}
+              image={p.image}
+              imageAlt={p.imageAlt}
+              tech={p.tech}
               onOpen={() => onOpenProject?.(p)}
             />
           ))}

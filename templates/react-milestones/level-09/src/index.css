@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+[data-theme="dark"] {
+  --page-bg: #0a0a0f;
+  --hero-bg: #0a0a0f;
+  --text-primary: #ffffff;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  --accent: #2a8ca0;
+  --nav-bg: rgba(10, 10, 15, 0.92);
+  --border-color: rgba(255, 255, 255, 0.12);
+  --surface-bg: rgba(255, 255, 255, 0.05);
+  --input-bg: rgba(255, 255, 255, 0.04);
+  --modal-bg: #141419;
+}
+
+[data-theme="light"] {
+  --page-bg: #f9fafb;
+  --hero-bg: #f3f4f6;
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+  --accent: #2a8ca0;
+  --nav-bg: rgba(255, 255, 255, 0.95);
+  --border-color: rgba(17, 24, 39, 0.12);
+  --surface-bg: #ffffff;
+  --input-bg: #ffffff;
+  --modal-bg: #ffffff;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--page-bg);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.theme-page {
+  background-color: var(--page-bg);
+  color: var(--text-primary);
+}
+
+.theme-hero-bg {
+  background-color: var(--hero-bg);
+}
+
+.theme-nav {
+  background-color: var(--nav-bg);
+  border-color: var(--border-color);
+}
+
+.theme-text {
+  color: var(--text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary);
+}
+
+.theme-text-muted {
+  color: var(--text-muted);
+}
+
+.theme-surface {
+  background-color: var(--surface-bg);
+  border-color: var(--border-color);
+}
+
+.theme-input {
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.theme-input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+.theme-modal {
+  background-color: var(--modal-bg);
+  border-color: var(--border-color);
+}
+
+.theme-accent-btn {
+  background-color: var(--accent);
+  color: #ffffff;
+}
+
+.section-anchor {
+  scroll-margin-top: 5.5rem;
+}
+
+a.theme-text-secondary:hover,
+a.hover\:theme-text:hover {
+  color: var(--text-primary);
+}

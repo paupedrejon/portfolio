@@ -1,10 +1,16 @@
 import { spawn } from "child_process";
+import { existsSync } from "fs";
+import { join } from "path";
 import { spawnVite, projectRoot } from "./spawn-vite.mjs";
+import { spawnAuthApi } from "./spawn-auth-api.mjs";
 import { chromium } from "@playwright/test";
 import { getCheck } from "./checks/index.js";
 
 export { projectRoot };
 export const DEFAULT_PORT = 5173;
+const AUTH_PORT = 8787;
+
+let authProcStartedByUs = null;
 
 const GREEN = "\x1b[32m";
 const RED = "\x1b[31m";
@@ -28,10 +34,80 @@ export async function isServerReady(port = DEFAULT_PORT) {
   return { ready: false, url: null };
 }
 
+async function isAuthReady(port = AUTH_PORT) {
+  try {
+    const r = await fetch(`http://127.0.0.1:${port}/api/health`, {
+      signal: AbortSignal.timeout(2000),
+    });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function ensureAuthServer() {
+  const authPath = join(projectRoot, "server", "auth-api.mjs");
+  if (!existsSync(authPath)) {
+    return { proc: null, startedByUs: false };
+  }
+  if (await isAuthReady()) {
+    return { proc: null, startedByUs: false };
+  }
+
+  return new Promise((resolve, reject) => {
+    const proc = spawnAuthApi({
+      stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true,
+    });
+    if (!proc) {
+      resolve({ proc: null, startedByUs: false });
+      return;
+    }
+
+    let resolved = false;
+    const fail = (err) => {
+      if (resolved) return;
+      resolved = true;
+      clearInterval(poll);
+      clearTimeout(hardTimeout);
+      try {
+        proc.kill("SIGTERM");
+      } catch {
+        /* ignore */
+      }
+      reject(err);
+    };
+
+    const tryResolve = async () => {
+      if (resolved) return;
+      if (await isAuthReady()) {
+        resolved = true;
+        clearInterval(poll);
+        clearTimeout(hardTimeout);
+        authProcStartedByUs = proc;
+        resolve({ proc, startedByUs: true });
+      }
+    };
+
+    proc.on("error", fail);
+    const poll = setInterval(tryResolve, 400);
+    const hardTimeout = setTimeout(
+      () => fail(new Error("Timeout esperando auth-api en el puerto 8787")),
+      30000
+    );
+  });
+}
+
 /**
  * Usa el servidor Vite si ya está corriendo (npm run dev); si no, lo arranca.
  */
 export async function ensureDevServer(port = DEFAULT_PORT) {
+  try {
+    await ensureAuthServer();
+  } catch {
+    /* auth opcional hasta nivel 20 */
+  }
+
   const existing = await isServerReady(port);
   if (existing.ready) {
     return { proc: null, baseUrl: existing.url, startedByUs: false };
@@ -92,6 +168,20 @@ export async function ensureDevServer(port = DEFAULT_PORT) {
 }
 
 export function stopDevServer(proc) {
+  if (authProcStartedByUs) {
+    try {
+      if (process.platform === "win32") {
+        spawn("taskkill", ["/pid", String(authProcStartedByUs.pid), "/f", "/t"], {
+          shell: true,
+        });
+      } else {
+        authProcStartedByUs.kill("SIGTERM");
+      }
+    } catch {
+      /* ignore */
+    }
+    authProcStartedByUs = null;
+  }
   if (!proc) return;
   try {
     if (process.platform === "win32") {

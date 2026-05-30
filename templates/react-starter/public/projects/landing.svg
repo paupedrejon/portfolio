@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Clon de landing">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <rect x="60" y="40" width="520" height="280" rx="12" fill="#0f172a" stroke="#475569" stroke-width="2"/>
+  <rect x="60" y="40" width="520" height="48" fill="#1e293b"/>
+  <rect x="90" y="58" width="80" height="12" rx="6" fill="#2a8ca0"/>
+  <rect x="420" y="54" width="50" height="10" rx="5" fill="#475569"/>
+  <rect x="480" y="54" width="50" height="10" rx="5" fill="#475569"/>
+  <rect x="120" y="120" width="400" height="28" rx="8" fill="#e2e8f0" opacity="0.9"/>
+  <rect x="180" y="165" width="280" height="14" rx="7" fill="#64748b"/>
+  <rect x="260" y="200" width="120" height="36" rx="18" fill="#2a8ca0"/>
+  <rect x="100" y="260" width="140" height="40" rx="8" fill="#1e293b" stroke="#334155"/>
+  <rect x="260" y="260" width="140" height="40" rx="8" fill="#1e293b" stroke="#334155"/>
+  <rect x="420" y="260" width="140" height="40" rx="8" fill="#1e293b" stroke="#334155"/>
+</svg>

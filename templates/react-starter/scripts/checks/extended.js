@@ -184,9 +184,9 @@ export const extendedChecks = {
 
   // —— Nivel 9: Tema ——
   "theme-toggle-button": async (page) => {
-    const btn = page.locator("[data-testid='theme-toggle'], button").filter({ hasText: /tema|oscuro|claro|🌙|☀/i });
+    const btn = page.locator("[data-testid='theme-toggle']");
     if (!(await btn.count())) {
-      return { passed: false, hint: "añade un botón para cambiar tema" };
+      return { passed: false, hint: "añade un botón con data-testid=\"theme-toggle\" para cambiar tema" };
     }
     return { passed: true };
   },
@@ -198,14 +198,24 @@ export const extendedChecks = {
     return { passed: true };
   },
   "theme-changes-on-click": async (page) => {
-    const before = await page.evaluate(() => document.body.className + document.documentElement.className);
-    const btn = page.locator("[data-testid='theme-toggle'], button").filter({ hasText: /tema|oscuro|claro/i }).first();
+    const readTheme = () =>
+      page.evaluate(
+        () =>
+          document.documentElement.getAttribute("data-theme") ??
+          document.querySelector("[data-theme]")?.getAttribute("data-theme") ??
+          ""
+      );
+    const before = await readTheme();
+    const btn = page.locator("[data-testid='theme-toggle']").first();
     if (!(await btn.count())) return { passed: false, hint: "falta botón de tema" };
     await btn.click();
     await page.waitForTimeout(300);
-    const after = await page.evaluate(() => document.body.className + document.documentElement.className);
-    if (before === after) {
-      return { passed: false, hint: "al pulsar, debe cambiar la clase del body o html (dark/light)" };
+    const after = await readTheme();
+    if (!after || before === after) {
+      return {
+        passed: false,
+        hint: "al pulsar, debe cambiar data-theme (dark/light) — también revisa que textos y fondos usen variables CSS, no text-white fijo",
+      };
     }
     return { passed: true };
   },
@@ -386,9 +396,11 @@ export const extendedChecks = {
     return { passed: true };
   },
   "usefetch-used": async () => {
+    const projects = readProjectFile("src/components/Projects.jsx") ?? "";
     const app = readProjectFile("src/App.jsx") ?? "";
-    if (!app.includes("useFetch")) {
-      return { passed: false, hint: "importa y usa useFetch en un componente" };
+    const src = projects + app;
+    if (!src.includes("useFetch")) {
+      return { passed: false, hint: "importa y usa useFetch en Projects u otro componente" };
     }
     return { passed: true };
   },
@@ -427,12 +439,83 @@ export const extendedChecks = {
     return { passed: true };
   },
   "login-page-exists": async (page) => {
-    await page.goto(page.url().replace(/\/$/, "") + "/login");
-    await page.waitForTimeout(300);
-    if (!(await page.locator("form input[type='password'], form input[type='email']").count())) {
-      return { passed: false, hint: "página /login con formulario" };
+    const app = readProjectFile("src/App.jsx") ?? "";
+    if (!app.includes("/login") && !app.includes('path="/login"') && !app.includes("path='/login'")) {
+      return { passed: false, hint: 'añade Route path="/login" en App.jsx' };
+    }
+    await page.goto(new URL("/login", page.url()).href, { waitUntil: "domcontentloaded" });
+    try {
+      await page.waitForSelector("form input[type='email'], form input[type='password']", {
+        timeout: 10000,
+      });
+    } catch {
+      return { passed: false, hint: "página /login con formulario email y password" };
     }
     return { passed: true };
+  },
+  "file-auth-api": async () => {
+    if (!fileExists("server/auth-api.mjs")) {
+      return { passed: false, hint: "crea server/auth-api.mjs con POST /api/login" };
+    }
+    const src = readProjectFile("server/auth-api.mjs") ?? "";
+    if (!src.includes("/api/login")) {
+      return { passed: false, hint: "implementa la ruta POST /api/login" };
+    }
+    if (!src.includes("demo@curso.dev")) {
+      return { passed: false, hint: "usa usuario demo demo@curso.dev / curso123" };
+    }
+    return { passed: true };
+  },
+  "vite-proxy-auth": async () => {
+    const cfg = readProjectFile("vite.config.js") ?? "";
+    if (!cfg.includes("proxy") || !cfg.includes("/api")) {
+      return { passed: false, hint: "añade proxy /api en vite.config.js" };
+    }
+    if (!cfg.includes("8787")) {
+      return { passed: false, hint: "el proxy debe apuntar a http://localhost:8787" };
+    }
+    return { passed: true };
+  },
+  "login-fetch-post": async () => {
+    const login = readProjectFile("src/pages/LoginPage.jsx") ?? "";
+    if (!login.includes("fetch") || !login.includes("/api/login")) {
+      return { passed: false, hint: 'LoginPage debe hacer fetch("/api/login", …)' };
+    }
+    if (!/method:\s*["']POST["']/.test(login)) {
+      return { passed: false, hint: 'usa method: "POST" en el fetch' };
+    }
+    if (!login.includes("localStorage") || !login.includes("auth-token")) {
+      return { passed: false, hint: "guarda data.token en localStorage como auth-token" };
+    }
+    return { passed: true };
+  },
+  "login-api-works": async (page) => {
+    const origin = new URL(page.url()).origin;
+    await page.goto(`${origin}/login`, { waitUntil: "domcontentloaded" });
+    try {
+      await page.waitForSelector("#login-email", { timeout: 10000 });
+      await page.waitForSelector("#login-password", { timeout: 5000 });
+    } catch {
+      return { passed: false, hint: "añade id login-email y login-password a los inputs" };
+    }
+    await page.locator("#login-email").fill("demo@curso.dev");
+    await page.locator("#login-password").fill("curso123");
+    await page.locator('form button[type="submit"]').click();
+    await page.waitForURL(/\/admin/, { timeout: 8000 }).catch(() => null);
+    if (page.url().includes("/admin")) return { passed: true };
+    const token = await page.evaluate(() => localStorage.getItem("auth-token"));
+    if (token) return { passed: true };
+    const err = await page
+      .locator("[role='alert']")
+      .first()
+      .textContent()
+      .catch(() => null);
+    return {
+      passed: false,
+      hint:
+        err?.trim() ||
+        "login falló — ¿auth-api en marcha? Usa npm run dev (no dev:only)",
+    };
   },
   "env-example-exists": async () => {
     if (!fileExists(".env.example")) {
@@ -444,6 +527,12 @@ export const extendedChecks = {
     const app = readProjectFile("src/App.jsx") ?? "";
     if (/supabase.*key.*=.*['"]eyJ/.test(app)) {
       return { passed: false, hint: "no pegues keys en el código — usa import.meta.env" };
+    }
+    return { passed: true };
+  },
+  "file-input-image": async (page) => {
+    if (!(await page.locator('input[type="file"]').count())) {
+      return { passed: false, hint: 'añade <input type="file" accept="image/*" />' };
     }
     return { passed: true };
   },

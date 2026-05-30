@@ -170,10 +170,12 @@ export const levels4to30 = [
         { type: "code", text: "Estado:", code: 'const [dark, setDark] = useState(true);' },
       ]),
       cp("theme-toggle-button", "Hay un botón para cambiar el tema", [
-        { type: "code", text: "Botón:", code: '<button type="button" data-testid="theme-toggle" onClick={() => setDark(!dark)}>Tema</button>' },
+        { type: "code", text: "Botón con icono sol/luna:", code: '<button type="button" data-testid="theme-toggle" aria-label="Cambiar tema">…</button>' },
       ]),
       cp("theme-changes-on-click", "Al pulsar, cambia el aspecto de la página", [
-        { type: "action", text: "Aplica className dark en body o en un div wrapper según el estado" },
+        { type: "action", text: "En App.jsx: useEffect que ponga data-theme en document.documentElement" },
+        { type: "action", text: "En index.css: variables --text-primary, --page-bg para dark y light" },
+        { type: "tip", text: "Los componentes deben usar var(--text-primary), no text-white fijo" },
       ]),
     ]
   ),
@@ -377,13 +379,48 @@ export const levels4to30 = [
     20,
     "login-app",
     "Login con backend real",
-    "Routing y calidad",
-    "Auth en la propia app del alumno.",
-    "Página /login simple (demo).",
-    "Formulario de login en /login.",
+    "Backend real",
+    "Servidor Node local + proxy Vite + formulario que autentica contra la API.",
+    "Crea server/auth-api.mjs, configura el proxy y una página /login que haga POST a /api/login.",
+    "Login funcional con demo@curso.dev / curso123 y redirección a /admin.",
     [
-      cp("login-page-exists", "Página /login con formulario", [
-        { type: "action", text: "Crea ruta /login con email y password" },
+      cp("login-page-exists", "Ruta /login con formulario email y password", [
+        { type: "file", text: "Crea", path: "src/pages/LoginPage.jsx" },
+        { type: "action", text: 'Añade <Route path="/login" element={<LoginPage />} /> en App.jsx' },
+        {
+          type: "code",
+          text: "Campos mínimos:",
+          code: '<input type="email" id="login-email" />\n<input type="password" id="login-password" />',
+        },
+      ]),
+      cp("file-auth-api", "Servidor local server/auth-api.mjs", [
+        { type: "file", text: "Crea", path: "server/auth-api.mjs" },
+        { type: "action", text: "Implementa POST /api/login que valide email y password" },
+        { type: "tip", text: "Credenciales demo: demo@curso.dev / curso123" },
+        { type: "code", text: "Puerto por defecto:", code: "8787 (variable AUTH_API_PORT)" },
+      ]),
+      cp("vite-proxy-auth", "Proxy /api en vite.config.js", [
+        { type: "file", text: "Edita", path: "vite.config.js" },
+        {
+          type: "code",
+          text: "Dentro de server:",
+          code: 'proxy: {\n  "/api": { target: "http://localhost:8787", changeOrigin: true },\n}',
+        },
+        { type: "tip", text: 'Así fetch("/api/login") desde el navegador llega al servidor Node' },
+      ]),
+      cp("login-fetch-post", "LoginPage hace fetch POST a /api/login", [
+        { type: "action", text: "En handleSubmit, envía email y password con fetch POST" },
+        {
+          type: "code",
+          text: "Ejemplo:",
+          code: 'const res = await fetch("/api/login", {\n  method: "POST",\n  headers: { "Content-Type": "application/json" },\n  body: JSON.stringify({ email, password }),\n});',
+        },
+        { type: "action", text: "Si res.ok, guarda data.token en localStorage y navega a /admin" },
+      ]),
+      cp("login-api-works", "Login demo funciona con credenciales correctas", [
+        { type: "action", text: "Ejecuta npm run dev (arranca Vite y auth-api juntos)" },
+        { type: "action", text: "En /login usa demo@curso.dev y curso123" },
+        { type: "tip", text: "Debes acabar en /admin sin alert de demo" },
       ]),
     ]
   ),
@@ -427,8 +464,8 @@ export const levels4to30 = [
     "Input type=file para subir imagen de proyecto.",
     "Campo para subir imagen.",
     [
-      cp("contact-input-name", "Input type=file para imagen", [
-        { type: "code", text: "Input:", code: '<input type="file" accept="image/*" />' },
+      cp("file-input-image", "Input type=file para imagen", [
+        { type: "code", text: "Input:", code: '<input type="file" name="image" accept="image/*" />' },
       ]),
     ]
   ),

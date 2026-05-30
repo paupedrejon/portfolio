@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Portfolio personal">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="55%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2a8ca0"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)"/>
+  <circle cx="520" cy="80" r="120" fill="#6366f1" opacity="0.12"/>
+  <circle cx="100" cy="300" r="90" fill="#2a8ca0" opacity="0.15"/>
+  <rect x="80" y="70" width="480" height="220" rx="16" fill="#111827" stroke="#334155" stroke-width="2"/>
+  <rect x="80" y="70" width="480" height="36" rx="16" fill="#1f2937"/>
+  <rect x="80" y="94" width="480" height="12" fill="#1f2937"/>
+  <circle cx="104" cy="88" r="6" fill="#ef4444"/>
+  <circle cx="124" cy="88" r="6" fill="#eab308"/>
+  <circle cx="144" cy="88" r="6" fill="#22c55e"/>
+  <text x="320" y="175" text-anchor="middle" fill="url(#accent)" font-family="system-ui,sans-serif" font-size="42" font-weight="700">&lt;/&gt;</text>
+  <text x="320" y="215" text-anchor="middle" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="22" font-weight="600">Portfolio React</text>
+</svg>
