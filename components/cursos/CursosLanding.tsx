@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { COURSES } from "@/lib/cursos/courses-meta";
-import { formatEstimatedMinutes } from "@/lib/cursos/format-duration";
+import CourseMetaChips from "./CourseMetaChips";
 import { CourseFinalPreviewMock } from "./level-previews/LevelPreviewMocks";
 
 export default function CursosLanding() {
@@ -30,12 +30,11 @@ export default function CursosLanding() {
               <CourseFinalPreviewMock view="home" compact />
             </div>
             <div className="cursos-course-card__body">
-              <span className="cursos-course-card__eyebrow">
-                {t("courseCardEyebrow", {
-                  levels: course.totalLevels,
-                  duration: formatEstimatedMinutes(course.estimatedMinutes),
-                })}
-              </span>
+              <CourseMetaChips
+                totalLevels={course.totalLevels}
+                estimatedMinutes={course.estimatedMinutes}
+                className="cursos-course-card__meta"
+              />
               <h2 className="cursos-course-card__title">{t(`${course.slug}CardTitle`)}</h2>
               <p className="cursos-course-card__desc">{t(`${course.slug}CardDescription`)}</p>
               <span className="cursos-btn-primary cursos-course-card__cta">

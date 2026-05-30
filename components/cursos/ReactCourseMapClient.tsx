@@ -7,7 +7,7 @@ import { Link } from "@/i18n/navigation";
 import ProfileNameForm from "./ProfileNameForm";
 import LevelRoadmap, { type LevelState } from "./LevelRoadmap";
 import { REACT_COURSE } from "@/lib/cursos/courses-meta";
-import { formatEstimatedMinutes } from "@/lib/cursos/format-duration";
+import EstimatedTimeBadge from "./EstimatedTimeBadge";
 
 type ProgressPayload = {
   passedCount: number;
@@ -73,20 +73,26 @@ export default function ReactCourseMapClient() {
           <span className="cursos-hero__title-line">{t("levelsTitle")}</span>
         </h1>
         {session && progress && (
-          <p className="cursos-hero__tagline">
-            {progress.passedCount}/{progress.totalLevels} niveles ·{" "}
-            {progress.progressPercent}% {t("progressLabel").toLowerCase()} ·{" "}
-            {t("courseEstimatedTime", {
-              duration: formatEstimatedMinutes(REACT_COURSE.estimatedMinutes),
-            })}
-          </p>
+          <div className="cursos-hero__map-meta">
+            <p className="cursos-hero__tagline cursos-hero__tagline--inline">
+              {progress.passedCount}/{progress.totalLevels} niveles ·{" "}
+              {progress.progressPercent}% {t("progressLabel").toLowerCase()}
+            </p>
+            <EstimatedTimeBadge
+              minutes={REACT_COURSE.estimatedMinutes}
+              size="md"
+              label={t("estimatedTimeLabel")}
+            />
+          </div>
         )}
         {!session && (
-          <p className="cursos-hero__tagline">
-            {t("courseEstimatedTime", {
-              duration: formatEstimatedMinutes(REACT_COURSE.estimatedMinutes),
-            })}
-          </p>
+          <div className="cursos-hero__map-meta">
+            <EstimatedTimeBadge
+              minutes={REACT_COURSE.estimatedMinutes}
+              size="md"
+              label={t("estimatedTimeLabel")}
+            />
+          </div>
         )}
       </header>
 

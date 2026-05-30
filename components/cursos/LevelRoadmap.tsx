@@ -2,7 +2,7 @@
 
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { formatEstimatedMinutes } from "@/lib/cursos/format-duration";
+import EstimatedTimeBadge from "./EstimatedTimeBadge";
 
 export type LevelState = {
   id: number;
@@ -94,11 +94,10 @@ export default function LevelRoadmap({
                           Nivel {level.id}
                         </span>
                         <div className="cursos-level-card__meta">
-                          <span className="cursos-level-card__time">
-                            {t("levelEstimatedTime", {
-                              duration: formatEstimatedMinutes(level.estimatedMinutes),
-                            })}
-                          </span>
+                          <EstimatedTimeBadge
+                            minutes={level.estimatedMinutes}
+                            size="sm"
+                          />
                           <span
                             className={`cursos-level-card__badge cursos-level-card__badge--${level.status}`}
                           >
