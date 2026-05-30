@@ -2567,6 +2567,286 @@ body:has(.cursos-page)::before {
   letter-spacing: 0.1em;
 }
 
+.cursos-mock__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: #0f172a;
+  border-bottom: 1px solid #1e293b;
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.cursos-mock__nav--light {
+  background: #f1f5f9;
+  border-bottom-color: #e2e8f0;
+  color: #475569;
+}
+
+.cursos-mock__nav-brand {
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.cursos-mock__nav--light .cursos-mock__nav-brand {
+  color: #0f172a;
+}
+
+.cursos-mock__nav-links {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.cursos-mock__nav-theme {
+  padding: 0.15rem 0.35rem;
+  border-radius: 999px;
+  border: 1px solid #334155;
+  font-size: 0.75rem;
+}
+
+.cursos-mock__phone {
+  width: 11rem;
+  margin: 0 auto;
+  border: 3px solid #334155;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  background: #0a0a0f;
+}
+
+.cursos-mock__components {
+  gap: 0.5rem;
+  align-items: center;
+  text-align: center;
+}
+
+.cursos-mock__chip {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  margin: 0.15rem;
+  border-radius: 999px;
+  background: #e0f2f1;
+  color: #0d9488;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+}
+
+.cursos-mock__card {
+  width: 100%;
+  max-width: 14rem;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.65rem;
+  background: #fff;
+}
+
+.cursos-mock__card-img {
+  height: 4rem;
+  border-radius: 0.4rem;
+  background: linear-gradient(135deg, #2a8ca0 0%, #0f172a 100%);
+  margin-bottom: 0.5rem;
+}
+
+.cursos-mock__card-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.cursos-mock__card-desc {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.cursos-mock__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.cursos-mock__tags span {
+  font-size: 0.62rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.cursos-mock__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.75rem;
+  align-items: start;
+}
+
+.cursos-mock__form {
+  width: 100%;
+  max-width: 16rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.cursos-mock__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cursos-mock__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.cursos-mock__input {
+  height: 1.35rem;
+  border-radius: 0.35rem;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+}
+
+.cursos-mock__file {
+  font-size: 0.68rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px dashed #94a3b8;
+  border-radius: 0.35rem;
+  color: #64748b;
+}
+
+.cursos-mock__img-preview {
+  height: 3.5rem;
+  border-radius: 0.4rem;
+  background: linear-gradient(135deg, #64748b, #334155);
+}
+
+.cursos-mock__error {
+  margin: 0;
+  font-size: 0.68rem;
+  color: #dc2626;
+}
+
+.cursos-mock__success {
+  margin: 0;
+  font-size: 0.68rem;
+  color: #16a34a;
+}
+
+.cursos-mock__btn--sm {
+  margin-top: 0.35rem;
+  padding: 0.35rem 1rem;
+  font-size: 0.75rem;
+  align-self: flex-start;
+}
+
+.cursos-mock__loading {
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.cursos-mock__code-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.68rem;
+  font-family: ui-monospace, monospace;
+  color: #2a8ca0;
+}
+
+.cursos-mock__browser {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  background: #1e293b;
+  font-size: 0.65rem;
+  color: #94a3b8;
+}
+
+.cursos-mock__browser-dots::before {
+  content: "● ● ●";
+  letter-spacing: 0.15em;
+  color: #475569;
+  font-size: 0.5rem;
+}
+
+.cursos-mock__browser-url {
+  flex: 1;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  background: #0f172a;
+  font-family: ui-monospace, monospace;
+}
+
+.cursos-mock--modal-scene {
+  position: relative;
+  min-height: 12rem;
+  background: rgba(15, 23, 42, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.cursos-mock__modal {
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 1rem 1.15rem;
+  max-width: 14rem;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.cursos-mock__env {
+  gap: 0.35rem;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.cursos-mock__file-icon {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f172a;
+  padding: 0.35rem 0.65rem;
+  background: #f1f5f9;
+  border-radius: 0.35rem;
+  border: 1px solid #e2e8f0;
+}
+
+.cursos-mock__terminal {
+  align-items: flex-start;
+  text-align: left;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  width: 100%;
+  padding: 1.25rem;
+}
+
+.cursos-mock__term-line {
+  margin: 0 0 0.5rem;
+  color: #94a3b8;
+}
+
+.cursos-mock__term-ok {
+  margin: 0.15rem 0;
+  color: #4ade80;
+}
+
+.cursos-mock__globe {
+  font-size: 2rem;
+  line-height: 1;
+}
+
 .cursos-check-item__head {
   display: flex;
   align-items: flex-start;
