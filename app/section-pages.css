@@ -1,0 +1,455 @@
+/* Páginas principales — misma marca visual que la home (teal #358c9f) */
+
+.portfolio-page {
+  --portfolio-bg: #030d14;
+  --portfolio-bg-elevated: #0a1c28;
+  --portfolio-card: #142a38;
+  --portfolio-accent: #358c9f;
+  --portfolio-accent-bright: #4eb3c8;
+  --portfolio-accent-soft: rgba(53, 140, 159, 0.28);
+  --portfolio-text: #ffffff;
+  --portfolio-text-muted: rgba(255, 255, 255, 0.82);
+  /* Alias home.css (variables solo existían en .home-page) */
+  --home-bg: #030d14;
+  --home-text: #ffffff;
+  --home-text-muted: rgba(255, 255, 255, 0.82);
+  --home-accent: #358c9f;
+  --home-accent-bright: #4eb3c8;
+  --home-accent-soft: rgba(53, 140, 159, 0.28);
+  background: var(--portfolio-bg);
+  color: var(--portfolio-text);
+}
+
+/* —— Héroe portfolio (misma capa que home) —— */
+.portfolio-page .home-hero {
+  background: var(--home-bg, #030d14);
+}
+
+.portfolio-hero__fx,
+.proyectos-hero__fx,
+.skills-hero__fx {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.portfolio-hero__fx > .home-hero__motion,
+.proyectos-hero__fx > .home-hero__motion,
+.skills-hero__fx > .home-hero__motion {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.44;
+}
+
+.portfolio-hero__fx .floating-lines-container,
+.proyectos-hero__fx .floating-lines-container,
+.skills-hero__fx .floating-lines-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* Hyperspeed / canvas / Orb: atenuar para no tapar el look home */
+.portfolio-hero__fx > canvas,
+.portfolio-hero__fx > div:not(.home-hero__motion),
+.proyectos-hero__fx > canvas,
+.proyectos-hero__fx > div:not(.home-hero__motion),
+.skills-hero__fx > canvas,
+.skills-hero__fx > div:not(.home-hero__motion) {
+  opacity: 0.55;
+}
+
+.portfolio-page .home-hero__kicker {
+  margin: 0 0 1.5rem;
+  font-family: var(--font-body);
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--home-accent-bright, #4eb3c8);
+}
+
+.portfolio-page .home-hero__title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: clamp(3.25rem, 12vw, 6.75rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  color: var(--home-text, #ffffff);
+}
+
+.portfolio-page .home-hero__title-accent {
+  color: var(--home-accent-bright, #4eb3c8);
+}
+
+@media (min-width: 720px) {
+  .portfolio-page .home-hero__title-accent {
+    display: inline;
+  }
+}
+
+.portfolio-page .home-hero__tagline {
+  margin: 1.75rem auto 0;
+  max-width: 46rem;
+  font-family: var(--font-body);
+  font-size: clamp(1.1rem, 2.8vw, 1.45rem);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--home-text-muted, rgba(255, 255, 255, 0.82));
+}
+
+.portfolio-page .home-hero__inner {
+  position: relative;
+  z-index: 2;
+}
+
+.portfolio-page .home-hero__scroll {
+  z-index: 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-hero__fx > .home-hero__motion,
+  .proyectos-hero__fx > .home-hero__motion {
+    opacity: 0.3;
+  }
+}
+
+.hero-badge-wrap {
+  margin-bottom: 1.5rem;
+  font-family: var(--font-mono);
+}
+
+.hero-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(78, 179, 200, 0.95);
+  background: linear-gradient(
+    135deg,
+    rgba(53, 140, 159, 0.14) 0%,
+    rgba(78, 179, 200, 0.1) 100%
+  );
+  border: 1px solid rgba(53, 140, 159, 0.35);
+  border-radius: 50px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 4px 20px rgba(53, 140, 159, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.hero-badge__text {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-badge__shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(78, 179, 200, 0.12),
+    transparent
+  );
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* —— Héroe secciones —— */
+.portfolio-page .hero-section,
+.hero-section.portfolio-hero {
+  background: var(--portfolio-bg, #030d14);
+}
+
+.hero-section:not(.proyectos-hero):not(.skills-hero):not(.experience-hero):not(.about-hero):not(.contact-hero)::before {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(53, 140, 159, 0.22) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(78, 179, 200, 0.14) 0%, transparent 50%);
+}
+
+.hero-section .hero-title {
+  color: #ffffff;
+}
+
+.hero-section .hero-tagline {
+  font-family: var(--font-body);
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+  color: var(--portfolio-text-muted, rgba(255, 255, 255, 0.82));
+  max-width: 46rem;
+}
+
+.hero-section .gradient-text {
+  background: linear-gradient(135deg, #4eb3c8, #358c9f, #2a6f7d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Botón CV / CTA (mismo que home) */
+.home-btn--cv,
+.hero-section .cv-download-btn.portfolio-btn--cv,
+.hero-section button.portfolio-btn--cv {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-height: 3.35rem;
+  padding: 1.1rem 2.35rem;
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  letter-spacing: normal;
+  text-transform: none;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    background 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease;
+}
+
+.home-btn--cv:hover,
+.hero-section .cv-download-btn.portfolio-btn--cv:hover,
+.hero-section button.portfolio-btn--cv:hover {
+  color: #061018;
+  background: #00d9ff;
+  border-color: #00d9ff;
+  transform: translateY(-3px);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.3),
+    0 0 56px rgba(0, 213, 255, 0.7);
+}
+
+.home-btn--cv:hover .cv-btn-text svg,
+.hero-section .cv-download-btn.portfolio-btn--cv:hover .cv-btn-text svg {
+  stroke: #061018;
+}
+
+.home-btn--cv:focus-visible,
+.hero-section .cv-download-btn.portfolio-btn--cv:focus-visible,
+.hero-section button.portfolio-btn--cv:focus-visible {
+  outline: 2px solid var(--portfolio-accent-bright, #4eb3c8);
+  outline-offset: 3px;
+}
+
+.home-btn--cv .cv-btn-text,
+.hero-section .cv-download-btn.portfolio-btn--cv .cv-btn-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.home-btn--cv .cv-btn-text svg,
+.hero-section .cv-download-btn.portfolio-btn--cv .cv-btn-text svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+/* Scroll */
+.hero-section .scroll-btn:hover {
+  border-color: rgba(78, 179, 200, 0.8);
+  box-shadow: 0 8px 32px rgba(53, 140, 159, 0.35);
+}
+
+.hero-section .scroll-btn.clicked::after {
+  border-color: var(--portfolio-accent, #358c9f);
+}
+
+/* Secciones oscuras */
+.portfolio-page .projects-dark-section,
+.portfolio-page .skills-dark-section,
+.portfolio-page .portfolio-content-section {
+  background: var(--portfolio-bg) !important;
+}
+
+/* Tarjetas skills */
+.portfolio-skill-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  background-color: var(--portfolio-card, #142a38) !important;
+  border: 1px solid rgba(53, 140, 159, 0.2) !important;
+  border-radius: 16px !important;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease !important;
+}
+
+.portfolio-skill-card:hover {
+  transform: scale(1.03) !important;
+  border-color: rgba(78, 179, 200, 0.55) !important;
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.35),
+    0 0 32px rgba(53, 140, 159, 0.25) !important;
+}
+
+.portfolio-skill-card__glow {
+  position: absolute;
+  bottom: -30px;
+  right: -30px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(53, 140, 159, 0.25) 0%, transparent 70%);
+  filter: blur(20px);
+  pointer-events: none;
+}
+
+.portfolio-skill-card__icon {
+  width: 88px;
+  height: 88px;
+  background-color: rgba(53, 140, 159, 0.14) !important;
+  border: 1px solid rgba(53, 140, 159, 0.35) !important;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* Botón tipo submit en héroe contacto */
+.hero-section button.portfolio-btn--cv {
+  font-family: var(--font-body);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* Orbes decorativos (clases utilitarias) */
+.portfolio-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.portfolio-orb--teal-lg {
+  background: linear-gradient(135deg, #4eb3c8, #358c9f);
+}
+
+.portfolio-orb--teal-md {
+  background: linear-gradient(135deg, #358c9f, #2a6f7d);
+}
+
+.portfolio-orb--teal-sm {
+  background: linear-gradient(135deg, #4eb3c8, #358c9f);
+}
+
+.portfolio-bg-pattern {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 30% 20%, rgba(53, 140, 159, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(78, 179, 200, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(42, 111, 125, 0.08) 0%, transparent 50%);
+  animation: pulseBg 30s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* —— Proyectos: tipografía y CTAs como la home —— */
+.portfolio-page .projects-dark-section .project-section h2,
+.portfolio-page .projects-dark-section .project-section .scroll-reveal-text {
+  font-family: var(--font-body) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.portfolio-page .projects-dark-section .project-section h3,
+.portfolio-page .projects-dark-section .project-section .scroll-reveal h3 {
+  font-family: var(--font-body) !important;
+  color: var(--portfolio-accent-bright, #4eb3c8) !important;
+}
+
+.portfolio-page .projects-dark-section .project-section p.leading-relaxed,
+.portfolio-page .projects-dark-section .project-section .scroll-reveal p {
+  font-family: var(--font-body) !important;
+  color: var(--portfolio-text-muted) !important;
+}
+
+.portfolio-page .projects-dark-section .project-section [class*="uppercase"] {
+  font-family: var(--font-mono) !important;
+  color: var(--portfolio-accent-bright) !important;
+  letter-spacing: 0.12em !important;
+}
+
+.portfolio-page .projects-dark-section .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-height: 3.1rem;
+  padding: 1rem 2rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.portfolio-page .projects-dark-section .btn-primary::before {
+  display: none;
+}
+
+.portfolio-page .projects-dark-section .btn-primary:hover {
+  color: #061018;
+  background: #00d9ff;
+  border-color: #00d9ff;
+  transform: translateY(-3px);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.3),
+    0 0 48px rgba(0, 213, 255, 0.55);
+}
+
+.portfolio-page .projects-dark-section .btn-primary:hover svg {
+  stroke: #061018;
+  transform: translate(2px, -2px);
+}
+
+.portfolio-page .projects-dark-section .project-section {
+  border-bottom-color: rgba(53, 140, 159, 0.15) !important;
+}
+
+.portfolio-page .projects-dark-section .project-image {
+  border-radius: 16px;
+  border: 1px solid rgba(53, 140, 159, 0.25);
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}

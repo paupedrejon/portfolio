@@ -12,7 +12,7 @@ import {
   type TechIconKey,
 } from "./EgoIcons";
 
-const ACCENT = "#2ab982";
+const ACCENT = "#4eb3c8";
 const SECTION = {
   padding: "clamp(2.75rem, 8vw, 7rem) clamp(1rem, 4vw, 4rem)",
   maxWidth: 1200,
@@ -66,8 +66,8 @@ function VisualCard({
       style={{
         padding: "clamp(1.25rem, 3vw, 1.75rem)",
         borderRadius: "16px",
-        border: "1px solid rgba(42, 185, 130, 0.18)",
-        background: "linear-gradient(160deg, rgba(42, 185, 130, 0.08) 0%, rgba(255,255,255,0.02) 100%)",
+        border: "1px solid rgba(78, 179, 200, 0.22)",
+        background: "linear-gradient(160deg, rgba(53, 140, 159, 0.12) 0%, rgba(255,255,255,0.02) 100%)",
         display: "flex",
         flexDirection: "column",
         alignItems: "flex-start",
@@ -90,7 +90,7 @@ function IconBox({ children }: { children: React.ReactNode }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "rgba(42, 185, 130, 0.15)",
+        background: "rgba(78, 179, 200, 0.15)",
         color: "#5eead4",
         flexShrink: 0,
       }}
@@ -127,7 +127,7 @@ export default function EgoPageSections() {
 
   return (
     <>
-      <section id="about" style={{ ...SECTION, borderTop: "1px solid rgba(42, 185, 130, 0.12)" }}>
+      <section id="about" style={{ ...SECTION, borderTop: "1px solid rgba(78, 179, 200, 0.12)" }}>
         <SectionLabel>{tAbout("label")}</SectionLabel>
         <SectionTitle>{tAbout("title")}</SectionTitle>
         <p
@@ -244,9 +244,9 @@ export default function EgoPageSections() {
                         fontFamily: "var(--font-mono)",
                         padding: "0.35rem 0.65rem",
                         borderRadius: "6px",
-                        background: "rgba(42, 185, 130, 0.12)",
+                        background: "rgba(78, 179, 200, 0.12)",
                         color: "rgba(255,255,255,0.75)",
-                        border: "1px solid rgba(42, 185, 130, 0.2)",
+                        border: "1px solid rgba(78, 179, 200, 0.2)",
                       }}
                     >
                       {pill}
@@ -287,9 +287,9 @@ export default function EgoPageSections() {
                 borderRadius: "12px",
                 fontSize: "0.95rem",
                 fontWeight: 600,
-                background: "rgba(42, 185, 130, 0.1)",
+                background: "rgba(78, 179, 200, 0.1)",
                 color: "rgba(255,255,255,0.9)",
-                border: "1px solid rgba(42, 185, 130, 0.22)",
+                border: "1px solid rgba(78, 179, 200, 0.22)",
               }}
             >
               {icon === "team" ? (

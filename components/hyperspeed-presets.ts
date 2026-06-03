@@ -31,9 +31,9 @@ export const hyperspeedPresets = {
       background: 0x000000,
       shoulderLines: 0x131318,
       brokenLines: 0x131318,
-      leftCars: [0xd856bf, 0x6750a2, 0xc247ac],
-      rightCars: [0x03b3c3, 0x0e5ea5, 0x324555],
-      sticks: 0x03b3c3,
+      leftCars: [0x2a6f7d, 0x358c9f, 0x4eb3c8],
+      rightCars: [0x4eb3c8, 0x00d9ff, 0x358c9f],
+      sticks: 0x4eb3c8,
     },
   },
   two: {

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 interface CurriculumButtonProps {
   href: string;
   label?: string;
+  className?: string;
 }
 
 function DownloadIcon({ size = 16 }: { size?: number }) {
@@ -27,16 +28,22 @@ function DownloadIcon({ size = 16 }: { size?: number }) {
   );
 }
 
-export default function CurriculumButton({ href, label }: CurriculumButtonProps) {
+export default function CurriculumButton({ href, label, className }: CurriculumButtonProps) {
   const t = useTranslations("common");
   const displayLabel = label ?? t("downloadCv");
+
+  const useNeoBrutalist = className?.includes("cv-download-btn--neo");
 
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="cv-download-btn"
+      className={
+        useNeoBrutalist
+          ? ["cv-download-btn", className].filter(Boolean).join(" ")
+          : ["portfolio-btn--cv", "home-btn--cv", className].filter(Boolean).join(" ")
+      }
     >
       <span className="cv-btn-text">
         <DownloadIcon size={16} />

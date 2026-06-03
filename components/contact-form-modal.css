@@ -1,0 +1,394 @@
+/* Modal formulario contacto — estilo portfolio teal */
+
+.contact-form-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 13, 20, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.contact-form-modal__panel {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 560px;
+  padding: clamp(1.5rem, 4vw, 2rem) clamp(1.25rem, 4vw, 2.25rem) clamp(1.25rem, 3vw, 1.75rem);
+  border-radius: 12px;
+  background: rgba(8, 22, 32, 0.96);
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.contact-form-modal__glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(50px);
+}
+
+.contact-form-modal__glow--1 {
+  top: -100px;
+  right: -100px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(53, 140, 159, 0.28) 0%, transparent 62%);
+}
+
+.contact-form-modal__glow--2 {
+  bottom: -80px;
+  left: -80px;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(78, 179, 200, 0.18) 0%, transparent 62%);
+}
+
+.contact-form-modal__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(78, 179, 200, 0.28);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.contact-form-modal__close:hover {
+  color: #fff;
+  background: rgba(53, 140, 159, 0.25);
+  border-color: #4eb3c8;
+}
+
+.contact-form-modal__kicker {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4eb3c8;
+}
+
+.contact-form-modal__title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-body);
+  font-size: clamp(1.65rem, 5vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.contact-form-modal__subtitle {
+  margin: 0 0 1.25rem;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.contact-form-modal__error {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.contact-form-modal__success-icon {
+  width: 5rem;
+  height: 5rem;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(53, 140, 159, 0.2);
+  border: 2px solid rgba(78, 179, 200, 0.45);
+}
+
+.contact-form-modal__success-title {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-body);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.contact-form-modal__success-text {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.contact-form-modal__step-label {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(78, 179, 200, 0.9);
+}
+
+.contact-form-modal__step-title {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-body);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: #fff;
+}
+
+.contact-form-modal__reason {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.contact-form-modal__reason.is-selected {
+  background: rgba(53, 140, 159, 0.16);
+  border-color: rgba(78, 179, 200, 0.55);
+  box-shadow: 0 0 24px rgba(53, 140, 159, 0.2);
+}
+
+.contact-form-modal__reason-icon {
+  flex-shrink: 0;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.contact-form-modal__reason.is-selected .contact-form-modal__reason-icon {
+  color: #fff;
+  background: linear-gradient(135deg, #358c9f, #4eb3c8);
+  border-color: transparent;
+}
+
+.contact-form-modal__reason-label {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.contact-form-modal__reason.is-selected .contact-form-modal__reason-label {
+  color: #fff;
+}
+
+.contact-form-modal__reason-desc {
+  margin-top: 0.15rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.contact-form-modal__reason-check {
+  flex-shrink: 0;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: #061018;
+  background: #4eb3c8;
+  box-shadow: 0 0 12px rgba(78, 179, 200, 0.5);
+}
+
+.contact-form-modal__field {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  cursor: text;
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.contact-form-modal__field:focus-within {
+  border-color: #4eb3c8;
+  box-shadow: 0 0 0 3px rgba(53, 140, 159, 0.22);
+}
+
+.contact-form-modal__field-icon {
+  flex-shrink: 0;
+  color: rgba(78, 179, 200, 0.75);
+}
+
+.contact-form-modal__input,
+.contact-form-modal__textarea {
+  width: 100%;
+  border: none;
+  padding: 0;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: #fff;
+  background: transparent;
+}
+
+.contact-form-modal__input::placeholder,
+.contact-form-modal__textarea::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.contact-form-modal__textarea {
+  resize: none;
+  min-height: 9rem;
+  line-height: 1.65;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.contact-form-modal__textarea:focus {
+  border-color: #4eb3c8;
+  box-shadow: 0 0 0 3px rgba(53, 140, 159, 0.22);
+}
+
+.contact-form-modal__review {
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+}
+
+.contact-form-modal__review-row {
+  display: flex;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.contact-form-modal__review-row:last-child {
+  border-bottom: none;
+}
+
+.contact-form-modal__review-key {
+  flex-shrink: 0;
+  width: 5.5rem;
+  padding: 0.75rem 0.85rem;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4eb3c8;
+  background: rgba(53, 140, 159, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.contact-form-modal__review-val {
+  flex: 1;
+  padding: 0.75rem 0.85rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.contact-form-modal__hint {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.contact-form-modal__reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.contact-form-modal__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.contact-form-modal-stepper.contact-modal-stepper .next-button,
+.contact-form-modal-stepper.contact-modal-stepper .next-button-premium {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  min-width: 3.25rem !important;
+  min-height: 3.25rem !important;
+  padding: 0.75rem 1.15rem !important;
+  color: #061018 !important;
+  background: #00d9ff !important;
+  border: 2px solid #00d9ff !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 28px rgba(0, 213, 255, 0.35) !important;
+}
+
+.contact-form-modal-stepper.contact-modal-stepper .next-button svg,
+.contact-form-modal-stepper.contact-modal-stepper .next-button-premium svg {
+  flex-shrink: 0;
+  stroke: #061018;
+}
+
+.contact-form-modal-stepper.contact-modal-stepper .next-button:hover,
+.contact-form-modal-stepper.contact-modal-stepper .next-button-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(0, 213, 255, 0.5) !important;
+}
+
+.contact-form-modal-stepper.contact-modal-stepper .back-button,
+.contact-form-modal-stepper.contact-modal-stepper .back-button-premium {
+  color: #4eb3c8 !important;
+  font-weight: 600;
+}
+
+.contact-form-modal-stepper .step-indicator-premium.step-indicator-inner[style*="background"] {
+  background: linear-gradient(135deg, #358c9f, #4eb3c8) !important;
+}
+
+.contact-form-modal-stepper .step-connector-premium > div {
+  background: linear-gradient(90deg, rgba(53, 140, 159, 0.5), rgba(255, 255, 255, 0.08)) !important;
+}
+
+.contact-form-modal-stepper .footerClassName,
+.contact-form-modal-stepper [class*="footer"] {
+  background: transparent !important;
+}

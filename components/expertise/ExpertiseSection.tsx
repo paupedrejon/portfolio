@@ -33,6 +33,8 @@ interface ExpertiseSectionProps {
   weakDevice: boolean;
   active: boolean;
   onActive: () => void;
+  /** En /proyectos: hero de área sin CTA hacia la misma página. */
+  heroMode?: boolean;
 }
 
 type ExpertiseInfoRow =
@@ -123,6 +125,7 @@ export default function ExpertiseSection({
   weakDevice,
   active,
   onActive,
+  heroMode = false,
 }: ExpertiseSectionProps) {
   void textAlign;
   const t = useTranslations("expertise");
@@ -133,6 +136,10 @@ export default function ExpertiseSection({
   const scrollProgressRef = useRef(0);
 
   useEffect(() => {
+    if (heroMode) {
+      setShouldRenderCanvas(true);
+      return;
+    }
     const section = sectionRef.current;
     if (!section) return;
     const observer = new IntersectionObserver(
@@ -151,7 +158,7 @@ export default function ExpertiseSection({
     );
     observer.observe(section);
     return () => observer.disconnect();
-  }, [scrollRoot]);
+  }, [scrollRoot, heroMode]);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -200,7 +207,8 @@ export default function ExpertiseSection({
 
   const showEffects = !reducedMotion && !isMobile && !weakDevice;
   const finalDpr = isMobile || weakDevice ? 1 : 1.6;
-  const sectionOpacity = active ? 1 : 0.86;
+  const sectionOpacity = heroMode || active ? 1 : 0.86;
+  const canvasActive = heroMode || active;
 
   const headingStyles = useMemo(
     () => ({
@@ -298,7 +306,7 @@ export default function ExpertiseSection({
           zIndex: 0,
         }}
       >
-        {shouldRenderCanvas && !weakDevice && active ? (
+        {shouldRenderCanvas && !weakDevice && canvasActive ? (
           <Canvas
             style={{ width: "100%", height: "100%", display: "block" }}
             dpr={[1, finalDpr]}
@@ -428,43 +436,45 @@ export default function ExpertiseSection({
           >
             {stackSubtitle}
           </p>
-          <Link
-            href={ctaHref}
-            target={ctaExternal ? "_blank" : undefined}
-            rel={ctaExternal ? "noopener noreferrer" : undefined}
-            style={{
-              pointerEvents: "auto",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "14px 36px",
-              background: "rgba(0,0,0,0.55)",
-              border: "1px solid rgba(255,255,255,0.35)",
-              color: "#ffffff",
-              fontFamily: "Inter, sans-serif",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              textDecoration: "none",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              transition: "border-color 0.3s, background 0.3s",
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.8)";
-              e.currentTarget.style.background = "rgba(0,0,0,0.75)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
-              e.currentTarget.style.background = "rgba(0,0,0,0.55)";
-            }}
-          >
-            <span style={{ opacity: 0.5 }}>—</span>
-            {ctaLabel}
-            <span style={{ opacity: 0.5 }}>—</span>
-          </Link>
+          {!heroMode ? (
+            <Link
+              href={ctaHref}
+              target={ctaExternal ? "_blank" : undefined}
+              rel={ctaExternal ? "noopener noreferrer" : undefined}
+              style={{
+                pointerEvents: "auto",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "14px 36px",
+                background: "rgba(0,0,0,0.55)",
+                border: "1px solid rgba(255,255,255,0.35)",
+                color: "#ffffff",
+                fontFamily: "Inter, sans-serif",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                textDecoration: "none",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                transition: "border-color 0.3s, background 0.3s",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.8)";
+                e.currentTarget.style.background = "rgba(0,0,0,0.75)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
+                e.currentTarget.style.background = "rgba(0,0,0,0.55)";
+              }}
+            >
+              <span style={{ opacity: 0.5 }}>—</span>
+              {ctaLabel}
+              <span style={{ opacity: 0.5 }}>—</span>
+            </Link>
+          ) : null}
         </div>
         <div
           style={{

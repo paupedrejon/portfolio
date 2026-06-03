@@ -15,7 +15,13 @@ export default function ConditionalHeader() {
   const pathname = usePathname();
   const isStudyAgentsPage = pathname?.startsWith("/study-agents");
   const forceDarkProjectsTheme =
-    pathname?.includes("/proyectos") || pathname?.includes("/projects");
+    pathname?.includes("/proyectos") ||
+    pathname?.includes("/projects") ||
+    pathname?.includes("/skills") ||
+    pathname?.includes("/experience") ||
+    pathname?.includes("/education") ||
+    pathname?.includes("/about-me") ||
+    pathname?.includes("/contact");
   const forceLightCursosTheme = pathname?.includes("/cursos");
   const [colorTheme, setColorTheme] = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
@@ -388,9 +394,9 @@ export default function ConditionalHeader() {
       menuButtonColor="#ffffff"
       openMenuButtonColor="#000"
       changeMenuColorOnOpen
-      colors={["#B19EEF", "#5227FF"]}
+      colors={["#4eb3c8", "#358c9f"]}
       logoUrl="/logo.svg"
-      accentColor="#5227FF"
+      accentColor="#358c9f"
       isFixed
       closeOnClickAway
       headerExtra={

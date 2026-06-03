@@ -19,7 +19,8 @@ type StepperProps = {
   backButtonProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
   nextButtonProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
   backButtonText?: string;
-  nextButtonText?: string;
+  nextButtonText?: React.ReactNode;
+  completeButtonText?: string;
   disableStepIndicators?: boolean;
   renderStepIndicator?: (props: {
     step: number;
@@ -43,6 +44,7 @@ export default function Stepper({
   nextButtonProps = {},
   backButtonText = "Back",
   nextButtonText = "Continue",
+  completeButtonText = "Complete",
   disableStepIndicators = false,
   renderStepIndicator,
   className,
@@ -162,7 +164,7 @@ export default function Stepper({
                 className={cn("next-button", variant === "premium" && "next-button-premium")}
                 {...nextButtonProps}
               >
-                {isLastStep ? "Complete" : nextButtonText}
+                {isLastStep ? completeButtonText : nextButtonText}
               </button>
             </div>
           </div>

@@ -62,12 +62,25 @@ function hslToRgb(
   return [r, g, b];
 }
 
+/** "portfolio" = azul/teal de home y proyectos; "default" = paleta original con `hue`. */
+export type OrbVariant = "default" | "portfolio";
+
+const PORTFOLIO_ORB_COLORS = {
+  /** #4eb3c8 */
+  color1: new Vec3(78 / 255, 179 / 255, 200 / 255),
+  /** #358c9f */
+  color2: new Vec3(53 / 255, 140 / 255, 159 / 255),
+  /** #0a1c28 */
+  color3: new Vec3(10 / 255, 28 / 255, 40 / 255),
+};
+
 interface OrbProps {
   hue?: number;
   hoverIntensity?: number;
   rotateOnHover?: boolean;
   forceHoverState?: boolean;
   backgroundColor?: string;
+  variant?: OrbVariant;
 }
 
 export default function Orb({
@@ -76,6 +89,7 @@ export default function Orb({
   rotateOnHover = true,
   forceHoverState = false,
   backgroundColor = "#000000",
+  variant = "default",
 }: OrbProps) {
   const ctnDom = useRef<HTMLDivElement>(null);
 
@@ -96,6 +110,10 @@ export default function Orb({
     uniform float iTime;
     uniform vec3 iResolution;
     uniform float hue;
+    uniform float usePortfolioPalette;
+    uniform vec3 portfolioColor1;
+    uniform vec3 portfolioColor2;
+    uniform vec3 portfolioColor3;
     uniform float hover;
     uniform float rot;
     uniform float hoverIntensity;
@@ -183,9 +201,15 @@ export default function Orb({
     }
 
     vec4 draw(vec2 uv) {
-      vec3 color1 = adjustHue(baseColor1, hue);
-      vec3 color2 = adjustHue(baseColor2, hue);
-      vec3 color3 = adjustHue(baseColor3, hue);
+      vec3 color1 = usePortfolioPalette > 0.5
+        ? portfolioColor1
+        : adjustHue(baseColor1, hue);
+      vec3 color2 = usePortfolioPalette > 0.5
+        ? portfolioColor2
+        : adjustHue(baseColor2, hue);
+      vec3 color3 = usePortfolioPalette > 0.5
+        ? portfolioColor3
+        : adjustHue(baseColor3, hue);
       
       float ang = atan(uv.y, uv.x);
       float len = length(uv);
@@ -274,6 +298,10 @@ export default function Orb({
           ),
         },
         hue: { value: hue },
+        usePortfolioPalette: { value: variant === "portfolio" ? 1 : 0 },
+        portfolioColor1: { value: PORTFOLIO_ORB_COLORS.color1 },
+        portfolioColor2: { value: PORTFOLIO_ORB_COLORS.color2 },
+        portfolioColor3: { value: PORTFOLIO_ORB_COLORS.color3 },
         hover: { value: 0 },
         rot: { value: 0 },
         hoverIntensity: { value: hoverIntensity },
@@ -338,6 +366,7 @@ export default function Orb({
       lastTime = t;
       program.uniforms.iTime.value = t * 0.001;
       program.uniforms.hue.value = hue;
+      program.uniforms.usePortfolioPalette.value = variant === "portfolio" ? 1 : 0;
       program.uniforms.hoverIntensity.value = hoverIntensity;
       program.uniforms.backgroundColor.value = hexToVec3(backgroundColor);
 
@@ -362,7 +391,7 @@ export default function Orb({
       container.removeChild(gl.canvas);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, [hue, hoverIntensity, rotateOnHover, forceHoverState, backgroundColor]);
+  }, [hue, hoverIntensity, rotateOnHover, forceHoverState, backgroundColor, variant]);
 
   return <div ref={ctnDom} className="orb-container" />;
 }

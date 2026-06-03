@@ -1,5 +1,6 @@
 // app/layout.tsx
 import "./globals.css";
+import "./section-pages.css";
 import { Analytics } from "@vercel/analytics/react";
 import { Providers } from "./providers";
 import { spaceGrotesk, outfit, jetbrainsMono, leagueSpartan } from "./fonts";

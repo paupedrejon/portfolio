@@ -194,8 +194,8 @@ export default function EgoPhoneCanvas({
   const camera =
     variant === "banner"
       ? {
-          position: [0, 0.52, narrow ? 10.4 : 9.2] as [number, number, number],
-          fov: narrow ? 36 : 34,
+          position: [0, 0.52, narrow ? 8.6 : 7.4] as [number, number, number],
+          fov: narrow ? 32 : 30,
         }
       : { position: [0, 0.68, narrow ? 12.2 : 10.8] as [number, number, number], fov: narrow ? 34 : 30 };
 
@@ -230,7 +230,7 @@ export default function EgoPhoneCanvas({
           min-height: clamp(280px, 52vh, 720px);
         }
         .ego-phone-canvas--banner {
-          min-height: clamp(300px, 62vw, 460px);
+          min-height: clamp(220px, 42vw, 320px);
         }
       `}</style>
     </div>

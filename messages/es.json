@@ -100,7 +100,7 @@
   },
   "home": {
     "title": "PAU PEDREJON",
-    "tagline": "Creando experiencias digitales inmersivas a través del código, diseño y tecnología creativa.",
+    "tagline": "Desarrollador Full-Stack especializado en Ingeniería de Software e Inteligencia Artificial",
     "studyAgentsFeaturedBadge": "Destacado",
     "studyAgentsPreviewCaption": "Vista previa",
     "projectsHighlight": "Proyectos que destacan",
@@ -207,7 +207,15 @@
     "used": "USADO",
     "filterAll": "Todos",
     "filterByArea": "Filtrar por área",
-    "filterEmpty": "Ningún proyecto en esta categoría por ahora."
+    "filterEmpty": "Ningún proyecto en esta categoría por ahora.",
+    "moreInfo": "+ Información",
+    "backToProjects": "Volver a proyectos",
+    "aboutProject": "Sobre el proyecto",
+    "openProject": "Abrir proyecto",
+    "stackTitle": "Stack tecnológico",
+    "roleTitle": "Mi rol",
+    "highlightsTitle": "Lo que he desarrollado",
+    "overviewTitle": "El proyecto"
   },
   "projectsData": {
     "study-agents": {
@@ -229,7 +237,7 @@
       "kicker": "2025 - Universitat Politècnica de Barcelona",
       "title2": "App de Movilidad Sostenible",
       "subtitle": "Plataforma de movilidad eléctrica con app móvil y backend API. Permite registro/login con Google, exploración de estaciones y servicios, favoritos, gestión de vehículos, cálculo de alcance/autonomía (can-reach), suscripciones con Stripe (incluyendo webhooks), rutas de administración e integración de ubicación/mapas.",
-      "ctaText": ""
+      "ctaText": "Descargar e-Go"
     },
     "shooter": {
       "title": "Videojuego Online Realista",
@@ -288,12 +296,339 @@
       "ctaText": ""
     }
   },
+  "projectPages": {
+    "study-agents": {
+      "heroSummary": "Capstone del programa Desarrollador 10X con IA (Instituto de Inteligencia Artificial): 8 semanas de formación intensiva + proyecto final. Plataforma multi-agente en producción, integrada en mi portfolio, para estudiar de verdad — no solo leer párrafos de un chat.",
+      "contextTitle": "Formación + capstone",
+      "context": "Study Agents es el proyecto final del curso Desarrollador 10X con Inteligencia Artificial del Instituto de Inteligencia Artificial: un programa de 8 semanas más proyecto, donde consolidé agentes, RAG, APIs con Python y producto web con Next.js. Partí de lo visto en clase (orquestación de LLMs, pipelines, buenas prácticas) y fui mucho más allá con aprendizaje autónomo: arquitectura multi-agente completa, UX de estudio pensada para el día a día del estudiante y despliegue real enlazado desde este portfolio. Es mi pieza estrella de IA aplicada a un problema que vivía como alumno.",
+      "overviewTitle": "El producto",
+      "overview": "La propuesta: convertir la IA en un compañero de estudio interactivo. El usuario sube PDFs, el sistema los indexa con RAG (ChromaDB) y ocho agentes especializados cubren el ciclo completo — explicar con el nivel adecuado (0-10), responder dudas con contexto, generar tests y ejercicios, corregir con feedback educativo y exportar apuntes. Todo corre sobre FastAPI + LangChain en backend y Next.js en frontend, con login Google y demo pública para que cualquier reclutador o profesor pueda probarlo en un clic.",
+      "highlightsTitle": "Lo que he desarrollado",
+      "highlights": [
+        {
+          "icon": "graduation",
+          "title": "Del curso 10X al producto real",
+          "text": "Transformé el capstone del Instituto de IA en una aplicación desplegada y mantenida: no es un mockup, es código en producción con documentación, demo en vídeo y enlace directo desde proyectos."
+        },
+        {
+          "icon": "bots",
+          "title": "8 agentes orquestados",
+          "text": "Content Processor, Explanation, Q&A, Test Generator, Feedback, Exercise Generator/Corrector y Correction Agent, con memoria compartida y routing inteligente GPT-3.5 / GPT-4."
+        },
+        {
+          "icon": "database",
+          "title": "RAG sobre tus apuntes",
+          "text": "PDFs → chunking → embeddings → ChromaDB. Cada respuesta se apoya en el material del usuario, no en alucinaciones genéricas."
+        },
+        {
+          "icon": "books",
+          "title": "Flujos de estudio completos",
+          "text": "Chat, apuntes Markdown→PDF, tests adaptativos, flashcards de idiomas, intérprete de código en navegador y panel de progreso."
+        },
+        {
+          "icon": "rocket",
+          "title": "En producción",
+          "text": "paupedrejon.com/study-agents · NextAuth (Google) · API keys por usuario · backend FastAPI escalable."
+        },
+        {
+          "icon": "link",
+          "title": "Integrado en el portfolio",
+          "text": "Mismo monorepo Next.js 15, i18n, identidad visual coherente y CTA visible en la home y en proyectos."
+        }
+      ],
+      "stackIntro": "Separación clara: Python orquesta la IA; React/Next.js entrega la experiencia.",
+      "stack": [
+        { "name": "Next.js 15", "role": "App Router · UI · despliegue" },
+        { "name": "React & TypeScript", "role": "Frontend interactivo" },
+        { "name": "FastAPI", "role": "API y orquestación de agentes" },
+        { "name": "LangChain + OpenAI", "role": "LLMs y pipelines de IA" },
+        { "name": "ChromaDB", "role": "Base vectorial · RAG" },
+        { "name": "NextAuth.js", "role": "Login con Google" },
+        { "name": "Python 3.11", "role": "Backend y agentes" },
+        { "name": "jsPDF / Markdown", "role": "Exportación de apuntes" }
+      ],
+      "role": "Responsable único del capstone: diseño de arquitectura multi-agente, backend Python, frontend Next.js, RAG, integración en el portfolio, despliegue, documentación (README + demo) y iteración UX basada en uso real como estudiante."
+    },
+    "ego": {
+      "heroSummary": "App móvil de movilidad eléctrica (UPC): estaciones, rutas según autonomía, gamificación y backend completo con pagos Stripe — APK publicada y backend desplegable.",
+      "contextTitle": "Contexto académico",
+      "context": "E-Go es el proyecto de la asignatura de React Native en la Universitat Politècnica de Barcelona (2025). Partí de los requisitos del curso y los convertí en un producto ambicioso: no solo una app de mapas, sino una plataforma con API propia, datos reales de estaciones (ICAEN), lógica de autonomía, suscripciones y panel de administración. Complementé lo visto en clase con documentación, tests y despliegue en la nube.",
+      "overviewTitle": "El producto",
+      "overview": "Conductores de vehículos eléctricos e híbridos encuentran estaciones activas, planifican rutas según su autonomía real, guardan favoritos y compiten en rankings mientras cargan. La app Expo/React Native consume una API Express + PostgreSQL con OAuth Google, JWT, Stripe (webhooks), geolocalización y jobs en AWS. Incluye APK para Android y arquitectura preparada para escalar.",
+      "highlightsTitle": "Lo que he desarrollado",
+      "highlights": [
+        {
+          "icon": "graduation",
+          "title": "Proyecto universitario → producto real",
+          "text": "De entrega académica a app descargable, API documentada y repositorio con CI: demuestra capacidad de llevar un MVP a algo presentable profesionalmente."
+        },
+        {
+          "icon": "globe",
+          "title": "Mapas y datos abiertos",
+          "text": "Integración de miles de puntos de carga (ICAEN), filtros, favoritos y visualización clara en móvil."
+        },
+        {
+          "icon": "zap",
+          "title": "Rutas y autonomía (can-reach)",
+          "text": "Cálculo de alcance según vehículo y batería para recomendar paradas de carga en trayectos reales."
+        },
+        {
+          "icon": "brain",
+          "title": "Gamificación y retención",
+          "text": "Ranking, puntos en tiempo real y recompensas (skins, premium sin anuncios) para engagement."
+        },
+        {
+          "icon": "layers",
+          "title": "Backend y pagos",
+          "text": "Express, PostgreSQL, Stripe + webhooks, Lambda, S3, Docker, tests Jest/Supertest y pipelines GitHub Actions."
+        },
+        {
+          "icon": "rocket",
+          "title": "App móvil Expo",
+          "text": "React Native, Expo Router, TypeScript, Google OAuth y build APK publicada en GitHub Releases."
+        }
+      ],
+      "stackIntro": "Stack mobile-first con backend propio y despliegue cloud.",
+      "stack": [
+        { "name": "React Native & Expo", "role": "App iOS / Android" },
+        { "name": "Expo Router", "role": "Navegación tipada" },
+        { "name": "Node.js & Express", "role": "API REST" },
+        { "name": "PostgreSQL", "role": "Datos y usuarios" },
+        { "name": "Stripe", "role": "Suscripciones + webhooks" },
+        { "name": "AWS Lambda & S3", "role": "Cloud" },
+        { "name": "Google OAuth + JWT", "role": "Auth" },
+        { "name": "Docker & GitHub Actions", "role": "CI/CD" }
+      ],
+      "role": "Diseño UX/UI móvil, arquitectura full-stack, implementación frontend y backend, integración de pagos y mapas, tests, documentación y entrega del proyecto en la UPC."
+    },
+    "portfolio": {
+      "heroSummary": "Mi portfolio en producción: identidad visual propia, i18n, rendimiento adaptativo y productos reales embebidos (Study Agents, E-Go, juegos).",
+      "contextTitle": "Por qué este sitio",
+      "context": "Necesitaba un hub profesional que fuera más que un CV estático: algo que demuestre producto, código y criterio visual. Por eso construí este sitio como aplicación Next.js completa, no como plantilla, y lo uso como escaparate de todo lo demás que hago.",
+      "overviewTitle": "El producto",
+      "overview": "Sitio multi-idioma (es/en/it) con home cinematográfica, secciones de skills, experiencia, educación y proyectos filtrables por expertise. Integra demos vivas, páginas de detalle narrativas y optimizaciones según dispositivo (WebGL solo cuando tiene sentido). Es el pegamento entre mis trabajos académicos, personales y profesionales.",
+      "highlightsTitle": "Lo que he desarrollado",
+      "highlights": [
+        {
+          "icon": "palette",
+          "title": "Sistema de diseño",
+          "text": "Paleta teal, tipografía League Spartan, botones cristal/cyan y CSS compartido (home, section-pages) en todas las rutas principales."
+        },
+        {
+          "icon": "globe",
+          "title": "i18n completo",
+          "text": "next-intl, rutas por locale, traducciones de proyectos y menú StaggeredMenu coherente con la marca."
+        },
+        {
+          "icon": "zap",
+          "title": "Rendimiento adaptativo",
+          "text": "Hyperspeed/Orb/WebGL atenuados en móvil, reduced-motion y hardware limitado."
+        },
+        {
+          "icon": "link",
+          "title": "Productos embebidos",
+          "text": "Study Agents como app dentro del repo; enlaces a E-Go, juegos y demos externas desde un solo portfolio."
+        },
+        {
+          "icon": "sparkles",
+          "title": "Detalle de proyectos",
+          "text": "Listado en grid, filtros por área y fichas de proyecto con storytelling para reclutadores."
+        }
+      ],
+      "stackIntro": "Pensado para SSR, SEO y despliegue continuo.",
+      "stack": [
+        { "name": "Next.js 15", "role": "App Router · SSR" },
+        { "name": "React 19", "role": "UI" },
+        { "name": "TypeScript", "role": "Tipado end-to-end" },
+        { "name": "next-intl", "role": "i18n" },
+        { "name": "Tailwind CSS", "role": "Layout" },
+        { "name": "Vercel", "role": "Hosting" }
+      ],
+      "role": "Conceptualización, diseño UX/UI, desarrollo frontend, integración de proyectos, i18n, performance y mantenimiento del repositorio."
+    },
+    "shooter": {
+      "heroSummary": "Shooter multijugador en Unreal (Salmon Infinite): personajes custom, networking y pipeline 3D profesional — segunda entrega de mi línea de juegos online.",
+      "contextTitle": "Continuidad del proyecto",
+      "context": "Después de Salmon (Parte 1), quise subir el listón: más realismo visual, animaciones propias y sesiones online estables. Es un proyecto personal que demuestra evolución técnica en Unreal, arte 3D y publicación en Game Jolt.",
+      "overviewTitle": "El proyecto",
+      "overview": "Shooter en tercera persona con énfasis en materiales PBR, personajes riggeados y partidas online. Pipeline completo en Blender, Substance Painter y Mixamo, lógica de juego en Blueprints/C++ y build pública para que cualquiera pueda probarlo.",
+      "highlightsTitle": "Lo que he desarrollado",
+      "highlights": [
+        { "icon": "gamepad", "title": "Multijugador online", "text": "Sesiones en red, sincronización de jugadores y loop de partida jugable." },
+        { "icon": "palette", "title": "Arte y materiales", "text": "Modelado, texturas en Substance Painter y look realista en Unreal." },
+        { "icon": "sparkles", "title": "Animación de personajes", "text": "Rigs y animaciones vía Mixamo adaptadas al gameplay." },
+        { "icon": "rocket", "title": "Publicación", "text": "Build en Game Jolt con página de proyecto enlazada desde el portfolio." }
+      ],
+      "stackIntro": "Motor Unreal + pipeline de arte 3D clásico para juegos AA indie.",
+      "stack": [
+        { "name": "Unreal Engine", "role": "Motor · networking" },
+        { "name": "C++ / Blueprints", "role": "Gameplay" },
+        { "name": "Blender", "role": "Modelado" },
+        { "name": "Substance Painter", "role": "Texturas" },
+        { "name": "Mixamo", "role": "Animación" }
+      ],
+      "role": "Dirección creativa, programación de gameplay, arte 3D, integración online y publicación."
+    },
+    "tire-inflator": {
+      "heroSummary": "Simulador de inflado de neumáticos en Proteus con firmware en C — proyecto de microcontroladores (UPC).",
+      "contextTitle": "Contexto académico",
+      "context": "Asignatura de sistemas embebidos en la UPC: el objetivo era modelar un sistema de control real en simulación antes de pasar a hardware. Documenté requisitos, esquema y comportamiento del inflador.",
+      "overviewTitle": "El proyecto",
+      "overview": "Circuito en Proteus que simula sensores, actuadores y lógica de inflado seguro. Firmware en C para el microcontrolador con estados claros (inflar, detener, alertas) y validación de casos límite en simulación.",
+      "highlightsTitle": "Lo que he desarrollado",
+      "highlights": [
+        { "icon": "cpu", "title": "Esquema y simulación", "text": "Diseño eléctrico completo y pruebas en Proteus." },
+        { "icon": "code", "title": "Firmware C", "text": "Control de presión, temporizadores y seguridad del inflado." },
+        { "icon": "file", "title": "Documentación", "text": "Informe técnico alineado con criterios de la asignatura." }
+      ],
+      "stackIntro": "Enfoque hardware-first con validación en simulación.",
+      "stack": [
+        { "name": "Proteus", "role": "Simulación" },
+        { "name": "C", "role": "Microcontrolador" },
+        { "name": "Embedded Systems", "role": "Lógica de control" }
+      ],
+      "role": "Diseño del sistema, implementación del firmware y validación en simulación para la entrega universitaria."
+    },
+    "fiblab": {
+      "heroSummary": "FIB Lab: juego 2D en Unity del curso esencial de Unity (UPC) — publicado en itch.io.",
+      "contextTitle": "Curso Unity (FIB)",
+      "context": "Primer contacto formal con Unity en la FIB: el proyecto debía demostrar física 2D, UI, gestión de escenas y un loop de juego completo en un plazo acotado.",
+      "overviewTitle": "El proyecto",
+      "overview": "Juego 2D con mecánicas de plataformas, enemigos, puntuación y menús. Assets propios en Photoshop, escenas organizadas y build Web/PC publicada para compartir con evaluadores y amigos.",
+      "highlightsTitle": "Lo que he desarrollado",
+      "highlights": [
+        { "icon": "gamepad", "title": "Gameplay 2D", "text": "Mecánicas completas, colisiones y progresión de nivel." },
+        { "icon": "palette", "title": "Arte propio", "text": "Sprites y UI diseñados en Photoshop." },
+        { "icon": "rocket", "title": "Publicación itch.io", "text": "Build jugable online enlazada desde el portfolio." }
+      ],
+      "stackIntro": "Stack clásico de curso Unity 2D.",
+      "stack": [
+        { "name": "Unity", "role": "Motor y C#" },
+        { "name": "Photoshop", "role": "Arte 2D" }
+      ],
+      "role": "Desarrollo completo del juego para la entrega del curso: diseño, programación, arte y publicación."
+    },
+    "circusvr": {
+      "heroSummary": "Circus VR: experiencia de circo en realidad virtual — Game Jam BCN 2024 (48 h).",
+      "contextTitle": "Game Jam 48 h",
+      "context": "Equipo multidisciplinar, plazo de un fin de semana y tema de circo. Mi rol: lógica VR en Unreal, interacciones y assets 3D rápidos en Blender para mantener ritmo de jam.",
+      "overviewTitle": "El proyecto",
+      "overview": "Prototipo VR jugable con acrobacias, público y ambientación de circo. Prioricé presencia inmersiva, feedback háptico/visual y un vertical slice que se pudiera probar al final del jam.",
+      "highlightsTitle": "Lo que he desarrollado",
+      "highlights": [
+        { "icon": "gamepad", "title": "VR en Unreal", "text": "Interacciones, locomoción y escenario circense." },
+        { "icon": "palette", "title": "Assets 3D rápidos", "text": "Modelado en Blender optimizado para VR." },
+        { "icon": "zap", "title": "Entrega en jam", "text": "Build presentada en Game Jam BCN con documentación del proceso." }
+      ],
+      "stackIntro": "Unreal VR + Blender bajo presión de tiempo.",
+      "stack": [
+        { "name": "Unreal Engine VR", "role": "Experiencia inmersiva" },
+        { "name": "Blender", "role": "Assets" },
+        { "name": "Git", "role": "Colaboración en jam" }
+      ],
+      "role": "Programación VR, arte 3D de soporte y coordinación técnica durante el game jam."
+    },
+    "vr-experience": {
+      "heroSummary": "Treball de Recerca (4t ESO): primera experiencia VR sobre el metaverso con Unreal y MetaHumans.",
+      "contextTitle": "Treball de Recerca",
+      "context": "Proyecto de investigación en instituto: explicar el potencial del metaverso mediante una demo inmersiva, no solo un informe escrito. Fue mi primera toma de contacto seria con Unreal y VR.",
+      "overviewTitle": "El proyecto",
+      "overview": "Entorno virtual explorable con personajes MetaHuman, iluminación cuidada y guion de recorrido para la presentación oral. Combiné investigación documental con prototipo jugable publicado en Game Jolt.",
+      "highlightsTitle": "Lo que he desarrollado",
+      "highlights": [
+        { "icon": "globe", "title": "Mundo VR", "text": "Escena navegable con storytelling espacial." },
+        { "icon": "sparkles", "title": "MetaHumans", "text": "Personajes creíbles integrados en Unreal." },
+        { "icon": "file", "title": "Memoria escrita", "text": "Treball de Recerca con marco teórico + demo." },
+        { "icon": "rocket", "title": "Demo pública", "text": "Build en Game Jolt para demostrar el resultado." }
+      ],
+      "stackIntro": "Unreal Engine VR + herramientas de autor de personajes.",
+      "stack": [
+        { "name": "Unreal Engine VR", "role": "Motor" },
+        { "name": "MetaHumans", "role": "Personajes" },
+        { "name": "Blender", "role": "Entorno" }
+      ],
+      "role": "Investigación, diseño de la experiencia, implementación en Unreal y presentación del Treball de Recerca."
+    },
+    "drovo": {
+      "heroSummary": "DROVO: prototipo multijugador divertido en Unreal para jugar con amigos — iteración rápida y publicación online.",
+      "contextTitle": "Proyecto personal",
+      "context": "Quería un juego social ligero, sin la ambición de un AAA: algo que pudiera construir en semanas, probar con amigos y publicar. DROVO es ese experimento de diseño de juegos y networking básico.",
+      "overviewTitle": "El proyecto",
+      "overview": "Prototipo online con personajes caricaturescos, mapa compacto y sesiones cortas. Pipeline Blender → Mixamo → Unreal, priorizando diversión y feedback inmediato sobre gráficos hiperrealistas.",
+      "highlightsTitle": "Lo que he desarrollado",
+      "highlights": [
+        { "icon": "gamepad", "title": "Multijugador", "text": "Partidas online con amigos en sesiones cortas." },
+        { "icon": "palette", "title": "Estilo visual", "text": "Look colorido y legible en Blender." },
+        { "icon": "rocket", "title": "Game Jolt", "text": "Build pública para descargar y jugar." }
+      ],
+      "stackIntro": "Unreal + arte 3D ligero.",
+      "stack": [
+        { "name": "Unreal Engine", "role": "Gameplay" },
+        { "name": "Blender", "role": "Modelado" },
+        { "name": "Mixamo", "role": "Animación" }
+      ],
+      "role": "Ideación, desarrollo del prototipo, arte 3D y publicación."
+    },
+    "salmon1": {
+      "heroSummary": "Salmon Infinite (Parte 1): mi primer videojuego multijugador — donde empezó todo (2020).",
+      "contextTitle": "Origen",
+      "context": "Primer proyecto serio de programación y videojuegos: aprender Unreal, C++, modelado y publicar algo jugable online. La Parte 2 (shooter) demuestra la evolución años después.",
+      "overviewTitle": "El proyecto",
+      "overview": "Juego multijugador experimental con personajes simples, mapas y networking básico en Unreal. Aprendí el pipeline completo: modelar, texturizar, implementar lógica y subir la build a Game Jolt.",
+      "highlightsTitle": "Lo que he desarrollado",
+      "highlights": [
+        { "icon": "graduation", "title": "Primera base técnica", "text": "Unreal + C++ desde cero siendo adolescente." },
+        { "icon": "gamepad", "title": "Networking introductorio", "text": "Partidas online funcionales entre amigos." },
+        { "icon": "palette", "title": "Arte 3D", "text": "Blender y Substance para personajes y entorno." },
+        { "icon": "rocket", "title": "Publicación", "text": "Build experimental en Game Jolt." }
+      ],
+      "stackIntro": "Stack fundacional de mis proyectos en Unreal.",
+      "stack": [
+        { "name": "Unreal Engine", "role": "Motor" },
+        { "name": "C++", "role": "Lógica" },
+        { "name": "Blender", "role": "3D" }
+      ],
+      "role": "Aprendizaje autodidacta, implementación completa y publicación del primer título."
+    },
+    "3dprinting": {
+      "heroSummary": "Impresión 3D a gran escala: CAD, slicer y piezas funcionales — proyecto maker personal.",
+      "contextTitle": "Proyecto maker",
+      "context": "Más allá del software, aplico diseño 3D para piezas reales: adaptar modelos existentes o crearlos en CAD, prepararlos en Cura y validar en impresora FDM.",
+      "overviewTitle": "El proyecto",
+      "overview": "Varias piezas de gran formato con ajuste de orientación, soportes, relleno y postprocesado. Uso FreeCAD para parametrizar, Blender cuando hace falta remallar y Cura para perfiles de impresión fiables.",
+      "highlightsTitle": "Lo que he desarrollado",
+      "highlights": [
+        { "icon": "code", "title": "Modelado CAD", "text": "Piezas adaptadas y medidas reales en FreeCAD." },
+        { "icon": "layers", "title": "Slicing avanzado", "text": "Perfiles en UltiMaker Cura para piezas grandes." },
+        { "icon": "sparkles", "title": "Acabado físico", "text": "Lijado, ensamblaje y validación de tolerancias." }
+      ],
+      "stackIntro": "CAD + slicer + impresora FDM.",
+      "stack": [
+        { "name": "FreeCAD", "role": "CAD paramétrico" },
+        { "name": "Blender", "role": "Remallado" },
+        { "name": "UltiMaker Cura", "role": "Slicer" }
+      ],
+      "role": "Diseño 3D, preparación de impresión y ejecución en taller maker."
+    }
+  },
   "skills": {
     "badge": "Skills & Tecnologías",
     "heroBadge": "Experiencia técnica",
     "title": "SKILLS",
     "tagline": "Una visión completa de mis habilidades técnicas y niveles de competencia.",
     "categoryLabel": "Categoría",
+    "filterAll": "Todas",
+    "filterByCategory": "Filtrar por categoría",
+    "filterEmpty": "Ninguna skill en esta categoría por ahora.",
+    "filterCategories": {
+      "programmingLanguages": "Lenguajes",
+      "frontEnd": "Front-End",
+      "backEnd": "Back-End",
+      "artificialIntelligence": "IA",
+      "gameCreative": "Juegos",
+      "versionControl": "Git & tools",
+      "hardware3d": "Hardware"
+    },
     "categories": {
       "programmingLanguages": "Lenguajes de Programación",
       "frontEnd": "Front-End",
@@ -522,9 +857,10 @@
     }
   },
   "experience": {
-    "badge": "Trayectoria",
+    "badge": "Trayectoria profesional",
     "title": "EXPERIENCIA",
     "tagline": "Mi camino profesional en desarrollo de software y tecnología.",
+    "sectionTitle": "Experiencia laboral",
     "timeline": {
       "kicker": "Experiencia laboral",
       "title": "Cronología"
@@ -622,12 +958,73 @@
   "about": {
     "badge": "Sobre mí",
     "title": "SOBRE MÍ",
-    "tagline": "Conóceme mejor."
+    "tagline": "Conóceme mejor.",
+    "sectionProfile": "Perfil",
+    "sectionLanguages": "Idiomas",
+    "bio": "Estudiante de Ingeniería Informática especializado en Software en la UPC. Me motiva aplicar un perfil multidisciplinar en equipos colaborativos para crear experiencias de usuario con impacto.",
+    "location": "Castelldefels, Barcelona, España",
+    "languages": {
+      "spanish": { "name": "Español", "level": "Nativo" },
+      "catalan": { "name": "Catalán", "level": "Nativo" },
+      "english": { "name": "Inglés", "level": "Avanzado" },
+      "chinese": { "name": "Chino", "level": "En aprendizaje" }
+    }
   },
   "contact": {
     "badge": "Contacto",
     "title": "CONTACTO",
-    "tagline": "Conectemos y trabajemos juntos."
+    "tagline": "Conectemos y trabajemos juntos.",
+    "sectionTitle": "Información de contacto",
+    "getInTouch": "Contactar",
+    "methods": {
+      "github": { "title": "GitHub", "subtitle": "@paupedrejon" },
+      "linkedin": { "title": "LinkedIn", "subtitle": "Pau Pedrejon" },
+      "email": { "title": "Email", "subtitle": "paupedrejon@gmail.com" },
+      "phone": { "title": "Teléfono", "subtitle": "+34 689 063 590" }
+    },
+    "form": {
+      "sectionTitle": "Escríbeme",
+      "kicker": "Formulario",
+      "title": "Ponte en contacto",
+      "subtitle": "Cuéntame tu proyecto o idea en unos pasos.",
+      "openForm": "Abrir formulario",
+      "ctaTitle": "¿Empezamos un proyecto?",
+      "ctaText": "Siempre estoy abierto a nuevos proyectos, ideas creativas u oportunidades para formar parte de tu visión.",
+      "sendEmail": "Enviar email",
+      "close": "Cerrar",
+      "back": "Atrás",
+      "complete": "Enviar",
+      "sending": "Enviando…",
+      "tryAgain": "Inténtalo de nuevo",
+      "errorGeneric": "Algo ha fallado",
+      "successTitle": "¡Mensaje enviado!",
+      "successText": "Te responderé pronto.",
+      "step1Label": "Paso 1 de 4",
+      "step1Title": "¿En qué puedo ayudarte?",
+      "step2Label": "Paso 2 de 4",
+      "step2Title": "Tus datos",
+      "step3Label": "Paso 3 de 4",
+      "step3Title": "Tu mensaje",
+      "step4Label": "Paso 4 de 4",
+      "step4Title": "Revisar y enviar",
+      "namePlaceholder": "Tu nombre",
+      "emailPlaceholder": "tu@email.com",
+      "messagePlaceholder": "Cuéntame tu proyecto o consulta…",
+      "reviewHint": "Al completar, enviaremos tu mensaje por email.",
+      "review": {
+        "reason": "Motivo",
+        "name": "Nombre",
+        "email": "Email",
+        "message": "Mensaje"
+      },
+      "reasons": {
+        "project": { "label": "Proyecto / Colaboración", "desc": "Creemos algo juntos" },
+        "job": { "label": "Oferta de trabajo", "desc": "Oportunidad a tiempo completo o parcial" },
+        "freelance": { "label": "Freelance", "desc": "Proyecto o contrato a corto plazo" },
+        "question": { "label": "Consulta general", "desc": "Charlar o preguntar algo" },
+        "other": { "label": "Otro", "desc": "Cualquier otra cosa" }
+      }
+    }
   },
   "auth": {
     "title": "Study Agents",

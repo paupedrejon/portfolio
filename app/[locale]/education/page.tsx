@@ -2,17 +2,17 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import ScrollButton from "@/components/ScrollButton";
-import { leagueSpartan } from "@/app/fonts";
-import CurriculumButton from "@/components/CurriculumButton";
+import "../home.css";
+import PortfolioPageHero from "@/components/portfolio/PortfolioPageHero";
+import HomeHeroBackground from "@/components/home/HomeHeroBackground";
 import PrismaticBurst from "@/components/PrismaticBurst";
 import { FaUniversity, FaGraduationCap, FaCertificate } from "react-icons/fa";
 
 const EDUCATION_CONFIG = [
-  { key: "iia10x", icon: <FaCertificate size={24} />, href: "https://www.credential.net/9340a704-7896-4104-b745-d6e2c9605eb0#acc.zYw8lsuv", years: "2025–2026", type: "certificate" as const, gradient: "linear-gradient(135deg, #6366f1, #8b5cf6)" },
-  { key: "upcDegree", icon: <FaGraduationCap size={24} />, href: "https://www.upc.edu/ca/graus/enginyeria-informatica-barcelona-fib", years: "2023–2027*", type: "degree" as const, gradient: "linear-gradient(135deg, #10b981, #059669)" },
-  { key: "unityCourse", icon: <FaCertificate size={24} />, href: "https://www.fib.upc.edu/es/noticias/cursos-vgafib-febrero-2022", years: "2024", type: "course" as const, gradient: "linear-gradient(135deg, #f59e0b, #d97706)" },
-  { key: "itbDiploma", icon: <FaUniversity size={24} />, href: "https://itecbcn.eu/portfolio/batxillerat-tecnologic-digital/", years: "2021–2023", type: "diploma" as const, gradient: "linear-gradient(135deg, #ec4899, #db2777)" },
+  { key: "iia10x", icon: <FaCertificate size={24} />, href: "https://www.credential.net/9340a704-7896-4104-b745-d6e2c9605eb0#acc.zYw8lsuv", years: "2025–2026", type: "certificate" as const, gradient: "linear-gradient(135deg, #358c9f, #4eb3c8)" },
+  { key: "upcDegree", icon: <FaGraduationCap size={24} />, href: "https://www.upc.edu/ca/graus/enginyeria-informatica-barcelona-fib", years: "2023–2027*", type: "degree" as const, gradient: "linear-gradient(135deg, #4eb3c8, #2a6f7d)" },
+  { key: "unityCourse", icon: <FaCertificate size={24} />, href: "https://www.fib.upc.edu/es/noticias/cursos-vgafib-febrero-2022", years: "2024", type: "course" as const, gradient: "linear-gradient(135deg, #358c9f, #4eb3c8)" },
+  { key: "itbDiploma", icon: <FaUniversity size={24} />, href: "https://itecbcn.eu/portfolio/batxillerat-tecnologic-digital/", years: "2021–2023", type: "diploma" as const, gradient: "linear-gradient(135deg, #2a6f7d, #358c9f)" },
 ] as const;
 
 export default function EducationPage() {
@@ -61,14 +61,16 @@ export default function EducationPage() {
   const showPrismatic = !reducedMotion && !weakDevice;
 
   return (
-    <>
-      {/* Hero Section */}
-      <section className="hero-section" style={{ position: 'relative', overflow: 'hidden' }}>
-        <div className="hero-grid" />
-
-        {/* PrismaticBurst Background */}
-        <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}>
-          {showPrismatic ? (
+    <div className="portfolio-page">
+      <PortfolioPageHero
+        className="education-hero"
+        kicker={t("badge")}
+        title={t("title")}
+        tagline={t("tagline")}
+        scrollTargetId="education"
+        mounted={mounted}
+        background={
+          showPrismatic ? (
             <PrismaticBurst
               animationType="rotate3d"
               intensity={isMobile ? 1.2 : 2}
@@ -79,243 +81,17 @@ export default function EducationPage() {
               hoverDampness={0.25}
               rayCount={0}
               mixBlendMode="lighten"
-              colors={['#10b981', '#059669', '#ffffff']}
+              colors={["#4eb3c8", "#358c9f", "#ffffff"]}
             />
-          ) : null}
-        </div>
-        
-        {/* Animated Background Orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div 
-            className="absolute rounded-full opacity-25"
-            style={{
-              width: '600px',
-              height: '600px',
-              background: "linear-gradient(135deg, #10b981, #059669)",
-              top: "15%",
-              left: "15%",
-              animation: "floatOrb1 60s ease-in-out infinite",
-              filter: isMobile ? "blur(60px)" : "blur(120px)",
-            }}
-          />
-          <div 
-            className="absolute rounded-full opacity-20"
-            style={{
-              width: '500px',
-              height: '500px',
-              background: "linear-gradient(135deg, #059669, #047857)",
-              bottom: "20%",
-              right: "20%",
-              animation: "floatOrb2 70s ease-in-out infinite reverse",
-              filter: isMobile ? "blur(55px)" : "blur(100px)",
-            }}
-          />
-          <div 
-            className="absolute rounded-full blur-[80px] opacity-15 transition-all duration-500"
-            style={{
-              width: '400px',
-              height: '400px',
-              background: "linear-gradient(135deg, #10b981, #059669)",
-              top: "50%",
-              left: "50%",
-              transform: 'translate(-50%, -50%)',
-              animation: "floatOrb3 80s ease-in-out infinite",
-            }}
-          />
-        </div>
-
-        {/* Animated Background Pattern */}
-        <div 
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: `
-              radial-gradient(circle at 30% 20%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
-              radial-gradient(circle at 70% 80%, rgba(5, 150, 105, 0.12) 0%, transparent 50%),
-              radial-gradient(circle at 50% 50%, rgba(4, 120, 87, 0.08) 0%, transparent 50%)
-            `,
-            animation: 'pulseBg 30s ease-in-out infinite',
-          }}
-        />
-
-        {/* Rising Lines - Inverted Rain (deterministic to avoid hydration mismatch) */}
-        {[...Array(15)].map((_, i) => {
-          const s = (i * 2654435761) % 10000 / 10000;
-          const t = ((i + 1) * 1597334677) % 10000 / 10000;
-          const u = ((i + 2) * 32416190071) % 10000 / 10000;
-          const v = ((i + 3) * 2038074743) % 10000 / 10000;
-          const w = ((i + 4) * 2166136261) % 10000 / 10000;
-          const width = s * 2 + 1;
-          const height = t * 200 + 100;
-          const left = u * 100;
-          const duration = v * 8 + 6;
-          const delay = w * 5;
-          const color1 = s > 0.5 ? '16, 185, 129' : '5, 150, 105';
-          const color2 = t > 0.5 ? '16, 185, 129' : '5, 150, 105';
-          const opacity = u * 0.4 + 0.2;
-          const shadowSize = v * 10 + 5;
-          const shadowColor = w > 0.5 ? '16, 185, 129' : '5, 150, 105';
-          return (
-            <div
-              key={i}
-              style={{
-                position: 'absolute',
-                width: `${width}px`,
-                height: `${height}px`,
-                background: `linear-gradient(to top, rgba(${color1}, 0), rgba(${color2}, ${opacity}))`,
-                left: `${left}%`,
-                bottom: '-200px',
-                borderRadius: '2px',
-                animation: `riseLine ${duration}s linear infinite`,
-                animationDelay: `${delay}s`,
-                boxShadow: `0 0 ${shadowSize}px rgba(${shadowColor}, 0.3)`,
-              }}
-            />
-          );
-        })}
-
-        <div 
-          className={`relative z-10 flex flex-col items-center text-center px-6 ${mounted ? 'opacity-100' : 'opacity-0'}`}
-          style={{ transition: 'opacity 0.8s ease-out' }}
-        >
-          <div 
-            className={`${mounted ? 'animate-fade-in-up' : ''}`}
-            style={{ 
-              fontFamily: 'var(--font-mono)',
-              animationDelay: '0.1s',
-              animationFillMode: 'both',
-              marginBottom: '1.5rem',
-            }}
-          >
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 1.25rem',
-                fontSize: '0.75rem',
-                fontWeight: 500,
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-                color: 'rgba(16, 185, 129, 0.9)',
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%)',
-                border: '1px solid rgba(16, 185, 129, 0.2)',
-                borderRadius: '50px',
-                backdropFilter: 'blur(10px)',
-                boxShadow: '0 4px 20px rgba(16, 185, 129, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              <span style={{ position: 'relative', zIndex: 1 }}>Academic Journey</span>
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent)',
-                  animation: 'shimmer 3s ease-in-out infinite',
-                }}
-              />
-            </div>
-          </div>
-
-          <h1 
-            className={`${leagueSpartan.className} hero-title ${mounted ? 'animate-fade-in-up' : ''}`}
-            style={{ 
-              color: '#ffffff',
-              animationDelay: '0.2s',
-              animationFillMode: 'both'
-            }}
-          >
-            {t("title")}
-          </h1>
-
-          <p 
-            className={`hero-tagline ${mounted ? 'animate-fade-in-up' : ''}`}
-            style={{ 
-              fontFamily: 'var(--font-body)',
-              animationDelay: '0.3s',
-              animationFillMode: 'both'
-            }}
-          >
-            {t("tagline")}
-          </p>
-
-          <div 
-            className={`flex flex-wrap gap-4 justify-center mt-8 ${mounted ? 'animate-fade-in-up' : ''}`}
-            style={{ animationDelay: '0.4s', animationFillMode: 'both' }}
-          >
-            <CurriculumButton href="/PauPedrejonCV.pdf" />
-          </div>
-
-          <div 
-            className={`scroll-wrap ${mounted ? 'animate-fade-in' : ''}`}
-            style={{ animationDelay: '0.6s', animationFillMode: 'both', marginTop: '3rem' }}
-          >
-            <ScrollButton targetId="education" color="transparent" iconColor="var(--text-secondary)" />
-          </div>
-        </div>
-
-        <style jsx>{`
-          @keyframes floatOrb1 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(60px, -100px) scale(1.1); }
-            50% { transform: translate(-40px, 80px) scale(0.9); }
-            75% { transform: translate(100px, 50px) scale(1.05); }
-          }
-          @keyframes floatOrb2 {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(-80px, -120px) scale(1.15); }
-            66% { transform: translate(60px, 100px) scale(0.85); }
-          }
-          @keyframes floatOrb3 {
-            0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
-            50% { transform: translate(-50%, -50%) scale(1.2) rotate(180deg); }
-          }
-          @keyframes riseLine {
-            0% {
-              transform: translateY(0);
-              opacity: 0;
-            }
-            10% {
-              opacity: 1;
-            }
-            90% {
-              opacity: 1;
-            }
-            100% {
-              transform: translateY(calc(-100vh - 200px));
-              opacity: 0;
-            }
-          }
-          @keyframes pulseBg {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-          }
-          @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-          }
-        `}</style>
-
-        {/* Suavizado negro hacia arriba (transición al siguiente apartado) */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: '120px',
-            background: 'linear-gradient(to top, #0a0a0f 0%, transparent 100%)',
-            pointerEvents: 'none',
-            zIndex: 5,
-          }}
-        />
-      </section>
+          ) : (
+            <HomeHeroBackground />
+          )
+        }
+      />
 
       {/* Education Section - Dark mode */}
       <section id="education" style={{ 
-        background: '#0a0a0f',
+        background: '#030d14',
         padding: '5rem 2rem',
       }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -327,7 +103,7 @@ export default function EducationPage() {
                 fontSize: '0.75rem',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
-                color: '#10b981',
+                color: '#4eb3c8',
                 marginBottom: '0.75rem',
               }}
             >
@@ -385,7 +161,7 @@ export default function EducationPage() {
                     width: '1rem',
                     height: '1rem',
                     borderRadius: '50%',
-                    background: '#10b981',
+                    background: '#4eb3c8',
                     border: '3px solid #12121a',
                     zIndex: 2,
                     transition: 'all 0.3s ease',
@@ -446,7 +222,7 @@ export default function EducationPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         background: 'rgba(16, 185, 129, 0.2)',
-                        color: '#10b981',
+                        color: '#4eb3c8',
                         flexShrink: 0,
                         transition: 'all 0.4s ease',
                         transform: 'rotate(0) scale(1)',
@@ -495,7 +271,7 @@ export default function EducationPage() {
                             padding: '0.25rem 0.75rem',
                             borderRadius: '100px',
                             background: 'rgba(16, 185, 129, 0.2)',
-                            color: '#10b981',
+                            color: '#4eb3c8',
                             fontWeight: 600,
                             transition: 'all 0.3s ease',
                           }}
@@ -551,7 +327,7 @@ export default function EducationPage() {
             onClick={(e) => e.stopPropagation()}
             style={{
               position: 'relative',
-              backgroundColor: '#0c0c14',
+              backgroundColor: '#142a38',
               border: '1px solid rgba(16, 185, 129, 0.3)',
               borderRadius: '28px',
               padding: '48px',
@@ -717,7 +493,7 @@ export default function EducationPage() {
                   padding: '0.4rem 1rem',
                   borderRadius: '100px',
                   background: 'rgba(16, 185, 129, 0.15)',
-                  color: '#10b981',
+                  color: '#4eb3c8',
                   fontSize: '0.9rem',
                   fontWeight: 600,
                   fontFamily: 'var(--font-mono)',
@@ -757,7 +533,7 @@ export default function EducationPage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
