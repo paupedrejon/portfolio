@@ -1,4 +1,5 @@
 // app/layout.tsx
+import type { Metadata } from "next";
 import "./globals.css";
 import "./section-pages.css";
 import { Analytics } from "@vercel/analytics/react";
@@ -8,10 +9,24 @@ import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { AiOutlineMail } from "react-icons/ai";
 import { getLocale, getTranslations } from "next-intl/server";
 import HapticsRoot from "@/components/HapticsRoot";
+import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo/config";
 
-export const metadata = {
-  title: "Pau Pedrejon — Software Engineer & Developer",
-  description: "Portfolio showcasing my projects, skills and experience as a software engineer specializing in game development, web applications, and creative technology.",
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: `${SITE_NAME} — Software Engineer & Developer`,
+    template: "%s",
+  },
+  description:
+    "Portfolio showcasing my projects, skills and experience as a software engineer specializing in game development, web applications, and creative technology.",
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    images: [{ url: DEFAULT_OG_IMAGE }],
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

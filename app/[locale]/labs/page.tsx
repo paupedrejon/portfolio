@@ -8,10 +8,13 @@ type Props = {
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "labs" });
-  return {
+  const { buildPageMetadata } = await import("@/lib/seo/metadata");
+  return buildPageMetadata({
+    locale,
+    pathname: "/labs",
     title: t("metaTitle"),
     description: t("metaDescription"),
-  };
+  });
 }
 
 export default async function LabsPage({ params }: Props) {

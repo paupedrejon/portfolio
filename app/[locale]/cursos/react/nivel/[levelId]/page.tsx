@@ -1,7 +1,8 @@
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getLevelById } from "@/lib/cursos/levels";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 import { TOTAL_LEVELS } from "@/lib/cursos/constants";
 import {
   buildProgressPayload,
@@ -15,6 +16,21 @@ import LevelDetailClient from "@/components/cursos/LevelDetailClient";
 type Props = {
   params: Promise<{ locale: string; levelId: string }>;
 };
+
+export async function generateMetadata({ params }: Props) {
+  const { locale, levelId: levelIdStr } = await params;
+  const levelId = parseInt(levelIdStr, 10);
+  if (Number.isNaN(levelId)) return {};
+  const level = getLevelById(levelId);
+  if (!level) return {};
+  const t = await getTranslations({ locale, namespace: "cursos" });
+  return buildPageMetadata({
+    locale,
+    pathname: `/cursos/react/nivel/${levelId}`,
+    title: `${level.title} | ${t("reactMetaTitle")}`,
+    description: level.description,
+  });
+}
 
 export default async function LevelPage({ params }: Props) {
   const { locale, levelId: levelIdStr } = await params;

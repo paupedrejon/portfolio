@@ -8,10 +8,13 @@ type Props = {
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "cursos" });
-  return {
+  const { buildPageMetadata } = await import("@/lib/seo/metadata");
+  return buildPageMetadata({
+    locale,
+    pathname: "/cursos/react",
     title: t("reactMetaTitle"),
     description: t("reactMetaDescription"),
-  };
+  });
 }
 
 export default async function ReactCoursePage({ params }: Props) {

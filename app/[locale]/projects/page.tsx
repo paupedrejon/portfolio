@@ -10,11 +10,14 @@ type Props = {
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "projectsList" });
+  const { buildPageMetadata } = await import("@/lib/seo/metadata");
 
-  return {
+  return buildPageMetadata({
+    locale,
+    pathname: "/projects",
     title: t("metaTitle"),
     description: t("metaDescription"),
-  };
+  });
 }
 
 export default async function ProjectsPage({ params }: Props) {
