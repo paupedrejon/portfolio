@@ -597,8 +597,6 @@ portfolio/
 5. Render generará una URL pública para tu backend
 6. Copia esta URL y configúrala como `FASTAPI_URL` en Vercel
 
-**Guía detallada**: Ver [GUIA_DESPLIEGUE_BACKEND.md](./GUIA_DESPLIEGUE_BACKEND.md)
-
 ---
 
 ## Próximamente...
