@@ -1,5 +1,5 @@
-/** @typedef {{ type: 'file' | 'code' | 'tip' | 'action'; text: string; path?: string; code?: string }} HintStep */
-/** @typedef {{ id: string; label: string; assert: string; hint?: string; hintSteps?: HintStep[] }} Checkpoint */
+/** @typedef {{ type: 'file' | 'code' | 'tip' | 'action' | 'concept'; text: string; path?: string; code?: string }} HintStep */
+/** @typedef {{ id: string; label: string; assert: string; concept?: string; hint?: string; hintSteps?: HintStep[] }} Checkpoint */
 
 /** @param {string} id @param {string} label @param {HintStep[]} steps */
 function cp(id, label, steps) {

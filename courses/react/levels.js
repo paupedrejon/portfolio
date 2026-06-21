@@ -1,5 +1,5 @@
-/** @typedef {{ type: 'file' | 'code' | 'tip' | 'action'; text: string; path?: string; code?: string }} HintStep */
-/** @typedef {{ id: string; label: string; assert: string; hint?: string; hintSteps?: HintStep[] }} Checkpoint */
+/** @typedef {{ type: 'file' | 'code' | 'tip' | 'action' | 'concept'; text: string; path?: string; code?: string }} HintStep */
+/** @typedef {{ id: string; label: string; assert: string; concept?: string; hint?: string; hintSteps?: HintStep[] }} Checkpoint */
 /** @typedef {{ title: string; description: string }} LevelPreview */
 /** @typedef {{ id: number; slug: string; title: string; block: string; description: string; objective: string; preview: LevelPreview; instructions?: string; estimatedMinutes: number; checkpoints: Checkpoint[] }} Level */
 
