@@ -18,6 +18,7 @@ export type CheckpointView = {
   id: string;
   label: string;
   hint: string;
+  concept?: string;
   hintSteps: HintStep[];
   passed: boolean;
 };
@@ -27,6 +28,7 @@ type Props = {
   title: string;
   block: string;
   objective: string;
+  instructions?: string;
   previewDescription: string;
   estimatedMinutes: number;
   initialCheckpoints: CheckpointView[];
@@ -39,6 +41,7 @@ export default function LevelDetailClient({
   title,
   block,
   objective,
+  instructions,
   previewDescription,
   estimatedMinutes,
   initialCheckpoints,
@@ -54,6 +57,9 @@ export default function LevelDetailClient({
   const [showLevelCelebrate, setShowLevelCelebrate] = useState(false);
   const hintsRef = useRef({
     hints: Object.fromEntries(initialCheckpoints.map((c) => [c.id, c.hint])),
+    concepts: Object.fromEntries(
+      initialCheckpoints.map((c) => [c.id, c.concept ?? ""])
+    ),
     steps: Object.fromEntries(
       initialCheckpoints.map((c) => [c.id, c.hintSteps ?? []])
     ),
@@ -77,6 +83,7 @@ export default function LevelDetailClient({
             id: cp.id,
             label: cp.label,
             hint: hintsRef.current.hints[cp.id] ?? cp.hint ?? "",
+            concept: hintsRef.current.concepts[cp.id] ?? cp.concept ?? "",
             hintSteps:
               hintsRef.current.steps[cp.id]?.length
                 ? hintsRef.current.steps[cp.id]
@@ -107,6 +114,11 @@ export default function LevelDetailClient({
       if (cp.passed && !wasPassed) {
         setBurstCheckpointId(cp.id);
         timer = setTimeout(() => setBurstCheckpointId(null), 700);
+        const idx = checkpoints.findIndex((c) => c.id === cp.id);
+        const next = checkpoints[idx + 1];
+        if (next && !next.passed) {
+          setOpenHintId(next.id);
+        }
       }
       passedByIdRef.current[cp.id] = cp.passed;
     }
@@ -186,6 +198,15 @@ export default function LevelDetailClient({
         <h2 className="cursos-level-page__section-title">{t("objectiveTitle")}</h2>
         <p className="cursos-level-page__objective">{objective}</p>
 
+        {instructions && (
+          <>
+            <h2 className="cursos-level-page__section-title">
+              {t("learnTitle")}
+            </h2>
+            <p className="cursos-level-page__instructions">{instructions}</p>
+          </>
+        )}
+
         {session && (
           <p className="cursos-level-page__sync">
             <span className="cursos-level-page__sync-dot" aria-hidden />
@@ -207,16 +228,26 @@ export default function LevelDetailClient({
               !cp.passed &&
               index === (currentStepIndex >= 0 ? currentStepIndex : 0);
             const justPassed = burstCheckpointId === cp.id;
+            const isLocked =
+              !cp.passed &&
+              index > 0 &&
+              !checkpoints.slice(0, index).every((c) => c.passed);
+            const canOpen = cp.passed || isCurrent || !isLocked;
             return (
               <li
                 key={cp.id}
-                className={`cursos-check-item${cp.passed ? " cursos-check-item--passed" : ""}${isCurrent ? " cursos-check-item--current" : ""}${justPassed ? " cursos-check-item--celebrate" : ""}`}
+                className={`cursos-check-item${cp.passed ? " cursos-check-item--passed" : ""}${isCurrent ? " cursos-check-item--current" : ""}${justPassed ? " cursos-check-item--celebrate" : ""}${isLocked ? " cursos-check-item--locked" : ""}`}
               >
                 <button
                   type="button"
                   className="cursos-check-item__head"
-                  onClick={() => setOpenHintId(isOpen ? null : cp.id)}
-                  aria-expanded={isOpen}
+                  onClick={() => {
+                    if (!canOpen) return;
+                    setOpenHintId(isOpen ? null : cp.id);
+                  }}
+                  aria-expanded={isOpen && canOpen}
+                  aria-disabled={isLocked}
+                  title={isLocked ? t("stepLockedHint") : undefined}
                 >
                   <span className="cursos-check-item__ring-wrap">
                     <StepPassedBurst active={justPassed} />
@@ -237,8 +268,16 @@ export default function LevelDetailClient({
                     ▾
                   </span>
                 </button>
-                {isOpen && (
+                {isOpen && canOpen && (
                   <div className="cursos-check-item__hint">
+                    {cp.concept && !cp.hintSteps.some((s) => s.type === "concept") && (
+                      <div className="cursos-check-item__concept">
+                        <h4 className="cursos-check-item__concept-title">
+                          {t("conceptTitle")}
+                        </h4>
+                        <p>{cp.concept}</p>
+                      </div>
+                    )}
                     {cp.id === "page-renders" && (
                       <>
                         <div className="cursos-level-page__download cursos-level-page__download--inline">
@@ -253,7 +292,11 @@ export default function LevelDetailClient({
                         <TerminalSetupBlock embedded />
                       </>
                     )}
-                    <StepHintPanel steps={cp.hintSteps} fallback={cp.hint} />
+                    <StepHintPanel
+                      steps={cp.hintSteps}
+                      fallback={cp.hint}
+                      concept={cp.concept}
+                    />
                   </div>
                 )}
               </li>

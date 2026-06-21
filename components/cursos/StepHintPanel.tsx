@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  BookOpen,
   FileCode,
   Code2,
   Lightbulb,
@@ -9,7 +10,7 @@ import {
 } from "lucide-react";
 
 export type HintStep = {
-  type: "file" | "code" | "tip" | "action";
+  type: "file" | "code" | "tip" | "action" | "concept";
   text: string;
   path?: string;
   code?: string;
@@ -18,19 +19,28 @@ export type HintStep = {
 type Props = {
   steps: HintStep[];
   fallback?: string;
+  concept?: string;
 };
 
 const ICON_MAP = {
+  concept: BookOpen,
   file: FileCode,
   code: Code2,
   tip: Lightbulb,
   action: MousePointerClick,
 } as const;
 
-export default function StepHintPanel({ steps, fallback }: Props) {
+export default function StepHintPanel({ steps, fallback, concept }: Props) {
   const [copied, setCopied] = useState<string | null>(null);
 
-  if (!steps?.length) {
+  const displaySteps =
+    steps?.length > 0
+      ? steps
+      : concept
+        ? [{ type: "concept" as const, text: concept }]
+        : [];
+
+  if (!displaySteps.length) {
     if (!fallback) return null;
     return <p className="cursos-hint-fallback">{fallback}</p>;
   }
@@ -47,8 +57,8 @@ export default function StepHintPanel({ steps, fallback }: Props) {
 
   return (
     <ul className="cursos-hint-steps">
-      {steps.map((step, i) => {
-        const Icon = ICON_MAP[step.type];
+      {displaySteps.map((step, i) => {
+        const Icon = ICON_MAP[step.type] ?? Lightbulb;
         return (
           <li
             key={i}

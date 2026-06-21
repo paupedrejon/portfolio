@@ -1,6 +1,7 @@
-import { getLevelById } from "@/lib/cursos/levels";
+import { getLevelById, type Level } from "@/lib/cursos/levels";
 import {
   getCurrentLevelId,
+  getLevelCheckpointProgress,
   upsertLevelProgress,
   validateStudentToken,
   allCheckpointsPassed,
@@ -11,6 +12,44 @@ export type VerifyResultItem = {
   checkpointId: string;
   passed: boolean;
 };
+
+/**
+ * Solo avanza un paso a la vez: el siguiente pendiente puede pasar si Playwright
+ * lo valida; los posteriores quedan bloqueados aunque el código ya los cumpla.
+ * Los pasos ya completados en previousCompleted se conservan.
+ */
+export function applySequentialCheckpoints(
+  level: Level,
+  rawResults: VerifyResultItem[],
+  previousCompleted: Record<string, boolean> = {}
+): Record<string, boolean> {
+  const rawMap = Object.fromEntries(
+    rawResults.map((r) => [r.checkpointId, r.passed === true])
+  );
+  const completed: Record<string, boolean> = {};
+  let canAdvance = true;
+
+  for (const cp of level.checkpoints) {
+    const id = cp.id;
+    if (previousCompleted[id] === true) {
+      completed[id] = true;
+      continue;
+    }
+    if (!canAdvance) {
+      completed[id] = false;
+      continue;
+    }
+    if (rawMap[id] === true) {
+      completed[id] = true;
+      canAdvance = false;
+    } else {
+      completed[id] = false;
+      canAdvance = false;
+    }
+  }
+
+  return completed;
+}
 
 export async function processVerify(
   token: string,
@@ -55,13 +94,23 @@ export async function processVerify(
     };
   }
 
-  const completed: Record<string, boolean> = {};
   for (const r of results) {
     if (!expectedIds.has(r.checkpointId)) {
       return { error: `Checkpoint desconocido: ${r.checkpointId}`, status: 400 };
     }
-    completed[r.checkpointId] = r.passed === true;
   }
+
+  const previousCompleted = await getLevelCheckpointProgress(
+    tokenRow.user_id,
+    tokenRow.course_slug,
+    levelId
+  );
+
+  const completed = applySequentialCheckpoints(
+    level,
+    results,
+    previousCompleted
+  );
 
   const levelPassed = await upsertLevelProgress(
     tokenRow.user_id,

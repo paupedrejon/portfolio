@@ -59,6 +59,9 @@
     "terminalAutoCheckNote": "npm run dev checks your code automatically on save. No need to run check manually.",
     "previewLevelEndTitle": "This is how your site should look when you finish this level",
     "objectiveTitle": "Objective",
+    "learnTitle": "In this level you will learn",
+    "conceptTitle": "React concept",
+    "stepLockedHint": "Complete the previous step first",
     "stepsTitle": "Steps to complete",
     "celebrationLevelSubtitle": "You completed level {level}. Keep going!",
     "hintLabel": "Hint",
@@ -218,12 +221,26 @@
     "overviewTitle": "The project"
   },
   "projectsData": {
+    "tealcode": {
+      "title": "PauStudio",
+      "kicker": "2026 - Personal Project",
+      "title2": "IDE with integrated AI",
+      "subtitle": "Desktop editor like Cursor/VS Code with the portfolio aesthetic. Ask, Agent and Plan modes, model picker, multiple terminals and an agent that reads and edits files via Ollama or free APIs.",
+      "ctaText": "Download PauStudio"
+    },
     "study-agents": {
       "title": "StudyAgents",
       "kicker": "2025 - Instituto de Inteligencia Artificial",
       "title2": "AI-Powered Learning Assistant",
       "subtitle": "An intelligent educational system that helps students learn through AI agents. Upload PDFs, generate notes, ask questions, and take interactive tests with real-time feedback.",
       "ctaText": "Try StudyAgents"
+    },
+    "react-course": {
+      "title": "Interactive React Course",
+      "kicker": "2025 - Educational project",
+      "title2": "Learn React by building a portfolio",
+      "subtitle": "An interactive course for beginners: 30 guided levels, automatic Playwright checks locally and cloud-synced progress.",
+      "ctaText": "Start course"
     },
     "portfolio": {
       "title": "Personal Portfolio",
@@ -297,6 +314,44 @@
     }
   },
   "projectPages": {
+    "tealcode": {
+      "heroSummary": "Open-source desktop IDE with integrated AI: professional Cursor/VS Code-like interface, portfolio aesthetic and an agent with Ask, Agent and Plan modes.",
+      "contextTitle": "Why PauStudio",
+      "context": "I wanted a local, free coding assistant without expensive subscriptions. PauStudio combines Tauri (native Rust, ~30 MB), Monaco Editor and a ReAct agent with file read/write tools. Supports Ollama (Qwen3-Coder, DeepSeek-R1) and free-tier APIs (DeepSeek, Qwen DashScope, GLM-4.7-Flash).",
+      "overviewTitle": "The product",
+      "overview": "Open any project folder, edit with syntax highlighting, chat with the agent and review diffs before applying changes. Integrated terminal, Ctrl+S/P/` shortcuts, direct download from the portfolio.",
+      "highlightsTitle": "What's included",
+      "highlights": [
+        {
+          "icon": "code",
+          "title": "VS Code-like workbench",
+          "text": "File explorer, multi-tab editor, custom teal Monaco theme and native PTY terminal."
+        },
+        {
+          "icon": "bots",
+          "title": "Tool-using agent",
+          "text": "ReAct loop with list_files, read_file, search_files and write_file. Mandatory diff preview before saving."
+        },
+        {
+          "icon": "sparkles",
+          "title": "Free Chinese AI",
+          "text": "Local Ollama (qwen3-coder-next) or DeepSeek, Qwen and GLM APIs with free tiers. User provides API key."
+        },
+        {
+          "icon": "rocket",
+          "title": "Lightweight desktop app",
+          "text": "Tauri 2 instead of Electron: small installer, real filesystem access, Windows/macOS/Linux builds via GitHub Actions."
+        }
+      ],
+      "stackIntro": "Desktop + AI + editor.",
+      "stack": [
+        { "name": "Tauri 2", "role": "Desktop shell · Rust" },
+        { "name": "React 19", "role": "UI · TypeScript · Vite" },
+        { "name": "Monaco Editor", "role": "Code editor" },
+        { "name": "Ollama / DeepSeek / Qwen / GLM", "role": "Free AI models" }
+      ],
+      "role": "Design, full-stack development and IDE distribution as a downloadable portfolio project."
+    },
     "study-agents": {
       "heroSummary": "Capstone of the Developer 10X with AI program (Instituto de Inteligencia Artificial): 8 intensive weeks + final project. Multi-agent platform in production inside my portfolio — real study flows, not long chat paragraphs.",
       "contextTitle": "Training + capstone",
@@ -348,6 +403,29 @@
         { "name": "jsPDF / Markdown", "role": "Notes export" }
       ],
       "role": "Sole capstone owner: multi-agent architecture, Python backend, Next.js frontend, RAG, portfolio integration, deployment, documentation (README + demo) and UX iteration based on real student use."
+    },
+    "react-course": {
+      "heroSummary": "Interactive React course for beginners: 30 levels guiding you to build a real portfolio, with local auto-checks and cloud progress.",
+      "contextTitle": "Why this course",
+      "context": "I wanted a practical, step-by-step way to learn React with immediate feedback — not passive tutorials or copy-paste without understanding. I designed a gamified path inside this portfolio: each level explains concepts (JSX, components, props, state, hooks, routing…) while you build your site with Vite and Tailwind.",
+      "overviewTitle": "How it works",
+      "overview": "Download a template, run npm run dev and npm run check. Playwright validates each step in your code; you advance one at a time. The course web shows React concepts, clear instructions and a level map. Complete all 30 for a diploma with your name.",
+      "highlightsTitle": "Features",
+      "highlights": [
+        { "icon": "code", "title": "30 progressive levels", "text": "From Hello World to Vercel deploy: JSX, components, props, useState, useEffect, React Router, Context, Vitest tests and GitHub Actions CI." },
+        { "icon": "sparkles", "title": "Automatic checking", "text": "Playwright verifies your code locally. One step = one advance; no batch completion even if code already satisfies later steps." },
+        { "icon": "books", "title": "Concepts explained", "text": "Each step includes a React concept explanation before the practical action — no need to hunt for hints." },
+        { "icon": "rocket", "title": "Real portfolio outcome", "text": "End result is a deployable portfolio with navbar, projects, contact, theme toggle and admin panel." }
+      ],
+      "stackIntro": "Student frontend + portfolio platform.",
+      "stack": [
+        { "name": "React 19", "role": "Student UI · Vite" },
+        { "name": "Tailwind CSS", "role": "Utility-first styling" },
+        { "name": "Playwright", "role": "Local auto-validation" },
+        { "name": "Next.js", "role": "Course platform" },
+        { "name": "Supabase", "role": "Progress & diplomas" }
+      ],
+      "role": "Pedagogical design, 30 levels of content, verification engine, level map UI and portfolio integration."
     },
     "ego": {
       "heroSummary": "Electric mobility app (UPC): stations, range-aware routes, gamification and full backend with Stripe — published APK and deployable API.",
@@ -1060,6 +1138,24 @@
       "dashCd": "Dash CD",
       "grappleCd": "Grapple CD"
     }
+  },
+  "tealcodePage": {
+    "title": "Download PauStudio",
+    "subtitle": "Windows installer. Run the .exe, open a folder and start coding with AI.",
+    "backLabel": "Back to project",
+    "installerTitle": "Windows installer (.exe)",
+    "installerDesc": "Ready-to-use desktop app. No compilation needed.",
+    "installerCta": "Download PauStudio-setup.exe",
+    "installerPending": "Installer is not available right now.",
+    "devTitle": "For developers: source code",
+    "sourceCta": "Download source code (.zip)",
+    "afterInstallTitle": "After installing",
+    "afterInstallSteps": [
+      "Open PauStudio from the Start menu",
+      "Click «Open folder» and select your project",
+      "In chat, choose Ask, Agent or Plan mode and the AI model",
+      "In Settings (⚙), configure Ollama (local) or an API (DeepSeek, Qwen, GLM)"
+    ]
   },
   "egoPage": {
     "hero": {

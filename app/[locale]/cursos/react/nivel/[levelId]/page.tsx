@@ -47,6 +47,7 @@ export default async function LevelPage({ params }: Props) {
     id: c.id,
     label: c.label,
     hint: c.hint ?? "",
+    concept: c.concept ?? "",
     hintSteps: c.hintSteps ?? [],
     passed: false,
   }));
@@ -76,6 +77,7 @@ export default async function LevelPage({ params }: Props) {
             id: c.id,
             label: c.label,
             hint: c.hint ?? "",
+            concept: c.concept ?? "",
             hintSteps: c.hintSteps ?? [],
             passed: fromProgress?.passed ?? false,
           };
@@ -90,6 +92,7 @@ export default async function LevelPage({ params }: Props) {
       title={level.title}
       block={level.block}
       objective={level.objective}
+      instructions={level.instructions}
       previewDescription={level.preview.description}
       estimatedMinutes={level.estimatedMinutes}
       initialCheckpoints={checkpoints}

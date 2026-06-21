@@ -1,7 +1,9 @@
 import type { ExpertiseAreaId } from "@/components/expertise/types";
 
 export type ProjectSlug =
+  | "tealcode"
   | "study-agents"
+  | "react-course"
   | "portfolio"
   | "ego"
   | "shooter"
@@ -26,11 +28,25 @@ export type ProjectConfig = {
 
 export const PROJECTS_CONFIG: ProjectConfig[] = [
   {
+    slug: "tealcode",
+    imageCard: "/tealcode.png",
+    tech: "Tauri 2, Rust, React 19, TypeScript, Monaco Editor, Ollama, DeepSeek, Qwen, GLM",
+    externalHref: "/api/tealcode/installer",
+    sections: ["ai", "web-development"],
+  },
+  {
     slug: "study-agents",
     imageCard: "/react_study_agents.png",
     tech: "Next.js, React, TypeScript, Python, FastAPI, LangChain, OpenAI, Vector DB",
     externalHref: "/study-agents",
     sections: ["ai", "web-development"],
+  },
+  {
+    slug: "react-course",
+    imageCard: "/react.png",
+    tech: "React, Vite, Tailwind CSS, Playwright, Next.js, Supabase",
+    externalHref: "/cursos/react",
+    sections: ["web-development"],
   },
   {
     slug: "portfolio",

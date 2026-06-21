@@ -59,6 +59,9 @@
     "terminalAutoCheckNote": "npm run dev controlla il codice automaticamente al salvataggio.",
     "previewLevelEndTitle": "Ecco come dovrebbe apparire il tuo sito a fine livello",
     "objectiveTitle": "Obiettivo",
+    "learnTitle": "In questo livello imparerai",
+    "conceptTitle": "Concetto React",
+    "stepLockedHint": "Completa prima il passo precedente",
     "stepsTitle": "Passi da completare",
     "celebrationLevelSubtitle": "Hai completato il livello {level}. Continua così!",
     "hintLabel": "Suggerimento",
@@ -218,12 +221,26 @@
     "overviewTitle": "Il progetto"
   },
   "projectsData": {
+    "tealcode": {
+      "title": "PauStudio",
+      "kicker": "2026 - Progetto Personale",
+      "title2": "IDE con IA integrata",
+      "subtitle": "Editor desktop tipo Cursor/VS Code con l'estetica del portfolio. Modalità Ask, Agent e Plan, selettore modello, terminali multipli e agente che legge e modifica file con Ollama o API gratuite.",
+      "ctaText": "Scarica PauStudio"
+    },
     "study-agents": {
       "title": "StudyAgents",
       "kicker": "2025 - Instituto de Inteligencia Artificial",
       "title2": "Assistente didattico con IA",
       "subtitle": "Sistema educativo intelligente che aiuta gli studenti ad apprendere tramite agenti IA. Carica PDF, genera note, fai domande e sostieni test interattivi con feedback in tempo reale.",
       "ctaText": "Prova StudyAgents"
+    },
+    "react-course": {
+      "title": "Corso interattivo di React",
+      "kicker": "2025 - Progetto formativo",
+      "title2": "Impara React costruendo un portfolio",
+      "subtitle": "Creazione di un corso interattivo per principianti: 30 livelli guidati, correzione automatica con Playwright in locale e progresso nel cloud.",
+      "ctaText": "Inizia il corso"
     },
     "portfolio": {
       "title": "Portfolio Personale",
@@ -297,6 +314,44 @@
     }
   },
   "projectPages": {
+    "tealcode": {
+      "heroSummary": "IDE desktop open-source con IA integrata: interfaccia professionale tipo Cursor/VS Code, estetica del portfolio e agente con modalità Ask, Agent e Plan.",
+      "contextTitle": "Perché PauStudio",
+      "context": "Volevo un assistente di codice locale e gratuito senza abbonamenti costosi. PauStudio combina Tauri (Rust nativo, ~30 MB), Monaco Editor e un agente ReAct con strumenti di lettura/scrittura file. Supporta Ollama (Qwen3-Coder, DeepSeek-R1) e API con tier gratuito (DeepSeek, Qwen DashScope, GLM-4.7-Flash).",
+      "overviewTitle": "Il prodotto",
+      "overview": "Apri qualsiasi cartella di progetto, modifica con syntax highlighting, chatta con l'agente e rivedi i diff prima di applicare le modifiche. Terminale integrato, scorciatoie Ctrl+S/P/` e download diretto dal portfolio.",
+      "highlightsTitle": "Cosa include",
+      "highlights": [
+        {
+          "icon": "code",
+          "title": "Workbench tipo VS Code",
+          "text": "Explorer, tab multi-file, Monaco con tema teal e terminale PTY nativo."
+        },
+        {
+          "icon": "bots",
+          "title": "Agente con strumenti",
+          "text": "Loop ReAct con list_files, read_file, search_files e write_file. Anteprima diff obbligatoria."
+        },
+        {
+          "icon": "sparkles",
+          "title": "IA cinese gratuita",
+          "text": "Ollama locale (qwen3-coder-next) o API DeepSeek, Qwen e GLM con tier gratuito."
+        },
+        {
+          "icon": "rocket",
+          "title": "App desktop leggera",
+          "text": "Tauri 2 al posto di Electron: installer piccolo, accesso reale al filesystem, build multi-piattaforma."
+        }
+      ],
+      "stackIntro": "Desktop + IA + editor.",
+      "stack": [
+        { "name": "Tauri 2", "role": "Shell desktop · Rust" },
+        { "name": "React 19", "role": "UI · TypeScript · Vite" },
+        { "name": "Monaco Editor", "role": "Editor di codice" },
+        { "name": "Ollama / DeepSeek / Qwen / GLM", "role": "Modelli IA gratuiti" }
+      ],
+      "role": "Design, sviluppo full-stack e distribuzione dell'IDE come progetto scaricabile dal portfolio."
+    },
     "study-agents": {
       "heroSummary": "Capstone del programma Developer 10X con IA (Instituto de Inteligencia Artificial): 8 settimane intensive + progetto finale. Piattaforma multi-agente in produzione nel portfolio — studio reale, non solo paragrafi in chat.",
       "contextTitle": "Formazione + capstone",
@@ -348,6 +403,29 @@
         { "name": "jsPDF / Markdown", "role": "Export appunti" }
       ],
       "role": "Responsabile unico del capstone: architettura, backend, frontend, RAG, integrazione portfolio e deploy."
+    },
+    "react-course": {
+      "heroSummary": "Corso interattivo di React per principianti: 30 livelli per costruire un portfolio reale, con controlli automatici locali e progresso nel cloud.",
+      "contextTitle": "Perché questo corso",
+      "context": "Volevo un modo pratico e passo passo per imparare React con feedback immediato. Ho progettato un percorso gamificato nel portfolio: ogni livello spiega concetti (JSX, componenti, props, stato, hook, routing…) mentre costruisci il sito con Vite e Tailwind.",
+      "overviewTitle": "Come funziona",
+      "overview": "Scarichi un template, esegui npm run dev e npm run check. Playwright valida ogni passo nel tuo codice; avanzi uno alla volta. Il sito del corso mostra concetti React, istruzioni chiare e mappa dei livelli.",
+      "highlightsTitle": "Caratteristiche",
+      "highlights": [
+        { "icon": "code", "title": "30 livelli progressivi", "text": "Da Hello World al deploy su Vercel: JSX, componenti, props, useState, useEffect, React Router, Context, test Vitest e CI GitHub Actions." },
+        { "icon": "sparkles", "title": "Correzione automatica", "text": "Playwright verifica il codice in locale. Un passo = un avanzamento; niente completamenti multipli." },
+        { "icon": "books", "title": "Concetti spiegati", "text": "Ogni passo include una spiegazione del concetto React prima dell'azione pratica." },
+        { "icon": "rocket", "title": "Portfolio reale", "text": "Risultato finale: portfolio deployabile con navbar, progetti, contatto, tema e pannello admin." }
+      ],
+      "stackIntro": "Frontend studente + piattaforma portfolio.",
+      "stack": [
+        { "name": "React 19", "role": "UI studente · Vite" },
+        { "name": "Tailwind CSS", "role": "Stili utility-first" },
+        { "name": "Playwright", "role": "Validazione locale" },
+        { "name": "Next.js", "role": "Piattaforma corso" },
+        { "name": "Supabase", "role": "Progresso e diplomi" }
+      ],
+      "role": "Design pedagogico, contenuti 30 livelli, motore di verifica, UI mappa livelli e integrazione portfolio."
     },
     "ego": {
       "heroSummary": "App di mobilità elettrica (UPC): stazioni, percorsi in base all'autonomia, gamification e backend completo con Stripe — APK pubblicata e API deployabile.",
@@ -1059,6 +1137,24 @@
       "dashCd": "Dash CD",
       "grappleCd": "Grapple CD"
     }
+  },
+  "tealcodePage": {
+    "title": "Scarica PauStudio",
+    "subtitle": "Installer per Windows. Esegui il .exe, apri una cartella e inizia a programmare con IA.",
+    "backLabel": "Torna al progetto",
+    "installerTitle": "Installer Windows (.exe)",
+    "installerDesc": "App desktop pronta all'uso. Nessuna compilazione necessaria.",
+    "installerCta": "Scarica PauStudio-setup.exe",
+    "installerPending": "L'installer non è disponibile al momento.",
+    "devTitle": "Per sviluppatori: codice sorgente",
+    "sourceCta": "Scarica codice sorgente (.zip)",
+    "afterInstallTitle": "Dopo l'installazione",
+    "afterInstallSteps": [
+      "Apri PauStudio dal menu Start",
+      "Clicca «Apri cartella» e seleziona il tuo progetto",
+      "Nella chat, scegli modalità Ask, Agent o Plan e il modello IA",
+      "In Impostazioni (⚙), configura Ollama (locale) o un'API (DeepSeek, Qwen, GLM)"
+    ]
   },
   "egoPage": {
     "hero": {

@@ -3524,6 +3524,55 @@ body:has(.cursos-page)::before {
   animation: cursos-item-glow 0.7s ease-out;
 }
 
+.cursos-check-item--locked {
+  opacity: 0.55;
+}
+
+.cursos-check-item--locked .cursos-check-item__head {
+  cursor: not-allowed;
+}
+
+.cursos-check-item__concept {
+  margin-bottom: 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.5rem;
+  background: rgba(78, 179, 200, 0.12);
+  border-left: 3px solid var(--cursos-accent, #358c9f);
+}
+
+.cursos-check-item__concept-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cursos-accent, #358c9f);
+}
+
+.cursos-check-item__concept p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--cursos-text, #e2e8f0);
+}
+
+.cursos-level-page__instructions {
+  margin: 0 0 1.5rem;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--cursos-text-muted, #94a3b8);
+}
+
+.cursos-hint-step--concept {
+  background: rgba(78, 179, 200, 0.08);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.cursos-hint-step--concept .cursos-hint-step__text {
+  font-weight: 500;
+}
+
 @keyframes cursos-ring-pop {
   0% {
     transform: scale(1);

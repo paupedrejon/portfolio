@@ -5,6 +5,7 @@
 
 import { levels4to30 } from "./levels-4-30.js";
 import { ESTIMATED_MINUTES_BY_LEVEL } from "./estimated-minutes.js";
+import { applyPedagogy } from "./pedagogy.js";
 
 /** @type {Level[]} */
 export const levels = [
@@ -387,6 +388,7 @@ for (const level of levels) {
     if (!cp.hintSteps?.length) cp.hintSteps = DEFAULT_HINT_STEPS;
   }
   level.estimatedMinutes = ESTIMATED_MINUTES_BY_LEVEL[level.id] ?? 30;
+  applyPedagogy(level);
 }
 
 export function getLevelById(id) {

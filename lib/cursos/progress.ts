@@ -141,6 +141,23 @@ export function allCheckpointsPassed(
   return level.checkpoints.every((c) => completed[c.id] === true);
 }
 
+export async function getLevelCheckpointProgress(
+  userId: string,
+  courseSlug: string,
+  levelId: number
+): Promise<Record<string, boolean>> {
+  const supabase = getSupabaseAdmin();
+  const { data } = await supabase
+    .from("level_progress")
+    .select("completed_checkpoints")
+    .eq("user_id", userId)
+    .eq("course_slug", courseSlug)
+    .eq("level_id", levelId)
+    .maybeSingle();
+
+  return normalizeCheckpoints(data?.completed_checkpoints);
+}
+
 export async function upsertLevelProgress(
   userId: string,
   courseSlug: string,
