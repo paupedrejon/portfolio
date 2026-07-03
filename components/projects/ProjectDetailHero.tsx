@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
+import { isLocaleFreePath } from "@/lib/i18n/locale-free-paths";
 
 type ProjectDetailHeroProps = {
   kicker: string;
@@ -28,6 +29,16 @@ export default function ProjectDetailHero({
   ctaLabel,
 }: ProjectDetailHeroProps) {
   const isExternal = Boolean(ctaHref?.startsWith("http"));
+  const isLocaleFree = Boolean(ctaHref && isLocaleFreePath(ctaHref));
+  const isDirectDownload = Boolean(
+    ctaHref?.includes(".apk") ||
+      ctaHref?.includes(".exe") ||
+      ctaHref?.includes("/api/tealcode/installer")
+  );
+  const isInternalDownload = Boolean(
+    isDirectDownload && ctaHref && !ctaHref.startsWith("http")
+  );
+  const usePlainAnchor = isExternal || isInternalDownload || isLocaleFree;
 
   return (
     <header className="project-detail-hero">
@@ -58,18 +69,24 @@ export default function ProjectDetailHero({
 
         {ctaHref && ctaLabel ? (
           <div className="project-detail-hero__actions">
-            {isExternal ? (
+            {usePlainAnchor ? (
               <a
                 href={ctaHref}
                 className="home-btn--cv project-detail-hero__cta"
-                target={ctaHref.includes(".apk") ? undefined : "_blank"}
-                rel={ctaHref.includes(".apk") ? undefined : "noopener noreferrer"}
-                download={ctaHref.includes(".apk") ? "" : undefined}
+                target={
+                  isDirectDownload || isLocaleFree ? undefined : "_blank"
+                }
+                rel={
+                  isDirectDownload || isLocaleFree
+                    ? undefined
+                    : "noopener noreferrer"
+                }
+                download={isDirectDownload ? "" : undefined}
               >
                 {ctaLabel}
               </a>
             ) : (
-              <Link href={ctaHref} className="home-btn--cv project-detail-hero__cta">
+              <Link href={ctaHref!} className="home-btn--cv project-detail-hero__cta">
                 {ctaLabel}
               </Link>
             )}
