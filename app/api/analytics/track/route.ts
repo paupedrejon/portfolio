@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { insertAnalyticsEvent } from "@/lib/analytics/store";
+import { isExcludedAnalyticsEvent } from "@/lib/analytics/filters";
 import { ANALYTICS_EVENT_TYPES } from "@/lib/analytics/types";
 
 export async function POST(request: Request) {
@@ -24,6 +25,10 @@ export async function POST(request: Request) {
       )
     ) {
       return NextResponse.json({ ok: false, error: "unknown_event" }, { status: 400 });
+    }
+
+    if (isExcludedAnalyticsEvent({ path, metadata })) {
+      return NextResponse.json({ ok: true, skipped: true });
     }
 
     const result = await insertAnalyticsEvent({

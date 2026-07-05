@@ -52,6 +52,7 @@ export function trackPortfolioEvent(
       ...metadata,
       locale: locale ?? "unknown",
       referrer: document.referrer || "direct",
+      hostname: window.location.hostname,
     },
   };
 

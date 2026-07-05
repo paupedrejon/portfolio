@@ -1,5 +1,10 @@
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/admin";
 import { TOTAL_LEVELS, COURSE_SLUG_REACT } from "@/lib/cursos/levels";
+import {
+  isExcludedAnalyticsEvent,
+  isExcludedAnalyticsPath,
+  localDateKey,
+} from "@/lib/analytics/filters";
 import type { AnalyticsEventInput } from "@/lib/analytics/types";
 
 type EventRow = {
@@ -13,6 +18,10 @@ type EventRow = {
 export async function insertAnalyticsEvent(
   input: AnalyticsEventInput,
 ): Promise<{ ok: boolean; error?: string }> {
+  if (isExcludedAnalyticsEvent({ path: input.path, metadata: input.metadata })) {
+    return { ok: true };
+  }
+
   if (!isSupabaseConfigured()) {
     return { ok: false, error: "supabase_not_configured" };
   }
@@ -56,6 +65,10 @@ async function fetchEventsSince(since: Date): Promise<EventRow[]> {
     return [];
   }
   return (data ?? []) as EventRow[];
+}
+
+function filterEvents(events: EventRow[]): EventRow[] {
+  return events.filter((e) => !isExcludedAnalyticsEvent(e));
 }
 
 function countInRange(events: EventRow[], start: Date, end: Date): number {
@@ -108,11 +121,12 @@ function visitsByDay(events: EventRow[], days: number) {
   const now = new Date();
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
     d.setDate(d.getDate() - i);
-    buckets.set(d.toISOString().slice(0, 10), 0);
+    buckets.set(localDateKey(d), 0);
   }
   for (const e of views) {
-    const day = e.created_at.slice(0, 10);
+    const day = localDateKey(new Date(e.created_at));
     if (buckets.has(day)) buckets.set(day, (buckets.get(day) ?? 0) + 1);
   }
   return [...buckets.entries()].map(([date, count]) => ({ date, count }));
@@ -183,7 +197,7 @@ export async function getAdminAnalyticsSummary(): Promise<AdminAnalyticsSummary>
 
   const now = new Date();
   const yearStart = new Date(now.getFullYear(), 0, 1);
-  const events = await fetchEventsSince(yearStart);
+  const events = filterEvents(await fetchEventsSince(yearStart));
 
   if (events.length === 0) {
     const supabase = getSupabaseAdmin();
@@ -232,7 +246,9 @@ export async function getAdminAnalyticsSummary(): Promise<AdminAnalyticsSummary>
     year: views.length,
   };
   empty.visitsByDay = visitsByDay(events, 30);
-  empty.visitsByPage = tallyByKey(views, (e) => e.path);
+  empty.visitsByPage = tallyByKey(views, (e) => e.path).filter(
+    (x) => x.key && !isExcludedAnalyticsPath(x.key),
+  );
   empty.projectsViewModes = tallyByKey(
     events.filter((e) => e.event_type === "projects_view_change"),
     (e) => metaString(e, "view") ?? "list",
@@ -257,11 +273,13 @@ export async function getAdminAnalyticsSummary(): Promise<AdminAnalyticsSummary>
   empty.cvDownloads = tallyByKey(
     events.filter((e) => e.event_type === "cv_download"),
     (e) => metaString(e, "source") ?? e.path ?? "unknown",
-  );
+  ).filter((x) => !isExcludedAnalyticsPath(x.key));
   empty.cvDownloadsTotal = events.filter((e) => e.event_type === "cv_download").length;
 
   empty.locales = tallyByKey(views, (e) => metaString(e, "locale") ?? "unknown");
-  empty.visitsByPageLocale = visitsByPageLocale(events);
+  empty.visitsByPageLocale = visitsByPageLocale(events).filter(
+    (row) => !isExcludedAnalyticsPath(row.page),
+  );
   empty.referrers = tallyByKey(views, (e) => {
     const ref = metaString(e, "referrer");
     if (!ref || ref === "direct") return "direct";

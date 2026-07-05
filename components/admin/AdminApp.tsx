@@ -2,25 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { AdminAnalyticsSummary } from "@/lib/analytics/store";
-
-type TabId =
-  | "overview"
-  | "pages"
-  | "projects"
-  | "study"
-  | "react"
-  | "cv"
-  | "extra";
-
-const TABS: { id: TabId; label: string }[] = [
-  { id: "overview", label: "Resumen" },
-  { id: "pages", label: "Páginas" },
-  { id: "projects", label: "Proyectos" },
-  { id: "study", label: "Study Agents" },
-  { id: "react", label: "Curso React" },
-  { id: "cv", label: "CV" },
-  { id: "extra", label: "Extra" },
-];
+import {
+  DonutChart,
+  HorizontalBarChart,
+  MiniBarChart,
+  VisitsLineChart,
+} from "@/components/admin/AdminCharts";
 
 const LOCALE_LABELS: Record<string, string> = {
   es: "Español",
@@ -29,39 +16,15 @@ const LOCALE_LABELS: Record<string, string> = {
   unknown: "Sin locale",
 };
 
+const LOCALE_COLORS: Record<string, string> = {
+  es: "#4eb3c8",
+  en: "#358c9f",
+  it: "#2a6f7d",
+  unknown: "#64748b",
+};
+
 function localeLabel(code: string) {
   return LOCALE_LABELS[code] ?? code.toUpperCase();
-}
-
-function BarList({
-  items,
-  emptyLabel = "Sin datos todavía",
-}: {
-  items: { key: string; count: number }[];
-  emptyLabel?: string;
-}) {
-  if (items.length === 0) {
-    return <p className="admin-empty">{emptyLabel}</p>;
-  }
-  const max = Math.max(...items.map((i) => i.count), 1);
-  return (
-    <div className="admin-bars">
-      {items.slice(0, 12).map((item) => (
-        <div key={item.key} className="admin-bar-row">
-          <span className="admin-bar-row__label" title={item.key}>
-            {item.key}
-          </span>
-          <div className="admin-bar-row__track">
-            <div
-              className="admin-bar-row__fill"
-              style={{ width: `${(item.count / max) * 100}%` }}
-            />
-          </div>
-          <span className="admin-bar-row__count">{item.count}</span>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 function KpiCard({ label, value }: { label: string; value: number | string }) {
@@ -73,6 +36,23 @@ function KpiCard({ label, value }: { label: string; value: number | string }) {
   );
 }
 
+function Panel({
+  title,
+  children,
+  className = "",
+}: {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={`admin-panel ${className}`.trim()}>
+      <h2 className="admin-panel__title">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
 export default function AdminApp() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [email, setEmail] = useState("");
@@ -81,7 +61,6 @@ export default function AdminApp() {
   const [loadingLogin, setLoadingLogin] = useState(false);
   const [summary, setSummary] = useState<AdminAnalyticsSummary | null>(null);
   const [loadingData, setLoadingData] = useState(false);
-  const [tab, setTab] = useState<TabId>("overview");
 
   const loadSession = useCallback(async () => {
     const res = await fetch("/api/admin/auth/session");
@@ -159,8 +138,7 @@ export default function AdminApp() {
           <form className="admin-login__card" onSubmit={handleLogin}>
             <h1 className="admin-login__title">Admin portfolio</h1>
             <p className="admin-login__sub">
-              Acceso privado para métricas de visitas, proyectos, Study Agents y
-              curso de React.
+              Métricas de visitas, proyectos, Study Agents y curso de React.
             </p>
             {loginError ? <p className="admin-error">{loginError}</p> : null}
             <div className="admin-field">
@@ -171,7 +149,6 @@ export default function AdminApp() {
                 autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="pau.pedrejon@estudiantat.upc.edu"
                 required
               />
             </div>
@@ -193,34 +170,31 @@ export default function AdminApp() {
             >
               {loadingLogin ? "Entrando…" : "Entrar"}
             </button>
-            <p className="admin-hint">
-              Configura en <code>.env.local</code>:{" "}
-              <code>ADMIN_EMAIL</code> y <code>ADMIN_PASSWORD</code> (tu
-              contraseña, no la subas a git). Ejecuta también{" "}
-              <code>supabase/migrations/003_analytics.sql</code>.
-            </p>
           </form>
         </div>
       </div>
     );
   }
 
+  const localeDonut =
+    summary?.locales.map((l) => ({
+      label: localeLabel(l.key),
+      count: l.count,
+      color: LOCALE_COLORS[l.key] ?? "#94a3b8",
+    })) ?? [];
+
   return (
     <div className="admin-page">
-      <div className="admin-page__inner">
+      <div className="admin-page__inner admin-page__inner--wide">
         <header className="admin-header">
           <div>
             <h1 className="admin-header__title">Dashboard</h1>
             <p className="admin-header__meta">
-              {email} · {loadingData ? "Actualizando…" : "Métricas del portfolio"}
+              {email} · {loadingData ? "Actualizando…" : "Sin localhost ni /admin"}
             </p>
           </div>
           <div className="admin-header__actions">
-            <button
-              type="button"
-              className="admin-btn"
-              onClick={() => void loadAnalytics()}
-            >
+            <button type="button" className="admin-btn" onClick={() => void loadAnalytics()}>
               Actualizar
             </button>
             <button type="button" className="admin-btn" onClick={() => void handleLogout()}>
@@ -231,210 +205,158 @@ export default function AdminApp() {
 
         {!summary?.configured ? (
           <div className="admin-alert">
-            Supabase no está configurado. Los eventos no se guardan hasta que definas{" "}
-            <code>SUPABASE_URL</code> y <code>SUPABASE_SERVICE_ROLE_KEY</code>.
+            Supabase no configurado. Define <code>SUPABASE_URL</code> y{" "}
+            <code>SUPABASE_SERVICE_ROLE_KEY</code>.
           </div>
         ) : null}
 
         {summary && !summary.tableReady ? (
           <div className="admin-alert">
-            Falta la tabla <code>analytics_events</code>. Ejecuta{" "}
-            <code>supabase/migrations/003_analytics.sql</code> en tu proyecto Supabase.
+            Ejecuta <code>supabase/migrations/003_analytics.sql</code> en Supabase.
           </div>
         ) : null}
 
-        <nav className="admin-tabs" aria-label="Secciones del admin">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              className={`admin-tab${tab === t.id ? " admin-tab--active" : ""}`}
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </nav>
-
         {summary ? (
-          <>
-            {tab === "overview" ? (
-              <>
-                <div className="admin-kpi-grid">
-                  <KpiCard label="Hoy" value={summary.visits.today} />
-                  <KpiCard label="Este mes" value={summary.visits.month} />
-                  <KpiCard label="Este año" value={summary.visits.year} />
-                  <KpiCard label="Eventos totales" value={summary.totalEvents} />
-                  <KpiCard
-                    label="Páginas / sesión"
-                    value={summary.avgPagesPerSession}
-                  />
-                  <KpiCard label="Descargas CV" value={summary.cvDownloadsTotal} />
-                </div>
-                <section className="admin-panel">
-                  <h2 className="admin-panel__title">Visitas — últimos 30 días</h2>
-                  <BarList
-                    items={summary.visitsByDay.map((d) => ({
-                      key: d.date.slice(5),
-                      count: d.count,
-                    }))}
-                  />
-                </section>
-                <section className="admin-panel">
-                  <h2 className="admin-panel__title">Idioma de visita</h2>
-                  <BarList
-                    items={summary.locales.map((l) => ({
-                      key: localeLabel(l.key),
-                      count: l.count,
-                    }))}
-                  />
-                </section>
-              </>
-            ) : null}
+          <div className="admin-dashboard">
+            <div className="admin-kpi-grid">
+              <KpiCard label="Hoy" value={summary.visits.today} />
+              <KpiCard label="Este mes" value={summary.visits.month} />
+              <KpiCard label="Este año" value={summary.visits.year} />
+              <KpiCard label="Páginas / sesión" value={summary.avgPagesPerSession} />
+              <KpiCard label="Descargas CV" value={summary.cvDownloadsTotal} />
+              <KpiCard label="Study Agents" value={summary.studyAgentsTotal} />
+            </div>
 
-            {tab === "pages" ? (
-              <>
-                <section className="admin-panel">
-                  <h2 className="admin-panel__title">Visitas por página</h2>
-                  <BarList items={summary.visitsByPage} />
-                </section>
-                <section className="admin-panel">
-                  <h2 className="admin-panel__title">Página × idioma</h2>
-                  {summary.visitsByPageLocale.length === 0 ? (
-                    <p className="admin-empty">Sin datos todavía</p>
-                  ) : (
-                    <div className="admin-table-wrap">
-                      <table className="admin-table">
-                        <thead>
-                          <tr>
-                            <th>Página</th>
-                            <th>Idioma</th>
-                            <th>Visitas</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {summary.visitsByPageLocale.slice(0, 40).map((row) => (
-                            <tr key={`${row.page}-${row.locale}`}>
-                              <td>{row.page}</td>
-                              <td>{localeLabel(row.locale)}</td>
-                              <td>{row.count}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </section>
-              </>
-            ) : null}
+            <div className="admin-grid admin-grid--2">
+              <Panel title="Visitas — últimos 30 días" className="admin-panel--wide">
+                <VisitsLineChart data={summary.visitsByDay} height={220} />
+              </Panel>
+              <Panel title="Idioma de visita">
+                <DonutChart items={localeDonut} />
+              </Panel>
+            </div>
 
-            {tab === "projects" ? (
-              <>
-                <section className="admin-panel">
-                  <h2 className="admin-panel__title">Vista de proyectos (list / timeline / …)</h2>
-                  <BarList items={summary.projectsViewModes} />
-                </section>
-                <section className="admin-panel">
-                  <h2 className="admin-panel__title">Filtros por área</h2>
-                  <BarList items={summary.projectFilters} />
-                </section>
-                <section className="admin-panel">
-                  <h2 className="admin-panel__title">Visitas por proyecto</h2>
-                  <BarList items={summary.projectViews} />
-                </section>
-              </>
-            ) : null}
+            <div className="admin-grid admin-grid--2">
+              <Panel title="Top páginas">
+                <HorizontalBarChart items={summary.visitsByPage} limit={8} />
+              </Panel>
+              <Panel title="Origen (referrer)">
+                <HorizontalBarChart items={summary.referrers} limit={8} />
+              </Panel>
+            </div>
 
-            {tab === "study" ? (
-              <>
-                <div className="admin-kpi-grid">
-                  <KpiCard label="Vistas Study Agents" value={summary.studyAgentsTotal} />
-                  {summary.studyAgentsBackend ? (
-                    <>
-                      <KpiCard
-                        label="Usuarios activos (backend)"
-                        value={summary.studyAgentsBackend.active_users}
-                      />
-                      <KpiCard
-                        label="Inscripciones"
-                        value={summary.studyAgentsBackend.total_enrollments}
-                      />
-                      <KpiCard
-                        label="Ingresos wallet (€)"
-                        value={summary.studyAgentsBackend.total_revenue.toFixed(2)}
-                      />
-                    </>
-                  ) : null}
-                </div>
-                <section className="admin-panel">
-                  <h2 className="admin-panel__title">Rutas Study Agents</h2>
-                  <BarList items={summary.studyAgentsViews} />
-                </section>
-                {!summary.studyAgentsBackend ? (
-                  <p className="admin-empty">
-                    Backend FastAPI no disponible — solo se muestran page views registradas
-                    en el portfolio.
-                  </p>
+            <div className="admin-grid admin-grid--3">
+              <Panel title="Vista proyectos">
+                <MiniBarChart items={summary.projectsViewModes} />
+              </Panel>
+              <Panel title="Filtros por área">
+                <MiniBarChart items={summary.projectFilters} />
+              </Panel>
+              <Panel title="Visitas por proyecto">
+                <HorizontalBarChart items={summary.projectViews} limit={6} />
+              </Panel>
+            </div>
+
+            <div className="admin-grid admin-grid--2">
+              <Panel title="Study Agents">
+                {summary.studyAgentsBackend ? (
+                  <div className="admin-kpi-grid admin-kpi-grid--compact">
+                    <KpiCard
+                      label="Usuarios activos"
+                      value={summary.studyAgentsBackend.active_users}
+                    />
+                    <KpiCard
+                      label="Inscripciones"
+                      value={summary.studyAgentsBackend.total_enrollments}
+                    />
+                    <KpiCard
+                      label="Ingresos (€)"
+                      value={summary.studyAgentsBackend.total_revenue.toFixed(2)}
+                    />
+                  </div>
                 ) : null}
-              </>
-            ) : null}
+                <HorizontalBarChart items={summary.studyAgentsViews} limit={6} />
+              </Panel>
+              <Panel title="Descargas CV">
+                <HorizontalBarChart items={summary.cvDownloads} limit={8} />
+              </Panel>
+            </div>
 
-            {tab === "react" ? (
-              <section className="admin-panel">
-                <h2 className="admin-panel__title">Alumnos — nivel y progreso</h2>
-                {summary.reactCourseUsers.length === 0 ? (
-                  <p className="admin-empty">Sin alumnos registrados todavía</p>
-                ) : (
-                  <div className="admin-table-wrap">
-                    <table className="admin-table">
-                      <thead>
-                        <tr>
-                          <th>Alumno</th>
-                          <th>Nivel actual</th>
-                          <th>Niveles superados</th>
-                          <th>Última actividad</th>
+            <Panel title="Página × idioma">
+              {summary.visitsByPageLocale.length === 0 ? (
+                <p className="admin-empty">Sin datos todavía</p>
+              ) : (
+                <div className="admin-table-wrap">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Página</th>
+                        <th>Idioma</th>
+                        <th>Visitas</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summary.visitsByPageLocale.slice(0, 20).map((row) => (
+                        <tr key={`${row.page}-${row.locale}`}>
+                          <td>{row.page}</td>
+                          <td>{localeLabel(row.locale)}</td>
+                          <td>{row.count}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {summary.reactCourseUsers.map((u) => (
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Panel>
+
+            <Panel title="Curso React — progreso alumnos">
+              {summary.reactCourseUsers.length === 0 ? (
+                <p className="admin-empty">Sin alumnos registrados</p>
+              ) : (
+                <div className="admin-table-wrap">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Alumno</th>
+                        <th>Nivel</th>
+                        <th>Superados</th>
+                        <th>Progreso</th>
+                        <th>Última act.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summary.reactCourseUsers.map((u) => {
+                        const pct = Math.round((u.passed_levels / 30) * 100);
+                        return (
                           <tr key={u.user_id}>
                             <td>{u.display_name ?? u.user_id.slice(0, 12)}</td>
                             <td>
-                              {u.current_level > 30
-                                ? "Completado"
-                                : `Nivel ${u.current_level}`}
+                              {u.current_level > 30 ? "Completado" : `Nivel ${u.current_level}`}
                             </td>
-                            <td>{u.passed_levels} / 30</td>
+                            <td>{u.passed_levels}/30</td>
+                            <td>
+                              <div className="admin-progress">
+                                <div
+                                  className="admin-progress__fill"
+                                  style={{ width: `${pct}%` }}
+                                />
+                                <span>{pct}%</span>
+                              </div>
+                            </td>
                             <td>
                               {u.last_activity
                                 ? new Date(u.last_activity).toLocaleDateString("es-ES")
                                 : "—"}
                             </td>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </section>
-            ) : null}
-
-            {tab === "cv" ? (
-              <section className="admin-panel">
-                <h2 className="admin-panel__title">Descargas de CV por página</h2>
-                <BarList items={summary.cvDownloads} />
-              </section>
-            ) : null}
-
-            {tab === "extra" ? (
-              <>
-                <section className="admin-panel">
-                  <h2 className="admin-panel__title">Origen (referrer)</h2>
-                  <BarList items={summary.referrers} />
-                </section>
-              </>
-            ) : null}
-          </>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Panel>
+          </div>
         ) : (
           <div className="admin-loading">Cargando métricas…</div>
         )}
