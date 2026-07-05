@@ -13,3 +13,15 @@
   mix-blend-mode: screen;
   filter: blur(2px);
 }
+
+/* iOS Safari: filter CSS sobre canvas WebGL rompe el render */
+@media (max-width: 719px) {
+  .hero-smoke-gl {
+    inset: -30% -8%;
+  }
+
+  .hero-smoke-gl canvas {
+    filter: none;
+    -webkit-filter: none;
+  }
+}

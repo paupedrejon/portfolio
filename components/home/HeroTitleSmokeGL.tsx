@@ -3,9 +3,10 @@
 import { useEffect, useRef } from "react";
 import {
   buildField,
-  computeSplitX,
+  computeSmokeLayout,
   ensureSmokeFontsReady,
   measureFieldWords,
+  type SmokeLayout,
 } from "@/components/home/hero-smoke-field";
 import { readMaskFont } from "@/components/home/hero-word-measure";
 import "./hero-title-smoke-gl.css";
@@ -26,7 +27,7 @@ void main(){
 const FRAG = `
 precision mediump float;
 uniform sampler2D uField;
-uniform float uTime, uFade, uSplitX, uLetterH;
+uniform float uTime, uFade, uSplitX, uSplitY, uStacked, uLetterH;
 uniform vec2 uRes;
 varying vec2 vUv;
 
@@ -72,7 +73,9 @@ void main(){
 
   float density = clamp(tex * field * WISP, 0.0, 1.0);
 
-  float side = smoothstep(uSplitX - 0.06, uSplitX + 0.06, vUv.x);
+  float side = uStacked > 0.5
+    ? smoothstep(uSplitY - 0.08, uSplitY + 0.08, vUv.y)
+    : smoothstep(uSplitX - 0.06, uSplitX + 0.06, vUv.x);
   vec3 tube = mix(vec3(0.72, 0.86, 1.00), vec3(0.16, 0.78, 1.00), side);
   vec3 base = mix(vec3(0.012, 0.050, 0.070), vec3(0.020, 0.090, 0.130), side);
 
@@ -115,7 +118,19 @@ function easeOutCubic(t: number) {
   return 1 - (1 - t) ** 3;
 }
 
-const INTERNAL_SCALE = 0.5;
+const INTERNAL_SCALE_DESKTOP = 0.5;
+
+function getInternalScale(): number {
+  if (typeof window === "undefined") return INTERNAL_SCALE_DESKTOP;
+  const narrow = window.innerWidth < 720;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (!narrow) return INTERNAL_SCALE_DESKTOP;
+  return Math.min(1, Math.max(0.72, INTERNAL_SCALE_DESKTOP * dpr));
+}
+
+function isMobileViewport(): boolean {
+  return typeof window !== "undefined" && window.innerWidth < 720;
+}
 
 /** Humo volumétrico WebGL — campo único + shader definitivo. */
 export default function HeroTitleSmokeGL({ titleRef }: HeroTitleSmokeGLProps) {
@@ -164,6 +179,8 @@ export default function HeroTitleSmokeGL({ titleRef }: HeroTitleSmokeGLProps) {
     const uTime = webgl.getUniformLocation(program, "uTime");
     const uFade = webgl.getUniformLocation(program, "uFade");
     const uSplitX = webgl.getUniformLocation(program, "uSplitX");
+    const uSplitY = webgl.getUniformLocation(program, "uSplitY");
+    const uStacked = webgl.getUniformLocation(program, "uStacked");
     const uLetterH = webgl.getUniformLocation(program, "uLetterH");
     const uRes = webgl.getUniformLocation(program, "uRes");
 
@@ -181,8 +198,9 @@ export default function HeroTitleSmokeGL({ titleRef }: HeroTitleSmokeGLProps) {
 
     let clientW = 0;
     let clientH = 0;
-    let splitX = 0.5;
+    let layout: SmokeLayout = { stacked: false, splitX: 0.5, splitY: 0.5 };
     let letterH = 1;
+    let internalScale = INTERNAL_SCALE_DESKTOP;
     let raf = 0;
     let running = true;
     let visible = true;
@@ -206,18 +224,21 @@ export default function HeroTitleSmokeGL({ titleRef }: HeroTitleSmokeGLProps) {
 
     const buildPresence = async () => {
       if (clientW <= 0 || clientH <= 0) return;
-      const smokeEl = canvasRef.current ?? wrap;
-      if (!smokeEl) return;
 
       await ensureSmokeFontsReady(titleEl);
 
       const words = measureFieldWords(titleEl);
+      if (!words.length) return;
+
       const maskFont = readMaskFont(titleEl);
       const fontSizeCss = parseFloat(getComputedStyle(titleEl).fontSize);
-      letterH = Math.max(1, fontSizeCss * INTERNAL_SCALE);
+      internalScale = getInternalScale();
+      letterH = Math.max(1, fontSizeCss * internalScale);
 
-      const fieldCanvas = buildField(glCanvas, smokeEl, words, maskFont);
-      splitX = computeSplitX(words, smokeEl);
+      const fieldCanvas = buildField(glCanvas, wrap, words, maskFont, {
+        mobile: isMobileViewport(),
+      });
+      layout = computeSmokeLayout(words, wrap);
       uploadField(fieldCanvas);
     };
 
@@ -226,11 +247,12 @@ export default function HeroTitleSmokeGL({ titleRef }: HeroTitleSmokeGLProps) {
     };
 
     const resize = () => {
+      internalScale = getInternalScale();
       const rect = wrap.getBoundingClientRect();
       clientW = rect.width;
       clientH = rect.height;
-      glCanvas.width = Math.max(1, Math.floor(clientW * INTERNAL_SCALE));
-      glCanvas.height = Math.max(1, Math.floor(clientH * INTERNAL_SCALE));
+      glCanvas.width = Math.max(1, Math.floor(clientW * internalScale));
+      glCanvas.height = Math.max(1, Math.floor(clientH * internalScale));
       glCanvas.style.width = `${clientW}px`;
       glCanvas.style.height = `${clientH}px`;
       webgl.viewport(0, 0, glCanvas.width, glCanvas.height);
@@ -246,6 +268,13 @@ export default function HeroTitleSmokeGL({ titleRef }: HeroTitleSmokeGLProps) {
     ro.observe(wrap);
     ro.observe(titleEl);
     resize();
+
+    const mobileTimer1 = isMobileViewport()
+      ? window.setTimeout(schedulePresence, 350)
+      : 0;
+    const mobileTimer2 = isMobileViewport()
+      ? window.setTimeout(schedulePresence, 900)
+      : 0;
 
     const onFontsDone = () => schedulePresence();
     document.fonts.addEventListener("loadingdone", onFontsDone);
@@ -293,7 +322,9 @@ export default function HeroTitleSmokeGL({ titleRef }: HeroTitleSmokeGLProps) {
       if (uField) webgl.uniform1i(uField, 0);
       webgl.uniform1f(uTime, timeSec);
       webgl.uniform1f(uFade, reduced ? 1 : fade);
-      webgl.uniform1f(uSplitX, splitX);
+      webgl.uniform1f(uSplitX, layout.splitX);
+      webgl.uniform1f(uSplitY, layout.splitY);
+      webgl.uniform1f(uStacked, layout.stacked ? 1 : 0);
       webgl.uniform1f(uLetterH, letterH);
       webgl.uniform2f(uRes, glCanvas.width, glCanvas.height);
       webgl.drawArrays(webgl.TRIANGLES, 0, 6);
@@ -309,6 +340,8 @@ export default function HeroTitleSmokeGL({ titleRef }: HeroTitleSmokeGLProps) {
       running = false;
       cancelAnimationFrame(raf);
       window.clearTimeout(debounceTimer);
+      window.clearTimeout(mobileTimer1);
+      window.clearTimeout(mobileTimer2);
       ro.disconnect();
       io.disconnect();
       document.removeEventListener("visibilitychange", onVis);
