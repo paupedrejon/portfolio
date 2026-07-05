@@ -30,9 +30,7 @@ export default function HomePage() {
   const t = useTranslations("home");
   const tCommon = useTranslations("common");
   const [mounted, setMounted] = useState(false);
-  const [igniteActive, setIgniteActive] = useState(false);
-  const [igniteFade, setIgniteFade] = useState(false);
-  const [neonActive, setNeonActive] = useState(false);
+  const [heroPhase, setHeroPhase] = useState<"idle" | "ignite" | "neon">("idle");
   const titleRef = useRef<HTMLHeadingElement>(null);
   const title = t("title");
   const { lead, accent } = useMemo(() => splitDisplayTitle(title), [title]);
@@ -45,34 +43,31 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!mounted) return;
-    setIgniteActive(true);
+    setHeroPhase("ignite");
   }, [mounted]);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || heroPhase !== "ignite") return;
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const delay = mq.matches ? 0 : Math.max(0, igniteTotalMs - 200);
-    const timer = window.setTimeout(() => {
-      setNeonActive(true);
-      setIgniteFade(true);
-    }, delay);
+    const timer = window.setTimeout(() => setHeroPhase("neon"), delay);
     return () => window.clearTimeout(timer);
-  }, [mounted, igniteTotalMs]);
+  }, [mounted, heroPhase, igniteTotalMs]);
 
-  useEffect(() => {
-    if (!neonActive) return;
-    const timer = window.setTimeout(() => {
-      setIgniteActive(false);
-      setIgniteFade(false);
-    }, 2400);
-    return () => window.clearTimeout(timer);
-  }, [neonActive]);
+  const neonActive = heroPhase === "neon";
+  const heroClassName = [
+    "home-hero",
+    heroPhase === "ignite" ? "home-hero--ignite" : "",
+    heroPhase === "neon" ? "home-hero--neon home-hero--ignite-fade" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className="home-page">
       <section
         id="hero-section"
-        className={`home-hero${igniteActive ? " home-hero--ignite" : ""}${igniteFade ? " home-hero--ignite-fade" : ""}${neonActive ? " home-hero--neon" : ""}`}
+        className={heroClassName}
         aria-label="Intro"
       >
         <div className="home-hero__bg" aria-hidden />

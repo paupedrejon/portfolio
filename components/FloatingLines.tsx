@@ -316,6 +316,9 @@ export default function FloatingLines({
     ? getLineDistance("bottom") * 0.01
     : 0.01;
 
+  const enabledWavesKey = enabledWaves.join(",");
+  const linesGradientKey = linesGradient?.join(",") ?? "";
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -548,8 +551,8 @@ export default function FloatingLines({
       }
     };
   }, [
-    linesGradient,
-    enabledWaves,
+    linesGradientKey,
+    enabledWavesKey,
     lineCount,
     lineDistance,
     animationSpeed,
