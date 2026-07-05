@@ -1,6 +1,8 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { trackPortfolioEvent } from "@/lib/analytics/track-client";
 
 interface CurriculumButtonProps {
   href: string;
@@ -30,6 +32,7 @@ function DownloadIcon({ size = 16 }: { size?: number }) {
 
 export default function CurriculumButton({ href, label, className }: CurriculumButtonProps) {
   const t = useTranslations("common");
+  const pathname = usePathname();
   const displayLabel = label ?? t("downloadCv");
 
   const useNeoBrutalist = className?.includes("cv-download-btn--neo");
@@ -44,6 +47,9 @@ export default function CurriculumButton({ href, label, className }: CurriculumB
           ? ["cv-download-btn", className].filter(Boolean).join(" ")
           : ["portfolio-btn--cv", "home-btn--cv", className].filter(Boolean).join(" ")
       }
+      onClick={() => {
+        trackPortfolioEvent("cv_download", { source: pathname || "/" }, pathname || "/");
+      }}
     >
       <span className="cv-btn-text">
         <DownloadIcon size={16} />

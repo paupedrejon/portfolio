@@ -17,6 +17,7 @@ import {
   Rocket,
   Sparkles,
   User,
+  Users,
   Zap,
 } from "lucide-react";
 
@@ -37,6 +38,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   sparkles: Sparkles,
   brain: Brain,
   messages: MessagesSquare,
+  users: Users,
   file: FileText,
   zap: Zap,
 };

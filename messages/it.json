@@ -211,12 +211,30 @@
     "filterAll": "Tutti",
     "filterByArea": "Filtra per area",
     "filterEmpty": "Nessun progetto in questa categoria per ora.",
+    "viewBy": "Vedi per",
+    "viewList": "Elenco",
+    "viewTimeline": "Cronologia",
+    "viewEntity": "Ente",
+    "viewCategory": "Categoria",
+    "timelineCount": "{count, plural, one {# progetto} other {# progetti}}",
+    "entity": {
+      "personal": "Progetto personale",
+      "owius": "Owius",
+      "upc": "UPC",
+      "iia": "IIA",
+      "itb": "ITB"
+    },
     "moreInfo": "+ Informazioni",
     "backToProjects": "Torna ai progetti",
     "aboutProject": "Sul progetto",
     "openProject": "Apri progetto",
     "stackTitle": "Stack tecnologico",
     "roleTitle": "Il mio ruolo",
+    "galleryTitle": "Screenshot del progetto",
+    "carouselPrev": "Foto precedente",
+    "carouselNext": "Foto successiva",
+    "carouselDots": "Galleria screenshot",
+    "carouselSlide": "Foto {current} di {total}",
     "highlightsTitle": "Cosa ho sviluppato",
     "overviewTitle": "Il progetto"
   },
@@ -234,6 +252,20 @@
       "title2": "Assistente didattico con IA",
       "subtitle": "Sistema educativo intelligente che aiuta gli studenti ad apprendere tramite agenti IA. Carica PDF, genera note, fai domande e sostieni test interattivi con feedback in tempo reale.",
       "ctaText": "Prova StudyAgents"
+    },
+    "turelojya": {
+      "title": "TuRelojYa",
+      "kicker": "2025 — Tirocinio in azienda",
+      "title2": "E-commerce di orologi di lusso",
+      "subtitle": "Piattaforma full-stack in produzione per la compravendita di orologi premium: inventario, valutazione automatica su oltre 100.000 record, checkout Redsys, backoffice su misura e SEO multilingue.",
+      "ctaText": "Visita il sito"
+    },
+    "evenely": {
+      "title": "Evenely",
+      "kicker": "2026 — Tirocinio in azienda",
+      "title2": "Creatore di escape room virtuali",
+      "subtitle": "SaaS con editor visuale tipo Canva: diapositive interattive, collaborazione in tempo reale, abbonamenti Redsys e app di gioco separata con classifiche live.",
+      "ctaText": "Visita il sito"
     },
     "react-course": {
       "title": "Corso interattivo di React",
@@ -403,6 +435,98 @@
         { "name": "jsPDF / Markdown", "role": "Export appunti" }
       ],
       "role": "Responsabile unico del capstone: architettura, backend, frontend, RAG, integrazione portfolio e deploy."
+    },
+    "turelojya": {
+      "heroSummary": "E-commerce full-stack di orologi di lusso in produzione: catalogo, motore di valutazione su oltre 100.000 record di mercato, checkout Redsys, backoffice su misura e SEO tecnico multilingue — sviluppato end-to-end in Owius.",
+      "contextTitle": "Owius · Consulenza software",
+      "context": "Progetto reale per cliente in Owius, consulenza di sviluppo su misura a Barcellona (owius.com). In un team full-stack compatto ho gestito la piattaforma end-to-end: architettura MVC in Node.js, storefront React, migrazione da WordPress, integrazioni di pagamento e deploy Docker con MongoDB.",
+      "overviewTitle": "Il prodotto",
+      "overview": "TuRelojYa (turelojya.com) è un e-commerce B2C specializzato in orologi di lusso con inventario gestito, valutazione automatica basata su storici di prezzi, gateway Redsys, fatturazione via email e pannello admin proprietario. Sostituisce un sito legacy WordPress con uno stack moderno orientato a performance, SEO e operatività autonoma del business.",
+      "highlightsTitle": "Cosa ho sviluppato",
+      "highlights": [
+        {
+          "icon": "database",
+          "title": "Inventario e migrazione dati",
+          "text": "Esportato e normalizzato il catalogo da WordPress verso MongoDB. Progettato il backend con pattern modello–controller–route e API sicure con CORS configurato per il frontend."
+        },
+        {
+          "icon": "brain",
+          "title": "Motore di valutazione automatica",
+          "text": "Elaborati oltre 100.000 record di prezzi per offrire valutazioni affidabili in tempo reale. Implementato scraping giornaliero e ottimizzato il servizio per non saturare le risorse del server."
+        },
+        {
+          "icon": "globe",
+          "title": "Frontend, performance e SEO",
+          "text": "UI responsive in React con focus su Lighthouse: immagini ottimizzate, sitemap, metadati dinamici e URL multilingue (i18n) per l'indicizzazione corretta su Google."
+        },
+        {
+          "icon": "zap",
+          "title": "Pagamenti, email e backoffice",
+          "text": "Integrato Redsys per il checkout, Brevo per email transazionali e fatture PDF, e un pannello admin per gestire ordini e utenti senza supporto tecnico."
+        },
+        {
+          "icon": "rocket",
+          "title": "Deploy e sicurezza",
+          "text": "Migrata l'applicazione tra server con Docker, configurato MongoDB in produzione e applicate best practice di sicurezza (hash password, gestione segreti, Compass per le operazioni)."
+        }
+      ],
+      "stackIntro": "Stack full-stack per scalare catalogo, pagamenti e SEO.",
+      "stack": [
+        { "name": "React", "role": "Storefront e pannello admin" },
+        { "name": "Node.js", "role": "API REST · architettura MVC" },
+        { "name": "MongoDB", "role": "Catalogo, ordini e dati di valutazione" },
+        { "name": "Docker", "role": "Deploy e migrazione tra server" },
+        { "name": "Redsys", "role": "Gateway di pagamento" },
+        { "name": "Brevo", "role": "Email transazionale e fatture PDF" },
+        { "name": "WordPress", "role": "Migrazione del legacy" }
+      ],
+      "role": "Sviluppatore full-stack junior (tirocinio in azienda): design e implementazione di backend e frontend, algoritmo di valutazione e pipeline di scraping, integrazione pagamenti, SEO tecnico, backoffice, deploy e comunicazione diretta con il cliente per iterare sui requisiti di business."
+    },
+    "evenely": {
+      "heroSummary": "Piattaforma SaaS per progettare escape room virtuali senza codice: editor visuale a diapositive, collaborazione in tempo reale, abbonamenti Free/Basic/Premium con Redsys ricorrente e web di gioco separata con classifiche e analitiche — il capstone del tirocinio in Owius.",
+      "contextTitle": "Owius · Consulenza software",
+      "context": "Capstone del tirocinio in Owius (owius.com): la sfida tecnica più impegnativa del periodo. Ho costruito da zero un prodotto che permette a aziende e formatori di creare esperienze gamificate senza programmare, con un editor visuale ispirato a Canva e PowerPoint e un'architettura multi-app (portal, admin e gioco).",
+      "overviewTitle": "Il prodotto",
+      "overview": "Evenely (evenely.com) è un creatore di escape room virtuali per eventi aziendali, formazione, recruitment e comunicazione interna. Il cliente progetta esperienze posizionando elementi (testi, immagini, video, pulsanti e quiz) sulle diapositive; i giocatori accedono con un codice sala su una web indipendente che replica fedelmente il design, con classifiche live e dati di partecipazione per l'organizzatore.",
+      "highlightsTitle": "Cosa ho sviluppato",
+      "highlights": [
+        {
+          "icon": "layers",
+          "title": "Editor visuale a diapositive",
+          "text": "L'utente aggiunge pagine e posiziona elementi liberamente. Ogni componente può attivare azioni: saltare a un'altra schermata, aprire modali o validare risposte in tempo reale."
+        },
+        {
+          "icon": "users",
+          "title": "Collaborazione in tempo reale",
+          "text": "Più editor possono lavorare sullo stesso escape room contemporaneamente. Ho gestito lo stato condiviso per evitare conflitti tra utenti e mantenere coerente il canvas."
+        },
+        {
+          "icon": "globe",
+          "title": "Responsive dal canvas",
+          "text": "Il risultato deve funzionare su mobile, tablet e desktop anche se progettato da utenti non tecnici che spostano elementi liberamente — una delle sfide più delicate del prodotto."
+        },
+        {
+          "icon": "zap",
+          "title": "Abbonamenti e Redsys ricorrente",
+          "text": "Piani Free, Basic e Premium con addebiti periodici automatici tramite tokenizzazione delle carte in Redsys, più hardening di sicurezza su comunicazioni e storage dei token."
+        },
+        {
+          "icon": "rocket",
+          "title": "Portal di editing vs app di gioco",
+          "text": "Ho separato la web di costruzione (portal.evenely.com) da quella di gioco (app.evenely.com): il creatore modifica mentre i partecipanti inseriscono solo un codice. Include classifiche live e analitiche di progresso."
+        }
+      ],
+      "stackIntro": "Architettura multi-app con backend condiviso, focalizzata su tempo reale, pagamenti e fedeltà visiva tra editor e gioco.",
+      "stack": [
+        { "name": "React", "role": "Portal cliente, pannello admin e app di gioco" },
+        { "name": "Node.js", "role": "API REST · sale, utenti e abbonamenti" },
+        { "name": "TypeScript", "role": "Tipizzazione su frontend e servizi condivisi" },
+        { "name": "Redsys", "role": "Pagamenti ricorrenti con tokenizzazione" },
+        { "name": "WebSockets", "role": "Collaborazione live e stato sincronizzato" },
+        { "name": "Docker", "role": "Deploy dei servizi" },
+        { "name": "WordPress", "role": "Sito commerciale (evenely.com), separato dal SaaS" }
+      ],
+      "role": "Sviluppatore full-stack junior (tirocinio in azienda): design dell'editor visuale, logica di interattività, editing collaborativo, integrazione abbonamenti Redsys, separazione portal/gioco, classifiche e analitiche, e misure di sicurezza nel flusso di pagamento."
     },
     "react-course": {
       "heroSummary": "Corso interattivo di React per principianti: 30 livelli per costruire un portfolio reale, con controlli automatici locali e progresso nel cloud.",
@@ -903,7 +1027,7 @@
         "title": "Tirocinio nello sviluppo software",
         "company": "Owius",
         "years": "2025–2026*",
-        "summary": "Sviluppo web full-stack da novembre: prodotti data-heavy, e‑commerce con pagamenti, pannelli di gestione, WordPress e un SaaS in corso per costruire escape room virtuali.\n\nStack ricorrente: React, React Native, Node, Redsys, job con cron, SEO, i18n e ottimizzazione delle performance.",
+        "summary": "Sviluppo web full-stack da novembre: prodotti data-heavy, e‑commerce con pagamenti, pannelli di gestione, WordPress e Evenely, un SaaS per costruire escape room virtuali.\n\nStack ricorrente: React, React Native, Node, Redsys, job con cron, SEO, i18n e ottimizzazione delle performance.",
         "workBlocksTitle": "Progetti e consegne",
         "workBlocks": [
           {
@@ -939,11 +1063,11 @@
             ]
           },
           {
-            "title": "SaaS — builder di escape room (in corso)",
+            "title": "Evenely — builder di escape room",
             "points": [
-              "Prodotto greenfield: editor a slide interattive (pagine, pulsanti, quiz, immagini, video).",
-              "Portale con abbonamento mensile: Redsys, addebiti ricorrenti con tokenizzazione e hardening.",
-              "Web di gioco separata: accesso con codice stanza."
+              "SaaS da zero: editor a diapositive con interattività (pagine, pulsanti, quiz, immagine e video).",
+              "Collaborazione live, portal con abbonamento mensile (Redsys ricorrente e tokenizzazione) e hardening di sicurezza.",
+              "Web di gioco separata: codice sala, classifica live e analitiche per l'organizzatore."
             ]
           }
         ]

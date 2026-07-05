@@ -23,5 +23,12 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.js", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "tealcode",
+    "tmp-final-zip",
+    "tmp-zip-test",
+    "downloads",
+    "templates"
+  ]
 }

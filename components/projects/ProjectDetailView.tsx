@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import EgoPageSections from "@/components/ego/EgoPageSections";
 import ProjectDetailContent from "@/components/projects/ProjectDetailContent";
 import ProjectDetailHero from "@/components/projects/ProjectDetailHero";
 import { getProjectBySlug, type ProjectSlug } from "@/lib/projects/config";
+import { trackPortfolioEvent } from "@/lib/analytics/track-client";
 import { useTranslations } from "next-intl";
 import "@/app/[locale]/home.css";
 import "@/app/[locale]/proyectos/project-detail.css";
@@ -27,6 +29,10 @@ export default function ProjectDetailView({ slug }: ProjectDetailViewProps) {
   const ctaHref = config.externalHref;
   const ctaLabel = ctaText?.trim() ? ctaText : undefined;
 
+  useEffect(() => {
+    trackPortfolioEvent("project_view", { slug });
+  }, [slug]);
+
   return (
     <main className={`project-detail-page${isEgo ? " project-detail-page--ego" : ""}`}>
       <ProjectDetailHero
@@ -39,6 +45,10 @@ export default function ProjectDetailView({ slug }: ProjectDetailViewProps) {
         backLabel={t("backToProjects")}
         ctaHref={ctaHref}
         ctaLabel={ctaLabel}
+        company={config.company}
+        galleryImages={
+          config.gallery && config.gallery.length > 1 ? config.gallery : undefined
+        }
       />
 
       <ProjectDetailContent slug={slug} techFallback={config.tech} />

@@ -47,6 +47,12 @@ __pycache__/
 # vercel
 .vercel
 
+# local / scratch / desktop app build (not part of Next deploy)
+/tealcode/
+/tmp-final-zip/
+/tmp-zip-test/
+/downloads/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -38,6 +38,139 @@
     radial-gradient(ellipse 50% 40% at 85% 60%, rgba(78, 179, 200, 0.1) 0%, transparent 48%),
     linear-gradient(180deg, #041018 0%, var(--home-bg) 52%, #020810 100%);
   pointer-events: none;
+  transition: background 2s ease;
+}
+
+.home-hero--ignite .home-hero__bg {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(220, 40, 15, 0.16) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 20% 50%, rgba(180, 30, 10, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 80% 50%, rgba(180, 30, 10, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 90% 70% at 50% 35%, rgba(53, 140, 159, 0.22) 0%, transparent 62%),
+    radial-gradient(ellipse 60% 50% at 15% 75%, rgba(53, 140, 159, 0.12) 0%, transparent 52%),
+    radial-gradient(ellipse 50% 40% at 85% 60%, rgba(78, 179, 200, 0.1) 0%, transparent 48%),
+    linear-gradient(180deg, #0a0204 0%, var(--home-bg) 52%, #020810 100%);
+}
+
+/* Neón activo: volver al fondo original (brillante), no oscurecer */
+.home-hero--neon .home-hero__bg {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 35%, rgba(53, 140, 159, 0.28) 0%, transparent 62%),
+    radial-gradient(ellipse 60% 50% at 15% 75%, rgba(53, 140, 159, 0.12) 0%, transparent 52%),
+    radial-gradient(ellipse 50% 40% at 85% 60%, rgba(78, 179, 200, 0.1) 0%, transparent 48%),
+    linear-gradient(180deg, #041018 0%, var(--home-bg) 52%, #020810 100%);
+  transition: background 2.2s ease;
+}
+
+/* Apagado suave del ambiente rojo al entrar el neón */
+.home-hero--ignite-fade .home-hero__ignite-ambient {
+  animation: none;
+  opacity: 0;
+  transition: opacity 2.2s ease;
+}
+
+.home-hero--ignite-fade.home-hero--ignite::before {
+  animation: none;
+  opacity: 0;
+  transition: opacity 2.2s ease;
+}
+
+.home-hero--ignite-fade .home-hero__title-rays {
+  animation: none;
+  opacity: 0;
+  transition: opacity 2.2s ease;
+}
+
+.home-hero__ignite-ambient {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  z-index: 1;
+  width: min(95vw, 56rem);
+  height: clamp(10rem, 36vw, 18rem);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(
+      ellipse 80% 65% at 50% 50%,
+      rgba(255, 50, 20, 0.28) 0%,
+      rgba(180, 30, 10, 0.12) 40%,
+      transparent 72%
+    );
+}
+
+.home-hero--ignite .home-hero__ignite-ambient {
+  animation: home-ignite-ambient 5.2s ease-out forwards;
+}
+
+.home-hero--ignite::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse 100% 80% at 50% 45%,
+    transparent 40%,
+    rgba(80, 10, 5, 0.22) 100%
+  );
+  animation: home-ignite-vignette 5.2s ease-out forwards;
+}
+
+@keyframes home-ignite-ambient {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 0.85;
+  }
+  75% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes home-ignite-vignette {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.38;
+  }
+  60% {
+    opacity: 0.18;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero--ignite .home-hero__ignite-ambient,
+  .home-hero--ignite::before {
+    animation: none;
+    opacity: 0;
+  }
+
+  .home-hero--ignite .home-hero__title-rays {
+    animation: none;
+    opacity: 0;
+  }
+
+  .home-hero--ignite .home-hero__bg {
+    background:
+      radial-gradient(ellipse 90% 70% at 50% 35%, rgba(53, 140, 159, 0.28) 0%, transparent 62%),
+      radial-gradient(ellipse 60% 50% at 15% 75%, rgba(53, 140, 159, 0.12) 0%, transparent 52%),
+      radial-gradient(ellipse 50% 40% at 85% 60%, rgba(78, 179, 200, 0.1) 0%, transparent 48%),
+      linear-gradient(180deg, #041018 0%, var(--home-bg) 52%, #020810 100%);
+  }
 }
 
 .home-hero__motion {
@@ -46,6 +179,7 @@
   z-index: 1;
   opacity: 0.44;
   pointer-events: none;
+  transition: opacity 2s ease;
 }
 
 .home-hero__motion .floating-lines-container {
@@ -148,6 +282,73 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--home-accent-bright);
+}
+
+.home-hero__title-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  overflow: visible;
+}
+
+/* Rayos volumétricos globales bajo el título (ref. 1) */
+.home-hero__title-rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 0;
+  width: min(110%, 40rem);
+  height: clamp(5rem, 28vw, 12rem);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(255, 160, 160, 0.12) 42%,
+      rgba(255, 120, 130, 0.18) 50%,
+      rgba(255, 160, 160, 0.12) 58%,
+      transparent 100%
+    ),
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 140, 150, 0.06) 35%,
+      rgba(255, 180, 185, 0.14) 50%,
+      rgba(255, 140, 150, 0.06) 65%,
+      transparent 100%
+    );
+  filter: blur(18px);
+  mix-blend-mode: screen;
+}
+
+.home-hero--ignite .home-hero__title-rays {
+  animation: home-title-rays 5.5s ease-out forwards;
+}
+
+@keyframes home-title-rays {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scaleY(0.4);
+  }
+  22% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scaleY(1.15);
+  }
+  50% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scaleY(0.9);
+  }
+}
+
+.home-hero__title-wrap .home-hero__title {
+  position: relative;
+  z-index: 3;
 }
 
 .home-hero__title {

@@ -29,6 +29,11 @@ const nextConfig: NextConfig = {
     "/api/cursos/react/current-level": ["./courses/react/levels.js"],
     "/api/cursos/react/diploma": ["./courses/react/levels.js"],
     "/api/cursos/react/levels/[levelId]/verify": ["./courses/react/levels.js"],
+    "/api/tealcode/download": ["./tealcode/**/*"],
+    "/api/tealcode/installer": [
+      "./public/downloads/**/*",
+      "./tealcode/src-tauri/target/release/bundle/**/*",
+    ],
   },
 };
 

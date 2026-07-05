@@ -14,6 +14,8 @@ const AREA_TITLE_KEYS: Record<ExpertiseAreaId, string> = {
   hardware: "areas.hardware.title",
 };
 
+import type { ProjectEntityId } from "@/lib/projects/config";
+
 export type ProjectListItem = {
   slug: string;
   title: string;
@@ -23,11 +25,35 @@ export type ProjectListItem = {
   imageCard: string;
   tech: string;
   sections: ExpertiseAreaId[];
+  sortDate: string;
+  entityId: ProjectEntityId;
+  company?: {
+    id: ProjectEntityId;
+    name: string;
+    logo: string;
+    href: string;
+    logoStyle?: "round" | "blend" | "warm";
+  };
 };
 
 type ProjectsListProps = {
   projects: ProjectListItem[];
 };
+
+function orgClassName(style?: "round" | "blend" | "warm"): string {
+  return [
+    "projects-card__org",
+    style === "round" ? "projects-card__org--round" : "projects-card__org--mark",
+  ].join(" ");
+}
+
+/** Año o kicker completo si es prácticas — el logo identifica la institución. */
+function formatCardKicker(kicker: string, hasCompany: boolean): string {
+  if (!hasCompany) return kicker;
+  if (/prácticas|internship|tirocinio/i.test(kicker)) return kicker;
+  const year = kicker.match(/^(\d{4})/)?.[1];
+  return year ?? kicker;
+}
 
 export default function ProjectsList({ projects }: ProjectsListProps) {
   const t = useTranslations("projects");
@@ -55,7 +81,29 @@ export default function ProjectsList({ projects }: ProjectsListProps) {
             </Link>
 
             <div className="projects-card__body">
-              <p className="projects-card__kicker">{project.kicker}</p>
+              <div className="projects-card__meta">
+                <p className="projects-card__kicker">
+                  {formatCardKicker(project.kicker, Boolean(project.company))}
+                </p>
+                {project.company ? (
+                  <a
+                    href={project.company.href}
+                    className={orgClassName(project.company.logoStyle)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={project.company.name}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Image
+                      src={project.company.logo}
+                      alt=""
+                      width={project.company.logoStyle === "round" ? 48 : 130}
+                      height={project.company.logoStyle === "round" ? 48 : 32}
+                      className="projects-card__org-logo"
+                    />
+                  </a>
+                ) : null}
+              </div>
               <h3 className="projects-card__title">
                 <Link href={`/proyectos/${project.slug}`}>{project.title}</Link>
               </h3>

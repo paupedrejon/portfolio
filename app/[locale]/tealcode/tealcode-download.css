@@ -1,0 +1,169 @@
+.tealcode-download {
+  position: relative;
+  min-height: 100vh;
+  background: #030d14;
+  color: #f8fafc;
+  padding: 48px 24px 80px;
+}
+
+.tealcode-download__glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(53, 140, 159, 0.28), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 60%, rgba(78, 179, 200, 0.12), transparent);
+  pointer-events: none;
+}
+
+.tealcode-download__inner {
+  position: relative;
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.tealcode-download__back {
+  display: inline-block;
+  margin-bottom: 24px;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.tealcode-download__back:hover {
+  color: #4eb3c8;
+}
+
+.tealcode-download__kicker {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4eb3c8;
+  margin-bottom: 8px;
+}
+
+.tealcode-download__title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.tealcode-download__subtitle {
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.6;
+  margin-bottom: 32px;
+  max-width: 640px;
+}
+
+.tealcode-download__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.tealcode-download__card {
+  background: rgba(20, 42, 56, 0.85);
+  border: 1px solid rgba(53, 140, 159, 0.45);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.tealcode-download__card h2 {
+  font-size: 1.1rem;
+  color: #4eb3c8;
+  margin-bottom: 12px;
+}
+
+.tealcode-download__muted {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.tealcode-download__pending {
+  color: #fbbf24;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.tealcode-download__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.tealcode-download__btn--primary {
+  background: #358c9f;
+  color: #fff;
+}
+
+.tealcode-download__btn--primary:hover {
+  background: #4eb3c8;
+}
+
+.tealcode-download__btn--accent {
+  background: #00d9ff;
+  color: #061018;
+}
+
+.tealcode-download__btn--accent:hover {
+  box-shadow: 0 0 16px rgba(0, 213, 255, 0.5);
+}
+
+.tealcode-download__btn--ghost {
+  margin-top: 12px;
+  border: 1px solid rgba(53, 140, 159, 0.45);
+  color: #94a3b8;
+}
+
+.tealcode-download__btn--ghost:hover {
+  border-color: #4eb3c8;
+  color: #f8fafc;
+}
+
+.tealcode-download__card--hero {
+  margin-bottom: 24px;
+}
+
+.tealcode-download__dev {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid rgba(53, 140, 159, 0.25);
+  border-radius: 8px;
+  color: #94a3b8;
+}
+
+.tealcode-download__dev summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #4eb3c8;
+}
+
+.tealcode-download__section {
+  margin-bottom: 28px;
+}
+
+.tealcode-download__section h2 {
+  font-size: 1.05rem;
+  color: #4eb3c8;
+  margin-bottom: 12px;
+}
+
+.tealcode-download__steps,
+.tealcode-download__list {
+  color: #94a3b8;
+  line-height: 1.7;
+  padding-left: 1.25rem;
+}
+
+.tealcode-download__steps li,
+.tealcode-download__list li {
+  margin-bottom: 6px;
+}

@@ -1,5 +1,5 @@
 import { routing } from "@/i18n/routing";
-import { PROJECTS_CONFIG } from "@/lib/projects/config";
+import { getVisibleProjects } from "@/lib/projects/config";
 import { getLevelIds } from "@/lib/cursos/levels";
 import { SITE_URL } from "./config";
 
@@ -37,7 +37,7 @@ export function buildSitemapEntries(): { url: string; lastModified?: Date }[] {
     for (const path of LOCALIZED_STATIC_PATHS) {
       entries.push({ url: localizedUrl(locale, path), lastModified });
     }
-    for (const { slug } of PROJECTS_CONFIG) {
+    for (const { slug } of getVisibleProjects()) {
       entries.push({
         url: localizedUrl(locale, `/proyectos/${slug}`),
         lastModified,

@@ -18,6 +18,39 @@
     clamp(1.25rem, 4vw, 3rem);
 }
 
+.project-detail-hero--carousel {
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-y;
+}
+
+.project-detail-hero--carousel.is-dragging {
+  cursor: grabbing;
+  touch-action: none;
+}
+
+.project-detail-hero__viewport {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.project-detail-hero__track {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  will-change: transform;
+}
+
+.project-detail-hero__slide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  min-height: 100%;
+  overflow: hidden;
+}
+
 .project-detail-hero__image-bg {
   position: absolute;
   inset: 0;
@@ -28,6 +61,10 @@
   object-fit: cover;
   object-position: 82% center;
   opacity: 1;
+}
+
+.project-detail-hero__image-bg-img--photo {
+  object-position: center center;
 }
 
 /* E-Go: captura con mockups centrados — mostrar teléfonos a la derecha */
@@ -69,6 +106,97 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.project-detail-hero__inner--hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.project-detail-hero__carousel-ui {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.project-detail-hero__carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(3, 13, 20, 0.55);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.65rem;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  backdrop-filter: blur(8px);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.project-detail-hero__carousel-btn:hover:not(:disabled) {
+  background: rgba(53, 140, 159, 0.45);
+  border-color: rgba(78, 179, 200, 0.55);
+}
+
+.project-detail-hero__carousel-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.project-detail-hero__carousel-btn--prev {
+  left: clamp(0.75rem, 2vw, 1.25rem);
+}
+
+.project-detail-hero__carousel-btn--next {
+  right: clamp(0.75rem, 2vw, 1.25rem);
+}
+
+.project-detail-hero__dots {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.25rem, 3vw, 2rem);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transform: translateX(-50%);
+  padding: 0.4rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(3, 13, 20, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.project-detail-hero__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition:
+    width 0.25s ease,
+    background 0.25s ease;
+}
+
+.project-detail-hero__dot--active {
+  width: 1.35rem;
+  background: #4eb3c8;
 }
 
 .project-detail-hero__back {
@@ -90,8 +218,16 @@
   color: #4eb3c8;
 }
 
+.project-detail-hero__meta {
+  margin-bottom: 1rem;
+}
+
 .project-detail-hero__kicker {
-  margin: 0 0 1rem;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.5rem;
   font-family: var(--font-body);
   font-size: clamp(0.85rem, 1.6vw, 1rem);
   font-weight: 600;
@@ -99,6 +235,22 @@
   text-transform: uppercase;
   color: #4eb3c8;
   line-height: 1.35;
+}
+
+.project-detail-hero__kicker-dot {
+  color: rgba(255, 255, 255, 0.32);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.project-detail-hero__company-link {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.project-detail-hero__company-link:hover {
+  color: #ffffff;
 }
 
 .project-detail-hero__title {
@@ -197,6 +349,10 @@
 
   .project-detail-hero__actions {
     max-width: none;
+  }
+
+  .project-detail-hero__carousel-btn {
+    display: none;
   }
 }
 

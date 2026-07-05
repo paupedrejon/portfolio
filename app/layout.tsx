@@ -4,7 +4,7 @@ import "./globals.css";
 import "./section-pages.css";
 import { Analytics } from "@vercel/analytics/react";
 import { Providers } from "./providers";
-import { spaceGrotesk, outfit, jetbrainsMono, leagueSpartan } from "./fonts";
+import { spaceGrotesk, outfit, jetbrainsMono, leagueSpartan, quicksand } from "./fonts";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { AiOutlineMail } from "react-icons/ai";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -55,7 +55,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${spaceGrotesk.variable} ${outfit.variable} ${jetbrainsMono.variable} ${leagueSpartan.variable}`}
+      className={`${spaceGrotesk.variable} ${outfit.variable} ${jetbrainsMono.variable} ${leagueSpartan.variable} ${quicksand.variable}`}
       suppressHydrationWarning
     >
       <head>

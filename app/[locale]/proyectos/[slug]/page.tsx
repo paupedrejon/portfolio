@@ -3,7 +3,7 @@ import JsonLd from "@/components/seo/JsonLd";
 import { creativeWorkSchema } from "@/lib/seo/json-ld";
 import { localizedUrl } from "@/lib/seo/paths";
 import { projectDetailMetadata } from "@/lib/seo/sections";
-import { isProjectSlug, PROJECTS_CONFIG, type ProjectSlug } from "@/lib/projects/config";
+import { getVisibleProjects, isProjectSlug, PROJECTS_CONFIG, type ProjectSlug } from "@/lib/projects/config";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { SITE_URL } from "@/lib/seo/config";
@@ -13,7 +13,7 @@ type PageProps = {
 };
 
 export function generateStaticParams() {
-  return PROJECTS_CONFIG.map((project) => ({ slug: project.slug }));
+  return getVisibleProjects().map((project) => ({ slug: project.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {

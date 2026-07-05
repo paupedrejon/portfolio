@@ -1,0 +1,189 @@
+/* Ignición ST letra a letra sobre tubos SVG monolínea */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hero-ignite {
+  display: inline;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.hero-ignite--static {
+  white-space: pre;
+}
+
+.hero-word {
+  position: relative;
+  display: inline-block;
+}
+
+.hero-word__sizer {
+  font: inherit;
+  letter-spacing: inherit;
+  visibility: hidden;
+  user-select: none;
+}
+
+.hero-word--static {
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+.hero-ignite--default .hero-word--static {
+  color: #ffffff;
+}
+
+.hero-ignite--accent .hero-word--static {
+  color: #eafcff;
+}
+
+.hero-word__neon {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  opacity: 1;
+  pointer-events: none;
+  user-select: none;
+  font: inherit;
+}
+
+.hero-word__neon text {
+  letter-spacing: inherit;
+}
+
+.hero-ignite--accent .neon-halo {
+  color: #22c8f0;
+  filter: url(#hero-neon-soft);
+}
+
+.hero-ignite--default .neon-halo {
+  color: #6db6e8;
+  filter: url(#hero-neon-soft);
+}
+
+.hero-ignite--accent .neon-core {
+  color: #eafcff;
+}
+
+.hero-ignite--default .neon-core {
+  color: #ffffff;
+}
+
+.neon-ch {
+  fill: var(--ch-final);
+}
+
+.hero-ignite--idle .neon-ch {
+  fill: #14060a;
+  opacity: 0.15;
+}
+
+.hero-ignite--sequencing .neon-ch,
+.hero-ignite--done .neon-ch {
+  animation: neon-ch-ignite 1500ms both;
+  animation-delay: var(--d);
+}
+
+@keyframes neon-ch-ignite {
+  0% {
+    fill: #14060a;
+    opacity: 0.15;
+  }
+  7% {
+    fill: #ff3344;
+    opacity: 1;
+  }
+  11% {
+    fill: #1a070b;
+    opacity: 0.2;
+  }
+  18% {
+    fill: #ff5566;
+    opacity: 0.95;
+  }
+  22% {
+    fill: #240a0e;
+    opacity: 0.25;
+  }
+  34% {
+    fill: #ff3344;
+    opacity: 1;
+  }
+  48% {
+    fill: #ff8899;
+    opacity: 0.9;
+  }
+  72% {
+    fill: var(--ch-final);
+    opacity: 1;
+  }
+  80% {
+    fill: var(--ch-final);
+    opacity: 0.75;
+  }
+  84% {
+    fill: var(--ch-final);
+    opacity: 1;
+  }
+  100% {
+    fill: var(--ch-final);
+    opacity: 1;
+  }
+}
+
+.home-hero__title-wrap--neon .hero-word__neon {
+  animation: hero-neon-flicker 7.3s linear infinite;
+}
+
+.home-hero__title-wrap--neon .hero-ignite--accent .hero-word__neon {
+  animation-delay: 1.7s;
+  animation-duration: 9.1s;
+}
+
+@keyframes hero-neon-flicker {
+  0%,
+  5.9%,
+  6.4%,
+  41%,
+  42.4%,
+  100% {
+    opacity: 1;
+  }
+  6% {
+    opacity: 0.72;
+  }
+  6.2% {
+    opacity: 0.94;
+  }
+  41.5% {
+    opacity: 0.85;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-ignite--idle .neon-ch,
+  .hero-ignite--sequencing .neon-ch,
+  .hero-ignite--done .neon-ch {
+    animation: none;
+    fill: var(--ch-final);
+    opacity: 1;
+  }
+
+  .home-hero__title-wrap--neon .hero-word__neon {
+    animation: none;
+  }
+}

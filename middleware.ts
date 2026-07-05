@@ -11,6 +11,7 @@ export default function middleware(request: NextRequest) {
   if (
     pathname.startsWith("/api") ||
     pathname.startsWith("/auth") ||
+    pathname.startsWith("/admin") ||
     pathname.startsWith("/study-agents") ||
     pathname.startsWith("/cursos/react-demo")
   ) {
@@ -22,6 +23,6 @@ export default function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|auth|study-agents|cursos/react-demo|_next|_vercel|.*\\..*).*)",
+    "/((?!api|auth|admin|study-agents|cursos/react-demo|_next|_vercel|.*\\..*).*)",
   ],
 };

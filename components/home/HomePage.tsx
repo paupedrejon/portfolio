@@ -1,13 +1,24 @@
 "use client";
 
 import "@/app/[locale]/home.css";
+import dynamic from "next/dynamic";
+import HeroTitleIgnite, {
+  heroIgniteDelayMs,
+  heroIgniteTotalMs,
+  HeroTitleStatic,
+} from "@/components/home/HeroTitleIgnite";
+import HeroNeonFilters from "@/components/home/HeroNeonFilters";
 import HomeHeroBackground from "@/components/home/HomeHeroBackground";
 import ScrollButton from "@/components/ScrollButton";
 import CurriculumButton from "@/components/CurriculumButton";
 import ExploreWorkSection from "@/components/expertise/ExploreWorkSection";
 import { Link } from "@/i18n/navigation";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+
+const HeroTitleSmokeGL = dynamic(() => import("@/components/home/HeroTitleSmokeGL"), {
+  ssr: false,
+});
 
 function splitDisplayTitle(title: string) {
   const space = title.lastIndexOf(" ");
@@ -19,16 +30,53 @@ export default function HomePage() {
   const t = useTranslations("home");
   const tCommon = useTranslations("common");
   const [mounted, setMounted] = useState(false);
-  const { lead, accent } = useMemo(() => splitDisplayTitle(t("title")), [t]);
+  const [igniteActive, setIgniteActive] = useState(false);
+  const [igniteFade, setIgniteFade] = useState(false);
+  const [neonActive, setNeonActive] = useState(false);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const title = t("title");
+  const { lead, accent } = useMemo(() => splitDisplayTitle(title), [title]);
+  const accentDelay = useMemo(() => heroIgniteDelayMs(lead, 88), [lead]);
+  const igniteTotalMs = useMemo(() => heroIgniteTotalMs(lead, accent, 88), [lead, accent]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!mounted) return;
+    setIgniteActive(true);
+  }, [mounted]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const delay = mq.matches ? 0 : Math.max(0, igniteTotalMs - 200);
+    const timer = window.setTimeout(() => {
+      setNeonActive(true);
+      setIgniteFade(true);
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [mounted, igniteTotalMs]);
+
+  useEffect(() => {
+    if (!neonActive) return;
+    const timer = window.setTimeout(() => {
+      setIgniteActive(false);
+      setIgniteFade(false);
+    }, 2400);
+    return () => window.clearTimeout(timer);
+  }, [neonActive]);
+
   return (
     <div className="home-page">
-      <section id="hero-section" className="home-hero" aria-label="Intro">
+      <section
+        id="hero-section"
+        className={`home-hero${igniteActive ? " home-hero--ignite" : ""}${igniteFade ? " home-hero--ignite-fade" : ""}${neonActive ? " home-hero--neon" : ""}`}
+        aria-label="Intro"
+      >
         <div className="home-hero__bg" aria-hidden />
+        <div className="home-hero__ignite-ambient" aria-hidden />
         <HomeHeroBackground />
 
         <div
@@ -39,18 +87,50 @@ export default function HomePage() {
             {tCommon("softwareEngineer")}
           </p>
 
-          <h1
-            className={`home-hero__title ${mounted ? "animate-fade-in-up" : ""}`}
-            style={{ animationDelay: "0.08s", animationFillMode: "both" }}
+          <div
+            className={`home-hero__title-wrap${neonActive ? " home-hero__title-wrap--neon" : ""}`}
           >
-            {lead}
-            {accent ? (
-              <>
-                {" "}
-                <span className="home-hero__title-accent">{accent}</span>
-              </>
-            ) : null}
-          </h1>
+            {mounted ? <HeroNeonFilters /> : null}
+            {mounted ? <div className="home-hero__title-rays" aria-hidden /> : null}
+            {neonActive ? <HeroTitleSmokeGL titleRef={titleRef} /> : null}
+            <h1
+              ref={titleRef}
+              className={`home-hero__title ${mounted ? "animate-fade-in-up" : ""}`}
+              style={{ animationDelay: "0.08s", animationFillMode: "both" }}
+              suppressHydrationWarning
+            >
+              <span className="sr-only">{title}</span>
+              {mounted ? (
+                <>
+                  <HeroTitleIgnite text={lead} active variant="default" />
+                  {accent ? (
+                    <>
+                      {" "}
+                      <span className="home-hero__title-accent">
+                        <HeroTitleIgnite
+                          text={accent}
+                          variant="accent"
+                          startDelayMs={accentDelay}
+                        />
+                      </span>
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <HeroTitleStatic text={lead} variant="default" />
+                  {accent ? (
+                    <>
+                      {" "}
+                      <span className="home-hero__title-accent">
+                        <HeroTitleStatic text={accent} variant="accent" />
+                      </span>
+                    </>
+                  ) : null}
+                </>
+              )}
+            </h1>
+          </div>
 
           <p
             className={`home-hero__tagline ${mounted ? "animate-fade-in-up" : ""}`}
