@@ -15,6 +15,7 @@ export type PageMetadataInput = {
   description: string;
   image?: string;
   noIndex?: boolean;
+  keywords?: string[];
 };
 
 function resolveImageUrl(image: string): string {
@@ -39,6 +40,7 @@ export function buildPageMetadata({
   description,
   image = DEFAULT_OG_IMAGE,
   noIndex = false,
+  keywords,
 }: PageMetadataInput): Metadata {
   const pathKey = pathname === "" ? "/" : pathname.startsWith("/") ? pathname : `/${pathname}`;
   const canonical = `${SITE_URL}${localePath(locale, pathKey)}`;
@@ -53,6 +55,7 @@ export function buildPageMetadata({
   return {
     title,
     description,
+    ...(keywords?.length ? { keywords } : {}),
     alternates: {
       canonical,
       languages,

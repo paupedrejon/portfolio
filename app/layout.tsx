@@ -2,14 +2,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./section-pages.css";
-import { Analytics } from "@vercel/analytics/react";
+import VercelAnalyticsGate from "@/components/analytics/VercelAnalyticsGate";
 import { Providers } from "./providers";
 import { spaceGrotesk, outfit, jetbrainsMono, leagueSpartan, quicksand } from "./fonts";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { AiOutlineMail } from "react-icons/ai";
 import { getLocale, getTranslations } from "next-intl/server";
 import HapticsRoot from "@/components/HapticsRoot";
-import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo/config";
+import { CONTACT_EMAIL, GITHUB_URL, LINKEDIN_URL, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo/config";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s",
   },
   description:
-    "Portfolio showcasing my projects, skills and experience as a software engineer specializing in game development, web applications, and creative technology.",
+    "Full-Stack Software Engineer portfolio — React, Node.js, AI. Real production projects, professional experience, and open to opportunities in Barcelona and remote.",
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
@@ -75,7 +75,7 @@ export default async function RootLayout({
             {/* Social Links */}
             <div className="footer-social">
               <a
-                href="https://github.com/paupedrejon"
+                href={GITHUB_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub"
@@ -83,7 +83,7 @@ export default async function RootLayout({
                 <FaGithub size={20} />
               </a>
               <a
-                href="https://es.linkedin.com/in/pau-pedrejon-sobrino-0b5643380"
+                href={LINKEDIN_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn"
@@ -91,7 +91,7 @@ export default async function RootLayout({
                 <FaLinkedin size={20} />
               </a>
               <a
-                href="mailto:paupedrejon@gmail.com"
+                href={`mailto:${CONTACT_EMAIL}`}
                 aria-label="Email"
               >
                 <AiOutlineMail size={20} />
@@ -101,11 +101,15 @@ export default async function RootLayout({
             {/* Copyright */}
             <p className="footer-copyright">
               © {new Date().getFullYear()} Pau Pedrejon. {tFooter("craftedWithPassion")}
+              {" · "}
+              <a href={`/${locale}/privacy`} className="footer-legal-link">
+                {tFooter("privacy")}
+              </a>
             </p>
           </div>
         </footer>
 
-          <Analytics />
+          <VercelAnalyticsGate />
         </Providers>
       </body>
     </html>

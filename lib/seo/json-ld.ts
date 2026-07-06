@@ -1,10 +1,12 @@
 import { SITE_NAME, SITE_URL } from "./config";
+import { CONTACT_EMAIL, GITHUB_URL, LINKEDIN_URL } from "./config";
 
 export function personSchema(params: {
   name: string;
   description: string;
   locale: string;
-  sameAs?: string[];
+  jobTitle?: string;
+  knowsAbout?: string[];
 }) {
   return {
     "@context": "https://schema.org",
@@ -12,11 +14,30 @@ export function personSchema(params: {
     name: params.name,
     description: params.description,
     url: `${SITE_URL}/${params.locale}`,
-    jobTitle: "Software Engineer",
-    sameAs: params.sameAs ?? [
-      "https://github.com/paupedrejon",
-      "https://es.linkedin.com/in/pau-pedrejon-sobrino-0b5643380",
-    ],
+    jobTitle: params.jobTitle ?? "Full-Stack Software Engineer",
+    email: CONTACT_EMAIL,
+    image: `${SITE_URL}/Favicon.png`,
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Castelldefels",
+      addressRegion: "Barcelona",
+      addressCountry: "ES",
+    },
+    alumniOf: {
+      "@type": "CollegeOrUniversity",
+      name: "Universitat Politècnica de Barcelona",
+    },
+    ...(params.knowsAbout?.length ? { knowsAbout: params.knowsAbout } : {}),
+    sameAs: [GITHUB_URL, LINKEDIN_URL],
+  };
+}
+
+export function profilePageSchema(mainEntity: Record<string, unknown>) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    name: `${SITE_NAME} — Portfolio`,
+    mainEntity,
   };
 }
 
@@ -31,8 +52,13 @@ export function websiteSchema(params: {
     name: params.name,
     description: params.description,
     url: `${SITE_URL}/${params.locale}`,
-    author: { "@type": "Person", name: SITE_NAME },
+    author: { "@type": "Person", name: SITE_NAME, url: LINKEDIN_URL },
     inLanguage: params.locale,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${SITE_URL}/${params.locale}/proyectos`,
+      "query-input": "required name=search_term_string",
+    },
   };
 }
 

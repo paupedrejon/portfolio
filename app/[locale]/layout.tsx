@@ -1,5 +1,6 @@
 import ConditionalHeader from "@/components/ConditionalHeader";
 import CustomCursor from "@/components/CustomCursor";
+import AnalyticsConsentBanner from "@/components/analytics/AnalyticsConsentBanner";
 import { routing } from "@/i18n/routing";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
@@ -28,6 +29,7 @@ export default async function LocaleLayout({ children, params }: Props) {
       <ConditionalHeader />
       <main className="pt-0 w-full">{children}</main>
       <CustomCursor />
+      <AnalyticsConsentBanner />
     </NextIntlClientProvider>
   );
 }

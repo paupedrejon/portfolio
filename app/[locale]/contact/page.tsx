@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowRight, Github, Linkedin, Mail, Phone } from "lucide-react";
+import { CONTACT_EMAIL, GITHUB_URL, LINKEDIN_URL } from "@/lib/seo/config";
 import "../home.css";
 import "../proyectos/proyectos.css";
 import "./contact.css";
@@ -34,9 +35,9 @@ function lineStyle(i: number) {
 const METHOD_KEYS = ["github", "linkedin", "email", "phone"] as const;
 
 const METHOD_HREFS: Record<(typeof METHOD_KEYS)[number], string> = {
-  github: "https://www.github.com/paupedrejon",
-  linkedin: "https://es.linkedin.com/in/pau-pedrejon-sobrino-0b5643380",
-  email: "mailto:paupedrejon@gmail.com",
+  github: GITHUB_URL,
+  linkedin: LINKEDIN_URL,
+  email: `mailto:${CONTACT_EMAIL}`,
   phone: "tel:+34689063590",
 };
 

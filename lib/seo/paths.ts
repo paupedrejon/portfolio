@@ -12,6 +12,7 @@ export const LOCALIZED_STATIC_PATHS = [
   "/education",
   "/about-me",
   "/contact",
+  "/privacy",
   "/ego",
   "/cursos",
   "/cursos/react",

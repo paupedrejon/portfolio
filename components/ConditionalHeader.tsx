@@ -10,6 +10,7 @@ import { HiHome } from "react-icons/hi2";
 import { BsSun, BsMoon } from "react-icons/bs";
 import { HiUserCircle } from "react-icons/hi2";
 import { signOut, useSession } from "next-auth/react";
+import { CONTACT_EMAIL, GITHUB_URL, LINKEDIN_URL } from "@/lib/seo/config";
 
 export default function ConditionalHeader() {
   const pathname = usePathname();
@@ -376,9 +377,9 @@ export default function ConditionalHeader() {
   ];
 
   const socialItems = [
-    { label: "GitHub", link: "https://github.com/paupedrejon" },
-    { label: "LinkedIn", link: "https://es.linkedin.com/in/pau-pedrejon-sobrino-0b5643380" },
-    { label: "Email", link: "mailto:paupedrejon@gmail.com" },
+    { label: "GitHub", link: GITHUB_URL },
+    { label: "LinkedIn", link: LINKEDIN_URL },
+    { label: "Email", link: `mailto:${CONTACT_EMAIL}` },
   ];
 
   return (

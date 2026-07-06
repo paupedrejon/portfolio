@@ -7,12 +7,12 @@ const SITE_SUFFIX = ` | ${SITE_NAME}`;
 
 export async function homeMetadata(locale: string) {
   const t = await getTranslations({ locale, namespace: "home" });
-  const tCommon = await getTranslations({ locale, namespace: "common" });
   return buildPageMetadata({
     locale,
     pathname: "/",
-    title: `${t("title")} — ${tCommon("softwareEngineer")}`,
-    description: t("tagline"),
+    title: t("seoTitle"),
+    description: t("seoDescription"),
+    keywords: t.raw("seoKeywords") as string[],
   });
 }
 
@@ -42,7 +42,8 @@ export async function experienceMetadata(locale: string) {
     locale,
     pathname: "/experience",
     title: `${t("title")}${SITE_SUFFIX}`,
-    description: t("tagline"),
+    description: t("seoDescription"),
+    keywords: t.raw("seoKeywords") as string[],
   });
 }
 
@@ -72,7 +73,8 @@ export async function contactMetadata(locale: string) {
     locale,
     pathname: "/contact",
     title: `${t("title")}${SITE_SUFFIX}`,
-    description: t("tagline"),
+    description: t("seoDescription"),
+    keywords: t.raw("seoKeywords") as string[],
   });
 }
 

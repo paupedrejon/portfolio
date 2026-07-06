@@ -104,6 +104,25 @@
   "home": {
     "title": "PAU PEDREJON",
     "tagline": "Sviluppatore Full-Stack specializzato in Ingegneria del Software e Intelligenza Artificiale",
+    "seoTitle": "Pau Pedrejon — Sviluppatore Full-Stack e IA | Portfolio professionale",
+    "seoDescription": "Ingegnere del software Full-Stack (React, Node.js, IA) con progetti in produzione ed esperienza in azienda. Disponibile per opportunità a Barcellona e remoto.",
+    "seoJobTitle": "Sviluppatore Full-Stack e Ingegnere del Software",
+    "seoKeywords": [
+      "sviluppatore full-stack Barcellona",
+      "ingegnere del software",
+      "portfolio sviluppatore",
+      "React Node.js TypeScript",
+      "assumere sviluppatore"
+    ],
+    "seoKnowsAbout": [
+      "React",
+      "Next.js",
+      "Node.js",
+      "TypeScript",
+      "Intelligenza Artificiale",
+      "Sviluppo Full-Stack",
+      "React Native"
+    ],
     "studyAgentsFeaturedBadge": "In evidenza",
     "studyAgentsPreviewCaption": "Anteprima",
     "projectsHighlight": "Progetti in evidenza",
@@ -1017,6 +1036,12 @@
     "badge": "Percorso professionale",
     "title": "ESPERIENZA",
     "tagline": "Il mio percorso professionale nello sviluppo software e tecnologia.",
+    "seoDescription": "Esperienza professionale di Pau Pedrejon: full-stack in azienda, progetti UPC e prodotti reali. Pensato per recruiter e team tecnici.",
+    "seoKeywords": [
+      "esperienza sviluppatore",
+      "full-stack Barcellona",
+      "portfolio ingegnere software"
+    ],
     "sectionTitle": "Esperienza lavorativa",
     "timeline": {
       "kicker": "Esperienza lavorativa",
@@ -1131,6 +1156,12 @@
     "badge": "Contatto",
     "title": "CONTATTO",
     "tagline": "Connettiamoci e lavoriamo insieme.",
+    "seoDescription": "Contatta Pau Pedrejon per opportunità lavorative, freelance o collaborazioni in sviluppo software e IA.",
+    "seoKeywords": [
+      "contattare sviluppatore",
+      "assumere ingegnere software",
+      "freelance full-stack Barcellona"
+    ],
     "sectionTitle": "Informazioni di contatto",
     "getInTouch": "Contattami",
     "methods": {
@@ -1204,7 +1235,55 @@
     "technologiesAria": "Tecnologie utilizzate nel progetto"
   },
   "footer": {
-    "craftedWithPassion": "Realizzato con passione"
+    "craftedWithPassion": "Realizzato con passione",
+    "privacy": "Privacy e cookie"
+  },
+  "consent": {
+    "title": "Cookie e analitica",
+    "description": "Usiamo analitica propria per misurare le visite. Si attiva solo se accetti l'",
+    "accept": "Accetta",
+    "reject": "Rifiuta",
+    "learnMore": "Informativa sulla Privacy"
+  },
+  "privacy": {
+    "badge": "Legale",
+    "title": "Privacy e cookie",
+    "tagline": "Informazioni sul trattamento dei dati su questo sito.",
+    "lastUpdated": "Ultimo aggiornamento: luglio 2026",
+    "sections": {
+      "controller": {
+        "title": "Titolare del trattamento",
+        "body": "Pau Pedrejon (paupedrejon@gmail.com) è il titolare del trattamento dei dati personali raccolti tramite questo portfolio."
+      },
+      "data": {
+        "title": "Dati raccolti",
+        "body": "Se accetti i cookie di analitica, possiamo registrare: pagine visitate, lingua, referrer, identificativo di sessione anonimo (UUID nel browser), tipo di evento (es. download CV o vista progetto) e dati tecnici di base della visita.\n\nNon raccolgo intenzionalmente nome, email o IP nell'analitica proprietaria, salvo quanto possa derivare indirettamente dal traffico di rete."
+      },
+      "purpose": {
+        "title": "Finalità e base giuridica",
+        "body": "La finalità è ottenere statistiche d'uso del portfolio per migliorare il sito. La base giuridica è il tuo consenso (art. 6.1.a GDPR e normativa ePrivacy).\n\nSe rifiuti, l'analitica non viene attivata e l'identificativo di sessione non viene salvato per tale scopo."
+      },
+      "cookies": {
+        "title": "Cookie e archiviazione locale",
+        "body": "Usiamo localStorage per ricordare la tua scelta di consenso e, se accetti, un identificativo di sessione anonimo (portfolio_sid).\n\nPuò attivarsi anche Vercel Analytics se accetti, che utilizza cookie o tecnologie simili secondo la propria policy.\n\nI cookie strettamente necessari per l'accesso a Study Agents (se lo usi) sono separati e gestiti in quel servizio."
+      },
+      "retention": {
+        "title": "Conservazione",
+        "body": "Gli eventi di analitica sono conservati per un massimo di 24 mesi, salvo richiesta di cancellazione anticipata o obbligo legale."
+      },
+      "recipients": {
+        "title": "Responsabili e trasferimenti",
+        "body": "I dati possono essere archiviati in Supabase (database) e, se accetti l'analitica, elaborati anche da Vercel Analytics. Questi fornitori agiscono come responsabili del trattamento.\n\nPossono esistere trasferimenti internazionali secondo la loro infrastruttura; in tal caso si applicano le garanzie previste (es. clausole contrattuali tipo)."
+      },
+      "rights": {
+        "title": "I tuoi diritti",
+        "body": "Puoi revocare il consenso in qualsiasi momento cancellando i dati del sito nel browser.\n\nHai anche diritto di accesso, rettifica, cancellazione, opposizione, limitazione e portabilità, e puoi presentare reclamo all'autorità di controllo competente."
+      },
+      "contact": {
+        "title": "Contatto",
+        "body": "Per domande sulla privacy, scrivi a paupedrejon@gmail.com."
+      }
+    }
   },
   "labs": {
     "metaTitle": "Labs — Esperimenti",

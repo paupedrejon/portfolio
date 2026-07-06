@@ -2,8 +2,10 @@
 
 const SESSION_KEY = "portfolio_sid";
 
+import { hasAnalyticsConsent } from "@/lib/analytics/consent";
+
 export function getAnalyticsSessionId(): string {
-  if (typeof window === "undefined") return "";
+  if (typeof window === "undefined" || !hasAnalyticsConsent()) return "";
   try {
     let id = localStorage.getItem(SESSION_KEY);
     if (!id) {
@@ -39,7 +41,7 @@ export function trackPortfolioEvent(
   metadata?: Record<string, unknown>,
   path?: string,
 ) {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || !hasAnalyticsConsent()) return;
   if (window.location.pathname.startsWith("/admin")) return;
 
   const resolvedPath = path ?? window.location.pathname;

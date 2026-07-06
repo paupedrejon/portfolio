@@ -1,0 +1,58 @@
+.privacy-section {
+  position: relative;
+  padding: 0 clamp(1rem, 4vw, 2rem) clamp(4rem, 10vh, 6rem);
+}
+
+.privacy-section__inner {
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.privacy-updated {
+  margin: 0 0 1.5rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+}
+
+.privacy-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.privacy-card {
+  padding: 1.35rem 1.4rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(53, 140, 159, 0.28);
+  background: linear-gradient(160deg, rgba(20, 42, 56, 0.72), rgba(10, 24, 34, 0.88));
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22);
+}
+
+.privacy-card__title {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #4eb3c8;
+  letter-spacing: 0.01em;
+}
+
+.privacy-card__body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.82);
+  white-space: pre-line;
+}
+
+@media (min-width: 768px) {
+  .privacy-grid {
+    gap: 1.15rem;
+  }
+
+  .privacy-card {
+    padding: 1.5rem 1.65rem;
+  }
+}

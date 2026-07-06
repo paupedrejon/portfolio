@@ -104,6 +104,25 @@
   "home": {
     "title": "PAU PEDREJON",
     "tagline": "Full-Stack Developer specializing in Software Engineering and Artificial Intelligence",
+    "seoTitle": "Pau Pedrejon — Full-Stack & AI Software Engineer | Professional Portfolio",
+    "seoDescription": "Full-Stack Software Engineer (React, Node.js, AI) with production projects and company experience. Open to opportunities in Barcelona and remote.",
+    "seoJobTitle": "Full-Stack Software Engineer",
+    "seoKeywords": [
+      "full-stack developer Barcelona",
+      "software engineer portfolio",
+      "React Node.js TypeScript",
+      "hire developer",
+      "AI engineer"
+    ],
+    "seoKnowsAbout": [
+      "React",
+      "Next.js",
+      "Node.js",
+      "TypeScript",
+      "Artificial Intelligence",
+      "Full-Stack Development",
+      "React Native"
+    ],
     "studyAgentsFeaturedBadge": "Featured",
     "studyAgentsPreviewCaption": "Preview",
     "projectsHighlight": "Standout projects",
@@ -1018,6 +1037,12 @@
     "badge": "Professional journey",
     "title": "EXPERIENCE",
     "tagline": "My professional path in software development and technology.",
+    "seoDescription": "Pau Pedrejon's professional experience: company full-stack work, UPC projects and real shipped products. Built for recruiters and engineering teams.",
+    "seoKeywords": [
+      "software engineer experience",
+      "full-stack Barcelona",
+      "junior developer portfolio"
+    ],
     "sectionTitle": "Work experience",
     "timeline": {
       "kicker": "Work experience",
@@ -1132,6 +1157,12 @@
     "badge": "Contact",
     "title": "CONTACT",
     "tagline": "Let's connect and work together.",
+    "seoDescription": "Contact Pau Pedrejon for job opportunities, freelance work or software and AI collaborations.",
+    "seoKeywords": [
+      "hire software engineer",
+      "contact developer Barcelona",
+      "full-stack freelance"
+    ],
     "sectionTitle": "Contact information",
     "getInTouch": "Get in touch",
     "methods": {
@@ -1205,7 +1236,55 @@
     "technologiesAria": "Technologies used in this project"
   },
   "footer": {
-    "craftedWithPassion": "Crafted with passion"
+    "craftedWithPassion": "Crafted with passion",
+    "privacy": "Privacy & cookies"
+  },
+  "consent": {
+    "title": "Cookies & analytics",
+    "description": "We use first-party analytics to measure visits. They are only enabled if you accept the ",
+    "accept": "Accept",
+    "reject": "Reject",
+    "learnMore": "Privacy Policy"
+  },
+  "privacy": {
+    "badge": "Legal",
+    "title": "Privacy & cookies",
+    "tagline": "How personal data is handled on this website.",
+    "lastUpdated": "Last updated: July 2026",
+    "sections": {
+      "controller": {
+        "title": "Data controller",
+        "body": "Pau Pedrejon (paupedrejon@gmail.com) is the data controller for personal data collected through this portfolio."
+      },
+      "data": {
+        "title": "Data we collect",
+        "body": "If you accept analytics cookies, we may record: pages visited, language, referrer, anonymous session ID (UUID in your browser), event type (e.g. CV download or project view), and basic technical visit data.\n\nI do not intentionally collect name, email, or IP in first-party analytics, except what may indirectly arise from network traffic."
+      },
+      "purpose": {
+        "title": "Purpose and legal basis",
+        "body": "The purpose is to obtain usage statistics to improve the portfolio. The legal basis is your consent (GDPR Art. 6(1)(a) and ePrivacy rules).\n\nIf you reject, analytics is not enabled and the session identifier is not stored for that purpose."
+      },
+      "cookies": {
+        "title": "Cookies and local storage",
+        "body": "We use localStorage to remember your consent choice and, if you accept, an anonymous session ID (portfolio_sid).\n\nVercel Analytics may also be enabled if you accept; it uses cookies or similar technologies under its own policy.\n\nStrictly necessary cookies for Study Agents sign-in (if you use it) are separate and managed within that service."
+      },
+      "retention": {
+        "title": "Retention",
+        "body": "Analytics events are kept for up to 24 months, unless a shorter erasure is requested or required by law."
+      },
+      "recipients": {
+        "title": "Processors and transfers",
+        "body": "Data may be stored in Supabase (database) and, if you accept analytics, processed by Vercel Analytics. These providers act as data processors.\n\nInternational transfers may occur depending on their infrastructure; appropriate safeguards (e.g. standard contractual clauses) apply where relevant."
+      },
+      "rights": {
+        "title": "Your rights",
+        "body": "You may withdraw consent at any time by clearing this site's data in your browser.\n\nYou also have rights of access, rectification, erasure, objection, restriction, and portability, and may lodge a complaint with your supervisory authority."
+      },
+      "contact": {
+        "title": "Contact",
+        "body": "For privacy questions, email paupedrejon@gmail.com."
+      }
+    }
   },
   "labs": {
     "metaTitle": "Labs — Experiments",

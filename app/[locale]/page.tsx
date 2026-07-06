@@ -1,6 +1,6 @@
 import HomePage from "@/components/home/HomePage";
 import JsonLd from "@/components/seo/JsonLd";
-import { personSchema, websiteSchema } from "@/lib/seo/json-ld";
+import { personSchema, profilePageSchema, websiteSchema } from "@/lib/seo/json-ld";
 import { homeMetadata } from "@/lib/seo/sections";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
@@ -20,18 +20,21 @@ export default async function LocaleHomePage({ params }: Props) {
 
   const person = personSchema({
     name: t("title"),
-    description: t("tagline"),
+    description: t("seoDescription"),
     locale,
+    jobTitle: t("seoJobTitle"),
+    knowsAbout: t.raw("seoKnowsAbout") as string[],
   });
   const website = websiteSchema({
     name: t("title"),
-    description: t("tagline"),
+    description: t("seoDescription"),
     locale,
   });
+  const profilePage = profilePageSchema(person);
 
   return (
     <>
-      <JsonLd data={[person, website]} />
+      <JsonLd data={[profilePage, person, website]} />
       <HomePage />
     </>
   );

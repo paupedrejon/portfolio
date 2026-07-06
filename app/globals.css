@@ -1549,6 +1549,17 @@ body::after {
   color: var(--text-muted);
 }
 
+.footer-legal-link {
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s ease;
+}
+
+.footer-legal-link:hover {
+  color: var(--accent-primary);
+}
+
 /* ============================================
    ANIMATIONS & UTILITIES
    ============================================ */
