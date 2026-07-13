@@ -227,6 +227,15 @@
     "badge": "Proyectos destacados",
     "title": "PROYECTOS",
     "tagline": "Una colección de proyectos que muestran mi pasión por el desarrollo y la tecnología creativa.",
+    "seoTitle": "Proyectos Full-Stack e IA — Portfolio Pau Pedrejon",
+    "seoDescription": "Proyectos reales en producción: e-commerce de lujo, SaaS, IDE con IA local y plataforma educativa multi-agente. Desarrollador full-stack en Barcelona.",
+    "seoKeywords": [
+      "proyectos desarrollador full-stack",
+      "portfolio proyectos React",
+      "proyectos IA Barcelona",
+      "e-commerce React Node.js",
+      "proyectos UPC ingeniería informática"
+    ],
     "used": "USADO",
     "filterAll": "Todos",
     "filterByArea": "Filtrar por área",
@@ -402,7 +411,21 @@
         { "name": "Monaco Editor", "role": "Editor de código" },
         { "name": "Ollama / DeepSeek / Qwen / GLM", "role": "Modelos IA gratuitos" }
       ],
-      "role": "Diseño, desarrollo full-stack y distribución del IDE como proyecto descargable del portfolio."
+      "role": "Diseño, desarrollo full-stack y distribución del IDE como proyecto descargable del portfolio.",
+      "caseStudyTitle": "Caso de estudio: PauStudio — IDE con IA local",
+      "caseStudyIntro": "PauStudio (TealCode) es un IDE de escritorio open-source que combina la estética de mi portfolio con capacidades de agente IA comparable a Cursor, pero ejecutable localmente y con modelos gratuitos.",
+      "caseStudyProblemTitle": "El problema",
+      "caseStudyProblem": "Los asistentes de código en la nube requieren suscripciones costosas y envían tu código a servidores externos. Como estudiante y desarrollador, necesitaba una alternativa local, ligera y gratuita que pudiera leer y modificar archivos de proyectos reales sin depender de un SaaS.",
+      "caseStudySolutionTitle": "La solución técnica",
+      "caseStudySolution": "Construí PauStudio con Tauri 2 (Rust) para un binario nativo de ~30 MB, Monaco Editor para la experiencia de edición, y un agente ReAct con herramientas de filesystem (list, read, search, write). Soporta Ollama local (Qwen3-Coder, DeepSeek-R1) y APIs con tier gratuito (DeepSeek, Qwen DashScope, GLM-4.7-Flash). El diff preview obligatorio antes de aplicar cambios garantiza control del usuario.",
+      "caseStudyResultsTitle": "Resultados",
+      "caseStudyResults": "IDE funcional descargable desde el portfolio con instaladores Windows/macOS/Linux vía GitHub Actions. Terminal PTY integrado, explorador de archivos, pestañas multi-archivo y modos Ask/Agent/Plan. Proyecto demostrable para reclutadores que buscan perfil IA + desktop.",
+      "caseStudyMetrics": [
+        { "label": "Tamaño instalador", "value": "~30 MB (Tauri vs Electron)" },
+        { "label": "Stack", "value": "Tauri 2 + React 19 + Rust" },
+        { "label": "Modelos IA", "value": "Ollama + 3 APIs gratuitas" },
+        { "label": "Plataformas", "value": "Windows, macOS, Linux" }
+      ]
     },
     "study-agents": {
       "heroSummary": "Capstone del programa Desarrollador 10X con IA (Instituto de Inteligencia Artificial): 8 semanas de formación intensiva + proyecto final. Plataforma multi-agente en producción, integrada en mi portfolio, para estudiar de verdad — no solo leer párrafos de un chat.",
@@ -454,7 +477,21 @@
         { "name": "Python 3.11", "role": "Backend y agentes" },
         { "name": "jsPDF / Markdown", "role": "Exportación de apuntes" }
       ],
-      "role": "Responsable único del capstone: diseño de arquitectura multi-agente, backend Python, frontend Next.js, RAG, integración en el portfolio, despliegue, documentación (README + demo) y iteración UX basada en uso real como estudiante."
+      "role": "Responsable único del capstone: diseño de arquitectura multi-agente, backend Python, frontend Next.js, RAG, integración en el portfolio, despliegue, documentación (README + demo) y iteración UX basada en uso real como estudiante.",
+      "caseStudyTitle": "Caso de estudio: Study Agents — Plataforma educativa con IA",
+      "caseStudyIntro": "Study Agents transforma PDFs y apuntes en un tutor personal con ocho agentes especializados, RAG sobre ChromaDB y flujos completos de estudio: chat, tests, ejercicios y exportación de apuntes.",
+      "caseStudyProblemTitle": "El problema",
+      "caseStudyProblem": "Los estudiantes usan chats de IA genéricos que no conocen su material, no adaptan explicaciones a su nivel (0-10) y no ofrecen un ciclo de estudio estructurado con tests, corrección y seguimiento de progreso. Como alumno de la UPC, vivía este problema a diario.",
+      "caseStudySolutionTitle": "La solución técnica",
+      "caseStudySolution": "Arquitectura multi-agente con FastAPI + LangChain: Content Processor indexa PDFs en ChromaDB, Explanation Agent adapta al nivel del usuario, Q&A responde con contexto RAG, Test/Exercise Generators crean evaluaciones personalizadas, y Feedback/Correction Agents dan retroalimentación educativa. Frontend Next.js 15 con NextAuth (Google), API keys por usuario y demo pública integrada en el portfolio.",
+      "caseStudyResultsTitle": "Resultados",
+      "caseStudyResults": "Plataforma en producción en paupedrejon.com/study-agents, accesible con un clic desde el portfolio. Capstone del programa 10X Developer con IA del Instituto de Inteligencia Artificial. Demostrable para reclutadores: no es un mockup, es código mantenido con backend escalable.",
+      "caseStudyMetrics": [
+        { "label": "Agentes IA", "value": "8 especializados" },
+        { "label": "Backend", "value": "FastAPI + LangChain" },
+        { "label": "Vector DB", "value": "ChromaDB (RAG)" },
+        { "label": "Estado", "value": "En producción" }
+      ]
     },
     "turelojya": {
       "heroSummary": "E-commerce full-stack de relojes de lujo en producción: catálogo, motor de tasación sobre más de 100.000 registros de mercado, checkout con Redsys, backoffice a medida y SEO técnico multiidioma — desarrollado de extremo a extremo en Owius.",
@@ -500,7 +537,21 @@
         { "name": "Brevo", "role": "Email transaccional y facturas PDF" },
         { "name": "WordPress", "role": "Migración del legacy" }
       ],
-      "role": "Desarrollador full-stack junior (prácticas en empresa): diseño e implementación de backend y frontend, algoritmo de tasación y pipeline de scraping, integración de pagos, SEO técnico, backoffice, despliegue y comunicación directa con el cliente para iterar sobre requisitos de negocio."
+      "role": "Desarrollador full-stack junior (prácticas en empresa): diseño e implementación de backend y frontend, algoritmo de tasación y pipeline de scraping, integración de pagos, SEO técnico, backoffice, despliegue y comunicación directa con el cliente para iterar sobre requisitos de negocio.",
+      "caseStudyTitle": "Caso de estudio: TuRelojYa — E-commerce de relojes de lujo",
+      "caseStudyIntro": "TuRelojYa es un e-commerce B2C en producción para compraventa de relojes premium, con motor de tasación automática, pasarela Redsys y SEO multiidioma — desarrollado de extremo a extremo durante mis prácticas en Owius.",
+      "caseStudyProblemTitle": "El problema",
+      "caseStudyProblem": "El cliente operaba con una web legacy en WordPress lenta, difícil de mantener y sin capacidad de tasación automática ni checkout moderno. Necesitaban una plataforma escalable que gestionara inventario, valorara relojes con datos de mercado y operara de forma autónoma.",
+      "caseStudySolutionTitle": "La solución técnica",
+      "caseStudySolution": "Migré el catálogo a MongoDB con backend Node.js (MVC), storefront React responsive y motor de tasación sobre 100.000+ registros de precios con scraping diario optimizado. Integré Redsys para pagos, Brevo para emails transaccionales, panel de administración propio y SEO técnico con sitemaps, metadatos dinámicos e i18n.",
+      "caseStudyResultsTitle": "Resultados",
+      "caseStudyResults": "Plataforma desplegada en producción en turelojya.com con Docker, operación autónoma del negocio y Lighthouse optimizado. Experiencia real de e-commerce full-stack en consultora de Barcelona, demostrable para equipos que buscan perfil productivo desde el primer día.",
+      "caseStudyMetrics": [
+        { "label": "Registros de tasación", "value": "100.000+" },
+        { "label": "Stack", "value": "React + Node.js + MongoDB" },
+        { "label": "Pagos", "value": "Redsys integrado" },
+        { "label": "Estado", "value": "En producción" }
+      ]
     },
     "evenely": {
       "heroSummary": "Plataforma SaaS para diseñar escape rooms virtuales sin código: editor visual por diapositivas, colaboración en tiempo real, suscripciones Free/Basic/Premium con Redsys recurrente y web de juego independiente con rankings y analíticas — el cierre de mis prácticas en Owius.",
@@ -854,6 +905,14 @@
     "heroBadge": "Experiencia técnica",
     "title": "SKILLS",
     "tagline": "Una visión completa de mis habilidades técnicas y niveles de competencia.",
+    "seoTitle": "Skills técnicas — React, Node.js, IA y más | Pau Pedrejon",
+    "seoDescription": "Habilidades técnicas de Pau Pedrejon: React, Next.js, TypeScript, Node.js, Python, IA/LLMs, React Native y más. Niveles de competencia detallados.",
+    "seoKeywords": [
+      "skills desarrollador full-stack",
+      "React TypeScript Barcelona",
+      "desarrollador IA skills",
+      "competencias ingeniero software"
+    ],
     "categoryLabel": "Categoría",
     "filterAll": "Todas",
     "filterByCategory": "Filtrar por categoría",
@@ -1167,6 +1226,14 @@
     "badge": "Formación",
     "title": "EDUCACIÓN",
     "tagline": "Mi formación académica y logros.",
+    "seoTitle": "Educación — Ingeniería Informática UPC | Pau Pedrejon",
+    "seoDescription": "Formación académica de Pau Pedrejon: Grado en Ingeniería Informática (UPC/FIB), certificación 10X Developer con IA (IIA) y bachillerato tecnológico ITB.",
+    "seoKeywords": [
+      "ingeniero informático UPC",
+      "formación desarrollador Barcelona",
+      "grado ingeniería software",
+      "portfolio estudiante UPC"
+    ],
     "academicBackground": "Formación académica",
     "educationTimeline": "Cronología académica",
     "viewMoreInfo": "Ver más información",
@@ -1204,6 +1271,14 @@
     "badge": "Sobre mí",
     "title": "SOBRE MÍ",
     "tagline": "Conóceme mejor.",
+    "seoTitle": "Sobre mí — Desarrollador Full-Stack en Barcelona | Pau Pedrejon",
+    "seoDescription": "Perfil de Pau Pedrejon: estudiante de Ingeniería Informática en la UPC, desarrollador full-stack especializado en React, Node.js e IA. Castelldefels, Barcelona.",
+    "seoKeywords": [
+      "desarrollador full-stack Barcelona",
+      "ingeniero software Castelldefels",
+      "perfil desarrollador UPC",
+      "desarrollador React Barcelona"
+    ],
     "sectionProfile": "Perfil",
     "sectionLanguages": "Idiomas",
     "bio": "Estudiante de Ingeniería Informática especializado en Software en la UPC. Me motiva aplicar un perfil multidisciplinar en equipos colaborativos para crear experiencias de usuario con impacto.",
@@ -1224,6 +1299,29 @@
       "contactar desarrollador",
       "contratar ingeniero software",
       "freelance full-stack Barcelona"
+    ],
+    "faqTitle": "Preguntas frecuentes",
+    "faq": [
+      {
+        "question": "¿Estás disponible para nuevas oportunidades?",
+        "answer": "Sí, estoy abierto a oportunidades laborales, prácticas, freelance y colaboraciones en desarrollo de software e IA, en Barcelona o en remoto."
+      },
+      {
+        "question": "¿Cuál es tu stack principal?",
+        "answer": "React, Next.js, TypeScript en frontend; Node.js y Python en backend; experiencia con IA/LLMs (LangChain, RAG, agentes), MongoDB, PostgreSQL, Docker y despliegue en producción."
+      },
+      {
+        "question": "¿Dónde estás ubicado?",
+        "answer": "Vivo en Castelldefels (Barcelona, España). Puedo trabajar presencialmente en el área metropolitana de Barcelona o en remoto."
+      },
+      {
+        "question": "¿Qué tipo de proyectos te interesan?",
+        "answer": "Proyectos full-stack con impacto real: SaaS, e-commerce, plataformas con IA, aplicaciones móviles y herramientas de productividad para desarrolladores."
+      },
+      {
+        "question": "¿Puedo ver tu CV?",
+        "answer": "Sí, puedes descargar mi CV desde la página principal del portfolio. También puedes contactarme directamente por email o LinkedIn."
+      }
     ],
     "sectionTitle": "Información de contacto",
     "getInTouch": "Contactar",
@@ -1480,5 +1578,19 @@
         { "label": "Open Data", "icon": "team" }
       ]
     }
+  },
+  "blog": {
+    "metaTitle": "Blog — Desarrollo Full-Stack e IA | Pau Pedrejon",
+    "metaDescription": "Artículos sobre desarrollo full-stack, inteligencia artificial, proyectos reales y aprendizaje técnico.",
+    "seoKeywords": [
+      "blog desarrollador",
+      "artículos React Next.js",
+      "IA desarrollo software",
+      "tutorial full-stack"
+    ],
+    "title": "Blog",
+    "subtitle": "Reflexiones técnicas sobre proyectos reales, IA y desarrollo full-stack.",
+    "backToList": "Volver al blog",
+    "empty": "Próximamente más artículos."
   }
 }

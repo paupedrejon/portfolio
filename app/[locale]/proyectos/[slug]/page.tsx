@@ -1,4 +1,6 @@
 import ProjectDetailView from "@/components/projects/ProjectDetailView";
+import ProjectCaseStudy from "@/components/projects/ProjectCaseStudy";
+import BreadcrumbJsonLd from "@/components/seo/BreadcrumbJsonLd";
 import JsonLd from "@/components/seo/JsonLd";
 import { creativeWorkSchema } from "@/lib/seo/json-ld";
 import { localizedUrl } from "@/lib/seo/paths";
@@ -6,7 +8,7 @@ import { projectDetailMetadata } from "@/lib/seo/sections";
 import { getVisibleProjects, isProjectSlug, PROJECTS_CONFIG, type ProjectSlug } from "@/lib/projects/config";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { SITE_URL } from "@/lib/seo/config";
+import { SITE_NAME, SITE_URL } from "@/lib/seo/config";
 
 type PageProps = {
   params: Promise<{ slug: string; locale: string }>;
@@ -46,16 +48,39 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     ? config.imageCard
     : `${SITE_URL}${config.imageCard}`;
 
+  const tProjects = await getTranslations({ locale, namespace: "projects" });
+  const homeUrl = localizedUrl(locale, "/");
+  const projectsUrl = localizedUrl(locale, "/proyectos");
+
   const schema = creativeWorkSchema({
     name,
     description: tPage("heroSummary"),
     url,
     image,
+    datePublished: config.sortDate ? `${config.sortDate}-01` : undefined,
+    keywords: config.tech.split(",").map((k) => k.trim()),
+    programmingLanguage: config.tech
+      .split(",")
+      .map((k) => k.trim())
+      .filter((k) =>
+        ["React", "TypeScript", "Node.js", "Python", "Rust", "JavaScript"].some((lang) =>
+          k.includes(lang),
+        ),
+      ),
+    demoUrl: config.externalHref?.startsWith("http") ? config.externalHref : undefined,
   });
 
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: SITE_NAME, url: homeUrl },
+          { name: tProjects("title"), url: projectsUrl },
+          { name, url },
+        ]}
+      />
       <JsonLd data={schema} />
+      <ProjectCaseStudy slug={slug} locale={locale} />
       <ProjectDetailView slug={slug as ProjectSlug} />
     </>
   );

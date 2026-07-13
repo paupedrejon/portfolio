@@ -1,10 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { spaceGrotesk, outfit, jetbrainsMono } from "../app/fonts";
+import { spaceGrotesk, outfit } from "../app/fonts";
+import {
+  getStoredAPIKeys,
+  isValidOpenAIKey,
+  saveAPIKeys,
+  type StudyAgentsAPIKeys,
+} from "@/lib/study-agents/api-keys";
 
-interface APIKeys {
-  openai: string;
+interface APIKeys extends StudyAgentsAPIKeys {
   [key: string]: string;
 }
 
@@ -22,18 +27,10 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Cargar keys guardadas
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("study_agents_api_keys");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          setKeys(parsed);
-        } catch (e) {
-          console.error("Error loading API keys:", e);
-        }
-      }
+    const stored = getStoredAPIKeys();
+    if (stored) {
+      setKeys(stored);
     }
   }, []);
 
@@ -45,21 +42,13 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
     }
   };
 
-  const validateKey = (service: string, key: string): boolean => {
-    switch (service) {
-      case "openai":
-        return key.startsWith("sk-") && key.length > 20;
-      default:
-        return key.length > 0;
-    }
-  };
-
   const handleSave = () => {
     const newErrors: Record<string, string> = {};
+    const trimmedKey = keys.openai.trim();
 
-    // Validar OpenAI (requerido)
-    if (!keys.openai || !validateKey("openai", keys.openai)) {
-      newErrors.openai = "La API key de OpenAI debe comenzar con 'sk-' y tener al menos 20 caracteres";
+    if (!trimmedKey || !isValidOpenAIKey(trimmedKey)) {
+      newErrors.openai =
+        "La API key de OpenAI debe comenzar con 'sk-' y tener al menos 20 caracteres";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -67,15 +56,9 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
       return;
     }
 
-    // Guardar en localStorage
-    if (typeof window !== "undefined") {
-      localStorage.setItem("study_agents_api_keys", JSON.stringify(keys));
-      // Disparar evento personalizado para que otros componentes se actualicen
-      window.dispatchEvent(new CustomEvent("apiKeysUpdated"));
-    }
-
-    // Notificar al componente padre
-    onKeysConfigured(keys);
+    const normalized = { openai: trimmedKey };
+    saveAPIKeys(normalized);
+    onKeysConfigured(normalized);
     onClose();
   };
 

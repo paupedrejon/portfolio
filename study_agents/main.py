@@ -70,25 +70,30 @@ class StudyAgentsSystem:
         else:
             print("💡 Sin API key - intentando usar Ollama (gratis) si está disponible")
     
-    def upload_documents(self, document_paths: list[str]) -> dict:
+    def upload_documents(
+        self,
+        document_paths: list[str],
+        chat_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+    ) -> dict:
         """
-        Procesa documentos subidos por el usuario
+        Procesa documentos subidos por el usuario (acumula en el chat, no borra anteriores).
         
         Args:
             document_paths: Lista de rutas a los documentos
+            chat_id: ID del chat para aislar el RAG
+            user_id: ID del usuario
             
         Returns:
             Información del procesamiento con tema detectado
         """
         print("\n📄 Procesando documentos...")
         
-        # Limpiar documentos anteriores antes de procesar nuevos
-        # Esto asegura que solo se use el contenido del PDF más reciente
-        print("🗑️ Limpiando documentos anteriores...")
-        self.memory.clear_all_documents()
-        print("✅ Documentos anteriores eliminados")
-        
-        processed_content = self.content_processor.process_documents(document_paths)
+        processed_content = self.content_processor.process_documents(
+            document_paths,
+            chat_id=chat_id,
+            user_id=user_id,
+        )
         print("✅ Documentos procesados y almacenados en memoria")
         
         # Detectar tema del documento procesado

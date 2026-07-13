@@ -48,9 +48,18 @@ declare const SpeechRecognition: {
 } | undefined;
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useSession } from "next-auth/react";
 import { spaceGrotesk, outfit, jetbrainsMono } from "../app/fonts";
 import APIKeyConfig from "./APIKeyConfig";
+import {
+  getStoredAPIKeys,
+  OPEN_API_KEY_MODAL_EVENT,
+} from "@/lib/study-agents/api-keys";
+import { saFetch, studyAgentsFetch } from "@/hooks/study-agents/useApiClient";
+import { useChatDocuments } from "@/hooks/study-agents/useChatDocuments";
+import ChatToolbar from "@/components/study-agents/chat/ChatToolbar";
+import ChatDocumentsPanel from "@/components/study-agents/chat/ChatDocumentsPanel";
 import ChatSidebar from "./ChatSidebar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -373,6 +382,7 @@ export default function StudyChat() {
   const [exerciseAnswerImage, setExerciseAnswerImage] = useState<string | null>(null);
   const [exerciseCorrection, setExerciseCorrection] = useState<ExerciseCorrection | null>(null);
   const exerciseImageInputRef = useRef<HTMLInputElement>(null);
+  const [showDocumentsPanel, setShowDocumentsPanel] = useState(false);
   const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
   const [apiKeys, setApiKeys] = useState<{ openai: string } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -384,6 +394,12 @@ export default function StudyChat() {
   const [newChatColor, setNewChatColor] = useState<string>("#6366f1");
   const [newChatIcon, setNewChatIcon] = useState<string>("chat");
   const userId = session?.user?.id || "";
+  const {
+    documents: chatDocuments,
+    loading: chatDocumentsLoading,
+    loadDocuments: reloadChatDocuments,
+    deleteDocument: deleteChatDocument,
+  } = useChatDocuments(currentChatId, userId || null, apiKeys?.openai);
   const [currentChatLevel, setCurrentChatLevel] = useState<{ topic: string; level: number } | null>(null);
   const [messageLevels, setMessageLevels] = useState<Record<string, { topic: string; level: number }>>({});
   const [learnedWordsCount, setLearnedWordsCount] = useState<number>(0);
@@ -472,7 +488,7 @@ export default function StudyChat() {
     if (!userId || !language || !isLanguageTopic(language) || !word.trim() || !translation.trim()) return;
     
     try {
-      const response = await fetch("/api/study-agents/add-learned-word", {
+      const response = await studyAgentsFetch("/api/study-agents/add-learned-word", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -559,7 +575,7 @@ export default function StudyChat() {
     if (!userId || !language || !isLanguageTopic(language)) return;
     
     try {
-      const response = await fetch("/api/study-agents/get-learned-words-count", {
+      const response = await studyAgentsFetch("/api/study-agents/get-learned-words-count", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, language }),
@@ -582,7 +598,7 @@ export default function StudyChat() {
             // Actualizar el nivel en el backend
             const chatIdToUse = currentChatId || currentChatIdRef.current;
             if (chatIdToUse) {
-              fetch("/api/study-agents/set-chat-level", {
+              studyAgentsFetch("/api/study-agents/set-chat-level", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -606,7 +622,7 @@ export default function StudyChat() {
     if (!userId || !language || !isLanguageTopic(language)) return;
     
     try {
-      const response = await fetch("/api/study-agents/get-learned-words", {
+      const response = await studyAgentsFetch("/api/study-agents/get-learned-words", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, language }),
@@ -626,7 +642,7 @@ export default function StudyChat() {
     if (!userId || !chatId) return;
     
     try {
-      const response = await fetch("/api/study-agents/get-chat-progress", {
+      const response = await studyAgentsFetch("/api/study-agents/get-chat-progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, chatId }),
@@ -687,7 +703,7 @@ export default function StudyChat() {
     if (!topic) return;
     
     try {
-      const response = await fetch("/api/study-agents/get-progress", {
+      const response = await studyAgentsFetch("/api/study-agents/get-progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, topic }),
@@ -1293,7 +1309,7 @@ export default function StudyChat() {
     
     try {
       // Buscar chat "General" en la lista
-      const response = await fetch("/api/study-agents/list-chats", {
+      const response = await studyAgentsFetch("/api/study-agents/list-chats", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1436,24 +1452,29 @@ export default function StudyChat() {
 
   // Verificar si hay API keys configuradas al cargar
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("study_agents_api_keys");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed.openai && parsed.openai.startsWith("sk-")) {
-            setApiKeys(parsed);
-          } else {
-            setShowAPIKeyConfig(true);
-          }
-    } catch {
-          setShowAPIKeyConfig(true);
-        }
-      } else {
-        setShowAPIKeyConfig(true);
-      }
+    const stored = getStoredAPIKeys();
+    if (stored) {
+      setApiKeys(stored);
+    } else {
+      setShowAPIKeyConfig(true);
     }
   }, []);
+
+  // Abrir modal desde StudyAgentsNav u otros componentes
+  useEffect(() => {
+    const handleOpenModal = () => setShowAPIKeyConfig(true);
+    window.addEventListener(OPEN_API_KEY_MODAL_EVENT, handleOpenModal);
+    return () => window.removeEventListener(OPEN_API_KEY_MODAL_EVENT, handleOpenModal);
+  }, []);
+
+  const closeAPIKeyModal = () => {
+    setShowAPIKeyConfig(false);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("apiKeyModalChange", { detail: { isOpen: false } }),
+      );
+    }
+  };
 
   // Notificar cuando se abre/cierra el modal de API keys
   useEffect(() => {
@@ -1465,24 +1486,8 @@ export default function StudyChat() {
   // Escuchar cambios en las API keys (cuando se actualizan desde el Header)
   useEffect(() => {
     const handleApiKeysUpdate = () => {
-      if (typeof window !== "undefined") {
-        const saved = localStorage.getItem("study_agents_api_keys");
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            if (parsed.openai && parsed.openai.startsWith("sk-")) {
-              setApiKeys(parsed);
-            } else {
-              setApiKeys(null);
-            }
-          } catch (e) {
-            console.error("Error loading API keys:", e);
-            setApiKeys(null);
-          }
-        } else {
-          setApiKeys(null);
-        }
-      }
+      const stored = getStoredAPIKeys();
+      setApiKeys(stored);
     };
 
     window.addEventListener("apiKeysUpdated", handleApiKeysUpdate);
@@ -1530,21 +1535,26 @@ export default function StudyChat() {
       formData.append("files", file);
     });
     formData.append("apiKey", apiKeys.openai);
+    if (currentChatId) formData.append("chatId", currentChatId);
+    if (userId) formData.append("userId", userId);
 
     setIsLoading(true);
     setLoadingMessage("Cargando y procesando documentos...");
 
     try {
-      const response = await fetch("/api/study-agents/upload", {
+      const { ok, data } = await saFetch<{
+        success?: boolean;
+        error?: string;
+        data?: { detected_topic?: string };
+      }>("/upload", {
         method: "POST",
         body: formData,
       });
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (ok && data.success) {
         const fileNames = Array.from(files).map((f) => f.name);
         setUploadedFiles((prev) => [...prev, ...fileNames]);
+        void reloadChatDocuments();
 
         // Si se detectó un tema del documento, establecerlo para este chat
         const detectedTopic = data.data?.detected_topic;
@@ -1554,7 +1564,7 @@ export default function StudyChat() {
           setCurrentChatLevel({ topic: detectedTopic, level: currentChatLevel?.level || 0 });
           
           // Guardar el tema en el backend para este chat
-          fetch("/api/study-agents/set-chat-level", {
+          studyAgentsFetch("/api/study-agents/set-chat-level", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1708,7 +1718,7 @@ export default function StudyChat() {
     if (!chatIdToUse) {
       // Buscar chat "General" existente
       try {
-        const listResponse = await fetch("/api/study-agents/list-chats", {
+        const listResponse = await studyAgentsFetch("/api/study-agents/list-chats", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1750,7 +1760,7 @@ export default function StudyChat() {
     } else {
       // Si hay un chat_id, obtener su título para verificar si es "General"
       try {
-        const loadResponse = await fetch("/api/study-agents/load-chat", {
+        const loadResponse = await studyAgentsFetch("/api/study-agents/load-chat", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1787,7 +1797,7 @@ export default function StudyChat() {
         topic: msg.topic || undefined, // Preservar el tema si existe (para mensajes de selección de nivel)
       }));
 
-      const response = await fetch("/api/study-agents/save-chat", {
+      const response = await studyAgentsFetch("/api/study-agents/save-chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1841,7 +1851,7 @@ export default function StudyChat() {
     if (!userId) return;
 
     try {
-      const response = await fetch("/api/study-agents/load-chat", {
+      const response = await studyAgentsFetch("/api/study-agents/load-chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1965,7 +1975,7 @@ export default function StudyChat() {
     const newChatId = `chat-${Date.now()}`;
     
     try {
-      const response = await fetch("/api/study-agents/save-chat", {
+      const response = await studyAgentsFetch("/api/study-agents/save-chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -2178,7 +2188,7 @@ export default function StudyChat() {
           setLoadingMessage(`Procesando ${url}...`);
           
           try {
-            const response = await fetch("/api/study-agents/process-url", {
+            const response = await studyAgentsFetch("/api/study-agents/process-url", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -2327,7 +2337,7 @@ ${contentPreview}
           // Obtener el tema del chat actual (desde currentChatLevel o desde el título del chat)
           const chatTopic = currentChatLevel?.topic || null;
           
-          const response = await fetch("/api/study-agents/set-chat-level", {
+          const response = await studyAgentsFetch("/api/study-agents/set-chat-level", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -2422,7 +2432,7 @@ ${contentPreview}
           
           // Guardar el nivel en el backend si hay chatId
           if (currentChatId && userId) {
-            fetch("/api/study-agents/set-chat-level", {
+            studyAgentsFetch("/api/study-agents/set-chat-level", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -2642,7 +2652,7 @@ ${contentPreview}
       // const level = currentChatLevel?.level || null;
       
       // Llamar a la API con la key del usuario y el modelo seleccionado
-      const response = await fetch("/api/study-agents/generate-notes", {
+      const response = await studyAgentsFetch("/api/study-agents/generate-notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2755,7 +2765,7 @@ ${contentPreview}
       });
 
       // Llamar a la API con la key del usuario y el modelo seleccionado
-      const response = await fetch("/api/study-agents/generate-test", {
+      const response = await studyAgentsFetch("/api/study-agents/generate-test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2922,7 +2932,7 @@ ${contentPreview}
       
       console.log("[generateExercise] Enviando topics al backend:", topicsToSend);
       
-      const response = await fetch("/api/study-agents/generate-exercise", {
+      const response = await studyAgentsFetch("/api/study-agents/generate-exercise", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3087,7 +3097,7 @@ ${contentPreview}
       const chatTopic = currentChatLevel?.topic || null;
       
       // Llamar a la API con la key del usuario y el modelo seleccionado
-      const response = await fetch("/api/study-agents/ask", {
+      const response = await studyAgentsFetch("/api/study-agents/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3154,7 +3164,7 @@ ${contentPreview}
             // Actualizar progreso de comprensión (solo si hay comprensión significativa)
             if (understandingScore >= 0.2) {
               try {
-                const understandingResponse = await fetch("/api/study-agents/update-chat-understanding", {
+                const understandingResponse = await studyAgentsFetch("/api/study-agents/update-chat-understanding", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -3230,7 +3240,7 @@ ${contentPreview}
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/study-agents/grade-test", {
+      const response = await studyAgentsFetch("/api/study-agents/grade-test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3309,7 +3319,7 @@ ${contentPreview}
           const chatIdToUse = currentChatId || currentChatIdRef.current;
           console.log(`📊 [Frontend] Actualizando progreso del test: tema=${mainTopic}, score=${score}%, userId=${userId}, chatId=${chatIdToUse}`);
           console.log(`📊 [Frontend] Score calculado: ${score}% (${correctCount}/${totalQuestions})`);
-          const progressResponse = await fetch("/api/study-agents/update-test-progress", {
+          const progressResponse = await studyAgentsFetch("/api/study-agents/update-test-progress", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -3497,7 +3507,7 @@ ${contentPreview}
 
   const handleKeysConfigured = (keys: { openai: string }) => {
     setApiKeys(keys);
-    setShowAPIKeyConfig(false);
+    closeAPIKeyModal();
     addMessage({
       role: "system",
       content: "API keys configuradas correctamente. Ya puedes usar el sistema.",
@@ -4131,333 +4141,46 @@ ${contentPreview}
           zIndex: 1,
         }}
       >
-      {/* API Key Configuration Modal */}
-      {showAPIKeyConfig && (
-        <APIKeyConfig
-          onKeysConfigured={handleKeysConfigured}
-          onClose={() => {
-            if (apiKeys?.openai) {
-              setShowAPIKeyConfig(false);
-            }
-            // Notificar que el modal se cerró
-            if (typeof window !== "undefined") {
-              window.dispatchEvent(new CustomEvent("apiKeyModalChange", { detail: { isOpen: false } }));
-            }
-          }}
+      {/* API Key Configuration Modal — portal para evitar problemas de z-index */}
+      {showAPIKeyConfig &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <APIKeyConfig
+            onKeysConfigured={handleKeysConfigured}
+            onClose={closeAPIKeyModal}
+          />,
+          document.body,
+        )}
+      
+      <ChatToolbar
+        colorTheme={colorTheme}
+        isMounted={isMounted}
+        hasApiKey={!!apiKeys?.openai}
+        onOpenApiKeyConfig={() => setShowAPIKeyConfig(true)}
+        selectedModel={selectedModel}
+        onSelectModel={(model) => {
+          setSelectedModel(model);
+          setShowModelDropdown(false);
+        }}
+        showModelDropdown={showModelDropdown}
+        onToggleModelDropdown={() => setShowModelDropdown(!showModelDropdown)}
+        modelDropdownRef={modelDropdownRef}
+        onSetColorTheme={setColorTheme}
+        sessionCostUsd={totalStats.totalCost}
+        documentCount={chatDocuments.length}
+        onToggleDocuments={() => setShowDocumentsPanel((v) => !v)}
+        showDocuments={showDocumentsPanel}
+      />
+      {showDocumentsPanel && (
+        <ChatDocumentsPanel
+          colorTheme={colorTheme}
+          documents={chatDocuments}
+          loading={chatDocumentsLoading}
+          onRefresh={() => void reloadChatDocuments()}
+          onDelete={(docId) => void deleteChatDocument(docId)}
+          onClose={() => setShowDocumentsPanel(false)}
         />
       )}
-      
-      {/* Selector de Tema y Modelo Global - Premium Design */}
-      <div style={{
-        display: "flex",
-        justifyContent: "flex-end",
-        alignItems: "center",
-        padding: "1rem 1.5rem",
-        gap: "0.75rem",
-        background: colorTheme === "dark" 
-          ? "rgba(26, 26, 36, 0.6)" 
-          : "rgba(255, 255, 255, 0.8)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderBottom: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.25)"}`,
-        flexWrap: "wrap",
-        position: "relative",
-        zIndex: 10,
-        boxShadow: colorTheme === "dark"
-          ? "0 2px 8px rgba(0, 0, 0, 0.1)"
-          : "0 2px 8px rgba(0, 0, 0, 0.05)",
-      }}>
-        {/* Selector de Modelo */}
-        {isMounted && (
-          <>
-            <span style={{
-              fontSize: "0.875rem",
-              color: colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563",
-              marginRight: "0.5rem",
-              fontWeight: 500,
-            }}>
-              Modelo:
-            </span>
-              <div
-              ref={modelDropdownRef}
-              style={{ position: "relative", display: "inline-block" }}
-            >
-              <button
-                onClick={() => setShowModelDropdown(!showModelDropdown)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  padding: "0.625rem 1rem",
-                  paddingRight: "2rem",
-                  background: colorTheme === "dark"
-                    ? "rgba(99, 102, 241, 0.1)"
-                    : "rgba(99, 102, 241, 0.08)",
-                  border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.25)"}`,
-                  borderRadius: "8px",
-                  color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                  outline: "none",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = colorTheme === "dark"
-                    ? "rgba(99, 102, 241, 0.15)"
-                    : "rgba(99, 102, 241, 0.12)";
-                  e.currentTarget.style.borderColor = colorTheme === "dark"
-                    ? "rgba(99, 102, 241, 0.4)"
-                    : "rgba(99, 102, 241, 0.35)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = colorTheme === "dark"
-                    ? "rgba(99, 102, 241, 0.1)"
-                    : "rgba(99, 102, 241, 0.08)";
-                  e.currentTarget.style.borderColor = colorTheme === "dark"
-                    ? "rgba(99, 102, 241, 0.3)"
-                    : "rgba(99, 102, 241, 0.25)";
-                }}
-              >
-                <span>
-                  {selectedModel === "auto" ? "Automático (Optimiza Costes)" :
-                   selectedModel === "gpt-5" ? "GPT-5" :
-                   selectedModel === "gpt-4o" ? "GPT-4o" :
-                   selectedModel === "llama3.1" ? "Llama 3.1" :
-                 selectedModel}
-                </span>
-                <span style={{
-                  fontSize: "0.625rem",
-                  transform: showModelDropdown ? "rotate(180deg)" : "rotate(0deg)",
-                  transition: "transform 0.2s ease",
-                  display: "inline-block",
-                }}>
-                  ▼
-                </span>
-              </button>
-              
-              {showModelDropdown && (
-                <div 
-                  className="model-dropdown-scroll"
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseDown={(e) => e.stopPropagation()}
-                style={{
-                    position: "absolute",
-                    top: "calc(100% + 0.5rem)",
-                    left: 0,
-                    background: colorTheme === "dark" 
-                      ? "rgba(26, 26, 36, 0.95)" 
-                      : "rgba(255, 255, 255, 0.95)",
-                    backdropFilter: "blur(20px)",
-                    WebkitBackdropFilter: "blur(20px)",
-                    borderRadius: "12px",
-                    padding: "0.375rem",
-                    minWidth: "260px",
-                    maxHeight: "200px",
-                    overflowY: "auto",
-                    overflowX: "hidden",
-                    boxShadow: colorTheme === "dark"
-                      ? "0 8px 32px rgba(0, 0, 0, 0.4)"
-                      : "0 8px 32px rgba(0, 0, 0, 0.15)",
-                    border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(148, 163, 184, 0.2)"}`,
-                    zIndex: 10000,
-                    scrollbarWidth: "thin",
-                    scrollbarColor: `${colorTheme === "dark" ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.5)"} ${colorTheme === "dark" ? "rgba(26, 26, 36, 0.3)" : "rgba(255, 255, 255, 0.3)"}`,
-                    pointerEvents: "auto",
-                }}
-                >
-                  <style dangerouslySetInnerHTML={{__html: `
-                    .model-dropdown-scroll::-webkit-scrollbar {
-                      width: 6px;
-                    }
-                    .model-dropdown-scroll::-webkit-scrollbar-track {
-                      background: ${colorTheme === "dark" ? "rgba(26, 26, 36, 0.2)" : "rgba(241, 245, 249, 0.4)"};
-                      border-radius: 6px;
-                    }
-                    .model-dropdown-scroll::-webkit-scrollbar-thumb {
-                      background: ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.4)" : "rgba(148, 163, 184, 0.5)"};
-                      border-radius: 6px;
-                      border: 1px solid ${colorTheme === "dark" ? "rgba(26, 26, 36, 0.2)" : "rgba(255, 255, 255, 0.3)"};
-                    }
-                    .model-dropdown-scroll::-webkit-scrollbar-thumb:hover {
-                      background: ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.6)" : "rgba(148, 163, 184, 0.7)"};
-                    }
-                  `}} />
-                {(() => {
-                  // Función para obtener el precio por 1000 tokens (entrada + salida)
-                    const getPricePer1K = (modelKey: string): number => {
-                    const pricing = MODEL_PRICING[modelKey.toLowerCase()] || MODEL_PRICING["gpt-4-turbo"];
-                      return pricing.input + pricing.output;
-                    };
-                    
-                    const formatPrice = (price: number): string => {
-                      return formatCost(price);
-                    };
-                    
-                    const models = [
-                      { value: "auto", label: "Automático", subtitle: "Optimiza Costes", price: null, priceValue: 0 },
-                      { value: "gpt-5", label: "GPT-5", subtitle: null, price: null, priceValue: getPricePer1K("gpt-5") },
-                      { value: "gpt-4o", label: "GPT-4o", subtitle: null, price: null, priceValue: getPricePer1K("gpt-4o") },
-                      { value: "llama3.1", label: "Llama 3.1", subtitle: "Gratis", price: "Gratis", priceValue: 0 },
-                    ];
-                    
-                    // Ordenar por precio (Automático primero, luego modelos de pago, luego gratis)
-                    const sortedModels = models.sort((a, b) => {
-                      if (a.value === "auto") return -1; // Automático siempre primero
-                      if (b.value === "auto") return 1;
-                      // Modelos gratis (precio 0) al final
-                      if (a.priceValue === 0 && b.priceValue > 0) return 1;
-                      if (b.priceValue === 0 && a.priceValue > 0) return -1;
-                      // Ordenar modelos de pago por precio ascendente
-                      return a.priceValue - b.priceValue;
-                    });
-                    
-                    // Formatear precios después de ordenar
-                    sortedModels.forEach(model => {
-                      if (model.priceValue > 0) {
-                        model.price = formatPrice(model.priceValue);
-                      }
-                    });
-                  
-                    return sortedModels.map((model) => {
-                      const isSelected = selectedModel === model.value;
-                  return (
-                        <button
-                          key={model.value}
-                          onClick={() => {
-                            setSelectedModel(model.value);
-                            setShowModelDropdown(false);
-                          }}
-                style={{
-                            width: "100%",
-                            padding: "0.5rem 0.75rem",
-                            background: isSelected
-                              ? (colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.15)")
-                              : "transparent",
-                            border: "none",
-                            borderRadius: "8px",
-                  color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
-                            fontSize: "0.8125rem",
-                            fontWeight: isSelected ? 600 : 500,
-                            cursor: "pointer",
-                            textAlign: "left",
-                            transition: "all 0.2s ease",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: "0.5rem",
-                            marginBottom: "0.125rem",
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!isSelected) {
-                              e.currentTarget.style.background = colorTheme === "dark"
-                                ? "rgba(99, 102, 241, 0.1)"
-                                : "rgba(99, 102, 241, 0.08)";
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isSelected) {
-                              e.currentTarget.style.background = "transparent";
-                            }
-                          }}
-                        >
-                          <div style={{ display: "flex", flexDirection: "column", gap: "0.125rem", flex: 1, minWidth: 0 }}>
-                            <span style={{ fontSize: "0.8125rem" }}>{model.label}</span>
-                            {(model.subtitle || model.price) && (
-                              <span style={{
-                                fontSize: "0.6875rem",
-                                color: colorTheme === "dark" ? "#94a3b8" : "#64748b",
-                                fontWeight: 400,
-                              }}>
-                                {model.subtitle || `${model.price}/1K tokens`}
-                              </span>
-                            )}
-              </div>
-                          {isSelected && (
-                            <HiCheck size={14} color="#6366f1" style={{ flexShrink: 0 }} />
-                          )}
-                        </button>
-                      );
-                    });
-                  })()}
-                </div>
-              )}
-            </div>
-          </>
-        )}
-        
-        <span style={{
-          fontSize: "0.875rem",
-          color: colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563",
-          marginRight: "0.5rem",
-          marginLeft: "1rem",
-          fontWeight: 500,
-        }}>
-          Tema:
-        </span>
-        <button
-          onClick={() => setColorTheme("dark")}
-          title="Tema oscuro"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "48px",
-            height: "48px",
-            background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
-            borderRadius: "24px",
-            fontSize: "0.875rem",
-            fontWeight: 600,
-            color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-            border: "none",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = colorTheme === "dark" 
-              ? "rgba(99, 102, 241, 0.15)" 
-              : "rgba(99, 102, 241, 0.12)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = colorTheme === "dark" 
-              ? "rgba(99, 102, 241, 0.1)" 
-              : "rgba(99, 102, 241, 0.08)";
-          }}
-        >
-          <MoonIcon size={18} />
-        </button>
-        <button
-          onClick={() => setColorTheme("light")}
-          title="Tema claro"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "48px",
-            height: "48px",
-            background: colorTheme === "light" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
-            borderRadius: "24px",
-            fontSize: "0.875rem",
-            fontWeight: 600,
-            color: colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24",
-            border: "none",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = colorTheme === "light" 
-              ? "rgba(99, 102, 241, 0.15)" 
-              : "rgba(99, 102, 241, 0.12)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = colorTheme === "light" 
-              ? "rgba(99, 102, 241, 0.1)" 
-              : "rgba(99, 102, 241, 0.08)";
-          }}
-        >
-          <SunIcon size={18} />
-        </button>
-      </div>
       {/* Chat Container */}
       <div
         style={{
@@ -4813,7 +4536,7 @@ ${contentPreview}
                       if (currentChatId && userId) {
                         try {
                           // Obtener chat actual
-                          const loadResponse = await fetch("/api/study-agents/load-chat", {
+                          const loadResponse = await studyAgentsFetch("/api/study-agents/load-chat", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ userId, chatId: currentChatId }),
@@ -4830,7 +4553,7 @@ ${contentPreview}
                             };
                             
                             // Guardar chat actualizado
-                            await fetch("/api/study-agents/save-chat", {
+                            await studyAgentsFetch("/api/study-agents/save-chat", {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({
@@ -4844,7 +4567,7 @@ ${contentPreview}
                             
                             // Si hay nivel, actualizarlo también
                             if (initialFormData.level !== null) {
-                              await fetch("/api/study-agents/set-chat-level", {
+                              await studyAgentsFetch("/api/study-agents/set-chat-level", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({
@@ -5895,7 +5618,7 @@ ${contentPreview}
                                 
                                 try {
                                   // Establecer el nivel en el chat
-                                  const response = await fetch("/api/study-agents/set-chat-level", {
+                                  const response = await studyAgentsFetch("/api/study-agents/set-chat-level", {
                                     method: "POST",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({
@@ -6720,6 +6443,7 @@ ${contentPreview}
             msOverflowStyle: "none",
           }}>
             <input
+              id="study-chat-file-input"
               ref={fileInputRef}
               type="file"
               accept=".pdf"
@@ -7071,7 +6795,7 @@ ${contentPreview}
                                 
                                 console.log("📊 [Frontend] Enviando set-chat-level desde slider:", requestBody);
                                 
-                                const response = await fetch("/api/study-agents/set-chat-level", {
+                                const response = await studyAgentsFetch("/api/study-agents/set-chat-level", {
                                   method: "POST",
                                   headers: { "Content-Type": "application/json" },
                                   body: JSON.stringify(requestBody),
@@ -7210,7 +6934,7 @@ ${contentPreview}
                                 
                                 console.log("📊 [Frontend] Enviando set-chat-level:", requestBody);
                                 
-                                const response = await fetch("/api/study-agents/set-chat-level", {
+                                const response = await studyAgentsFetch("/api/study-agents/set-chat-level", {
                                   method: "POST",
                                   headers: { "Content-Type": "application/json" },
                                   body: JSON.stringify(requestBody),
@@ -7349,6 +7073,7 @@ ${contentPreview}
             </button>
             <textarea
               ref={textareaRef}
+              data-study-chat-input
               value={input}
               onChange={(e) => {
                 setInput(e.target.value);
@@ -12392,7 +12117,7 @@ function LanguageFlashcards({
       if (!userId || !language) return;
       
       try {
-        const response = await fetch("/api/study-agents/get-learned-words", {
+        const response = await studyAgentsFetch("/api/study-agents/get-learned-words", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId, language }),
@@ -12519,7 +12244,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
 [{"word": "concepto_o_término", "translation": "definición_o_explicación", "example": "ejemplo_práctico_opcional", "options": ["definición_correcta", "definición_de_concepto_diferente_1", "definición_de_concepto_diferente_2", "definición_de_concepto_diferente_3"]}]`;
       }
       
-      const response = await fetch("/api/study-agents/ask", {
+      const response = await studyAgentsFetch("/api/study-agents/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -12763,7 +12488,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
         
         // Guardar en el backend
         if (userId && language) {
-          fetch("/api/study-agents/add-learned-word", {
+          studyAgentsFetch("/api/study-agents/add-learned-word", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -12780,7 +12505,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
             const data = await res.json();
             if (data.success) {
               // Recargar el conteo desde el backend para asegurar sincronización
-              fetch("/api/study-agents/get-learned-words-count", {
+              studyAgentsFetch("/api/study-agents/get-learned-words-count", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId, language }),
@@ -12794,7 +12519,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
               .catch(err => console.error("Error loading words count:", err));
               
               // Recargar la lista completa de palabras aprendidas para asegurar que se filtren correctamente
-              fetch("/api/study-agents/get-learned-words", {
+              studyAgentsFetch("/api/study-agents/get-learned-words", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId, language }),
@@ -13673,7 +13398,7 @@ export default App;`,
       } else {
         // Para todos los lenguajes (incluyendo JavaScript con inputs), usar la API del servidor
         try {
-          const response = await fetch("/api/study-agents/execute-code", {
+          const response = await studyAgentsFetch("/api/study-agents/execute-code", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

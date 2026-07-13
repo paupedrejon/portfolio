@@ -1,9 +1,11 @@
 import { routing } from "@/i18n/routing";
+import { getAllPostSlugs } from "@/lib/blog/posts";
 import { getVisibleProjects } from "@/lib/projects/config";
 import { getLevelIds } from "@/lib/cursos/levels";
 import { SITE_URL } from "./config";
+import { localePathname } from "./localized-paths";
 
-/** Rutas públicas indexables (sin prefijo de locale). */
+/** Rutas públicas indexables (sin prefijo de locale, rutas internas). */
 export const LOCALIZED_STATIC_PATHS = [
   "",
   "/proyectos",
@@ -21,13 +23,11 @@ export const LOCALIZED_STATIC_PATHS = [
   "/cursos/react/resultado",
   "/labs",
   "/labs/minecraft",
-  "/projects",
+  "/blog",
 ] as const;
 
 export function localizedUrl(locale: string, pathname: string): string {
-  const normalized = pathname === "" ? "" : pathname.startsWith("/") ? pathname : `/${pathname}`;
-  if (!normalized) return `${SITE_URL}/${locale}`;
-  return `${SITE_URL}/${locale}${normalized}`;
+  return `${SITE_URL}${localePathname(locale, pathname)}`;
 }
 
 export function buildSitemapEntries(): { url: string; lastModified?: Date }[] {
@@ -47,6 +47,12 @@ export function buildSitemapEntries(): { url: string; lastModified?: Date }[] {
     for (const levelId of getLevelIds()) {
       entries.push({
         url: localizedUrl(locale, `/cursos/react/nivel/${levelId}`),
+        lastModified,
+      });
+    }
+    for (const { slug: blogSlug } of getAllPostSlugs().filter((p) => p.locale === locale)) {
+      entries.push({
+        url: localizedUrl(locale, `/blog/${blogSlug}`),
         lastModified,
       });
     }

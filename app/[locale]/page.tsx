@@ -35,6 +35,17 @@ export default async function LocaleHomePage({ params }: Props) {
   return (
     <>
       <JsonLd data={[profilePage, person, website]} />
+      <div className="sr-only">
+        <h1>{t("seoTitle")}</h1>
+        <p>{t("seoDescription")}</p>
+        <nav aria-label="Secciones principales">
+          <a href={`/${locale}/proyectos`}>Proyectos</a>
+          <a href={`/${locale}/skills`}>Skills</a>
+          <a href={`/${locale}/experience`}>Experiencia</a>
+          <a href={`/${locale}/blog`}>Blog</a>
+          <a href={`/${locale}/contact`}>Contacto</a>
+        </nav>
+      </div>
       <HomePage />
     </>
   );

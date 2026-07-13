@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { LayoutGrid } from "lucide-react";
 import "../home.css";
@@ -11,7 +12,6 @@ import "./skills.css";
 import PortfolioPageHero from "@/components/portfolio/PortfolioPageHero";
 import { SkillCard, type SkillCardItem } from "@/components/SkillCard";
 import SkillDetailModal from "@/components/skills/SkillDetailModal";
-import { usePathname, useRouter } from "@/i18n/navigation";
 import {
   SkillCategoryFilterIcon,
   type SkillCategoryKey,

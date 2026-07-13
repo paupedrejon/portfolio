@@ -15,6 +15,11 @@ export function personSchema(params: {
     description: params.description,
     url: `${SITE_URL}/${params.locale}`,
     jobTitle: params.jobTitle ?? "Full-Stack Software Engineer",
+    hasOccupation: {
+      "@type": "Occupation",
+      name: params.jobTitle ?? "Full-Stack Software Engineer",
+      occupationalCategory: "Software Development",
+    },
     email: CONTACT_EMAIL,
     image: `${SITE_URL}/Favicon.png`,
     address: {
@@ -26,6 +31,12 @@ export function personSchema(params: {
     alumniOf: {
       "@type": "CollegeOrUniversity",
       name: "Universitat Politècnica de Barcelona",
+      sameAs: "https://www.upc.edu/",
+    },
+    worksFor: {
+      "@type": "Organization",
+      name: "Owius",
+      url: "https://owius.com/",
     },
     ...(params.knowsAbout?.length ? { knowsAbout: params.knowsAbout } : {}),
     sameAs: [GITHUB_URL, LINKEDIN_URL],
@@ -54,11 +65,6 @@ export function websiteSchema(params: {
     url: `${SITE_URL}/${params.locale}`,
     author: { "@type": "Person", name: SITE_NAME, url: LINKEDIN_URL },
     inLanguage: params.locale,
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${SITE_URL}/${params.locale}/proyectos`,
-      "query-input": "required name=search_term_string",
-    },
   };
 }
 
@@ -67,6 +73,11 @@ export function creativeWorkSchema(params: {
   description: string;
   url: string;
   image?: string;
+  datePublished?: string;
+  keywords?: string[];
+  programmingLanguage?: string[];
+  codeRepository?: string;
+  demoUrl?: string;
 }) {
   return {
     "@context": "https://schema.org",
@@ -75,6 +86,42 @@ export function creativeWorkSchema(params: {
     description: params.description,
     url: params.url,
     ...(params.image ? { image: params.image } : {}),
+    ...(params.datePublished ? { datePublished: params.datePublished } : {}),
+    ...(params.keywords?.length ? { keywords: params.keywords.join(", ") } : {}),
+    ...(params.programmingLanguage?.length
+      ? { programmingLanguage: params.programmingLanguage }
+      : {}),
+    ...(params.codeRepository ? { codeRepository: params.codeRepository } : {}),
+    ...(params.demoUrl ? { workExample: { "@type": "WebApplication", url: params.demoUrl } } : {}),
     author: { "@type": "Person", name: SITE_NAME },
+  };
+}
+
+export function blogPostingSchema(params: {
+  title: string;
+  description: string;
+  url: string;
+  datePublished: string;
+  dateModified?: string;
+  image?: string;
+  tags?: string[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: params.title,
+    description: params.description,
+    url: params.url,
+    datePublished: params.datePublished,
+    dateModified: params.dateModified ?? params.datePublished,
+    ...(params.image ? { image: params.image } : {}),
+    ...(params.tags?.length ? { keywords: params.tags.join(", ") } : {}),
+    author: { "@type": "Person", name: SITE_NAME, url: LINKEDIN_URL },
+    publisher: {
+      "@type": "Person",
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+    inLanguage: params.url.includes("/en/") ? "en" : params.url.includes("/it/") ? "it" : "es",
   };
 }

@@ -226,6 +226,15 @@
     "badge": "Featured Work",
     "title": "PROJECTS",
     "tagline": "A collection of projects that showcase my passion for development and creative technology.",
+    "seoTitle": "Full-Stack & AI Projects — Pau Pedrejon Portfolio",
+    "seoDescription": "Real production projects: luxury e-commerce, SaaS, local AI IDE and multi-agent learning platform. Full-stack developer in Barcelona.",
+    "seoKeywords": [
+      "full-stack developer projects",
+      "React portfolio projects",
+      "AI projects Barcelona",
+      "React Node.js e-commerce",
+      "UPC software engineering portfolio"
+    ],
     "used": "USED",
     "filterAll": "All",
     "filterByArea": "Filter by area",
@@ -401,7 +410,21 @@
         { "name": "Monaco Editor", "role": "Code editor" },
         { "name": "Ollama / DeepSeek / Qwen / GLM", "role": "Free AI models" }
       ],
-      "role": "Design, full-stack development and IDE distribution as a downloadable portfolio project."
+      "role": "Design, full-stack development and IDE distribution as a downloadable portfolio project.",
+      "caseStudyTitle": "Case study: PauStudio — Local AI IDE",
+      "caseStudyIntro": "PauStudio (TealCode) is an open-source desktop IDE combining my portfolio aesthetics with AI agent capabilities comparable to Cursor, but running locally with free models.",
+      "caseStudyProblemTitle": "The problem",
+      "caseStudyProblem": "Cloud code assistants require expensive subscriptions and send your code to external servers. As a student and developer, I needed a local, lightweight, free alternative that could read and modify real project files without depending on a SaaS.",
+      "caseStudySolutionTitle": "Technical solution",
+      "caseStudySolution": "Built PauStudio with Tauri 2 (Rust) for a ~30 MB native binary, Monaco Editor for the editing experience, and a ReAct agent with filesystem tools (list, read, search, write). Supports local Ollama (Qwen3-Coder, DeepSeek-R1) and free-tier APIs (DeepSeek, Qwen DashScope, GLM-4.7-Flash). Mandatory diff preview before applying changes ensures user control.",
+      "caseStudyResultsTitle": "Results",
+      "caseStudyResults": "Functional IDE downloadable from the portfolio with Windows/macOS/Linux installers via GitHub Actions. Integrated PTY terminal, file explorer, multi-file tabs and Ask/Agent/Plan modes. Demonstrable project for recruiters seeking AI + desktop profile.",
+      "caseStudyMetrics": [
+        { "label": "Installer size", "value": "~30 MB (Tauri vs Electron)" },
+        { "label": "Stack", "value": "Tauri 2 + React 19 + Rust" },
+        { "label": "AI models", "value": "Ollama + 3 free APIs" },
+        { "label": "Platforms", "value": "Windows, macOS, Linux" }
+      ]
     },
     "study-agents": {
       "heroSummary": "Capstone of the Developer 10X with AI program (Instituto de Inteligencia Artificial): 8 intensive weeks + final project. Multi-agent platform in production inside my portfolio — real study flows, not long chat paragraphs.",
@@ -453,7 +476,21 @@
         { "name": "Python 3.11", "role": "Backend & agents" },
         { "name": "jsPDF / Markdown", "role": "Notes export" }
       ],
-      "role": "Sole capstone owner: multi-agent architecture, Python backend, Next.js frontend, RAG, portfolio integration, deployment, documentation (README + demo) and UX iteration based on real student use."
+      "role": "Sole capstone owner: multi-agent architecture, Python backend, Next.js frontend, RAG, portfolio integration, deployment, documentation (README + demo) and UX iteration based on real student use.",
+      "caseStudyTitle": "Case study: Study Agents — AI learning platform",
+      "caseStudyIntro": "Study Agents transforms PDFs and notes into a personal tutor with eight specialized agents, ChromaDB RAG and complete study flows: chat, tests, exercises and note export.",
+      "caseStudyProblemTitle": "The problem",
+      "caseStudyProblem": "Students use generic AI chats that don't know their material, don't adapt explanations to their level (0-10) and don't offer a structured study cycle with tests, correction and progress tracking. As a UPC student, I experienced this daily.",
+      "caseStudySolutionTitle": "Technical solution",
+      "caseStudySolution": "Multi-agent architecture with FastAPI + LangChain: Content Processor indexes PDFs in ChromaDB, Explanation Agent adapts to user level, Q&A answers with RAG context, Test/Exercise Generators create personalized assessments, and Feedback/Correction Agents provide educational feedback. Next.js 15 frontend with NextAuth (Google), per-user API keys and public demo integrated in the portfolio.",
+      "caseStudyResultsTitle": "Results",
+      "caseStudyResults": "Platform in production at paupedrejon.com/study-agents, accessible with one click from the portfolio. Capstone of the 10X AI Developer program at the Artificial Intelligence Institute. Demonstrable for recruiters: not a mockup, maintained code with scalable backend.",
+      "caseStudyMetrics": [
+        { "label": "AI agents", "value": "8 specialized" },
+        { "label": "Backend", "value": "FastAPI + LangChain" },
+        { "label": "Vector DB", "value": "ChromaDB (RAG)" },
+        { "label": "Status", "value": "In production" }
+      ]
     },
     "turelojya": {
       "heroSummary": "Production full-stack luxury watch e-commerce: catalog, valuation engine over 100,000+ market records, Redsys checkout, custom backoffice and multilingual technical SEO — built end-to-end at Owius.",
@@ -499,7 +536,21 @@
         { "name": "Brevo", "role": "Transactional email & PDF invoices" },
         { "name": "WordPress", "role": "Legacy migration" }
       ],
-      "role": "Junior full-stack developer (company internship): backend and frontend design and implementation, valuation algorithm and scraping pipeline, payment integration, technical SEO, backoffice, deployment and direct client communication to iterate on business requirements."
+      "role": "Junior full-stack developer (company internship): backend and frontend design and implementation, valuation algorithm and scraping pipeline, payment integration, technical SEO, backoffice, deployment and direct client communication to iterate on business requirements.",
+      "caseStudyTitle": "Case study: TuRelojYa — Luxury watch e-commerce",
+      "caseStudyIntro": "TuRelojYa is a production B2C e-commerce for premium watch trading, with automatic valuation engine, Redsys payment gateway and multilingual SEO — developed end-to-end during my internship at Owius.",
+      "caseStudyProblemTitle": "The problem",
+      "caseStudyProblem": "The client operated with a slow legacy WordPress site, hard to maintain and without automatic valuation or modern checkout. They needed a scalable platform managing inventory, valuing watches with market data and operating autonomously.",
+      "caseStudySolutionTitle": "Technical solution",
+      "caseStudySolution": "Migrated catalog to MongoDB with Node.js backend (MVC), responsive React storefront and valuation engine over 100,000+ price records with optimized daily scraping. Integrated Redsys payments, Brevo transactional emails, custom admin panel and technical SEO with sitemaps, dynamic metadata and i18n.",
+      "caseStudyResultsTitle": "Results",
+      "caseStudyResults": "Platform deployed in production at turelojya.com with Docker, autonomous business operation and optimized Lighthouse scores. Real full-stack e-commerce experience at a Barcelona consultancy, demonstrable for teams seeking a productive profile from day one.",
+      "caseStudyMetrics": [
+        { "label": "Valuation records", "value": "100,000+" },
+        { "label": "Stack", "value": "React + Node.js + MongoDB" },
+        { "label": "Payments", "value": "Redsys integrated" },
+        { "label": "Status", "value": "In production" }
+      ]
     },
     "evenely": {
       "heroSummary": "SaaS platform to design virtual escape rooms without code: visual slide editor, real-time collaboration, Free/Basic/Premium subscriptions with recurring Redsys billing and a separate play web with rankings and analytics — the capstone of my Owius internship.",
@@ -793,6 +844,14 @@
     "heroBadge": "Technical expertise",
     "title": "SKILLS",
     "tagline": "A comprehensive overview of my technical skills and proficiency levels.",
+    "seoTitle": "Technical Skills — React, Node.js, AI & more | Pau Pedrejon",
+    "seoDescription": "Technical skills of Pau Pedrejon: React, Next.js, TypeScript, Node.js, Python, AI/LLMs, React Native and more. Detailed proficiency levels.",
+    "seoKeywords": [
+      "full-stack developer skills",
+      "React TypeScript Barcelona",
+      "AI engineer skills",
+      "software engineer competencies"
+    ],
     "categoryLabel": "Category",
     "filterAll": "All",
     "filterByCategory": "Filter by category",
@@ -1105,6 +1164,14 @@
     "badge": "Education",
     "title": "EDUCATION",
     "tagline": "My academic background and achievements.",
+    "seoTitle": "Education — Computer Engineering UPC | Pau Pedrejon",
+    "seoDescription": "Academic background of Pau Pedrejon: Computer Engineering degree (UPC/FIB), 10X AI Developer certification (IIA) and ITB technological high school.",
+    "seoKeywords": [
+      "UPC computer engineer",
+      "developer education Barcelona",
+      "software engineering degree",
+      "UPC student portfolio"
+    ],
     "academicBackground": "Academic Background",
     "educationTimeline": "Education Timeline",
     "viewMoreInfo": "View more information",
@@ -1142,6 +1209,14 @@
     "badge": "About Me",
     "title": "ABOUT ME",
     "tagline": "Get to know me better.",
+    "seoTitle": "About Me — Full-Stack Developer in Barcelona | Pau Pedrejon",
+    "seoDescription": "Profile of Pau Pedrejon: Computer Engineering student at UPC, full-stack developer specialized in React, Node.js and AI. Castelldefels, Barcelona.",
+    "seoKeywords": [
+      "full-stack developer Barcelona",
+      "software engineer Castelldefels",
+      "UPC developer profile",
+      "React developer Barcelona"
+    ],
     "sectionProfile": "Profile",
     "sectionLanguages": "Languages",
     "bio": "Computer Engineering student specializing in Software at UPC. I am motivated to apply multidisciplinary expertise within collaborative teams to deliver impactful user experiences.",
@@ -1162,6 +1237,29 @@
       "hire software engineer",
       "contact developer Barcelona",
       "full-stack freelance"
+    ],
+    "faqTitle": "Frequently asked questions",
+    "faq": [
+      {
+        "question": "Are you available for new opportunities?",
+        "answer": "Yes, I'm open to job opportunities, internships, freelance work and collaborations in software development and AI, in Barcelona or remote."
+      },
+      {
+        "question": "What is your main tech stack?",
+        "answer": "React, Next.js, TypeScript on the frontend; Node.js and Python on the backend; experience with AI/LLMs (LangChain, RAG, agents), MongoDB, PostgreSQL, Docker and production deployment."
+      },
+      {
+        "question": "Where are you located?",
+        "answer": "I live in Castelldefels (Barcelona, Spain). I can work on-site in the Barcelona metropolitan area or remotely."
+      },
+      {
+        "question": "What kind of projects interest you?",
+        "answer": "Full-stack projects with real impact: SaaS, e-commerce, AI platforms, mobile apps and developer productivity tools."
+      },
+      {
+        "question": "Can I see your CV?",
+        "answer": "Yes, you can download my CV from the portfolio homepage. You can also contact me directly via email or LinkedIn."
+      }
     ],
     "sectionTitle": "Contact information",
     "getInTouch": "Get in touch",
@@ -1418,5 +1516,19 @@
         { "label": "Open Data", "icon": "team" }
       ]
     }
+  },
+  "blog": {
+    "metaTitle": "Blog — Full-Stack & AI Development | Pau Pedrejon",
+    "metaDescription": "Articles about full-stack development, artificial intelligence, real projects and technical learning.",
+    "seoKeywords": [
+      "developer blog",
+      "React Next.js articles",
+      "AI software development",
+      "full-stack tutorial"
+    ],
+    "title": "Blog",
+    "subtitle": "Technical reflections on real projects, AI and full-stack development.",
+    "backToList": "Back to blog",
+    "empty": "More articles coming soon."
   }
 }

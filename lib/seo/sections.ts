@@ -1,9 +1,22 @@
 import { getTranslations } from "next-intl/server";
 import { getProjectBySlug, type ProjectSlug } from "@/lib/projects/config";
 import { buildPageMetadata } from "./metadata";
-import { DEFAULT_OG_IMAGE, SITE_NAME } from "./config";
 
-const SITE_SUFFIX = ` | ${SITE_NAME}`;
+const SITE_SUFFIX = ` | Pau Pedrejon`;
+
+function seoOrFallback(
+  t: Awaited<ReturnType<typeof getTranslations>>,
+  titleKey: string,
+  descKey: string,
+  fallbackTitle: string,
+  fallbackDesc: string,
+) {
+  return {
+    title: t.has(titleKey) ? t(titleKey) : `${fallbackTitle}${SITE_SUFFIX}`,
+    description: t.has(descKey) ? t(descKey) : fallbackDesc,
+    keywords: t.has("seoKeywords") ? (t.raw("seoKeywords") as string[]) : undefined,
+  };
+}
 
 export async function homeMetadata(locale: string) {
   const t = await getTranslations({ locale, namespace: "home" });
@@ -18,21 +31,25 @@ export async function homeMetadata(locale: string) {
 
 export async function projectsMetadata(locale: string) {
   const t = await getTranslations({ locale, namespace: "projects" });
+  const seo = seoOrFallback(t, "seoTitle", "seoDescription", t("title"), t("tagline"));
   return buildPageMetadata({
     locale,
     pathname: "/proyectos",
-    title: `${t("title")}${SITE_SUFFIX}`,
-    description: t("tagline"),
+    title: seo.title,
+    description: seo.description,
+    keywords: seo.keywords,
   });
 }
 
 export async function skillsMetadata(locale: string) {
   const t = await getTranslations({ locale, namespace: "skills" });
+  const seo = seoOrFallback(t, "seoTitle", "seoDescription", t("title"), t("tagline"));
   return buildPageMetadata({
     locale,
     pathname: "/skills",
-    title: `${t("title")}${SITE_SUFFIX}`,
-    description: t("tagline"),
+    title: seo.title,
+    description: seo.description,
+    keywords: seo.keywords,
   });
 }
 
@@ -41,7 +58,7 @@ export async function experienceMetadata(locale: string) {
   return buildPageMetadata({
     locale,
     pathname: "/experience",
-    title: `${t("title")}${SITE_SUFFIX}`,
+    title: t.has("seoTitle") ? t("seoTitle") : `${t("title")}${SITE_SUFFIX}`,
     description: t("seoDescription"),
     keywords: t.raw("seoKeywords") as string[],
   });
@@ -49,21 +66,25 @@ export async function experienceMetadata(locale: string) {
 
 export async function educationMetadata(locale: string) {
   const t = await getTranslations({ locale, namespace: "education" });
+  const seo = seoOrFallback(t, "seoTitle", "seoDescription", t("title"), t("tagline"));
   return buildPageMetadata({
     locale,
     pathname: "/education",
-    title: `${t("title")}${SITE_SUFFIX}`,
-    description: t("tagline"),
+    title: seo.title,
+    description: seo.description,
+    keywords: seo.keywords,
   });
 }
 
 export async function aboutMetadata(locale: string) {
   const t = await getTranslations({ locale, namespace: "about" });
+  const seo = seoOrFallback(t, "seoTitle", "seoDescription", t("title"), t("tagline"));
   return buildPageMetadata({
     locale,
     pathname: "/about-me",
-    title: `${t("title")}${SITE_SUFFIX}`,
-    description: t("tagline"),
+    title: seo.title,
+    description: seo.description,
+    keywords: seo.keywords,
   });
 }
 
@@ -72,7 +93,7 @@ export async function contactMetadata(locale: string) {
   return buildPageMetadata({
     locale,
     pathname: "/contact",
-    title: `${t("title")}${SITE_SUFFIX}`,
+    title: t.has("seoTitle") ? t("seoTitle") : `${t("title")}${SITE_SUFFIX}`,
     description: t("seoDescription"),
     keywords: t.raw("seoKeywords") as string[],
   });
@@ -90,7 +111,8 @@ export async function egoPageMetadata(locale: string) {
     pathname: "/ego",
     title: `${name}${SITE_SUFFIX}`,
     description: tPage("heroSummary"),
-    image: config.imageCard,
+    ogTitle: name,
+    ogSubtitle: tPage("heroSummary").slice(0, 120),
   });
 }
 
@@ -109,6 +131,7 @@ export async function projectDetailMetadata(locale: string, slug: ProjectSlug) {
     pathname: `/proyectos/${slug}`,
     title: `${name}${SITE_SUFFIX}`,
     description: tPage("heroSummary"),
-    image: config.imageCard ?? DEFAULT_OG_IMAGE,
+    ogTitle: name,
+    ogSubtitle: tPage("heroSummary").slice(0, 120),
   });
 }

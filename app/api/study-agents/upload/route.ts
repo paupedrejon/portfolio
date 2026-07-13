@@ -83,6 +83,11 @@ export async function POST(request: NextRequest) {
       console.log('[Upload] No se envió API key del frontend, el backend usará la de .env.local');
     }
 
+    const chatId = formData.get('chatId') as string | null;
+    const userId = formData.get('userId') as string | null;
+    if (chatId) fastApiFormData.append('chatId', chatId);
+    if (userId) fastApiFormData.append('userId', userId);
+
     // Llamar al backend FastAPI
     const response = await fetch(`${FASTAPI_URL}/api/upload-documents`, {
       method: 'POST',

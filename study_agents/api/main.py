@@ -23,7 +23,7 @@ except Exception as e:
     import traceback
     traceback.print_exc()
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header, Request, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header, Request, BackgroundTasks, Query
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
@@ -177,6 +177,31 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Rate limiting (slowapi) — opcional si el paquete está instalado
+try:
+    from slowapi import Limiter, _rate_limit_exceeded_handler
+    from slowapi.util import get_remote_address
+    from slowapi.errors import RateLimitExceeded
+    from slowapi.middleware import SlowAPIMiddleware
+
+    limiter = Limiter(key_func=get_remote_address)
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_middleware(SlowAPIMiddleware)
+    print("✅ Rate limiting (slowapi) activado")
+except ImportError:
+    limiter = None
+    print("⚠️ slowapi no instalado — rate limiting desactivado")
+
+
+def _rate_limit(rule: str):
+    """Decorador de rate limit; no-op si slowapi no está disponible."""
+    def decorator(endpoint):
+        if limiter is not None:
+            return limiter.limit(rule)(endpoint)
+        return endpoint
+    return decorator
+
 # Manejar errores de validación de Pydantic para debug
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: StarletteRequest, exc: RequestValidationError):
@@ -222,7 +247,11 @@ async def validation_exception_handler(request: StarletteRequest, exc: RequestVa
 # Configurar CORS para permitir requests desde el frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, especifica los orígenes permitidos
+    allow_origins=[
+        "https://www.paupedrejon.com",
+        "https://paupedrejon.com",
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -676,7 +705,9 @@ async def serve_file(filename: str):
 @app.post("/api/upload-documents")
 async def upload_documents(
     files: List[UploadFile] = File(...),
-    apiKey: Optional[str] = Form(None)
+    apiKey: Optional[str] = Form(None),
+    chatId: Optional[str] = Form(None),
+    userId: Optional[str] = Form(None),
 ):
     """
     Sube documentos (PDFs o imágenes) al sistema.
@@ -734,7 +765,11 @@ async def upload_documents(
             # Obtener sistema para esta API key (modo automático por defecto)
             system = get_or_create_system(final_api_key, mode="auto")
             # Procesar solo los PDFs
-            pdf_result = system.upload_documents(pdf_paths)
+            pdf_result = system.upload_documents(
+                pdf_paths,
+                chat_id=chatId,
+                user_id=userId,
+            )
             result.update(pdf_result)
         
         # El resultado ya incluye detected_topic si se detectó
@@ -753,8 +788,50 @@ async def upload_documents(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/chat-documents/{chat_id}")
+async def list_chat_documents(
+    chat_id: str,
+    userId: str = Query(...),
+    apiKey: str = Query(...),
+):
+    """Lista documentos indexados en un chat (RAG acumulativo)."""
+    try:
+        if not apiKey:
+            raise HTTPException(status_code=400, detail="API key requerida")
+        system = get_or_create_system(apiKey, mode="auto")
+        documents = system.memory.list_chat_documents(chat_id, userId)
+        return {"success": True, "documents": documents}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/chat-documents/{chat_id}/{doc_id}")
+async def delete_chat_document(
+    chat_id: str,
+    doc_id: str,
+    userId: str = Query(...),
+    apiKey: str = Query(...),
+):
+    """Elimina un documento y sus chunks del índice RAG del chat."""
+    try:
+        if not apiKey:
+            raise HTTPException(status_code=400, detail="API key requerida")
+        system = get_or_create_system(apiKey, mode="auto")
+        deleted = system.memory.delete_chat_document(chat_id, userId, doc_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Documento no encontrado")
+        return {"success": True, "doc_id": doc_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/generate-notes")
-async def generate_notes(request: GenerateNotesRequest):
+@_rate_limit("30/minute")
+async def generate_notes(http_request: Request, request: GenerateNotesRequest):
     """
     Genera apuntes completos del contenido procesado
     
@@ -890,7 +967,8 @@ async def generate_study_plan(request: StudyPlanRequest):
 
 
 @app.post("/api/ask-question")
-async def ask_question(request: QuestionRequest):
+@_rate_limit("30/minute")
+async def ask_question(http_request: Request, request: QuestionRequest):
     """
     Responde una pregunta del estudiante
     
@@ -1007,7 +1085,8 @@ async def ask_question(request: QuestionRequest):
 
 
 @app.post("/api/generate-test")
-async def generate_test(request: TestRequest):
+@_rate_limit("30/minute")
+async def generate_test(http_request: Request, request: TestRequest):
     """
     Genera un test personalizado
     
@@ -2591,7 +2670,8 @@ async def update_chat_color_endpoint(request: UpdateChatColorRequest):
 
 
 @app.post("/api/execute-code")
-async def execute_code_endpoint(request: ExecuteCodeRequest):
+@_rate_limit("30/minute")
+async def execute_code_endpoint(http_request: Request, request: ExecuteCodeRequest):
     """
     Ejecuta código en el servidor (Python, JavaScript, SQL, Java, HTML, React, C++)
     

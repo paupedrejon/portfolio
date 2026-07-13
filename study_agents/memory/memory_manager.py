@@ -239,6 +239,78 @@ class MemoryManager:
                 print(f"⚠️ Error en fallback: {e2}")
             return []
     
+    def list_chat_documents(self, chat_id: str, user_id: str) -> List[Dict[str, Any]]:
+        """Lista documentos únicos indexados para un chat."""
+        try:
+            if self.collection.count() == 0:
+                return []
+            results = self.collection.get(
+                where={"$and": [{"chat_id": chat_id}, {"user_id": user_id}]},
+                limit=10000,
+            )
+            metadatas = results.get("metadatas") or []
+            docs_map: Dict[str, Dict[str, Any]] = {}
+            for meta in metadatas:
+                if not meta:
+                    continue
+                doc_id = meta.get("doc_id") or meta.get("source") or "unknown"
+                if doc_id not in docs_map:
+                    docs_map[doc_id] = {
+                        "doc_id": doc_id,
+                        "filename": meta.get("source", doc_id),
+                        "uploaded_at": meta.get("uploaded_at"),
+                        "chunk_count": 0,
+                    }
+                docs_map[doc_id]["chunk_count"] += 1
+            return list(docs_map.values())
+        except Exception as e:
+            print(f"⚠️ list_chat_documents fallback: {e}")
+            try:
+                results = self.collection.get(limit=10000)
+                metadatas = results.get("metadatas") or []
+                docs_map: Dict[str, Dict[str, Any]] = {}
+                for meta in metadatas:
+                    if not meta:
+                        continue
+                    if meta.get("chat_id") != chat_id or meta.get("user_id") != user_id:
+                        continue
+                    doc_id = meta.get("doc_id") or meta.get("source") or "unknown"
+                    if doc_id not in docs_map:
+                        docs_map[doc_id] = {
+                            "doc_id": doc_id,
+                            "filename": meta.get("source", doc_id),
+                            "uploaded_at": meta.get("uploaded_at"),
+                            "chunk_count": 0,
+                        }
+                    docs_map[doc_id]["chunk_count"] += 1
+                return list(docs_map.values())
+            except Exception as e2:
+                print(f"❌ list_chat_documents: {e2}")
+                return []
+
+    def delete_chat_document(self, chat_id: str, user_id: str, doc_id: str) -> bool:
+        """Elimina todos los chunks de un documento en un chat."""
+        try:
+            results = self.collection.get(
+                where={"$and": [{"chat_id": chat_id}, {"user_id": user_id}]},
+                limit=10000,
+            )
+            ids = results.get("ids") or []
+            metadatas = results.get("metadatas") or []
+            to_delete = [
+                chunk_id
+                for chunk_id, meta in zip(ids, metadatas)
+                if meta and (meta.get("doc_id") == doc_id or meta.get("source") == doc_id)
+            ]
+            if to_delete:
+                self.collection.delete(ids=to_delete)
+                print(f"🗑️ Eliminados {len(to_delete)} chunks del doc {doc_id}")
+                return True
+            return False
+        except Exception as e:
+            print(f"❌ delete_chat_document: {e}")
+            return False
+    
     def get_conversation_history(self, user_id: str, chat_id: Optional[str] = None) -> List[Dict]:
         """
         Obtiene el historial de conversación de un usuario para un chat específico

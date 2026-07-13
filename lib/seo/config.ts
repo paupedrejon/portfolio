@@ -3,7 +3,8 @@ export const SITE_URL =
 
 export const SITE_NAME = "Pau Pedrejon";
 
-export const DEFAULT_OG_IMAGE = "/react.png";
+/** @deprecated Usar buildOgImageUrl() de ./og-image — se mantiene para compatibilidad interna. */
+export const DEFAULT_OG_IMAGE = "/api/og";
 
 export const TWITTER_HANDLE = "@paupedrejon";
 

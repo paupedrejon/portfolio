@@ -1,0 +1,42 @@
+# Pau Pedrejon — paupedrejon.com
+
+> Full-Stack Software Engineer (React, Next.js, TypeScript, Node.js, AI) based in Barcelona, Spain.
+> Portfolio with production projects, professional experience, and open-source work.
+
+## About
+
+Pau Pedrejon is a software engineering student at Universitat Politècnica de Barcelona (UPC),
+specializing in software engineering and AI. Available for opportunities in Barcelona and remote.
+
+## Main sections
+
+- Home: https://www.paupedrejon.com/es
+- Projects (ES): https://www.paupedrejon.com/es/proyectos
+- Projects (EN): https://www.paupedrejon.com/en/projects
+- Skills: https://www.paupedrejon.com/es/skills
+- Experience: https://www.paupedrejon.com/es/experience
+- Education: https://www.paupedrejon.com/es/education
+- About: https://www.paupedrejon.com/es/about-me
+- Contact: https://www.paupedrejon.com/es/contact
+- Blog: https://www.paupedrejon.com/es/blog
+- Study Agents (AI learning platform): https://www.paupedrejon.com/study-agents
+
+## Featured projects
+
+- PauStudio (TealCode): Local AI IDE — https://www.paupedrejon.com/es/proyectos/tealcode
+- Study Agents: AI learning assistant — https://www.paupedrejon.com/es/proyectos/study-agents
+- TuRelojYa: Luxury watch e-commerce — https://www.paupedrejon.com/es/proyectos/turelojya
+
+## Contact
+
+- Email: paupedrejon@gmail.com
+- LinkedIn: https://www.linkedin.com/in/paupedrejon/
+- GitHub: https://github.com/paupedrejon
+
+## Languages
+
+Content available in Spanish (es), English (en), and Italian (it).
+
+## Sitemap
+
+https://www.paupedrejon.com/sitemap.xml

@@ -3,8 +3,10 @@ Content Processor Agent - Procesa documentos usando RAG
 Lee PDFs, los divide en chunks y los almacena en memoria
 """
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 import os
+import uuid
+from datetime import datetime, timezone
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from memory.memory_manager import MemoryManager
@@ -29,7 +31,12 @@ class ContentProcessorAgent:
         )
         print("🤖 Content Processor Agent inicializado")
     
-    def process_documents(self, document_paths: List[str]) -> dict:
+    def process_documents(
+        self,
+        document_paths: List[str],
+        chat_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+    ) -> dict:
         """
         Procesa documentos PDF y los almacena en memoria
         
@@ -49,6 +56,8 @@ class ContentProcessorAgent:
                 continue
                 
             print(f"📄 Procesando: {os.path.basename(doc_path)}")
+            doc_id = f"doc_{uuid.uuid4().hex[:12]}"
+            uploaded_at = datetime.now(timezone.utc).isoformat()
             
             try:
                 # Cargar documento PDF
@@ -68,7 +77,9 @@ class ContentProcessorAgent:
                     all_metadatas.append({
                         "source": os.path.basename(doc_path),
                         "full_path": doc_path,
-                        "page": chunk.metadata.get("page", 0)
+                        "page": chunk.metadata.get("page", 0),
+                        "doc_id": doc_id,
+                        "uploaded_at": uploaded_at,
                     })
                     total_chunks += 1
                 
@@ -78,9 +89,14 @@ class ContentProcessorAgent:
                 print(f"❌ Error procesando {doc_path}: {str(e)}")
                 continue
         
-        # Almacenar todos los documentos en memoria
+        # Almacenar todos los documentos en memoria (acumula por chat, no reemplaza)
         if all_documents:
-            self.memory.store_documents(all_documents, all_metadatas)
+            self.memory.store_documents(
+                all_documents,
+                all_metadatas,
+                chat_id=chat_id,
+                user_id=user_id,
+            )
         
         return {
             "total_documents": len([p for p in document_paths if os.path.exists(p)]),
