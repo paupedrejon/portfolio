@@ -23,38 +23,40 @@ export default async function ProjectCaseStudy({ slug, locale }: Props) {
     { key: "results", titleKey: "caseStudyResultsTitle", bodyKey: "caseStudyResults" },
   ] as const;
 
+  const metrics = t.has("caseStudyMetrics")
+    ? (t.raw("caseStudyMetrics") as { label: string; value: string }[])
+    : [];
+
   return (
-    <article
-      className="project-case-study mx-auto w-full max-w-3xl px-4 py-10 sm:px-6"
-      aria-labelledby="case-study-heading"
-    >
-      <h2 id="case-study-heading" className="text-2xl font-bold tracking-tight sm:text-3xl">
-        {t("caseStudyTitle")}
-      </h2>
-      <p className="mt-4 text-base leading-relaxed opacity-90">{t("caseStudyIntro")}</p>
-      <div className="mt-8 space-y-8">
-        {sections.map(({ key, titleKey, bodyKey }) => (
-          <section key={key}>
-            <h3 className="text-lg font-semibold">{t(titleKey)}</h3>
-            <p className="mt-2 text-sm leading-relaxed opacity-85 sm:text-base">{t(bodyKey)}</p>
-          </section>
-        ))}
-      </div>
-      {t.has("caseStudyMetrics") && (
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-          {(t.raw("caseStudyMetrics") as { label: string; value: string }[]).map((metric) => (
-            <li
-              key={metric.label}
-              className="rounded-lg border border-white/10 bg-white/5 px-4 py-3"
-            >
-              <span className="block text-xs uppercase tracking-wider opacity-60">
-                {metric.label}
-              </span>
-              <span className="mt-1 block text-lg font-semibold">{metric.value}</span>
-            </li>
+    <section className="project-case-study" aria-labelledby="case-study-heading">
+      <div className="project-case-study__inner">
+        <header className="project-case-study__header">
+          <h2 id="case-study-heading" className="project-case-study__title">
+            {t("caseStudyTitle")}
+          </h2>
+          <p className="project-case-study__intro">{t("caseStudyIntro")}</p>
+        </header>
+
+        <div className="project-case-study__sections">
+          {sections.map(({ key, titleKey, bodyKey }) => (
+            <article key={key} className="project-panel project-case-study__panel">
+              <h3 className="project-case-study__section-title">{t(titleKey)}</h3>
+              <p className="project-panel__text">{t(bodyKey)}</p>
+            </article>
           ))}
-        </ul>
-      )}
-    </article>
+        </div>
+
+        {metrics.length > 0 ? (
+          <ul className="project-case-study__metrics">
+            {metrics.map((metric) => (
+              <li key={metric.label} className="project-case-study__metric">
+                <span className="project-case-study__metric-label">{metric.label}</span>
+                <span className="project-case-study__metric-value">{metric.value}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    </section>
   );
 }

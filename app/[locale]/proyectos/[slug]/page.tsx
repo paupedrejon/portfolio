@@ -80,8 +80,10 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         ]}
       />
       <JsonLd data={schema} />
-      <ProjectCaseStudy slug={slug} locale={locale} />
-      <ProjectDetailView slug={slug as ProjectSlug} />
+      <ProjectDetailView
+        slug={slug as ProjectSlug}
+        caseStudy={<ProjectCaseStudy slug={slug} locale={locale} />}
+      />
     </>
   );
 }

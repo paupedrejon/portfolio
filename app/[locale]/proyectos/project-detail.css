@@ -621,3 +621,120 @@
   margin-left: auto;
   margin-right: auto;
 }
+
+/* —— Caso de estudio (SEO) al final del detalle —— */
+.project-case-study {
+  border-top: 1px solid rgba(53, 140, 159, 0.28);
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(53, 140, 159, 0.08) 0%, transparent 60%),
+    var(--home-bg, #030d14);
+}
+
+.project-case-study__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(3rem, 7vw, 5rem) clamp(1.25rem, 4vw, 3rem) clamp(4rem, 9vw, 6rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.project-case-study__header {
+  max-width: 52rem;
+}
+
+.project-case-study__kicker {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #4eb3c8;
+}
+
+.project-case-study__title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: clamp(1.65rem, 4vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  color: #ffffff;
+}
+
+.project-case-study__intro {
+  margin: clamp(0.85rem, 2vw, 1.15rem) 0 0;
+  font-family: var(--font-body);
+  font-size: clamp(1rem, 1.8vw, 1.15rem);
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.project-case-study__sections {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.15rem, 2.5vw, 1.5rem);
+}
+
+.project-case-study__panel {
+  margin: 0;
+}
+
+.project-case-study__section-title {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-body);
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #4eb3c8;
+}
+
+.project-case-study__metrics {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+}
+
+@media (min-width: 560px) {
+  .project-case-study__metrics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 960px) {
+  .project-case-study__metrics {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.project-case-study__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: clamp(1rem, 2.5vw, 1.25rem);
+  border-radius: 12px;
+  border: 1px solid rgba(78, 179, 200, 0.25);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.project-case-study__metric-label {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.project-case-study__metric-value {
+  font-family: var(--font-body);
+  font-size: clamp(1rem, 1.8vw, 1.15rem);
+  font-weight: 700;
+  line-height: 1.3;
+  color: #ffffff;
+}

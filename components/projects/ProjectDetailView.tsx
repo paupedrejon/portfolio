@@ -12,9 +12,10 @@ import "@/app/[locale]/proyectos/project-detail.css";
 
 type ProjectDetailViewProps = {
   slug: ProjectSlug;
+  caseStudy?: React.ReactNode;
 };
 
-export default function ProjectDetailView({ slug }: ProjectDetailViewProps) {
+export default function ProjectDetailView({ slug, caseStudy }: ProjectDetailViewProps) {
   const config = getProjectBySlug(slug)!;
   const t = useTranslations("projects");
   const tData = useTranslations("projectsData");
@@ -58,6 +59,8 @@ export default function ProjectDetailView({ slug }: ProjectDetailViewProps) {
           <EgoPageSections />
         </div>
       ) : null}
+
+      {caseStudy}
     </main>
   );
 }
