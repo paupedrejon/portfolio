@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
         chatId: body.chatId,
         userId: body.userId || "default",
         max_concepts: body.max_concepts ?? 25,
+        provider_keys: body.providerKeys || body.provider_keys || null,
       }),
     });
     const data = await response.json().catch(() => ({}));

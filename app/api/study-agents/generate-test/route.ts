@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
         conversation_history: conversation_history || null,
         user_id: userId || null,
         chat_id: chatId || null,  // Pasar chat_id para obtener el nivel
+        provider_keys: body.providerKeys || body.provider_keys || null,
       }),
     });
 

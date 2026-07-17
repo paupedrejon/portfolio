@@ -3,7 +3,13 @@
 import { RefObject } from "react";
 import { HiCheck, HiKey } from "react-icons/hi2";
 import { MoonIcon, SunIcon } from "@/components/Icons";
-import { formatCost, MODEL_PRICING } from "@/components/costCalculator";
+import { formatCost } from "@/components/costCalculator";
+import {
+  STUDY_MODEL_OPTIONS,
+  MODEL_GROUP_LABELS,
+  getStudyModelOption,
+  type StudyModelOption,
+} from "@/lib/study-agents/models";
 
 type Props = {
   colorTheme: "dark" | "light";
@@ -52,16 +58,18 @@ export default function ChatToolbar({
   showReview = false,
   srsDueCount = 0,
 }: Props) {
-  const modelLabel =
-    selectedModel === "auto"
-      ? "Automático (Optimiza Costes)"
-      : selectedModel === "gpt-5"
-        ? "GPT-5"
-        : selectedModel === "gpt-4o"
-          ? "GPT-4o"
-          : selectedModel === "llama3.1"
-            ? "Llama 3.1"
-            : selectedModel;
+  const selected = getStudyModelOption(selectedModel);
+  const modelLabel = selected
+    ? selected.subtitle
+      ? `${selected.label}`
+      : selected.label
+    : selectedModel;
+
+  const grouped = (["auto", "chinese", "free", "openai"] as const).map((group) => ({
+    group,
+    label: MODEL_GROUP_LABELS[group],
+    items: STUDY_MODEL_OPTIONS.filter((m) => m.group === group),
+  }));
 
   return (
     <div
@@ -322,66 +330,87 @@ export default function ChatToolbar({
                   backdropFilter: "blur(20px)",
                   borderRadius: "12px",
                   padding: "0.375rem",
-                  minWidth: "260px",
-                  maxHeight: "200px",
+                  minWidth: "300px",
+                  maxHeight: "320px",
                   overflowY: "auto",
                   zIndex: 10000,
                   border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(148, 163, 184, 0.2)"}`,
                 }}
               >
-                {[
-                  { value: "auto", label: "Automático", subtitle: "Optimiza Costes" },
-                  { value: "gpt-5", label: "GPT-5" },
-                  { value: "gpt-4o", label: "GPT-4o" },
-                  { value: "llama3.1", label: "Llama 3.1", subtitle: "Gratis" },
-                ].map((model) => {
-                  const isSelected = selectedModel === model.value;
-                  const price =
-                    model.value !== "auto" && model.value !== "llama3.1"
-                      ? formatCost(
-                          (MODEL_PRICING[model.value]?.input ?? 0) +
-                            (MODEL_PRICING[model.value]?.output ?? 0),
-                        )
-                      : null;
-                  return (
-                    <button
-                      key={model.value}
-                      type="button"
-                      onClick={() => {
-                        onSelectModel(model.value);
-                      }}
+                {grouped.map(({ group, label, items }) => (
+                  <div key={group}>
+                    <div
                       style={{
-                        width: "100%",
-                        padding: "0.5rem 0.75rem",
-                        background: isSelected
-                          ? colorTheme === "dark"
-                            ? "rgba(99, 102, 241, 0.2)"
-                            : "rgba(99, 102, 241, 0.15)"
-                          : "transparent",
-                        border: "none",
-                        borderRadius: "8px",
-                        color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
-                        fontSize: "0.8125rem",
-                        fontWeight: isSelected ? 600 : 500,
-                        cursor: "pointer",
-                        textAlign: "left",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
+                        padding: "0.4rem 0.75rem 0.25rem",
+                        fontSize: "0.65rem",
+                        fontWeight: 700,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: colorTheme === "dark" ? "#94a3b8" : "#64748b",
                       }}
                     >
-                      <div>
-                        <div>{model.label}</div>
-                        {(model.subtitle || price) && (
-                          <div style={{ fontSize: "0.6875rem", color: "#94a3b8" }}>
-                            {model.subtitle || `${price}/1K tokens`}
+                      {label}
+                    </div>
+                    {items.map((model: StudyModelOption) => {
+                      const isSelected = selectedModel === model.value;
+                      const isFree =
+                        model.pricing.input === 0 && model.pricing.output === 0;
+                      const price = !isFree
+                        ? formatCost(model.pricing.input + model.pricing.output)
+                        : null;
+                      return (
+                        <button
+                          key={model.value}
+                          type="button"
+                          onClick={() => onSelectModel(model.value)}
+                          style={{
+                            width: "100%",
+                            padding: "0.5rem 0.75rem",
+                            background: isSelected
+                              ? colorTheme === "dark"
+                                ? "rgba(99, 102, 241, 0.2)"
+                                : "rgba(99, 102, 241, 0.15)"
+                              : "transparent",
+                            border: "none",
+                            borderRadius: "8px",
+                            color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
+                            fontSize: "0.8125rem",
+                            fontWeight: isSelected ? 600 : 500,
+                            cursor: "pointer",
+                            textAlign: "left",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          <div>
+                            <div>{model.label}</div>
+                            {model.subtitle && (
+                              <div style={{ fontSize: "0.6875rem", color: "#94a3b8" }}>
+                                {model.subtitle}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      {isSelected && <HiCheck size={14} color="#6366f1" />}
-                    </button>
-                  );
-                })}
+                          <span style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                            {isFree ? (
+                              <span style={{ fontSize: "0.65rem", fontWeight: 700, color: "#22c55e" }}>
+                                Gratis
+                              </span>
+                            ) : (
+                              price && (
+                                <span style={{ fontSize: "0.65rem", color: "#94a3b8" }}>
+                                  {price}/1k
+                                </span>
+                              )
+                            )}
+                            {isSelected && <HiCheck size={14} color="#6366f1" />}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             )}
           </div>

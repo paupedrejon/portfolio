@@ -1,5 +1,15 @@
 # Changelog — Study Agents
 
+## 0.3.2 — Modelos chinos/gratis + sin emojis UI
+
+### Modelos
+- Selector ampliado: DeepSeek, Qwen/GLM (OpenRouter free), Groq (Llama/Gemma), Ollama, OpenAI
+- Keys opcionales: DeepSeek, Groq, OpenRouter (además de OpenAI para RAG)
+- `ModelManager` multi-proveedor (OpenAI-compatible base_url)
+
+### UI
+- Emojis de mensajes/modales sustituidos por texto o iconos SVG
+
 ## 0.3.1 — Fase 1 (mastery + FSRS)
 
 ### Visible

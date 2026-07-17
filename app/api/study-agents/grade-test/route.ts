@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
         answers,
         user_id: userId || null,
         chat_id: chatId || null,
+        provider_keys: body.providerKeys || body.provider_keys || null,
       }),
     });
 

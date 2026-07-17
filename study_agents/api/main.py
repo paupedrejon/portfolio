@@ -343,6 +343,30 @@ def save_user_cost(user_id: str, input_tokens: int, output_tokens: int, model: s
         return False
 
 
+def apply_provider_keys_from_request(
+    api_key: Optional[str] = None,
+    provider_keys: Optional[Dict] = None,
+) -> None:
+    """Inyecta keys multi-proveedor para ModelManager en esta petición."""
+    try:
+        from model_manager import set_request_provider_keys
+    except Exception:
+        try:
+            import importlib.util
+            mm_path = os.path.join(parent_dir, "model_manager.py")
+            spec = importlib.util.spec_from_file_location("model_manager", mm_path)
+            mm = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mm)
+            set_request_provider_keys = mm.set_request_provider_keys
+        except Exception as e:
+            print(f"⚠️ No se pudo cargar model_manager.set_request_provider_keys: {e}")
+            return
+    keys = {k: v for k, v in (provider_keys or {}).items() if v}
+    if api_key:
+        keys["openai"] = api_key
+    set_request_provider_keys(keys)
+
+
 def get_or_create_system(api_key: Optional[str] = None, mode: str = "auto") -> StudyAgentsSystem:
     """
     Obtiene o crea un sistema de agentes para una API key
@@ -493,6 +517,7 @@ class QuestionRequest(BaseModel):
     initial_form_data: Optional[Dict] = None  # Datos del formulario inicial (nivel, objetivo, tiempo)
     course_id: Optional[str] = None  # ID del curso si está en contexto de curso
     subtopic_name: Optional[str] = None  # Nombre del subtema/subapartado si está disponible
+    provider_keys: Optional[Dict[str, str]] = None
 
 
 class TestRequest(BaseModel):
@@ -506,6 +531,7 @@ class TestRequest(BaseModel):
     conversation_history: Optional[List[Dict[str, str]]] = None
     user_id: Optional[str] = None
     chat_id: Optional[str] = None  # ID de la conversación para obtener el nivel
+    provider_keys: Optional[Dict[str, str]] = None
 
 
 class GradeTestRequest(BaseModel):
@@ -517,6 +543,7 @@ class GradeTestRequest(BaseModel):
     chat_id: Optional[str] = None
     course_id: Optional[str] = None  # ID del curso si está en contexto de curso
     topic: Optional[str] = None  # Tema del curso
+    provider_keys: Optional[Dict[str, str]] = None
 
 
 class GenerateNotesRequest(BaseModel):
@@ -528,6 +555,7 @@ class GenerateNotesRequest(BaseModel):
     chat_id: Optional[str] = None  # ID de la conversación para obtener el nivel
     conversation_history: Optional[List[dict]] = None
     topic: Optional[str] = None
+    provider_keys: Optional[Dict[str, str]] = None
 
 
 class StudyPlanRequest(BaseModel):
@@ -540,6 +568,7 @@ class StudyPlanRequest(BaseModel):
     model: Optional[str] = "gpt-4-turbo"
     user_id: Optional[str] = None
     chat_id: Optional[str] = None
+    provider_keys: Optional[Dict[str, str]] = None
 
 
 class GenerateExerciseRequest(BaseModel):
@@ -840,6 +869,7 @@ class ExtractConceptsRequest(BaseModel):
     chatId: str
     userId: str = "default"
     max_concepts: int = 25
+    provider_keys: Optional[Dict[str, str]] = None
 
 
 class PredictMasteryRequest(BaseModel):
@@ -881,6 +911,7 @@ async def get_concepts(
 async def extract_concepts(body: ExtractConceptsRequest):
     """Extrae micro-conceptos del corpus RAG del chat."""
     try:
+        apply_provider_keys_from_request(body.apiKey, body.provider_keys)
         from core import concept_store
         from agents.concept_extractor import ConceptExtractorAgent
         from langchain_openai import ChatOpenAI
@@ -1105,6 +1136,7 @@ async def generate_notes(request: Request, body: GenerateNotesRequest):
     """
     try:
         print("[FastAPI] Iniciando generación de apuntes...")
+        apply_provider_keys_from_request(body.apiKey, body.provider_keys)
         if not body.apiKey:
             raise HTTPException(status_code=400, detail="API key requerida")
         
@@ -1187,6 +1219,7 @@ async def generate_study_plan(request: StudyPlanRequest):
     Si hay chat_id + documentos indexados, enriquece el plan con fragmentos RAG.
     """
     try:
+        apply_provider_keys_from_request(request.apiKey, request.provider_keys)
         if not request.apiKey:
             raise HTTPException(status_code=400, detail="API key requerida")
         topic = (request.topic or "").strip()
@@ -1241,6 +1274,7 @@ async def ask_question(request: Request, body: QuestionRequest):
         Respuesta contextualizada
     """
     try:
+        apply_provider_keys_from_request(body.apiKey, body.provider_keys)
         if not body.apiKey:
             raise HTTPException(status_code=400, detail="API key requerida")
         
@@ -1359,6 +1393,7 @@ async def generate_test(request: Request, body: TestRequest):
         Test generado
     """
     try:
+        apply_provider_keys_from_request(body.apiKey, body.provider_keys)
         if not body.apiKey:
             raise HTTPException(status_code=400, detail="API key requerida")
         
@@ -1422,6 +1457,7 @@ async def grade_test(request: GradeTestRequest):
         Feedback detallado
     """
     try:
+        apply_provider_keys_from_request(request.apiKey, request.provider_keys)
         if not request.apiKey:
             raise HTTPException(status_code=400, detail="API key requerida")
         

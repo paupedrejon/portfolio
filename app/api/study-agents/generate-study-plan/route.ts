@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
         model: model || null,
         user_id: userId || "default",
         chat_id: chatId || null,
+        provider_keys: body.providerKeys || body.provider_keys || null,
       }),
     });
 

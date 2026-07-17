@@ -344,7 +344,7 @@ function AssistantYoutubeChatEmbed({
       >
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <span style={{ fontSize: "1.15rem" }} aria-hidden>
-            🎬
+            
           </span>
           <strong style={{ color: textColor, fontWeight: 700 }}>{title}</strong>
         </div>
@@ -393,7 +393,7 @@ export default function StudyChat() {
   const [showReviewPanel, setShowReviewPanel] = useState(false);
   const [srsDueCount, setSrsDueCount] = useState(0);
   const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
-  const [apiKeys, setApiKeys] = useState<{ openai: string } | null>(null);
+  const [apiKeys, setApiKeys] = useState<import("@/lib/study-agents/api-keys").StudyAgentsAPIKeys | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
@@ -2238,21 +2238,21 @@ export default function StudyChat() {
                 if (data.type === "video") {
                   // Mostrar resumen del video con formato mejorado
                   const videoContent = `---
-### 🎬 Resumen del Video
+### Resumen del Video
 
-**📺 Título:** ${data.title || "Video"}
+**Título:** ${data.title || "Video"}
 
-**🔗 URL:** [${url}](${data.url})
+**URL:** [${url}](${data.url})
 
 ---
 
-#### 📝 Resumen:
+#### Resumen:
 
 ${data.summary || data.description || "No se pudo obtener el resumen del video."}
 
 ---
 
-*✨ Puedes hacer preguntas sobre el contenido del video.*`;
+*Puedes hacer preguntas sobre el contenido del video.*`;
                   
                   addMessage({
                     role: "assistant",
@@ -2262,7 +2262,7 @@ ${data.summary || data.description || "No se pudo obtener el resumen del video."
                 } else if (data.type === "text") {
                   // Mostrar contenido extraído con formato mejorado y diseño visual atractivo
                   const contentPreview = data.content.length > 3000 
-                    ? data.content.substring(0, 3000) + "...\n\n---\n\n*💡 Contenido truncado. Puedes hacer preguntas sobre el contenido completo.*"
+                    ? data.content.substring(0, 3000) + "...\n\n---\n\n*Contenido truncado. Puedes hacer preguntas sobre el contenido completo.*"
                     : data.content;
                   
                   // Limpiar la URL para evitar saltos de línea y espacios
@@ -2271,21 +2271,21 @@ ${data.summary || data.description || "No se pudo obtener el resumen del video."
                   // Formato mejorado con diseño visual atractivo usando solo markdown
                   // Usar código inline para la URL para evitar que se rompa en markdown
                   const formattedContent = `---
-## 🌐 ${data.title || "Contenido Web Extraído"}
+## ${data.title || "Contenido Web Extraído"}
 
-**🔗 URL Original:** [Ver página](${cleanUrl})
+**URL Original:** [Ver página](${cleanUrl})
 
 \`${cleanUrl}\`
 
 ---
 
-### 📋 Contenido Extraído:
+### Contenido Extraído:
 
 ${contentPreview}
 
 ---
 
-> ✨ **Este contenido ha sido procesado y está disponible para consultas.**  
+> **Este contenido ha sido procesado y está disponible para consultas.**  
 > Puedes hacer preguntas sobre él en el chat.
 
 ---`;
@@ -2302,14 +2302,14 @@ ${contentPreview}
               } else {
                 addMessage({
                   role: "assistant",
-                  content: `❌ Error al procesar la URL: ${data.error || "Error desconocido"}`,
+                  content: `Error al procesar la URL: ${data.error || "Error desconocido"}`,
                   type: "message",
                 });
               }
             } else {
               addMessage({
                 role: "assistant",
-                content: `❌ Error al procesar la URL: ${url}`,
+                content: `Error al procesar la URL: ${url}`,
                 type: "message",
               });
             }
@@ -2317,7 +2317,7 @@ ${contentPreview}
             console.error("Error procesando URL:", error);
             addMessage({
               role: "assistant",
-              content: `❌ Error al procesar la URL: ${url}`,
+              content: `Error al procesar la URL: ${url}`,
               type: "message",
             });
           }
@@ -2386,7 +2386,7 @@ ${contentPreview}
             setCurrentChatLevel({ topic, level: requestedLevel });
             addMessage({
               role: "assistant",
-              content: `✅ Nivel actualizado a **${requestedLevel}/10** para **${topic}**.`,
+              content: `Nivel actualizado a **${requestedLevel}/10** para **${topic}**.`,
               type: "message",
             });
             setIsLoading(false);
@@ -3220,7 +3220,7 @@ ${contentPreview}
                   if (understandingData.progress_update.level_up) {
                     addMessage({
                       role: "assistant",
-                      content: `🎉 ¡Felicitaciones! Has subido al nivel ${newLevel} en ${topic}! Sigue así!`,
+                      content: `Felicitaciones: Has subido al nivel ${newLevel} en ${topic}! Sigue así!`,
                       type: "success",
                     });
                   }
@@ -3242,7 +3242,7 @@ ${contentPreview}
         setTimeout(() => {
           addMessage({
             role: "assistant",
-            content: `❌ No se pudo generar la respuesta.\n\n${backendError}`,
+            content: `No se pudo generar la respuesta.\n\n${backendError}`,
             type: "message",
           });
         }, 800);
@@ -3254,7 +3254,7 @@ ${contentPreview}
       
       addMessage({
         role: "assistant",
-        content: `❌ Error de conexión:\n\n${errorMessage}\n\nVerifica que:\n- El backend FastAPI esté corriendo\n- La variable FASTAPI_URL esté configurada correctamente en Vercel\n- No haya problemas de red`,
+        content: `Error de conexión:\n\n${errorMessage}\n\nVerifica que:\n- El backend FastAPI esté corriendo\n- La variable FASTAPI_URL esté configurada correctamente en Vercel\n- No haya problemas de red`,
         type: "message",
       });
     }
@@ -3290,7 +3290,7 @@ ${contentPreview}
         setSrsDueCount((n) => n + Number(data.srs_cards_created));
         addMessage({
           role: "assistant",
-          content: `📚 Se crearon ${data.srs_cards_created} tarjeta(s) de repaso a partir de tus fallos. Ábrelo en **Repaso** (retrieval practice).`,
+          content: `Se crearon ${data.srs_cards_created} tarjeta(s) de repaso a partir de tus fallos. Ábrelo en **Repaso** (retrieval practice).`,
           type: "success",
         });
       }
@@ -3421,25 +3421,25 @@ ${contentPreview}
               // Construir mensaje con conceptos clave a repasar
               let conceptsText = "";
               if (keyConcepts && keyConcepts.length > 0) {
-                conceptsText = `\n\n📚 **Conceptos clave a repasar en este nivel:**\n${keyConcepts.map((c: string) => `• ${c}`).join("\n")}`;
+                conceptsText = `\n\n**Conceptos clave a repasar en este nivel:**\n${keyConcepts.map((c: string) => `• ${c}`).join("\n")}`;
               }
               
               // Mensaje diferente si subió 2 niveles
               const levelUpText = levelsChanged === 2 
-                ? ` **¡Felicidades!** Has subido **2 niveles** (${oldLevel} → ${newLevel}) en **${topic}**! 🎉🎉`
+                ? ` **¡Felicidades!** Has subido **2 niveles** (${oldLevel} → ${newLevel}) en **${topic}**! `
                 : ` **¡Felicidades!** Has subido al **nivel ${newLevel}** en **${topic}**!`;
               
               // Mostrar mensaje de felicitaciones con repaso de conceptos
               addMessage({
                 role: "assistant",
-                content: `${levelUpText}\n\n✨ Ganaste **${expGained} puntos de experiencia**.\n${conceptsText}\n\n💪 ¡Sigue así y continúa mejorando!`,
+                content: `${levelUpText}\n\nGanaste **${expGained} puntos de experiencia**.\n${conceptsText}\n\nSigue así y continúa mejorando!`,
                 type: "success",
               });
             } else if (levelDown) {
               // Mostrar mensaje de advertencia si bajó de nivel
               addMessage({
                 role: "assistant",
-                content: `⚠️ Has bajado al **nivel ${newLevel}** en **${topic}** debido a un resultado bajo.\n\n💡 Te recomiendo repasar los conceptos fundamentales antes de continuar. ¡No te desanimes, puedes recuperar tu nivel!`,
+                content: `Has bajado al **nivel ${newLevel}** en **${topic}** debido a un resultado bajo.\n\nTe recomiendo repasar los conceptos fundamentales antes de continuar. ¡No te desanimes, puedes recuperar tu nivel!`,
                 type: "warning",
               });
             }
@@ -5653,7 +5653,7 @@ ${contentPreview}
                                 e.currentTarget.style.boxShadow = "none";
                               }}
                             >
-                              <span>🔗</span>
+                              <span aria-hidden="true">Link</span>
                               {children}
                             </a>
                           ),
@@ -6358,7 +6358,7 @@ ${contentPreview}
                   padding: "3rem",
                   color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
                 }}>
-                  <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📚</div>
+                  <div style={{ fontSize: "3rem", marginBottom: "1rem" }}></div>
                   <div style={{ fontSize: "1.125rem" }}>
                     Aún no has aprendido ninguna palabra.
                     <br />
@@ -8599,7 +8599,7 @@ function NotesViewer({
                 gap: "0.5rem",
                 marginBottom: "0.5rem",
               }}>
-                <span style={{ fontSize: "1.2rem" }}>🎬</span>
+                <span style={{ fontSize: "1.2rem" }}></span>
                 <strong style={{ color: textColor }}>{videoTitle}</strong>
               </div>
             </div>
@@ -9307,7 +9307,7 @@ function NotesViewer({
           margin: 0.25rem 0;
         }
         .notes-viewer :global(a::before) {
-          content: "🔗";
+          content: "Link";
           font-size: 1rem;
         }
         .notes-viewer :global(a:hover) {
@@ -9701,7 +9701,7 @@ function NotesViewer({
                 e.currentTarget.style.boxShadow = "none";
               }}
             >
-              <span>🔗</span>
+              <span aria-hidden="true">Link</span>
               {children}
             </a>
           ),
@@ -13243,7 +13243,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
                 padding: "3rem",
                 color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
               }}>
-                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📚</div>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}></div>
                 <div style={{ fontSize: "1.125rem" }}>
                   Aún no has aprendido ninguna palabra.
                   <br />

@@ -5,7 +5,7 @@ const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { apiKey, topics, model, userId, conversationHistory, topic } = body;
+    const { apiKey, topics, model, userId, conversationHistory, topic, providerKeys, provider_keys, chatId } = body;
 
     if (!apiKey) {
       return NextResponse.json(
@@ -55,6 +55,8 @@ export async function POST(request: NextRequest) {
         user_id: userId || null,
         conversation_history: conversationHistory || null,
         topic: topic || null,
+        chat_id: chatId || null,
+        provider_keys: providerKeys || provider_keys || null,
       }),
     });
 

@@ -4,7 +4,7 @@ import { getFastAPIUrl } from '../utils';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { apiKey, question, userId = 'default', model, chatId, topic } = body;
+    const { apiKey, question, userId = 'default', model, chatId, topic, providerKeys, provider_keys } = body;
 
     if (!apiKey) {
       return NextResponse.json(
@@ -30,9 +30,10 @@ export async function POST(request: NextRequest) {
         apiKey,
         question,
         user_id: userId,
-        model: model || null, // null = modo automático
+        model: model || null,
         chat_id: chatId || null,
         topic: topic || null,
+        provider_keys: providerKeys || provider_keys || null,
       }),
     });
 

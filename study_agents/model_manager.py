@@ -1,8 +1,9 @@
 """
 Model Manager - Gestión inteligente de modelos LLM
-Optimiza costes seleccionando automáticamente el modelo más barato disponible
-Prioridad: Gratis (Ollama) > Barato (GPT-3.5) > Caro (GPT-4)
+Optimiza costes: Ollama/OpenRouter free → Groq → DeepSeek → OpenAI barato → premium
 """
+
+from __future__ import annotations
 
 import os
 from typing import Optional, Dict, List, Tuple, Any
@@ -16,17 +17,28 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Keys por petición (inyectadas desde FastAPI)
+_REQUEST_PROVIDER_KEYS: Dict[str, str] = {}
+
+
+def set_request_provider_keys(keys: Optional[Dict[str, str]]) -> None:
+    global _REQUEST_PROVIDER_KEYS
+    _REQUEST_PROVIDER_KEYS = {k: v for k, v in (keys or {}).items() if v}
+
+
+def get_request_provider_keys() -> Dict[str, str]:
+    return dict(_REQUEST_PROVIDER_KEYS)
+
 
 class ModelProvider(Enum):
-    """Proveedores de modelos disponibles"""
-    OLLAMA = "ollama"  # Gratis, local
-    OPENAI = "openai"  # De pago
-    HUGGINGFACE = "huggingface"  # Algunos modelos gratuitos
+    OLLAMA = "ollama"
+    OPENAI = "openai"
+    DEEPSEEK = "deepseek"
+    GROQ = "groq"
+    OPENROUTER = "openrouter"
 
 
 class ModelConfig:
-    """Configuración de un modelo"""
-    
     def __init__(
         self,
         name: str,
@@ -36,7 +48,9 @@ class ModelConfig:
         max_tokens: Optional[int] = None,
         available: bool = True,
         requires_api_key: bool = False,
-        quality_level: str = "medium"  # "low", "medium", "high"
+        quality_level: str = "medium",
+        api_model_id: Optional[str] = None,
+        base_url: Optional[str] = None,
     ):
         self.name = name
         self.provider = provider
@@ -46,420 +60,358 @@ class ModelConfig:
         self.available = available
         self.requires_api_key = requires_api_key
         self.quality_level = quality_level
-    
+        self.api_model_id = api_model_id or name
+        self.base_url = base_url
+
     def estimate_cost(self, input_tokens: int, output_tokens: int) -> float:
-        """Estima el costo de una llamada"""
         input_cost = (input_tokens / 1000) * self.cost_per_1k_input
         output_cost = (output_tokens / 1000) * self.cost_per_1k_output
         return input_cost + output_cost
-    
+
     def __repr__(self):
-        cost_str = f"${self.cost_per_1k_input:.4f}/{self.cost_per_1k_output:.4f}" if self.cost_per_1k_input > 0 else "GRATIS"
-        return f"ModelConfig(name={self.name}, provider={self.provider.value}, cost={cost_str}, quality={self.quality_level})"
+        cost_str = (
+            f"${self.cost_per_1k_input:.4f}/{self.cost_per_1k_output:.4f}"
+            if self.cost_per_1k_input > 0
+            else "GRATIS"
+        )
+        return f"ModelConfig(name={self.name}, provider={self.provider.value}, cost={cost_str})"
 
 
 class ModelManager:
-    """
-    Gestor de modelos que selecciona automáticamente el modelo más barato disponible
-    """
-    
-    # Configuración de modelos disponibles (ordenados por costo)
     MODELS: List[ModelConfig] = [
-        # Modelos GRATIS (Ollama - local)
+        # Local
+        ModelConfig("llama3.2", ModelProvider.OLLAMA, 0, 0, 8192, quality_level="medium"),
+        ModelConfig("llama3.1", ModelProvider.OLLAMA, 0, 0, 8192, quality_level="high"),
+        ModelConfig("mistral", ModelProvider.OLLAMA, 0, 0, 8192, quality_level="medium"),
+        ModelConfig("phi3", ModelProvider.OLLAMA, 0, 0, 4096, quality_level="low"),
+        ModelConfig("qwen2.5", ModelProvider.OLLAMA, 0, 0, 8192, quality_level="high"),
+        # DeepSeek (chino, barato)
         ModelConfig(
-            name="llama3.2",
-            provider=ModelProvider.OLLAMA,
-            cost_per_1k_input=0.0,
-            cost_per_1k_output=0.0,
-            max_tokens=8192,
-            requires_api_key=False,
-            quality_level="medium"
-        ),
-        ModelConfig(
-            name="llama3.1",
-            provider=ModelProvider.OLLAMA,
-            cost_per_1k_input=0.0,
-            cost_per_1k_output=0.0,
-            max_tokens=8192,  # Límite razonable para Ollama
-            requires_api_key=False,
-            quality_level="high"
-        ),
-        ModelConfig(
-            name="mistral",
-            provider=ModelProvider.OLLAMA,
-            cost_per_1k_input=0.0,
-            cost_per_1k_output=0.0,
-            max_tokens=8192,
-            requires_api_key=False,
-            quality_level="medium"
-        ),
-        ModelConfig(
-            name="phi3",
-            provider=ModelProvider.OLLAMA,
-            cost_per_1k_input=0.0,
-            cost_per_1k_output=0.0,
-            max_tokens=4096,
-            requires_api_key=False,
-            quality_level="low"
-        ),
-        
-        # Modelos BARATOS (OpenAI)
-        ModelConfig(
-            name="gpt-3.5-turbo",
-            provider=ModelProvider.OPENAI,
-            cost_per_1k_input=0.0005,  # $0.0005 por 1k tokens input
-            cost_per_1k_output=0.0015,  # $0.0015 por 1k tokens output
-            max_tokens=16384,  # Límite real: 16,385 tokens (usamos 16,384 para seguridad)
+            "deepseek-chat",
+            ModelProvider.DEEPSEEK,
+            0.00014,
+            0.00028,
+            8192,
             requires_api_key=True,
-            quality_level="medium"
+            quality_level="high",
+            base_url="https://api.deepseek.com",
         ),
         ModelConfig(
-            name="gpt-4o-mini",
-            provider=ModelProvider.OPENAI,
-            cost_per_1k_input=0.00015,  # $0.00015 por 1k tokens input
-            cost_per_1k_output=0.0006,   # $0.0006 por 1k tokens output
-            max_tokens=16384,  # Límite real: 16,384 tokens de salida
+            "deepseek-reasoner",
+            ModelProvider.DEEPSEEK,
+            0.00055,
+            0.0022,
+            8192,
             requires_api_key=True,
-            quality_level="medium"
+            quality_level="premium",
+            base_url="https://api.deepseek.com",
         ),
-        
-        # Modelos CAROS (OpenAI) - solo cuando es necesario
+        # Groq (tier gratis)
         ModelConfig(
-            name="gpt-4-turbo",
-            provider=ModelProvider.OPENAI,
-            cost_per_1k_input=0.01,     # $0.01 por 1k tokens input
-            cost_per_1k_output=0.03,    # $0.03 por 1k tokens output
-            max_tokens=16384,  # Límite real: 16,384 tokens de salida (aunque el contexto puede ser 128k)
+            "groq/llama-3.3-70b",
+            ModelProvider.GROQ,
+            0,
+            0,
+            8192,
             requires_api_key=True,
-            quality_level="high"
-        ),
-        ModelConfig(
-            name="gpt-4o",
-            provider=ModelProvider.OPENAI,
-            cost_per_1k_input=0.005,    # $0.005 por 1k tokens input
-            cost_per_1k_output=0.015,   # $0.015 por 1k tokens output
-            max_tokens=16384,  # Límite real: 16,384 tokens de salida (aunque el contexto puede ser 128k)
-            requires_api_key=True,
-            quality_level="high"
+            quality_level="high",
+            api_model_id="llama-3.3-70b-versatile",
+            base_url="https://api.groq.com/openai/v1",
         ),
         ModelConfig(
-            name="gpt-4",
-            provider=ModelProvider.OPENAI,
-            cost_per_1k_input=0.03,     # $0.03 por 1k tokens input
-            cost_per_1k_output=0.06,    # $0.06 por 1k tokens output
-            max_tokens=8192,  # Límite real: 8,192 tokens
+            "groq/gemma2-9b",
+            ModelProvider.GROQ,
+            0,
+            0,
+            8192,
             requires_api_key=True,
-            quality_level="high"
+            quality_level="medium",
+            api_model_id="gemma2-9b-it",
+            base_url="https://api.groq.com/openai/v1",
         ),
-        
-        # Modelos PREMIUM (OpenAI) - Máxima calidad, solo cuando es crítico
+        # OpenRouter free (chinos + otros)
         ModelConfig(
-            name="gpt-5",
-            provider=ModelProvider.OPENAI,
-            cost_per_1k_input=0.015,    # $0.015 por 1k tokens input (estimado)
-            cost_per_1k_output=0.06,    # $0.06 por 1k tokens output (estimado)
-            max_tokens=16384,  # Límite real: 16,384 tokens de salida (contexto 128k+)
+            "openrouter/qwen-2.5-72b-free",
+            ModelProvider.OPENROUTER,
+            0,
+            0,
+            8192,
             requires_api_key=True,
-            quality_level="premium"  # Nueva categoría de máxima calidad
+            quality_level="high",
+            api_model_id="qwen/qwen-2.5-72b-instruct:free",
+            base_url="https://openrouter.ai/api/v1",
         ),
         ModelConfig(
-            name="gpt-5-pro",
-            provider=ModelProvider.OPENAI,
-            cost_per_1k_input=0.03,     # $0.03 por 1k tokens input (estimado)
-            cost_per_1k_output=0.12,    # $0.12 por 1k tokens output (estimado)
-            max_tokens=16384,  # Límite real: 16,384 tokens de salida (contexto 128k+)
+            "openrouter/deepseek-chat-free",
+            ModelProvider.OPENROUTER,
+            0,
+            0,
+            8192,
             requires_api_key=True,
-            quality_level="premium"  # Máxima calidad disponible
+            quality_level="high",
+            api_model_id="deepseek/deepseek-chat-v3-0324:free",
+            base_url="https://openrouter.ai/api/v1",
         ),
+        ModelConfig(
+            "openrouter/glm-4-9b-free",
+            ModelProvider.OPENROUTER,
+            0,
+            0,
+            8192,
+            requires_api_key=True,
+            quality_level="medium",
+            api_model_id="thudm/glm-4-9b:free",
+            base_url="https://openrouter.ai/api/v1",
+        ),
+        ModelConfig(
+            "openrouter/llama-3.2-3b-free",
+            ModelProvider.OPENROUTER,
+            0,
+            0,
+            8192,
+            requires_api_key=True,
+            quality_level="medium",
+            api_model_id="meta-llama/llama-3.2-3b-instruct:free",
+            base_url="https://openrouter.ai/api/v1",
+        ),
+        # OpenAI
+        ModelConfig("gpt-3.5-turbo", ModelProvider.OPENAI, 0.0005, 0.0015, 4096, requires_api_key=True, quality_level="medium"),
+        ModelConfig("gpt-4o-mini", ModelProvider.OPENAI, 0.00015, 0.0006, 4096, requires_api_key=True, quality_level="medium"),
+        ModelConfig("gpt-4-turbo", ModelProvider.OPENAI, 0.01, 0.03, 4096, requires_api_key=True, quality_level="high"),
+        ModelConfig("gpt-4o", ModelProvider.OPENAI, 0.005, 0.015, 4096, requires_api_key=True, quality_level="high"),
+        ModelConfig("gpt-4", ModelProvider.OPENAI, 0.03, 0.06, 4096, requires_api_key=True, quality_level="high"),
+        ModelConfig("gpt-5", ModelProvider.OPENAI, 0.015, 0.06, 4096, requires_api_key=True, quality_level="premium"),
+        ModelConfig("gpt-5-pro", ModelProvider.OPENAI, 0.03, 0.12, 4096, requires_api_key=True, quality_level="premium"),
     ]
-    
-    def __init__(self, api_key: Optional[str] = None, mode: str = "auto"):
-        """
-        Inicializa el gestor de modelos
-        
-        Args:
-            api_key: API key de OpenAI (opcional, solo necesario para modelos de OpenAI)
-            mode: Modo de selección ("auto" = optimizar costes, "manual" = usar modelo especificado)
-        """
+
+    def __init__(self, api_key: Optional[str] = None, mode: str = "auto", provider_keys: Optional[Dict[str, str]] = None):
         self.api_key = api_key
         self.mode = mode
+        self.provider_keys = self._resolve_keys(api_key, provider_keys)
         self.ollama_available = self._check_ollama_availability()
         self._model_cache: Dict[str, Any] = {}
-    
+
+    def _resolve_keys(
+        self,
+        openai_key: Optional[str],
+        provider_keys: Optional[Dict[str, str]],
+    ) -> Dict[str, str]:
+        keys: Dict[str, str] = {}
+        # Env
+        env_map = {
+            "openai": "OPENAI_API_KEY",
+            "deepseek": "DEEPSEEK_API_KEY",
+            "groq": "GROQ_API_KEY",
+            "openrouter": "OPENROUTER_API_KEY",
+        }
+        for prov, env_name in env_map.items():
+            val = os.getenv(env_name)
+            if val:
+                keys[prov] = val
+        # Request / constructor
+        for src in (get_request_provider_keys(), provider_keys or {}):
+            for k, v in src.items():
+                if v:
+                    keys[k] = v
+        if openai_key:
+            keys["openai"] = openai_key
+        # Sync self.api_key
+        if keys.get("openai"):
+            self.api_key = keys["openai"]
+        return keys
+
+    def _key_for(self, provider: ModelProvider) -> Optional[str]:
+        if provider == ModelProvider.OPENAI:
+            return self.provider_keys.get("openai") or self.api_key
+        if provider == ModelProvider.DEEPSEEK:
+            return self.provider_keys.get("deepseek")
+        if provider == ModelProvider.GROQ:
+            return self.provider_keys.get("groq")
+        if provider == ModelProvider.OPENROUTER:
+            return self.provider_keys.get("openrouter")
+        return None
+
     def _check_ollama_availability(self) -> bool:
-        """Verifica si Ollama está disponible"""
         if requests is None:
             return False
         try:
             response = requests.get("http://localhost:11434/api/tags", timeout=2)
             return response.status_code == 200
-        except:
+        except Exception:
             return False
-    
+
     def get_available_models(self, min_quality: str = "low") -> List[ModelConfig]:
-        """
-        Obtiene lista de modelos disponibles ordenados por costo
-        
-        Args:
-            min_quality: Calidad mínima requerida ("low", "medium", "high")
-        
-        Returns:
-            Lista de modelos disponibles ordenados de más barato a más caro
-        """
         quality_order = {"low": 0, "medium": 1, "high": 2, "premium": 3}
         min_quality_level = quality_order.get(min_quality, 0)
-        
         available = []
-        
+
         for model in self.MODELS:
-            # Verificar disponibilidad según proveedor
-            if model.provider == ModelProvider.OLLAMA:
-                if not self.ollama_available:
-                    continue
-            elif model.provider == ModelProvider.OPENAI:
-                if not self.api_key:
-                    continue
-            
-            # Verificar calidad mínima
-            model_quality_level = quality_order.get(model.quality_level, 0)
-            if model_quality_level < min_quality_level:
+            if model.provider == ModelProvider.OLLAMA and not self.ollama_available:
                 continue
-            
+            if model.requires_api_key and not self._key_for(model.provider):
+                continue
+            if quality_order.get(model.quality_level, 0) < min_quality_level:
+                continue
             available.append(model)
-        
-        # Ordenar por costo (gratis primero, luego por costo)
-        available.sort(key=lambda m: (
-            m.cost_per_1k_input + m.cost_per_1k_output,  # Costo total
-            quality_order.get(m.quality_level, 0)  # Luego por calidad
-        ))
-        
+
+        available.sort(
+            key=lambda m: (
+                m.cost_per_1k_input + m.cost_per_1k_output,
+                quality_order.get(m.quality_level, 0),
+            )
+        )
         return available
-    
+
     def select_model(
         self,
         task_type: str = "general",
         min_quality: str = "medium",
         preferred_model: Optional[str] = None,
         context_length: Optional[int] = None,
-        force_premium: bool = False
+        force_premium: bool = False,
     ) -> Tuple[ModelConfig, Any]:
-        """
-        Selecciona el mejor modelo disponible para una tarea
-        
-        Args:
-            task_type: Tipo de tarea ("qa", "generation", "analysis", "general")
-            min_quality: Calidad mínima requerida ("low", "medium", "high", "premium")
-            preferred_model: Modelo preferido por el usuario (si está disponible)
-            context_length: Longitud del contexto requerida (en tokens)
-            force_premium: Si es True, fuerza el uso de un modelo premium (GPT-5 o GPT-5 Pro)
-        
-        Returns:
-            Tupla (ModelConfig, LLM instance)
-        """
-        # Si force_premium es True, usar modelo premium
+        # Refrescar keys por si cambió el request
+        self.provider_keys = self._resolve_keys(self.api_key, self.provider_keys)
+
         if force_premium:
             min_quality = "premium"
-            # Buscar primero GPT-5, luego GPT-5 Pro
-            premium_models = ["gpt-5", "gpt-5-pro"]
-            for premium_model in premium_models:
+            for premium_model in ("deepseek-reasoner", "gpt-5", "gpt-5-pro"):
                 for model in self.MODELS:
-                    if model.name == premium_model:
-                        if model.provider == ModelProvider.OPENAI and not self.api_key:
-                            continue
-                        if context_length and model.max_tokens and context_length > model.max_tokens:
-                            continue
-                        llm = self._create_llm(model)
-                        if llm:
-                            logger.info(f"✅ Usando modelo premium forzado: {model.name}")
-                            return model, llm
-        
-        # Si hay un modelo preferido y está disponible, usarlo
-        if preferred_model:
-            for model in self.MODELS:
-                if model.name == preferred_model:
-                    if model.provider == ModelProvider.OLLAMA and not self.ollama_available:
-                        break
-                    if model.provider == ModelProvider.OPENAI and not self.api_key:
-                        break
-                    if context_length and model.max_tokens and context_length > model.max_tokens:
-                        break
+                    if model.name != premium_model:
+                        continue
+                    if model.requires_api_key and not self._key_for(model.provider):
+                        continue
                     llm = self._create_llm(model)
                     if llm:
-                        logger.info(f"✅ Usando modelo preferido: {model.name}")
+                        logger.info(f"Usando modelo premium: {model.name}")
                         return model, llm
-        
-        # Modo automático: seleccionar el más barato disponible
+
+        if preferred_model:
+            for model in self.MODELS:
+                if model.name != preferred_model:
+                    continue
+                if model.provider == ModelProvider.OLLAMA and not self.ollama_available:
+                    break
+                if model.requires_api_key and not self._key_for(model.provider):
+                    break
+                llm = self._create_llm(model)
+                if llm:
+                    logger.info(f"Usando modelo preferido: {model.name}")
+                    return model, llm
+
         if self.mode == "auto":
             available_models = self.get_available_models(min_quality=min_quality)
-            
-            # Filtrar por longitud de contexto si se especifica
             if context_length:
                 available_models = [
                     m for m in available_models
                     if not m.max_tokens or m.max_tokens >= context_length
                 ]
-            
-            # Intentar cada modelo hasta encontrar uno que funcione
             for model in available_models:
                 try:
                     llm = self._create_llm(model)
                     if llm:
-                        logger.info(f"✅ Modelo seleccionado automáticamente: {model.name} (${model.cost_per_1k_input:.4f}/{model.cost_per_1k_output:.4f} por 1k tokens)")
+                        logger.info(f"Modelo auto: {model.name}")
                         return model, llm
                 except Exception as e:
-                    logger.warning(f"⚠️ No se pudo crear modelo {model.name}: {e}")
-                    continue
-            
-            # Si ningún modelo funciona, lanzar error
-            raise RuntimeError("No hay modelos disponibles. Verifica que Ollama esté instalado o que tengas una API key de OpenAI configurada.")
-        
-        # Modo manual: usar el primer modelo disponible
-        else:
-            available_models = self.get_available_models(min_quality=min_quality)
-            if not available_models:
-                raise RuntimeError("No hay modelos disponibles.")
-            model = available_models[0]
-            llm = self._create_llm(model)
-            return model, llm
-    
+                    logger.warning(f"No se pudo crear {model.name}: {e}")
+            raise RuntimeError(
+                "No hay modelos disponibles. Configura OpenAI, DeepSeek, Groq, OpenRouter u Ollama."
+            )
+
+        available_models = self.get_available_models(min_quality=min_quality)
+        if not available_models:
+            raise RuntimeError("No hay modelos disponibles.")
+        model = available_models[0]
+        llm = self._create_llm(model)
+        return model, llm
+
     def _create_llm(self, model_config: ModelConfig) -> Optional[Any]:
-        """
-        Crea una instancia de LLM según la configuración del modelo
-        
-        Args:
-            model_config: Configuración del modelo
-        
-        Returns:
-            Instancia de LLM o None si no se puede crear
-        """
         try:
             if model_config.provider == ModelProvider.OLLAMA:
                 return self._create_ollama_llm(model_config)
-            elif model_config.provider == ModelProvider.OPENAI:
-                return self._create_openai_llm(model_config)
-            else:
-                return None
+            return self._create_openai_compatible_llm(model_config)
         except Exception as e:
             logger.error(f"Error creando LLM {model_config.name}: {e}")
             return None
-    
+
     def _create_ollama_llm(self, model_config: ModelConfig) -> Optional[Any]:
-        """Crea un LLM de Ollama"""
         try:
-            from langchain_community.llms import Ollama
             from langchain_community.chat_models import ChatOllama
-            
-            # Verificar que el modelo esté disponible en Ollama
+
             if requests is None:
-                logger.warning("⚠️ requests no está instalado. Instala con: pip install requests")
                 return None
             try:
                 response = requests.get("http://localhost:11434/api/tags", timeout=2)
-                if response.status_code == 200:
-                    models = response.json().get("models", [])
-                    model_names = [m.get("name", "").split(":")[0] for m in models]
-                    
-                    # Buscar el modelo o una variante
-                    model_name = model_config.name
-                    if model_name not in model_names:
-                        # Intentar variantes comunes
-                        variants = [
-                            f"{model_name}:latest",
-                            f"{model_name}:8b",
-                            f"{model_name}:7b",
-                        ]
-                        for variant in variants:
-                            if any(variant.startswith(name) for name in model_names):
-                                model_name = variant.split(":")[0]
+                if response.status_code != 200:
+                    return None
+                models = response.json().get("models", [])
+                model_names = [m.get("name", "").split(":")[0] for m in models]
+                model_name = model_config.name
+                if model_name not in model_names:
+                    if model_names:
+                        # Preferir qwen/llama si el pedido no está
+                        for candidate in (model_name, "qwen2.5", "llama3.1", "llama3.2"):
+                            if candidate in model_names:
+                                model_name = candidate
                                 break
                         else:
-                            # Si no se encuentra, usar el primer modelo disponible
-                            if model_names:
-                                model_name = model_names[0]
-                                logger.warning(f"⚠️ Modelo {model_config.name} no encontrado, usando {model_name}")
-                            else:
-                                logger.error("❌ No hay modelos instalados en Ollama")
-                                return None
-            except Exception as e:
-                logger.warning(f"⚠️ No se pudo verificar modelos de Ollama: {e}")
+                            model_name = model_names[0]
+                    else:
+                        return None
+            except Exception:
                 return None
-            
-            # Crear instancia de ChatOllama
-            llm = ChatOllama(
-                model=model_name,
-                base_url="http://localhost:11434",
-                temperature=0.7
-            )
-            
-            logger.info(f"✅ LLM de Ollama creado: {model_name}")
-            return llm
-            
+
+            return ChatOllama(model=model_name, base_url="http://localhost:11434", temperature=0.7)
         except ImportError:
-            logger.warning("⚠️ langchain_community no está instalado. Instala con: pip install langchain-community")
+            logger.warning("langchain_community no instalado")
             return None
         except Exception as e:
-            logger.error(f"❌ Error creando LLM de Ollama: {e}")
+            logger.error(f"Error Ollama: {e}")
             return None
-    
-    def _create_openai_llm(self, model_config: ModelConfig) -> Optional[Any]:
-        """Crea un LLM de OpenAI"""
+
+    def _create_openai_compatible_llm(self, model_config: ModelConfig) -> Optional[Any]:
         try:
             from langchain_openai import ChatOpenAI
-            
-            if not self.api_key:
-                logger.warning("⚠️ API key de OpenAI no proporcionada")
+
+            api_key = self._key_for(model_config.provider)
+            if model_config.requires_api_key and not api_key:
+                logger.warning(f"Falta API key para {model_config.provider.value}")
                 return None
-            
-            # Asegurar que max_tokens no exceda los límites del modelo
-            # max_tokens se refiere a tokens de salida (completion tokens), no al contexto total
-            max_output_tokens = model_config.max_tokens
-            if max_output_tokens is None:
-                max_output_tokens = None
-            else:
-                # Límites reales de tokens de salida por modelo
-                # Nota: El contexto puede ser mayor, pero la salida tiene límites más estrictos
-                # Algunos entornos/API keys devuelven límites más bajos (p. ej. 4096).
-                # Usamos un tope conservador para evitar errores 400 por max_tokens excedido.
-                model_output_limits = {
-                    "gpt-3.5-turbo": 4096,
-                    "gpt-4o-mini": 4096,
-                    "gpt-4-turbo": 4096,
-                    "gpt-4o": 4096,
-                    "gpt-4": 4096,
+
+            max_output_tokens = min(model_config.max_tokens or 4096, 4096)
+            kwargs: Dict[str, Any] = {
+                "model": model_config.api_model_id,
+                "temperature": 0.7,
+                "api_key": api_key or "not-needed",
+                "max_tokens": max_output_tokens,
+            }
+            if model_config.base_url:
+                kwargs["base_url"] = model_config.base_url
+            # OpenRouter recomienda headers de atribución
+            if model_config.provider == ModelProvider.OPENROUTER:
+                kwargs["default_headers"] = {
+                    "HTTP-Referer": os.getenv("OPENROUTER_SITE_URL", "https://www.paupedrejon.com"),
+                    "X-Title": "Study Agents",
                 }
-                if model_config.name in model_output_limits:
-                    max_output_tokens = min(max_output_tokens, model_output_limits[model_config.name])
-                # Clamp global defensivo para modelos nuevos/no mapeados.
-                max_output_tokens = min(max_output_tokens, 4096)
-            
-            llm = ChatOpenAI(
-                model=model_config.name,
-                temperature=0.7,
-                api_key=self.api_key,
-                max_tokens=max_output_tokens
-            )
-            
-            logger.info(f"✅ LLM de OpenAI creado: {model_config.name} (max_tokens={max_output_tokens})")
+
+            llm = ChatOpenAI(**kwargs)
+            logger.info(f"LLM creado: {model_config.name} via {model_config.provider.value}")
             return llm
-            
         except ImportError:
-            logger.warning("⚠️ langchain_openai no está instalado")
+            logger.warning("langchain_openai no instalado")
             return None
         except Exception as e:
-            logger.error(f"❌ Error creando LLM de OpenAI: {e}")
+            logger.error(f"Error LLM compatible: {e}")
             return None
-    
+
     def get_model_info(self, model_name: str) -> Optional[ModelConfig]:
-        """Obtiene información de un modelo específico"""
         for model in self.MODELS:
             if model.name == model_name:
                 return model
         return None
-    
+
     def estimate_cost(self, model_name: str, input_tokens: int, output_tokens: int) -> float:
-        """Estima el costo de usar un modelo específico"""
         model = self.get_model_info(model_name)
         if model:
             return model.estimate_cost(input_tokens, output_tokens)
         return 0.0
-

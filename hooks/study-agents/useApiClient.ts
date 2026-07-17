@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { getOpenAIApiKey } from "@/lib/study-agents/api-keys";
+import { getOpenAIApiKey, getProviderKeysForRequest } from "@/lib/study-agents/api-keys";
 import type { StudyAgentsApiResponse } from "@/lib/study-agents/types";
 
 const DEFAULT_TIMEOUT_MS = 120_000;
@@ -18,15 +18,29 @@ function resolveStudyAgentsPath(path: string): string {
   return `/api/study-agents/${normalized}`;
 }
 
-/**
- * Cliente HTTP centralizado para Study Agents.
- * Timeout 120s, 1 reintento en fallo de red, respuestas tipadas.
- */
+function withProviderKeysBody(init?: RequestInit): RequestInit | undefined {
+  if (!init?.body || typeof init.body !== "string") return init;
+  try {
+    const parsed = JSON.parse(init.body) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return init;
+    if (parsed.providerKeys || parsed.provider_keys) return init;
+    const keys = getProviderKeysForRequest();
+    if (!Object.keys(keys).length) return init;
+    return {
+      ...init,
+      body: JSON.stringify({ ...parsed, providerKeys: keys }),
+    };
+  } catch {
+    return init;
+  }
+}
+
 export async function saFetch<T = StudyAgentsApiResponse>(
   path: string,
   options: RequestInit & { timeout?: number } = {},
 ): Promise<SaFetchResult<T>> {
-  const { timeout = DEFAULT_TIMEOUT_MS, ...init } = options;
+  const { timeout = DEFAULT_TIMEOUT_MS, ...rawInit } = options;
+  const init = withProviderKeysBody(rawInit) ?? rawInit;
   const url = resolveStudyAgentsPath(path);
 
   const doRequest = async (): Promise<Response> => {
@@ -79,7 +93,6 @@ export function useApiClient() {
   return { saFetch: fetchStudyAgents, getApiKey };
 }
 
-/** POST JSON a un endpoint de study-agents */
 export async function saPost<T = StudyAgentsApiResponse>(
   path: string,
   body: unknown,
@@ -93,10 +106,6 @@ export async function saPost<T = StudyAgentsApiResponse>(
   });
 }
 
-/**
- * Sustituto drop-in de `fetch` para `/api/study-agents/*`.
- * Permite migrar llamadas existentes sin reescribir la lógica de respuesta.
- */
 export async function studyAgentsFetch(
   endpoint: string,
   init?: RequestInit & { timeout?: number },
