@@ -130,8 +130,8 @@ export default function ChatToolbar({
             borderRadius: "8px",
             background:
               colorTheme === "dark"
-                ? "rgba(99, 102, 241, 0.08)"
-                : "rgba(99, 102, 241, 0.06)",
+                ? "rgba(37, 150, 190, 0.08)"
+                : "rgba(37, 150, 190, 0.06)",
           }}
           title="Coste estimado de esta sesión (BYOK)"
         >
@@ -267,7 +267,7 @@ export default function ChatToolbar({
                   maxHeight: "320px",
                   overflowY: "auto",
                   zIndex: 10000,
-                  border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(148, 163, 184, 0.2)"}`,
+                  border: `1px solid ${colorTheme === "dark" ? "rgba(37, 150, 190, 0.2)" : "rgba(148, 163, 184, 0.2)"}`,
                 }}
               >
                 {grouped.map(({ group, label, items }) => (
@@ -301,8 +301,8 @@ export default function ChatToolbar({
                             padding: "0.5rem 0.75rem",
                             background: isSelected
                               ? colorTheme === "dark"
-                                ? "rgba(99, 102, 241, 0.2)"
-                                : "rgba(99, 102, 241, 0.15)"
+                                ? "rgba(37, 150, 190, 0.2)"
+                                : "rgba(37, 150, 190, 0.15)"
                               : "transparent",
                             border: "none",
                             borderRadius: "8px",
@@ -372,8 +372,8 @@ export default function ChatToolbar({
           height: "48px",
           background:
             colorTheme === "dark"
-              ? "rgba(99, 102, 241, 0.1)"
-              : "rgba(99, 102, 241, 0.08)",
+              ? "rgba(37, 150, 190, 0.1)"
+              : "rgba(37, 150, 190, 0.08)",
           borderRadius: "24px",
           border: "none",
           cursor: "pointer",
@@ -393,8 +393,8 @@ export default function ChatToolbar({
           height: "48px",
           background:
             colorTheme === "light"
-              ? "rgba(99, 102, 241, 0.1)"
-              : "rgba(99, 102, 241, 0.08)",
+              ? "rgba(37, 150, 190, 0.1)"
+              : "rgba(37, 150, 190, 0.08)",
           borderRadius: "24px",
           border: "none",
           cursor: "pointer",
