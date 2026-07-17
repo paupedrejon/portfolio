@@ -7,6 +7,11 @@ import { useEffect, useState } from "react";
 import { KeyIcon, StarIcon } from "./Icons";
 import APIKeyConfig from "./APIKeyConfig";
 import ProfileView from "./ProfileView";
+import {
+  getStoredAPIKeys,
+  hasConfiguredProviderKeys,
+  type StudyAgentsAPIKeys,
+} from "@/lib/study-agents/api-keys";
 
 const links = [
   { href: "/", label: "Home" },
@@ -29,7 +34,7 @@ export default function Header() {
   const isStudyAgentsPage = pathname?.startsWith("/study-agents");
   const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [apiKeys, setApiKeys] = useState<{ openai: string } | null>(null);
+  const [apiKeys, setApiKeys] = useState<StudyAgentsAPIKeys | null>(null);
   const [totalLevel, setTotalLevel] = useState<number>(0);
   const [monthlyCost, setMonthlyCost] = useState<number>(0);
 
@@ -61,17 +66,7 @@ export default function Header() {
   // Cargar API keys desde localStorage
   useEffect(() => {
     if (typeof window !== "undefined" && isStudyAgentsPage) {
-      const saved = localStorage.getItem("study_agents_api_keys");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed.openai && parsed.openai.startsWith("sk-")) {
-            setApiKeys(parsed);
-          }
-        } catch (e) {
-          console.error("Error loading API keys:", e);
-        }
-      }
+      setApiKeys(getStoredAPIKeys());
     }
   }, [isStudyAgentsPage]);
 
@@ -80,21 +75,7 @@ export default function Header() {
     if (!isStudyAgentsPage) return;
 
     const handleStorageChange = () => {
-      const saved = localStorage.getItem("study_agents_api_keys");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed.openai && parsed.openai.startsWith("sk-")) {
-            setApiKeys(parsed);
-          } else {
-            setApiKeys(null);
-          }
-        } catch (e) {
-          console.error("Error loading API keys:", e);
-        }
-      } else {
-        setApiKeys(null);
-      }
+      setApiKeys(getStoredAPIKeys());
     };
 
     // Escuchar evento personalizado cuando se actualizan las keys
@@ -179,7 +160,7 @@ export default function Header() {
     }
   }, [isStudyAgentsPage, session?.user?.id]);
 
-  const handleKeysConfigured = (keys: { openai: string }) => {
+  const handleKeysConfigured = (keys: StudyAgentsAPIKeys) => {
     setApiKeys(keys);
     setShowAPIKeyConfig(false);
     // Disparar evento personalizado para que StudyChat actualice su estado
@@ -348,7 +329,7 @@ export default function Header() {
             {!isMobile && (
               <button
                 onClick={() => setShowAPIKeyConfig(true)}
-                title={apiKeys?.openai ? "API Configurada" : "Configurar API"}
+                title={hasConfiguredProviderKeys(apiKeys) ? "API Configurada" : "Configurar API"}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -718,7 +699,7 @@ export default function Header() {
         <APIKeyConfig
           onKeysConfigured={handleKeysConfigured}
           onClose={() => {
-            if (apiKeys?.openai) {
+            if (hasConfiguredProviderKeys(apiKeys)) {
               setShowAPIKeyConfig(false);
             }
           }}
