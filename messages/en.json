@@ -175,7 +175,7 @@
       "web": {
         "title": "WEB",
         "subtitle": "Building elegant high-performance web products with cinematic UI craft.",
-        "education": "Universitat Politècnica de Barcelona",
+        "education": "Universitat Politècnica de Catalunya",
         "experience": "Owius",
         "portfolio": "turelojya.com",
         "cta": "VIEW WEB PROJECTS"
@@ -194,13 +194,13 @@
       "mobile": {
         "title": "MOBILE",
         "subtitle": "React Native · Expo · iOS · Android",
-        "education": "Universitat Politècnica de Barcelona",
+        "education": "Universitat Politècnica de Catalunya",
         "cta": "VIEW MOBILE PROJECT"
       },
       "games": {
         "title": "VIDEOGAMES",
         "subtitle": "Unity · C# · VR · Multiplayer",
-        "education": "Universitat Politècnica de Barcelona",
+        "education": "Universitat Politècnica de Catalunya",
         "cta": "VIEW GAMES",
         "portfolio": {
           "salmon": "Realistic Online Game",
@@ -213,7 +213,7 @@
       "hardware": {
         "title": "HARDWARE",
         "subtitle": "3D Printing · IoT · Microcontrollers",
-        "education": "Universitat Politècnica de Barcelona",
+        "education": "Universitat Politècnica de Catalunya",
         "cta": "VIEW HARDWARE",
         "portfolio": {
           "tires": "Tire Inflator Simulator",
@@ -311,7 +311,7 @@
     },
     "ego": {
       "title": "E-Go",
-      "kicker": "2025 - Universitat Politècnica de Barcelona",
+      "kicker": "2025 - Universitat Politècnica de Catalunya",
       "title2": "Sustainable Mobility App",
       "subtitle": "Electric mobility platform with a mobile app and backend API. Includes Google login, station and service discovery, favorites, vehicle management, can-reach range estimation, Stripe subscriptions (including webhooks), admin routes, and location/maps integration.",
       "ctaText": ""
@@ -325,21 +325,21 @@
     },
     "tire-inflator": {
       "title": "Tire Inflator Simulator",
-      "kicker": "2024 - Universitat Politècnica de Barcelona",
+      "kicker": "2024 - Universitat Politècnica de Catalunya",
       "title2": "Microcontroller Project",
       "subtitle": "Simulation of a tire inflation system built in Proteus, using C for microcontroller programming.",
       "ctaText": ""
     },
     "fiblab": {
       "title": "FIB Lab",
-      "kicker": "2024 - Universitat Politècnica de Barcelona",
+      "kicker": "2024 - Universitat Politècnica de Catalunya",
       "title2": "Unity 2024 Course Project",
       "subtitle": "A simple 2D game made during the Unity Essential Course.",
       "ctaText": "Play Now"
     },
     "circusvr": {
       "title": "Circus VR",
-      "kicker": "2024 - Universitat Politècnica de Barcelona",
+      "kicker": "2024 - Universitat Politècnica de Catalunya",
       "title2": "Game Jam 2024",
       "subtitle": "Built a functional interactive VR system with circus props within 48 hours.",
       "ctaText": "About Game Jam"
@@ -624,7 +624,7 @@
     "ego": {
       "heroSummary": "Electric mobility app (UPC): stations, range-aware routes, gamification and full backend with Stripe — published APK and deployable API.",
       "contextTitle": "Academic context",
-      "context": "E-Go is the React Native course project at Universitat Politècnica de Barcelona (2025). I turned course requirements into an ambitious product: not just a map app, but a platform with its own API, real charging data (ICAEN), range logic, subscriptions and an admin panel — plus docs, tests and cloud deployment.",
+      "context": "E-Go is the React Native course project at Universitat Politècnica de Catalunya (2025). I turned course requirements into an ambitious product: not just a map app, but a platform with its own API, real charging data (ICAEN), range logic, subscriptions and an admin panel — plus docs, tests and cloud deployment.",
       "overviewTitle": "The product",
       "overview": "EV and hybrid drivers find active stations, plan routes based on real range, save favorites and compete on leaderboards while charging. The Expo/React Native app consumes an Express + PostgreSQL API with Google OAuth, JWT, Stripe webhooks, geolocation and AWS jobs. Includes an Android APK and architecture ready to scale.",
       "highlightsTitle": "What I built",
@@ -1190,12 +1190,12 @@
       },
       "upcDegree": {
         "title": "Bachelor's degree in Computer Engineering",
-        "school": "Universitat Politècnica de Barcelona (UPC)",
+        "school": "Universitat Politècnica de Catalunya (UPC)",
         "description": "Computer Engineering degree from FIB. I specialize in the Software Engineering track."
       },
       "unityCourse": {
         "title": "Unity Essential Course",
-        "school": "Universitat Politècnica de Barcelona (UPC)",
+        "school": "Universitat Politècnica de Catalunya (UPC)",
         "description": "Introduction to game development with Unity, taught by VGAFIB at FIB. Counts as 2 ECTS credits."
       },
       "itbDiploma": {
@@ -1460,7 +1460,7 @@
   },
   "egoPage": {
     "hero": {
-      "kicker": "Universitat Politècnica de Barcelona",
+      "kicker": "Universitat Politècnica de Catalunya",
       "title": "E-Go",
       "subtitle": "Mobile app for electric and hybrid drivers: find active chargers, plan trips around your range, and earn rewards while you charge.",
       "downloadCta": "Download e-Go"

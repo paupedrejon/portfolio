@@ -5,7 +5,7 @@
 
 ## About
 
-Pau Pedrejon is a software engineering student at Universitat Politècnica de Barcelona (UPC),
+Pau Pedrejon is a software engineering student at Universitat Politècnica de Catalunya (UPC),
 specializing in software engineering and AI. Available for opportunities in Barcelona and remote.
 
 ## Main sections

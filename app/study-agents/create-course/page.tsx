@@ -53,7 +53,7 @@ export default function CreateCoursePage() {
   
   // Lista de universidades/entidades predefinidas con logos
   const predefinedInstitutions = [
-    { name: "Universitat Politècnica de Barcelona", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Logo_UPC.svg/200px-Logo_UPC.svg.png" },
+    { name: "Universitat Politècnica de Catalunya", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Logo_UPC.svg/200px-Logo_UPC.svg.png" },
     { name: "Universitat de Barcelona", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Logo_UB.svg/200px-Logo_UB.svg.png" },
     { name: "Universitat Autònoma de Barcelona", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Logo_UAB.svg/200px-Logo_UAB.svg.png" },
     { name: "Universitat Pompeu Fabra", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Logo_UPF.svg/200px-Logo_UPF.svg.png" },

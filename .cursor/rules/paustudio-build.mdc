@@ -1,0 +1,16 @@
+---
+description: Tras cambios en PauStudio (tealcode), ejecutar build e instalar en public/downloads
+globs: tealcode/**/*
+alwaysApply: false
+---
+
+# PauStudio — build tras cada cambio
+
+Cuando modifiques código en `tealcode/`:
+
+1. Ejecuta `npm run tauri:build` en `tealcode/` (tarda ~3–4 min).
+2. Copia el instalador NSIS a `public/downloads/PauStudio-setup.exe`:
+   - Origen: `tealcode/src-tauri/target/release/bundle/nsis/PauStudio_*_x64-setup.exe`
+3. Si el cambio es una release notable, sube versión en `tealcode/package.json` y `tealcode/src-tauri/tauri.conf.json` antes del build.
+
+No omitas el build salvo que el usuario diga explícitamente que no hace falta.

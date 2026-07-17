@@ -8,7 +8,7 @@ ogTitle: "Study Agents + FSRS"
 
 ## Il problema
 
-Come studente di Ingegneria Informatica alla UPC di Barcellona, studiavo con PDF sparsi e chat IA generiche che non ricordavano il mio livello né il mio materiale. Avevo bisogno di un sistema che **imparasse dai miei appunti** e mi aiutasse a trattenere i concetti a lungo termine.
+Come studente di Ingegneria Informatica alla UPC (Universitat Politècnica de Catalunya), studiavo con PDF sparsi e chat IA generiche che non ricordavano il mio livello né il mio materiale. Avevo bisogno di un sistema che **imparasse dai miei appunti** e mi aiutasse a trattenere i concetti a lungo termine.
 
 ## La soluzione
 

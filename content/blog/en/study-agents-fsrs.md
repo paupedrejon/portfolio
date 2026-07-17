@@ -8,7 +8,7 @@ ogTitle: "Study Agents + FSRS"
 
 ## The problem
 
-As a Software Engineering student at UPC Barcelona, I studied with scattered PDFs and generic AI chats that didn't remember my level or my material. I needed a system that **learned from my notes** and helped me retain concepts long-term.
+As a Software Engineering student at UPC (Universitat Politècnica de Catalunya), I studied with scattered PDFs and generic AI chats that didn't remember my level or my material. I needed a system that **learned from my notes** and helped me retain concepts long-term.
 
 ## The solution
 

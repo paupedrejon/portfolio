@@ -238,7 +238,7 @@ export default function ExpertiseSection({
   } else {
     expertiseInfoRows.push({
       label: "EDUCATION",
-      value: area.id === "web-development" ? "Universitat Politècnica de Barcelona" : education,
+      value: area.id === "web-development" ? "Universitat Politècnica de Catalunya" : education,
     });
   }
   if (!area.hideExperience) {

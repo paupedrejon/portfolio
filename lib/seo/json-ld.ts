@@ -30,7 +30,7 @@ export function personSchema(params: {
     },
     alumniOf: {
       "@type": "CollegeOrUniversity",
-      name: "Universitat Politècnica de Barcelona",
+      name: "Universitat Politècnica de Catalunya",
       sameAs: "https://www.upc.edu/",
     },
     worksFor: {

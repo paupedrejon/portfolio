@@ -1139,7 +1139,7 @@
     "course_id": "course_20260207_190734_326180",
     "creator_id": "d764648c-74f6-4483-a0e1-fc7968132d57",
     "title": "DBD Segundo Parcial (para pruebas)",
-    "description": "Universitat Politècnica de Barcelona",
+    "description": "Universitat Politècnica de Catalunya",
     "price": 10.0,
     "max_duration_days": null,
     "cover_image": "http://localhost:8000/api/files/istockphoto-2162878522-612x612.jpg",

@@ -66,7 +66,7 @@
 
 Bienvenidos a mi **Capstone Project: Study Agents**.
 
-**Sobre mí:** Me llamo Pau, tengo 20 años y soy estudiante de ingeniería informática en la UPC (Universitat Politècnica de Barcelona).
+**Sobre mí:** Me llamo Pau, tengo 20 años y soy estudiante de ingeniería informática en la UPC (Universitat Politècnica de Catalunya).
 
 ### El Problema que Resuelve Study Agents
 
