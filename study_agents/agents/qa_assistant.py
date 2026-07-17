@@ -525,44 +525,41 @@ class QAAssistantAgent:
             history_str = "\n".join(history_messages)
         
         # Crear prompt manualmente usando replace para evitar problemas con llaves en el contenido
+        # Detectar si hay corpus real de documentos (no solo el título del chat)
+        has_document_corpus = bool(relevant_content) and not (
+            len(relevant_content) == 1
+            and isinstance(relevant_content[0], str)
+            and relevant_content[0].startswith("Tema del chat:")
+        )
+
         topic_context = ""
         if topic:
             if topic.lower() == "general":
-                # Si el tema es "General", el agente debe explicar cómo usar la aplicación
-                topic_context = """
+                if has_document_corpus:
+                    # Con PDF indexado: tutorizar el material, no el onboarding de la app
+                    topic_context = """
+
+**TEMA: material del documento indexado**
+
+Hay documentos PDF procesados en este chat. Tu rol es:
+1. Responder basándote PRIORITARIAMENTE en el CONTENIDO DE LOS DOCUMENTOS del contexto.
+2. Si el usuario pregunta "explicame el pdf", "explicame esto", etc., resume y explica el contenido del documento.
+3. Solo explica cómo usar Study Agents si pregunta explícitamente por la aplicación (navegación, botones, API keys).
+4. NO generes guías genéricas de "Bienvenido a Study Agents" ni ignores el PDF.
+"""
+                else:
+                    topic_context = """
                 
-**TEMA DE LA CONVERSACIÓN: "General" - Explicación de cómo usar Study Agents**
+**TEMA DE LA CONVERSACIÓN: "General" - Onboarding de Study Agents**
 
-Este chat es especial: está diseñado para que el usuario aprenda cómo usar la aplicación Study Agents. Tu rol aquí es:
-
-1. **Explicar la estructura de la aplicación:**
-   - Cada chat representa UN tema de estudio específico
-   - El usuario puede crear múltiples chats, cada uno para un tema diferente (ej: "SQL", "Inglés", "Matemáticas")
-   - Cada chat mantiene su propio historial, documentos y progreso independiente
-
-2. **Explicar las capacidades de Study Agents:**
-   - Subir documentos PDF que se procesan automáticamente
-   - Hacer preguntas sobre el material subido
-   - Generar apuntes estructurados a partir de documentos
-   - Crear tests personalizados adaptados al nivel del usuario
-   - Generar ejercicios prácticos con corrección automática
-   - Usar flashcards para aprender vocabulario (si el tema es un idioma)
-   - Ejecutar código directamente en el navegador (si el tema es programación)
-
-3. **Guiar al usuario sobre cómo empezar:**
-   - Explicar que debe crear un nuevo chat para cada tema que quiera estudiar
-   - Recomendar subir documentos primero para tener contexto
-   - Explicar cómo usar cada herramienta disponible
-
-4. **Responder preguntas sobre el funcionamiento de la aplicación:**
-   - Cómo funciona cada herramienta
-   - Cuándo usar cada herramienta
-   - Cómo personalizar la experiencia de aprendizaje
-
-**IMPORTANTE:** Cuando el tema es "General", NO debes responder preguntas sobre temas académicos específicos. En su lugar, explica cómo usar Study Agents para estudiar ese tema. Por ejemplo, si preguntan sobre SQL, explica cómo pueden crear un chat de SQL, subir documentos sobre SQL, y usar las herramientas para aprender SQL.
+Este chat aún no tiene material de estudio indexado. Puedes explicar brevemente cómo usar Study Agents
+(chats por tema, subir PDF, apuntes, tests). Si el usuario pregunta por un tema académico concreto,
+indícale que suba un PDF o cree un chat con ese tema — no inventes un temario largo de la app.
 """
             else:
                 topic_context = f"\n\nTEMA DE LA CONVERSACIÓN: Estamos trabajando específicamente sobre **{topic}**. Enfócate en este tema y proporciona información relevante sobre {topic}. Si la pregunta del estudiante está relacionada con este tema, asegúrate de contextualizarla dentro de {topic}."
+                if has_document_corpus:
+                    topic_context += "\n\n**PRIORIDAD:** Usa el contenido de los documentos indexados antes que conocimiento genérico."
         
         # Añadir contexto del formulario inicial si está disponible
         form_context = ""

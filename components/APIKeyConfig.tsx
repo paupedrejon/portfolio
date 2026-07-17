@@ -5,6 +5,7 @@ import { HiKey } from "react-icons/hi2";
 import { spaceGrotesk, outfit } from "../app/fonts";
 import {
   getStoredAPIKeys,
+  hasConfiguredProviderKeys,
   isValidOpenAIKey,
   isValidOptionalKey,
   saveAPIKeys,
@@ -94,9 +95,9 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
     const newErrors: Record<string, string> = {};
     const trimmedOpenAI = keys.openai.trim();
 
-    if (!trimmedOpenAI || !isValidOpenAIKey(trimmedOpenAI)) {
+    if (trimmedOpenAI && !isValidOpenAIKey(trimmedOpenAI)) {
       newErrors.openai =
-        "La API key de OpenAI debe comenzar con 'sk-' y tener al menos 20 caracteres (necesaria para embeddings/RAG).";
+        "La API key de OpenAI debe comenzar con 'sk-' y tener al menos 20 caracteres.";
     }
 
     for (const field of OPTIONAL_FIELDS) {
@@ -106,16 +107,27 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
       }
     }
 
+    const normalized: StudyAgentsAPIKeys = {};
+    if (trimmedOpenAI && isValidOpenAIKey(trimmedOpenAI)) {
+      normalized.openai = trimmedOpenAI;
+    }
+    for (const field of OPTIONAL_FIELDS) {
+      const val = (keys[field.id] || "").trim();
+      if (val) normalized[field.id] = val;
+    }
+
+    if (!hasConfiguredProviderKeys(normalized)) {
+      newErrors._form =
+        "Configura al menos una key: OpenAI, DeepSeek, Groq u OpenRouter.";
+      setErrors(newErrors);
+      return;
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    const normalized: StudyAgentsAPIKeys = { openai: trimmedOpenAI };
-    for (const field of OPTIONAL_FIELDS) {
-      const val = (keys[field.id] || "").trim();
-      if (val) normalized[field.id] = val;
-    }
     saveAPIKeys(normalized);
     onKeysConfigured(normalized);
     onClose();
@@ -257,18 +269,23 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
         <div
           style={{
             padding: "1rem",
-            background: "rgba(245, 158, 11, 0.1)",
-            border: "1px solid rgba(245, 158, 11, 0.3)",
+            background: "rgba(99, 102, 241, 0.1)",
+            border: "1px solid rgba(99, 102, 241, 0.25)",
             borderRadius: "12px",
             marginBottom: "1.5rem",
           }}
         >
-          <p className={outfit.className} style={{ margin: 0, fontSize: "0.875rem", color: "#fbbf24", lineHeight: 1.6 }}>
-            <strong>Importante:</strong> Las keys se guardan solo en tu navegador (localStorage).
-            OpenAI sigue siendo necesaria para embeddings/RAG; DeepSeek, Groq y OpenRouter son opcionales
-            para chat con modelos chinos o gratuitos.
+          <p className={outfit.className} style={{ margin: 0, fontSize: "0.875rem", color: "#c7d2fe", lineHeight: 1.6 }}>
+            Las keys se guardan solo en tu navegador. Basta con <strong>una</strong> (Groq, DeepSeek,
+            OpenRouter u OpenAI). OpenAI mejora la indexación de PDFs; sin ella se usan embeddings locales.
           </p>
         </div>
+
+        {errors._form && (
+          <p className={outfit.className} style={{ fontSize: "0.8rem", color: "#ef4444", marginBottom: "1rem" }}>
+            {errors._form}
+          </p>
+        )}
 
         <div style={{ marginBottom: "1.5rem" }}>
           <label
@@ -281,14 +298,13 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
               marginBottom: "0.5rem",
             }}
           >
-            OpenAI API Key <span style={{ color: "#ef4444" }}>*</span>
+            OpenAI API Key <span style={{ color: "#94a3b8", fontWeight: 500 }}>(opcional)</span>
           </label>
           <p className={outfit.className} style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "0.75rem" }}>
-            Requerida para indexar PDFs. Obtén tu key en{" "}
+            Recomendada para RAG de mejor calidad.{" "}
             <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: "#6366f1" }}>
               platform.openai.com/api-keys
             </a>
-            .
           </p>
           {renderKeyInput("openai", keys.openai, "sk-...", errors.openai)}
         </div>
@@ -297,7 +313,7 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
           className={outfit.className}
           style={{ fontSize: "0.9rem", fontWeight: 700, color: "#c4b5fd", margin: "0 0 1rem" }}
         >
-          Alternativas (opcionales)
+          Chat (elige al menos una si no usas OpenAI)
         </h3>
 
         {OPTIONAL_FIELDS.map((field) => (

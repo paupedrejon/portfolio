@@ -361,10 +361,31 @@ def apply_provider_keys_from_request(
         except Exception as e:
             print(f"⚠️ No se pudo cargar model_manager.set_request_provider_keys: {e}")
             return
-    keys = {k: v for k, v in (provider_keys or {}).items() if v}
-    if api_key:
+    keys = {k: v for k, v in (provider_keys or {}).items() if v and v != "default"}
+    if api_key and api_key != "default":
         keys["openai"] = api_key
     set_request_provider_keys(keys)
+
+
+def resolve_openai_and_llm_access(
+    api_key: Optional[str] = None,
+    provider_keys: Optional[Dict] = None,
+) -> tuple:
+    """
+    Devuelve (openai_key_or_None, has_any_llm_key).
+    openai_key solo para embeddings; LLM puede ser Groq/DeepSeek/OpenRouter.
+    """
+    apply_provider_keys_from_request(api_key, provider_keys)
+    pk = {k: v for k, v in (provider_keys or {}).items() if v and v != "default"}
+    openai_key = api_key if (api_key and api_key != "default") else None
+    openai_key = openai_key or pk.get("openai") or os.getenv("OPENAI_API_KEY")
+    has_llm = bool(
+        openai_key
+        or pk.get("groq")
+        or pk.get("deepseek")
+        or pk.get("openrouter")
+    )
+    return openai_key, has_llm
 
 
 def get_or_create_system(api_key: Optional[str] = None, mode: str = "auto") -> StudyAgentsSystem:
@@ -582,6 +603,7 @@ class GenerateExerciseRequest(BaseModel):
     conversation_history: Optional[List[Dict[str, str]]] = None
     user_id: Optional[str] = None
     chat_id: Optional[str] = None
+    provider_keys: Optional[Dict[str, str]] = None
 
 class CorrectExerciseRequest(BaseModel):
     """Modelo para corregir un ejercicio"""
@@ -756,19 +778,12 @@ async def upload_documents(
         Información sobre el procesamiento
     """
     try:
-        # Si no hay API key del frontend, usar la del entorno
-        final_api_key = apiKey
-        if not final_api_key:
-            final_api_key = os.getenv("OPENAI_API_KEY")
-            if not final_api_key:
-                print("[FastAPI] ERROR: No hay API key ni en FormData ni en variables de entorno")
-                raise HTTPException(
-                    status_code=400, 
-                    detail="API key requerida. Configúrala en .env.local o envíala como 'apiKey' en FormData."
-                )
-            print("[FastAPI] Usando API key del entorno (.env.local)")
+        # OpenAI opcional: embeddings del usuario, del entorno, o locales (DefaultEmbeddingFunction)
+        final_api_key = apiKey or os.getenv("OPENAI_API_KEY")
+        if final_api_key:
+            print(f"[FastAPI] Upload embeddings con OpenAI key: {final_api_key[:10]}...")
         else:
-            print(f"[FastAPI] API key recibida del frontend: {final_api_key[:10]}...")
+            print("[FastAPI] Upload sin OpenAI: embeddings locales (DefaultEmbeddingFunction)")
         
         saved_paths = []
         
@@ -797,9 +812,9 @@ async def upload_documents(
         result = {"saved_paths": saved_paths}
         
         if pdf_paths:
-            # Obtener sistema para esta API key (modo automático por defecto)
+            if not chatId or not userId:
+                print(f"[FastAPI] AVISO upload sin chatId/userId (chatId={chatId}, userId={userId})")
             system = get_or_create_system(final_api_key, mode="auto")
-            # Procesar solo los PDFs
             pdf_result = system.upload_documents(
                 pdf_paths,
                 chat_id=chatId,
@@ -1136,12 +1151,15 @@ async def generate_notes(request: Request, body: GenerateNotesRequest):
     """
     try:
         print("[FastAPI] Iniciando generación de apuntes...")
-        apply_provider_keys_from_request(body.apiKey, body.provider_keys)
-        if not body.apiKey:
-            raise HTTPException(status_code=400, detail="API key requerida")
+        openai_key, has_llm = resolve_openai_and_llm_access(body.apiKey, body.provider_keys)
+        if not has_llm:
+            raise HTTPException(
+                status_code=400,
+                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+            )
         
         print("[FastAPI] Obteniendo sistema...")
-        system = get_or_create_system(body.apiKey, mode="auto")
+        system = get_or_create_system(openai_key, mode="auto")
         
         print("[FastAPI] Generando resumen (esto puede tardar)...")
         # Usar el tema de la conversación si está disponible
@@ -1219,14 +1237,17 @@ async def generate_study_plan(request: StudyPlanRequest):
     Si hay chat_id + documentos indexados, enriquece el plan con fragmentos RAG.
     """
     try:
-        apply_provider_keys_from_request(request.apiKey, request.provider_keys)
-        if not request.apiKey:
-            raise HTTPException(status_code=400, detail="API key requerida")
+        openai_key, has_llm = resolve_openai_and_llm_access(request.apiKey, request.provider_keys)
+        if not has_llm:
+            raise HTTPException(
+                status_code=400,
+                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+            )
         topic = (request.topic or "").strip()
         if not topic:
             raise HTTPException(status_code=400, detail="topic es obligatorio")
 
-        system = get_or_create_system(request.apiKey, mode="auto")
+        system = get_or_create_system(openai_key, mode="auto")
         plan_md, usage_info = system.generate_study_plan(
             topic=topic,
             days=request.days,
@@ -1274,14 +1295,18 @@ async def ask_question(request: Request, body: QuestionRequest):
         Respuesta contextualizada
     """
     try:
-        apply_provider_keys_from_request(body.apiKey, body.provider_keys)
-        if not body.apiKey:
-            raise HTTPException(status_code=400, detail="API key requerida")
+        openai_key, has_llm = resolve_openai_and_llm_access(body.apiKey, body.provider_keys)
+        if not has_llm:
+            raise HTTPException(
+                status_code=400,
+                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+            )
         
         if not body.question:
             raise HTTPException(status_code=400, detail="Pregunta requerida")
         
-        system = get_or_create_system(body.apiKey, mode="auto")
+        # Embeddings: solo OpenAI (o locales si no hay). Nunca pasar una key de Groq como OpenAI.
+        system = get_or_create_system(openai_key, mode="auto")
         
         # Obtener tema del chat si está disponible
         chat_topic = body.topic
@@ -1393,11 +1418,14 @@ async def generate_test(request: Request, body: TestRequest):
         Test generado
     """
     try:
-        apply_provider_keys_from_request(body.apiKey, body.provider_keys)
-        if not body.apiKey:
-            raise HTTPException(status_code=400, detail="API key requerida")
+        openai_key, has_llm = resolve_openai_and_llm_access(body.apiKey, body.provider_keys)
+        if not has_llm:
+            raise HTTPException(
+                status_code=400,
+                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+            )
         
-        system = get_or_create_system(body.apiKey, mode="auto")
+        system = get_or_create_system(openai_key, mode="auto")
         
         # Obtener nivel del usuario desde la conversación si hay chat_id
         user_level = None
@@ -1457,11 +1485,14 @@ async def grade_test(request: GradeTestRequest):
         Feedback detallado
     """
     try:
-        apply_provider_keys_from_request(request.apiKey, request.provider_keys)
-        if not request.apiKey:
-            raise HTTPException(status_code=400, detail="API key requerida")
+        openai_key, has_llm = resolve_openai_and_llm_access(request.apiKey, request.provider_keys)
+        if not has_llm:
+            raise HTTPException(
+                status_code=400,
+                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+            )
         
-        system = get_or_create_system(request.apiKey, mode="auto")
+        system = get_or_create_system(openai_key, mode="auto")
         
         # Corregir test
         feedback, usage_info = system.grade_test(request.test_id, request.answers)
@@ -1580,10 +1611,16 @@ async def generate_exercise(request: GenerateExerciseRequest):
         Ejercicio generado
     """
     try:
-        if not request.apiKey:
-            raise HTTPException(status_code=400, detail="API key requerida")
+        openai_key, has_llm = resolve_openai_and_llm_access(
+            request.apiKey, getattr(request, "provider_keys", None)
+        )
+        if not has_llm:
+            raise HTTPException(
+                status_code=400,
+                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+            )
         
-        system = get_or_create_system(request.apiKey, mode="auto")
+        system = get_or_create_system(openai_key, mode="auto")
         
         # Log para debug
         print(f"[FastAPI] generate-exercise recibido: topics={request.topics}, difficulty={request.difficulty}, user_id={request.user_id}")

@@ -54,6 +54,9 @@ import { spaceGrotesk, outfit, jetbrainsMono } from "../app/fonts";
 import APIKeyConfig from "./APIKeyConfig";
 import {
   getStoredAPIKeys,
+  getEmbeddingApiKey,
+  getSystemApiKeyForRequest,
+  hasConfiguredProviderKeys,
   OPEN_API_KEY_MODAL_EVENT,
 } from "@/lib/study-agents/api-keys";
 import { saFetch, studyAgentsFetch } from "@/hooks/study-agents/useApiClient";
@@ -408,7 +411,7 @@ export default function StudyChat() {
     loading: chatDocumentsLoading,
     loadDocuments: reloadChatDocuments,
     deleteDocument: deleteChatDocument,
-  } = useChatDocuments(currentChatId, userId || null, apiKeys?.openai);
+  } = useChatDocuments(currentChatId, userId || null, getEmbeddingApiKey(apiKeys));
 
   useEffect(() => {
     if (!userId || !isStudyAgentsFlagEnabled("srsReview")) return;
@@ -1551,23 +1554,36 @@ export default function StudyChat() {
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    // Verificar API key antes de continuar
-    if (!apiKeys?.openai) {
+    if (!hasConfiguredProviderKeys(apiKeys)) {
       setShowAPIKeyConfig(true);
       addMessage({
         role: "system",
-        content: "Por favor, configura tu API key de OpenAI para subir documentos.",
+        content: "Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI) para subir documentos.",
         type: "message",
       });
       return;
+    }
+
+    // Asegurar chatId antes de indexar (sin él el RAG no recupera el PDF)
+    let chatIdForUpload = currentChatId || currentChatIdRef.current;
+    if (!chatIdForUpload && userId) {
+      await loadOrCreateGeneralChat();
+      chatIdForUpload = currentChatIdRef.current;
+    }
+    if (!chatIdForUpload) {
+      chatIdForUpload = `general-${Date.now()}`;
+      setCurrentChatId(chatIdForUpload);
+      currentChatIdRef.current = chatIdForUpload;
+      setCurrentChatLevel({ topic: "General", level: 0 });
     }
 
     const formData = new FormData();
     Array.from(files).forEach((file) => {
       formData.append("files", file);
     });
-    formData.append("apiKey", apiKeys.openai);
-    if (currentChatId) formData.append("chatId", currentChatId);
+    const embeddingKey = getEmbeddingApiKey(apiKeys);
+    if (embeddingKey) formData.append("apiKey", embeddingKey);
+    formData.append("chatId", chatIdForUpload);
     if (userId) formData.append("userId", userId);
 
     setIsLoading(true);
@@ -1588,22 +1604,28 @@ export default function StudyChat() {
         setUploadedFiles((prev) => [...prev, ...fileNames]);
         void reloadChatDocuments();
 
-        // Si se detectó un tema del documento, establecerlo para este chat
+        // Tema: detectado por backend, o derivado del nombre del PDF (evita quedar en "General")
         const detectedTopic = data.data?.detected_topic;
-        if (detectedTopic && currentChatId && userId) {
-          console.log(`🎯 Tema detectado del documento: ${detectedTopic}`);
-          // Establecer el tema del chat basado en el documento subido
-          setCurrentChatLevel({ topic: detectedTopic, level: currentChatLevel?.level || 0 });
-          
-          // Guardar el tema en el backend para este chat
+        const fallbackTopic = fileNames[0]
+          ? fileNames[0].replace(/\.[^.]+$/, "").replace(/[_\-]+/g, " ").replace(/\s*\(\d+\)\s*$/, "").trim()
+          : null;
+        const topicToSet =
+          detectedTopic ||
+          (currentChatLevel?.topic === "General" || !currentChatLevel?.topic
+            ? fallbackTopic
+            : null);
+
+        if (topicToSet && chatIdForUpload && userId) {
+          console.log(`🎯 Tema del documento: ${topicToSet}`);
+          setCurrentChatLevel({ topic: topicToSet, level: currentChatLevel?.level || 0 });
           studyAgentsFetch("/api/study-agents/set-chat-level", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               user_id: userId,
-              chat_id: currentChatId,
+              chat_id: chatIdForUpload,
               level: currentChatLevel?.level || 0,
-              topic: detectedTopic,
+              topic: topicToSet,
             }),
           }).catch(err => console.error("Error estableciendo tema del documento:", err));
         }
@@ -2184,11 +2206,11 @@ export default function StudyChat() {
     if (!input.trim() || isLoading || isGeneratingTest) return;
 
     // Verificar API keys antes de continuar
-    if (!apiKeys?.openai) {
+    if (!hasConfiguredProviderKeys(apiKeys)) {
       setShowAPIKeyConfig(true);
       addMessage({
         role: "system",
-        content: "Por favor, configura tu API key de OpenAI para usar el sistema.",
+        content: "Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI) para usar el sistema.",
         type: "message",
       });
       return;
@@ -2226,7 +2248,7 @@ export default function StudyChat() {
               body: JSON.stringify({
                 url: url,
                 userId: userId,
-                apiKey: apiKeys?.openai,
+                apiKey: getSystemApiKeyForRequest(apiKeys),
                 model: selectedModel,
               }),
             });
@@ -2656,7 +2678,7 @@ ${contentPreview}
   };
 
   const generateNotes = async () => {
-    if (!apiKeys?.openai) {
+    if (!hasConfiguredProviderKeys(apiKeys)) {
       setShowAPIKeyConfig(true);
       return;
     }
@@ -2688,7 +2710,7 @@ ${contentPreview}
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          apiKey: apiKeys.openai,
+          apiKey: getSystemApiKeyForRequest(apiKeys),
           uploadedFiles: uploadedFiles,
           model: selectedModel === "auto" ? null : selectedModel,
           userId: userId,
@@ -2749,7 +2771,7 @@ ${contentPreview}
   };
 
   const generateTest = async (difficulty: string = "medium", numQuestions?: number | null, topic?: string | null, constraints?: string | null) => {
-    if (!apiKeys?.openai) {
+    if (!hasConfiguredProviderKeys(apiKeys)) {
       setShowAPIKeyConfig(true);
       return;
     }
@@ -2801,7 +2823,7 @@ ${contentPreview}
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          apiKey: apiKeys.openai,
+          apiKey: getSystemApiKeyForRequest(apiKeys),
           difficulty,
           numQuestions: finalNumQuestions,
           topics: topic ? [topic] : null,
@@ -2917,7 +2939,7 @@ ${contentPreview}
   };
 
   const generateExercise = async (difficulty: string = "medium", topic?: string | null, constraints?: string | null) => {
-    if (!apiKeys?.openai) {
+    if (!hasConfiguredProviderKeys(apiKeys)) {
       setShowAPIKeyConfig(true);
       return;
     }
@@ -2968,7 +2990,7 @@ ${contentPreview}
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          apiKey: apiKeys.openai,
+          apiKey: getSystemApiKeyForRequest(apiKeys),
           difficulty,
           topics: topicsToSend,
           exercise_type: null,
@@ -3117,7 +3139,7 @@ ${contentPreview}
   };
 
   const askQuestion = async (question: string) => {
-    if (!apiKeys?.openai) {
+    if (!hasConfiguredProviderKeys(apiKeys)) {
       setShowAPIKeyConfig(true);
       return;
     }
@@ -3125,15 +3147,18 @@ ${contentPreview}
     setLoadingMessage("Pensando y generando respuesta...");
 
     try {
-      // Obtener el tema del chat actual
-      const chatTopic = currentChatLevel?.topic || null;
+      // Con documentos indexados, no forzar el modo onboarding "General"
+      const chatTopic =
+        uploadedFiles.length > 0 &&
+        (!currentChatLevel?.topic || currentChatLevel.topic === "General")
+          ? null
+          : currentChatLevel?.topic || null;
       
-      // Llamar a la API con la key del usuario y el modelo seleccionado
       const response = await studyAgentsFetch("/api/study-agents/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          apiKey: apiKeys.openai,
+          apiKey: getEmbeddingApiKey(apiKeys) || undefined,
           question,
           uploadedFiles: uploadedFiles,
           model: selectedModel === "auto" ? null : selectedModel,
@@ -3261,7 +3286,7 @@ ${contentPreview}
   };
 
   const handleTestSubmit = async () => {
-    if (!currentTest || !apiKeys?.openai) return;
+    if (!currentTest || !hasConfiguredProviderKeys(apiKeys)) return;
 
     addMessage({
       role: "user",
@@ -3276,7 +3301,7 @@ ${contentPreview}
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          apiKey: apiKeys.openai,
+          apiKey: getSystemApiKeyForRequest(apiKeys),
           testId: currentTest.id,
           answers: testAnswers,
           userId: userId || null,
@@ -3548,7 +3573,7 @@ ${contentPreview}
     }
   };
 
-  const handleKeysConfigured = (keys: { openai: string }) => {
+  const handleKeysConfigured = (keys: import("@/lib/study-agents/api-keys").StudyAgentsAPIKeys) => {
     setApiKeys(keys);
     closeAPIKeyModal();
     addMessage({
@@ -4198,7 +4223,7 @@ ${contentPreview}
       <ChatToolbar
         colorTheme={colorTheme}
         isMounted={isMounted}
-        hasApiKey={!!apiKeys?.openai}
+        hasApiKey={hasConfiguredProviderKeys(apiKeys)}
         onOpenApiKeyConfig={() => setShowAPIKeyConfig(true)}
         selectedModel={selectedModel}
         onSelectModel={(model) => {
@@ -4248,7 +4273,7 @@ ${contentPreview}
           open={showStudyPlanPanel}
           onClose={() => setShowStudyPlanPanel(false)}
           colorTheme={colorTheme}
-          apiKey={apiKeys?.openai || null}
+          apiKey={getEmbeddingApiKey(apiKeys) || getSystemApiKeyForRequest(apiKeys)}
           userId={userId}
           chatId={currentChatId}
           defaultTopic={currentChatLevel?.topic && currentChatLevel.topic !== "General" ? currentChatLevel.topic : ""}
@@ -4272,7 +4297,7 @@ ${contentPreview}
           open={showConceptMapPanel}
           onClose={() => setShowConceptMapPanel(false)}
           colorTheme={colorTheme}
-          apiKey={apiKeys?.openai || null}
+          apiKey={getEmbeddingApiKey(apiKeys) || getSystemApiKeyForRequest(apiKeys)}
           userId={userId}
           chatId={currentChatId}
         />
@@ -6248,7 +6273,7 @@ ${contentPreview}
                 language={detectContextualTools.detectedLanguage || currentChatLevel?.topic || (detectContextualTools.explicitFlashcardRequest ? "General" : "Idioma")}
                 level={currentChatLevel?.level || 0}
                 colorTheme={colorTheme}
-                apiKey={apiKeys?.openai}
+                apiKey={getEmbeddingApiKey(apiKeys) || getSystemApiKeyForRequest(apiKeys)}
                 userId={userId}
                 setLearnedWordsCount={setLearnedWordsCount}
                 currentChatLevel={currentChatLevel}
@@ -7115,14 +7140,14 @@ ${contentPreview}
             colorTheme={colorTheme}
             disabled={isLoading}
             onStudyPlan={() => {
-              if (!apiKeys?.openai) {
+              if (!hasConfiguredProviderKeys(apiKeys)) {
                 setShowAPIKeyConfig(true);
                 return;
               }
               setShowStudyPlanPanel(true);
             }}
             onConcepts={() => {
-              if (!apiKeys?.openai) {
+              if (!hasConfiguredProviderKeys(apiKeys)) {
                 setShowAPIKeyConfig(true);
                 return;
               }

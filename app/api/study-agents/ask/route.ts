@@ -4,11 +4,30 @@ import { getFastAPIUrl } from '../utils';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { apiKey, question, userId = 'default', model, chatId, topic, providerKeys, provider_keys } = body;
+    const {
+      apiKey,
+      question,
+      userId = 'default',
+      model,
+      chatId,
+      topic,
+      providerKeys,
+      provider_keys,
+      initial_form_data,
+    } = body;
 
-    if (!apiKey) {
+    const keys = (providerKeys || provider_keys || {}) as Record<string, string>;
+    const hasAnyKey = Boolean(
+      apiKey ||
+        keys.openai ||
+        keys.groq ||
+        keys.deepseek ||
+        keys.openrouter,
+    );
+
+    if (!hasAnyKey) {
       return NextResponse.json(
-        { error: 'API key requerida' },
+        { error: 'Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).' },
         { status: 400 }
       );
     }
@@ -20,20 +39,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Llamar al backend FastAPI
+    // apiKey = solo OpenAI para embeddings; el resto va en provider_keys
+    const openaiForEmbeddings =
+      (typeof apiKey === 'string' && apiKey !== 'default' ? apiKey : null) ||
+      keys.openai ||
+      null;
+
     const response = await fetch(getFastAPIUrl('/api/ask-question'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        apiKey,
+        apiKey: openaiForEmbeddings,
         question,
         user_id: userId,
         model: model || null,
         chat_id: chatId || null,
         topic: topic || null,
-        provider_keys: providerKeys || provider_keys || null,
+        provider_keys: keys,
+        initial_form_data: initial_form_data || null,
       }),
     });
 
@@ -85,4 +110,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
