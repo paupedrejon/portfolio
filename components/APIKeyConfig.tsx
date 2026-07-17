@@ -306,7 +306,7 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
               platform.openai.com/api-keys
             </a>
           </p>
-          {renderKeyInput("openai", keys.openai, "sk-...", errors.openai)}
+          {renderKeyInput("openai", keys.openai || "", "sk-...", errors.openai)}
         </div>
 
         <h3
