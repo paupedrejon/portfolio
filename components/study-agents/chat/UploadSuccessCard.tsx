@@ -11,6 +11,7 @@ import {
 import { outfit, spaceGrotesk } from "@/app/fonts";
 import {
   SA_PRIMARY,
+  SA_PRIMARY_SOFT,
   SA_SUCCESS,
 } from "@/lib/study-agents/brand";
 
