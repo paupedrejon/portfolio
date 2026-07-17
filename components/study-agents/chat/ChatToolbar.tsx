@@ -71,6 +71,34 @@ export default function ChatToolbar({
     items: STUDY_MODEL_OPTIONS.filter((m) => m.group === group),
   }));
 
+  const dark = colorTheme === "dark";
+  const chip = (active?: boolean) => ({
+    display: "flex" as const,
+    alignItems: "center" as const,
+    gap: "0.35rem",
+    padding: "0.5rem 0.9rem",
+    borderRadius: 9999,
+    cursor: "pointer" as const,
+    fontSize: "0.8125rem",
+    fontWeight: 600,
+    color: active ? "#6366f1" : dark ? "#e2e8f0" : "#1e293b",
+    background: active
+      ? dark
+        ? "rgba(99, 102, 241, 0.18)"
+        : "rgba(99, 102, 241, 0.1)"
+      : dark
+        ? "rgba(26, 26, 36, 0.7)"
+        : "rgba(255, 255, 255, 0.95)",
+    border: `1px solid ${
+      active
+        ? "rgba(99, 102, 241, 0.45)"
+        : dark
+          ? "rgba(148, 163, 184, 0.2)"
+          : "rgba(148, 163, 184, 0.28)"
+    }`,
+    boxShadow: dark ? "none" : "0 1px 2px rgba(15, 23, 42, 0.04)",
+  });
+
   return (
     <div
       style={{
@@ -78,7 +106,7 @@ export default function ChatToolbar({
         justifyContent: "flex-end",
         alignItems: "center",
         padding: "1rem 1.5rem",
-        gap: "0.75rem",
+        gap: "0.5rem",
         background:
           colorTheme === "dark"
             ? "rgba(26, 26, 36, 0.6)"
@@ -118,23 +146,7 @@ export default function ChatToolbar({
           type="button"
           onClick={onToggleDocuments}
           title="Documentos indexados en este chat"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.35rem",
-            padding: "0.625rem 1rem",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontSize: "0.8125rem",
-            fontWeight: 600,
-            color: showDocuments ? "#a5b4fc" : colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
-            background: showDocuments
-              ? "rgba(99, 102, 241, 0.2)"
-              : colorTheme === "dark"
-                ? "rgba(99, 102, 241, 0.1)"
-                : "rgba(99, 102, 241, 0.08)",
-            border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.25)"}`,
-          }}
+          style={chip(showDocuments)}
         >
           Docs{documentCount > 0 ? ` (${documentCount})` : ""}
         </button>
@@ -145,23 +157,7 @@ export default function ChatToolbar({
           type="button"
           onClick={onOpenStudyPlan}
           title="Generar plan de estudio adaptativo"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.35rem",
-            padding: "0.625rem 1rem",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontSize: "0.8125rem",
-            fontWeight: 600,
-            color: showStudyPlan ? "#c4b5fd" : colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
-            background: showStudyPlan
-              ? "rgba(139, 92, 246, 0.25)"
-              : colorTheme === "dark"
-                ? "rgba(139, 92, 246, 0.12)"
-                : "rgba(139, 92, 246, 0.1)",
-            border: `1px solid ${colorTheme === "dark" ? "rgba(139, 92, 246, 0.4)" : "rgba(139, 92, 246, 0.3)"}`,
-          }}
+          style={chip(showStudyPlan)}
         >
           Plan
         </button>
@@ -172,23 +168,7 @@ export default function ChatToolbar({
           type="button"
           onClick={onOpenConcepts}
           title="Mapa de conceptos y dominio"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.35rem",
-            padding: "0.625rem 1rem",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontSize: "0.8125rem",
-            fontWeight: 600,
-            color: showConcepts ? "#67e8f9" : colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
-            background: showConcepts
-              ? "rgba(6, 182, 212, 0.25)"
-              : colorTheme === "dark"
-                ? "rgba(6, 182, 212, 0.12)"
-                : "rgba(6, 182, 212, 0.1)",
-            border: `1px solid ${colorTheme === "dark" ? "rgba(6, 182, 212, 0.4)" : "rgba(6, 182, 212, 0.3)"}`,
-          }}
+          style={chip(showConcepts)}
         >
           Conceptos
         </button>
@@ -199,23 +179,7 @@ export default function ChatToolbar({
           type="button"
           onClick={onOpenReview}
           title="Repaso spaced repetition (FSRS)"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.35rem",
-            padding: "0.625rem 1rem",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontSize: "0.8125rem",
-            fontWeight: 600,
-            color: showReview ? "#fcd34d" : colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
-            background: showReview
-              ? "rgba(245, 158, 11, 0.25)"
-              : colorTheme === "dark"
-                ? "rgba(245, 158, 11, 0.12)"
-                : "rgba(245, 158, 11, 0.1)",
-            border: `1px solid ${colorTheme === "dark" ? "rgba(245, 158, 11, 0.4)" : "rgba(245, 158, 11, 0.3)"}`,
-          }}
+          style={chip(showReview)}
         >
           Repaso
           {srsDueCount > 0 && (
@@ -225,8 +189,8 @@ export default function ChatToolbar({
                 height: 18,
                 padding: "0 5px",
                 borderRadius: 999,
-                background: "#f59e0b",
-                color: "#111",
+                background: "#6366f1",
+                color: "#fff",
                 fontSize: "0.65rem",
                 fontWeight: 800,
                 display: "inline-flex",
@@ -244,26 +208,10 @@ export default function ChatToolbar({
         <button
           type="button"
           onClick={onOpenApiKeyConfig}
-          title={hasApiKey ? "Cambiar API Key de OpenAI" : "Configurar API Key de OpenAI"}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.4rem",
-            padding: "0.625rem 1rem",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontSize: "0.8125rem",
-            fontWeight: 600,
-            color: hasApiKey ? "#86efac" : "#fbbf24",
-            background: hasApiKey
-              ? "rgba(34, 197, 94, 0.1)"
-              : "rgba(245, 158, 11, 0.1)",
-            border: hasApiKey
-              ? "1px solid rgba(34, 197, 94, 0.35)"
-              : "1px solid rgba(245, 158, 11, 0.35)",
-          }}
+          title={hasApiKey ? "Cambiar API keys" : "Configurar API keys"}
+          style={chip(hasApiKey)}
         >
-          <HiKey size={16} />
+          <HiKey size={15} color="#6366f1" />
           {hasApiKey ? "API Key" : "Configurar API"}
         </button>
       )}
@@ -274,7 +222,7 @@ export default function ChatToolbar({
             style={{
               fontSize: "0.875rem",
               color: colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563",
-              marginRight: "0.5rem",
+              marginRight: "0.25rem",
               fontWeight: 500,
             }}
           >
@@ -285,21 +233,8 @@ export default function ChatToolbar({
               type="button"
               onClick={onToggleModelDropdown}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.625rem 1rem",
-                paddingRight: "2rem",
-                background:
-                  colorTheme === "dark"
-                    ? "rgba(99, 102, 241, 0.1)"
-                    : "rgba(99, 102, 241, 0.08)",
-                border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.25)"}`,
-                borderRadius: "8px",
-                color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                cursor: "pointer",
+                ...chip(false),
+                paddingRight: "1.75rem",
               }}
             >
               <span>{modelLabel}</span>

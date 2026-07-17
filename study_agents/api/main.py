@@ -786,7 +786,8 @@ async def upload_documents(
         else:
             print("[FastAPI] Upload sin OpenAI: embeddings locales (DefaultEmbeddingFunction)")
         
-        saved_paths = []
+        saved_paths = []  # rutas API para el frontend
+        saved_fs_paths = []  # rutas reales en disco para Chroma/PDF
         
         # Guardar archivos
         for file in files:
@@ -805,11 +806,11 @@ async def upload_documents(
                 content = await file.read()
                 f.write(content)
             
-            # Guardar ruta relativa para acceso desde el frontend
+            saved_fs_paths.append(file_path)
             saved_paths.append(f"/api/files/{file.filename}")
         
-        # Solo procesar documentos si son PDFs (las imágenes no se procesan con el sistema)
-        pdf_paths = [path for path in saved_paths if path.lower().endswith('.pdf')]
+        # Indexar con rutas de disco (NO /api/files/… — esas no existen en el FS)
+        pdf_paths = [path for path in saved_fs_paths if path.lower().endswith('.pdf')]
         result = {"saved_paths": saved_paths}
         
         if pdf_paths:
@@ -822,6 +823,13 @@ async def upload_documents(
                 user_id=userId,
             )
             result.update(pdf_result)
+            # Si no se indexó ningún chunk, fallar de forma explícita
+            if pdf_result.get("status") == "error" or int(pdf_result.get("total_chunks") or 0) == 0:
+                print(f"[FastAPI] Upload indexó 0 chunks. paths={pdf_paths} result={pdf_result}")
+                raise HTTPException(
+                    status_code=500,
+                    detail="El PDF se guardó pero no se pudo indexar (0 chunks). Prueba otro PDF o revisa logs del servidor.",
+                )
         
         # El resultado ya incluye detected_topic si se detectó
         return {
@@ -843,15 +851,14 @@ async def upload_documents(
 async def list_chat_documents(
     chat_id: str,
     userId: str = Query(...),
-    apiKey: str = Query(...),
+    apiKey: Optional[str] = Query(None),
 ):
     """Lista documentos indexados en un chat (RAG acumulativo)."""
     try:
-        if not apiKey:
-            raise HTTPException(status_code=400, detail="API key requerida")
-        system = get_or_create_system(apiKey, mode="auto")
+        openai_key = apiKey if (apiKey and apiKey != "default") else os.getenv("OPENAI_API_KEY")
+        system = get_or_create_system(openai_key, mode="auto")
         documents = system.memory.list_chat_documents(chat_id, userId)
-        return {"success": True, "documents": documents}
+        return {"success": True, "documents": documents, "count": len(documents)}
     except HTTPException:
         raise
     except Exception as e:
@@ -863,13 +870,12 @@ async def delete_chat_document(
     chat_id: str,
     doc_id: str,
     userId: str = Query(...),
-    apiKey: str = Query(...),
+    apiKey: Optional[str] = Query(None),
 ):
     """Elimina un documento y sus chunks del índice RAG del chat."""
     try:
-        if not apiKey:
-            raise HTTPException(status_code=400, detail="API key requerida")
-        system = get_or_create_system(apiKey, mode="auto")
+        openai_key = apiKey if (apiKey and apiKey != "default") else os.getenv("OPENAI_API_KEY")
+        system = get_or_create_system(openai_key, mode="auto")
         deleted = system.memory.delete_chat_document(chat_id, userId, doc_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="Documento no encontrado")

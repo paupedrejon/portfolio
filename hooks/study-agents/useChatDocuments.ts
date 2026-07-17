@@ -7,29 +7,28 @@ import { saFetch } from "@/hooks/study-agents/useApiClient";
 export function useChatDocuments(
   chatId: string | null,
   userId: string | null,
-  apiKey: string | null | undefined,
+  apiKey?: string | null,
 ) {
   const [documents, setDocuments] = useState<ChatDocument[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadDocuments = useCallback(async () => {
-    if (!chatId || !userId || !apiKey) {
+    if (!chatId || !userId) {
       setDocuments([]);
       return;
     }
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        chatId,
-        userId,
-        apiKey,
-      });
+      const params = new URLSearchParams({ chatId, userId });
+      if (apiKey && apiKey !== "default") params.set("apiKey", apiKey);
       const { ok, data } = await saFetch<{
         success?: boolean;
         documents?: ChatDocument[];
       }>(`/chat-documents?${params.toString()}`);
       if (ok && data.documents) {
         setDocuments(data.documents);
+      } else {
+        setDocuments([]);
       }
     } finally {
       setLoading(false);
@@ -38,8 +37,9 @@ export function useChatDocuments(
 
   const deleteDocument = useCallback(
     async (docId: string) => {
-      if (!chatId || !userId || !apiKey) return false;
-      const params = new URLSearchParams({ chatId, userId, apiKey });
+      if (!chatId || !userId) return false;
+      const params = new URLSearchParams({ chatId, userId });
+      if (apiKey && apiKey !== "default") params.set("apiKey", apiKey);
       const { ok } = await saFetch(`/chat-documents/${encodeURIComponent(docId)}?${params}`, {
         method: "DELETE",
       });

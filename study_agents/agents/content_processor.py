@@ -51,21 +51,32 @@ class ContentProcessorAgent:
         total_chunks = 0
         
         for doc_path in document_paths:
-            if not os.path.exists(doc_path):
-                print(f"⚠️ Archivo no encontrado: {doc_path}")
+            # Resolver rutas /api/files/… → documents/…
+            resolved = doc_path
+            if doc_path.startswith("/api/files/"):
+                filename = doc_path.replace("/api/files/", "", 1)
+                candidates = [
+                    os.path.join("documents", filename),
+                    os.path.join(os.path.dirname(os.path.dirname(__file__)), "documents", filename),
+                    os.path.join(os.getcwd(), "documents", filename),
+                ]
+                resolved = next((c for c in candidates if os.path.exists(c)), doc_path)
+
+            if not os.path.exists(resolved):
+                print(f"⚠️ Archivo no encontrado: {doc_path} (resolved={resolved})")
                 continue
                 
-            print(f"📄 Procesando: {os.path.basename(doc_path)}")
+            print(f"📄 Procesando: {os.path.basename(resolved)}")
             doc_id = f"doc_{uuid.uuid4().hex[:12]}"
             uploaded_at = datetime.now(timezone.utc).isoformat()
             
             try:
                 # Cargar documento PDF
-                loader = PyPDFLoader(doc_path)
+                loader = PyPDFLoader(resolved)
                 pages = loader.load()
                 
                 if not pages:
-                    print(f"⚠️ No se pudieron leer páginas de: {doc_path}")
+                    print(f"⚠️ No se pudieron leer páginas de: {resolved}")
                     continue
                 
                 # Dividir en chunks
@@ -75,18 +86,18 @@ class ContentProcessorAgent:
                 for chunk in chunks:
                     all_documents.append(chunk.page_content)
                     all_metadatas.append({
-                        "source": os.path.basename(doc_path),
-                        "full_path": doc_path,
+                        "source": os.path.basename(resolved),
+                        "full_path": resolved,
                         "page": chunk.metadata.get("page", 0),
                         "doc_id": doc_id,
                         "uploaded_at": uploaded_at,
                     })
                     total_chunks += 1
                 
-                print(f"✅ {len(chunks)} chunks creados de {len(pages)} páginas")
+                print(f"✅ {len(chunks)} chunks creados de {len(pages)} páginas (chat_id={chat_id})")
                 
             except Exception as e:
-                print(f"❌ Error procesando {doc_path}: {str(e)}")
+                print(f"❌ Error procesando {resolved}: {str(e)}")
                 continue
         
         # Almacenar todos los documentos en memoria (acumula por chat, no reemplaza)
@@ -98,11 +109,25 @@ class ContentProcessorAgent:
                 user_id=user_id,
             )
         
+        existing_count = sum(
+            1 for p in document_paths
+            if os.path.exists(p) or (
+                p.startswith("/api/files/") and any(
+                    os.path.exists(os.path.join(d, p.replace("/api/files/", "", 1)))
+                    for d in ("documents", os.path.join(os.getcwd(), "documents"))
+                )
+            )
+        )
         return {
-            "total_documents": len([p for p in document_paths if os.path.exists(p)]),
+            "total_documents": existing_count or (1 if all_documents else 0),
             "total_chunks": total_chunks,
             "status": "processed" if all_documents else "error",
-            "processed_files": [os.path.basename(p) for p in document_paths if os.path.exists(p)]
+            "processed_files": [
+                os.path.basename(m.get("source", ""))
+                for m in all_metadatas
+            ][:20],
+            "chat_id": chat_id,
+            "user_id": user_id,
         }
     
     def process_text(self, text: str, metadata: Dict = None) -> dict:

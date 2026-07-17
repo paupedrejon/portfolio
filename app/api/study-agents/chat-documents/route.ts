@@ -8,16 +8,18 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get("userId");
     const apiKey = searchParams.get("apiKey");
 
-    if (!chatId || !userId || !apiKey) {
+    if (!chatId || !userId) {
       return NextResponse.json(
-        { error: "chatId, userId y apiKey son requeridos" },
+        { error: "chatId y userId son requeridos" },
         { status: 400 },
       );
     }
 
     const url = new URL(getFastAPIUrl(`/api/chat-documents/${encodeURIComponent(chatId)}`));
     url.searchParams.set("userId", userId);
-    url.searchParams.set("apiKey", apiKey);
+    if (apiKey && apiKey !== "default") {
+      url.searchParams.set("apiKey", apiKey);
+    }
 
     const response = await fetch(url.toString(), { method: "GET" });
 

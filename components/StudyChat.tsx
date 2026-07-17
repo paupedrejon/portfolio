@@ -1593,13 +1593,24 @@ export default function StudyChat() {
       const { ok, data } = await saFetch<{
         success?: boolean;
         error?: string;
-        data?: { detected_topic?: string };
+        data?: { detected_topic?: string; total_chunks?: number; status?: string };
       }>("/upload", {
         method: "POST",
         body: formData,
       });
 
       if (ok && data.success) {
+        const chunks = data.data?.total_chunks ?? 0;
+        if (data.data?.status === "error" || chunks === 0) {
+          addMessage({
+            role: "assistant",
+            content:
+              "El archivo se subió pero no se indexó en el chat (0 fragmentos). Vuelve a intentarlo tras el redeploy del backend, o prueba otro PDF.",
+            type: "message",
+          });
+          return;
+        }
+
         const fileNames = Array.from(files).map((f) => f.name);
         setUploadedFiles((prev) => [...prev, ...fileNames]);
         void reloadChatDocuments();

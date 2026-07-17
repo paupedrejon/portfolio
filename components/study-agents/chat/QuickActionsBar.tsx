@@ -8,7 +8,7 @@ import {
   HiOutlineLightBulb,
   HiOutlineArrowPath,
 } from "react-icons/hi2";
-import { outfit, spaceGrotesk } from "@/app/fonts";
+import { outfit } from "@/app/fonts";
 
 type Action = {
   id: string;
@@ -29,6 +29,7 @@ type Props = {
   srsDueCount?: number;
 };
 
+/** Chips compactos alineados con la toolbar / input pill de Study Agents. */
 export default function QuickActionsBar({
   colorTheme,
   disabled,
@@ -40,13 +41,12 @@ export default function QuickActionsBar({
   srsDueCount = 0,
 }: Props) {
   const dark = colorTheme === "dark";
-
-  const iconProps = { size: 18, strokeWidth: 1.75 } as const;
+  const iconProps = { size: 15, strokeWidth: 1.75 } as const;
 
   const actions: Action[] = [
     {
       id: "plan",
-      label: "Plan de estudio",
+      label: "Plan",
       hint: "Calendario adaptativo",
       onClick: onStudyPlan,
       icon: <HiOutlineCalendarDays {...iconProps} />,
@@ -77,25 +77,32 @@ export default function QuickActionsBar({
   if (onReview) {
     actions.splice(2, 0, {
       id: "review",
-      label: srsDueCount > 0 ? `Repaso (${srsDueCount})` : "Repaso",
+      label: srsDueCount > 0 ? `Repaso · ${srsDueCount}` : "Repaso",
       hint: "Spaced repetition",
       onClick: onReview,
       icon: <HiOutlineArrowPath {...iconProps} />,
     });
   }
 
+  const border = dark ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.28)";
+  const bg = dark ? "rgba(26, 26, 36, 0.85)" : "rgba(255, 255, 255, 0.95)";
+  const text = dark ? "#e2e8f0" : "#1e293b";
+  const muted = dark ? "#94a3b8" : "#64748b";
+  const accent = "#6366f1";
+
   return (
     <div
       className={outfit.className}
+      role="toolbar"
+      aria-label="Acciones de estudio"
       style={{
         display: "flex",
         flexWrap: "wrap",
-        gap: "0.45rem",
-        marginBottom: "0.75rem",
-        padding: "0.15rem 0",
+        alignItems: "center",
+        gap: "0.4rem",
+        marginBottom: "0.65rem",
+        padding: "0.2rem 0",
       }}
-      role="toolbar"
-      aria-label="Acciones de estudio"
     >
       {actions.map((a) => (
         <button
@@ -106,67 +113,36 @@ export default function QuickActionsBar({
           title={a.hint}
           style={{
             display: "inline-flex",
-            flexDirection: "row",
             alignItems: "center",
-            gap: "0.55rem",
-            padding: "0.55rem 0.85rem",
-            borderRadius: 12,
-            border: dark
-              ? "1px solid rgba(148, 163, 184, 0.18)"
-              : "1px solid rgba(99, 102, 241, 0.18)",
-            background: dark
-              ? "linear-gradient(145deg, rgba(99, 102, 241, 0.14), rgba(139, 92, 246, 0.08))"
-              : "linear-gradient(145deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.04))",
-            color: dark ? "#e2e8f0" : "#1e293b",
+            gap: "0.4rem",
+            padding: "0.4rem 0.75rem",
+            borderRadius: 9999,
+            border: `1px solid ${border}`,
+            background: bg,
+            color: text,
             cursor: disabled ? "not-allowed" : "pointer",
             opacity: disabled ? 0.55 : 1,
-            minWidth: 0,
-            flex: "1 1 150px",
-            textAlign: "left",
-            transition: "border-color 0.15s ease, background 0.15s ease, transform 0.12s ease",
+            fontSize: "0.78rem",
+            fontWeight: 600,
+            boxShadow: dark
+              ? "none"
+              : "0 1px 2px rgba(15, 23, 42, 0.04)",
+            transition: "border-color 0.15s ease, color 0.15s ease, background 0.15s ease",
           }}
           onMouseEnter={(e) => {
             if (disabled) return;
-            e.currentTarget.style.borderColor = dark
-              ? "rgba(129, 140, 248, 0.45)"
-              : "rgba(99, 102, 241, 0.4)";
-            e.currentTarget.style.transform = "translateY(-1px)";
+            e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.45)";
+            e.currentTarget.style.color = accent;
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = dark
-              ? "rgba(148, 163, 184, 0.18)"
-              : "rgba(99, 102, 241, 0.18)";
-            e.currentTarget.style.transform = "none";
+            e.currentTarget.style.borderColor = border;
+            e.currentTarget.style.color = text;
           }}
         >
-          <span
-            aria-hidden
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 32,
-              height: 32,
-              borderRadius: 9,
-              flexShrink: 0,
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-              color: "#fff",
-              boxShadow: "0 4px 12px rgba(99, 102, 241, 0.28)",
-            }}
-          >
+          <span style={{ display: "inline-flex", color: accent, opacity: 0.9 }} aria-hidden>
             {a.icon}
           </span>
-          <span style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
-            <span
-              className={spaceGrotesk.className}
-              style={{ fontSize: "0.82rem", fontWeight: 700, letterSpacing: "-0.01em" }}
-            >
-              {a.label}
-            </span>
-            <span style={{ fontSize: "0.65rem", color: dark ? "#94a3b8" : "#64748b" }}>
-              {a.hint}
-            </span>
-          </span>
+          {a.label}
         </button>
       ))}
     </div>
