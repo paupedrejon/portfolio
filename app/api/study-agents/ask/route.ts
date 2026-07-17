@@ -37,17 +37,27 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      let errorData;
+      const raw = await response.text();
+      let detail: string = `Error ${response.status}: ${response.statusText}`;
       try {
-        errorData = await response.json();
+        const errorData = raw ? JSON.parse(raw) : null;
+        if (typeof errorData?.detail === 'string') {
+          detail = errorData.detail;
+        } else if (Array.isArray(errorData?.detail)) {
+          detail = JSON.stringify(errorData.detail);
+        } else if (typeof errorData?.error === 'string') {
+          detail = errorData.error;
+        } else if (raw?.trim()) {
+          detail = raw.trim().slice(0, 500);
+        }
       } catch {
-        errorData = { detail: `Error ${response.status}: ${response.statusText}` };
+        if (raw?.trim()) detail = raw.trim().slice(0, 500);
       }
-      console.error('Error from FastAPI:', errorData);
+      console.error('Error from FastAPI:', { status: response.status, detail, raw: raw?.slice(0, 500) });
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: errorData.detail || 'Error al procesar pregunta' 
+          error: detail || 'Error al procesar pregunta',
         },
         { status: response.status }
       );

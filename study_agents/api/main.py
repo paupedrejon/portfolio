@@ -195,7 +195,12 @@ except ImportError:
 
 
 def _rate_limit(rule: str):
-    """Decorador de rate limit; no-op si slowapi no está disponible."""
+    """Decorador de rate limit; no-op si slowapi no está disponible.
+
+    Importante: el endpoint DEBE declarar un parámetro llamado exactamente
+    `request: Request` (Starlette). El body Pydantic no puede llamarse `request`
+    o slowapi lanza Exception → 500 en producción.
+    """
     def decorator(endpoint):
         if limiter is not None:
             return limiter.limit(rule)(endpoint)
@@ -831,7 +836,7 @@ async def delete_chat_document(
 
 @app.post("/api/generate-notes")
 @_rate_limit("30/minute")
-async def generate_notes(http_request: Request, request: GenerateNotesRequest):
+async def generate_notes(request: Request, body: GenerateNotesRequest):
     """
     Genera apuntes completos del contenido procesado
     
@@ -843,46 +848,46 @@ async def generate_notes(http_request: Request, request: GenerateNotesRequest):
     """
     try:
         print("[FastAPI] Iniciando generación de apuntes...")
-        if not request.apiKey:
+        if not body.apiKey:
             raise HTTPException(status_code=400, detail="API key requerida")
         
         print("[FastAPI] Obteniendo sistema...")
-        system = get_or_create_system(request.apiKey, mode="auto")
+        system = get_or_create_system(body.apiKey, mode="auto")
         
         print("[FastAPI] Generando resumen (esto puede tardar)...")
         # Usar el tema de la conversación si está disponible
-        final_topics = request.topics
-        if not final_topics and request.topic:
-            final_topics = [request.topic]
+        final_topics = body.topics
+        if not final_topics and body.topic:
+            final_topics = [body.topic]
         
         # Obtener nivel del usuario desde la conversación si hay chat_id
         user_level = None
-        if request.user_id and request.chat_id:
+        if body.user_id and body.chat_id:
             try:
-                chat_data = progress_tracker_instance.get_chat_level(request.user_id, request.chat_id)
+                chat_data = progress_tracker_instance.get_chat_level(body.user_id, body.chat_id)
                 user_level = chat_data.get("level", 0)
-                print(f"📊 Nivel del usuario en conversación '{request.chat_id}': {user_level}/10")
+                print(f"📊 Nivel del usuario en conversación '{body.chat_id}': {user_level}/10")
             except Exception as e:
                 print(f"⚠️ No se pudo obtener el nivel del usuario desde chat_id: {e}")
         
         # Generar resumen basado en la conversación y temas (model=None usa modo automático)
         notes = system.generate_notes(
             topics=final_topics, 
-            model=request.model if request.model else None, 
-            user_id=request.user_id,
-            conversation_history=request.conversation_history,
-            topic=request.topic,
+            model=body.model if body.model else None, 
+            user_id=body.user_id,
+            conversation_history=body.conversation_history,
+            topic=body.topic,
             user_level=user_level,  # Pasar el nivel obtenido del chat
-            chat_id=request.chat_id  # Pasar chat_id para mantener chats separados
+            chat_id=body.chat_id  # Pasar chat_id para mantener chats separados
         )
         
         print(f"[FastAPI] Apuntes generados exitosamente ({len(notes)} caracteres)")
         
         # generate_notes ahora devuelve usage_info internamente, pero no lo expone
         # Necesitamos obtenerlo del agente si está disponible
-        if request.user_id:
+        if body.user_id:
             # Intentar obtener el modelo usado y tokens del agente
-            model_used = request.model or "gpt-3.5-turbo"
+            model_used = body.model or "gpt-3.5-turbo"
             input_tokens = 0
             output_tokens = 0
             
@@ -893,10 +898,10 @@ async def generate_notes(http_request: Request, request: GenerateNotesRequest):
             # Estimar tokens basándose en la longitud del contenido si no están disponibles
             # Aproximación: 1 token ≈ 4 caracteres
             if input_tokens == 0 and output_tokens == 0:
-                input_tokens = len(str(request.conversation_history or "")) // 4 if request.conversation_history else 1000
+                input_tokens = len(str(body.conversation_history or "")) // 4 if body.conversation_history else 1000
                 output_tokens = len(notes) // 4
             
-            save_user_cost(request.user_id, input_tokens, output_tokens, model_used, system)
+            save_user_cost(body.user_id, input_tokens, output_tokens, model_used, system)
         
         return {
             "success": True,
@@ -968,7 +973,7 @@ async def generate_study_plan(request: StudyPlanRequest):
 
 @app.post("/api/ask-question")
 @_rate_limit("30/minute")
-async def ask_question(http_request: Request, request: QuestionRequest):
+async def ask_question(request: Request, body: QuestionRequest):
     """
     Responde una pregunta del estudiante
     
@@ -979,30 +984,30 @@ async def ask_question(http_request: Request, request: QuestionRequest):
         Respuesta contextualizada
     """
     try:
-        if not request.apiKey:
+        if not body.apiKey:
             raise HTTPException(status_code=400, detail="API key requerida")
         
-        if not request.question:
+        if not body.question:
             raise HTTPException(status_code=400, detail="Pregunta requerida")
         
-        system = get_or_create_system(request.apiKey, mode="auto")
+        system = get_or_create_system(body.apiKey, mode="auto")
         
         # Obtener tema del chat si está disponible
-        chat_topic = request.topic
-        initial_form = request.initial_form_data
-        if not chat_topic and request.chat_id:
+        chat_topic = body.topic
+        initial_form = body.initial_form_data
+        if not chat_topic and body.chat_id:
             try:
-                chat_data = progress_tracker_instance.get_chat_level(request.user_id, request.chat_id)
+                chat_data = progress_tracker_instance.get_chat_level(body.user_id, body.chat_id)
                 chat_topic = chat_data.get("topic")
             except Exception as e:
                 print(f"⚠️ No se pudo obtener el tema del chat: {e}")
         
         # Si no se proporcionó initial_form_data, intentar obtenerlo del chat
-        if not initial_form and request.chat_id:
+        if not initial_form and body.chat_id:
             try:
                 # Cargar chat para obtener metadata
                 from chat_storage import load_chat
-                chat_data = load_chat(request.user_id, request.chat_id)
+                chat_data = load_chat(body.user_id, body.chat_id)
                 if chat_data and chat_data.get("metadata", {}).get("initialForm"):
                     initial_form = chat_data["metadata"]["initialForm"]
                     print(f"📋 Datos del formulario inicial obtenidos del chat: nivel={initial_form.get('level')}, objetivo={initial_form.get('learningGoal', '')[:50]}...")
@@ -1012,11 +1017,11 @@ async def ask_question(http_request: Request, request: QuestionRequest):
         # Obtener información del curso si está disponible
         course_context = None
         exam_info = None
-        if request.course_id:
+        if body.course_id:
             try:
-                course = course_storage.get_course(request.course_id)
+                course = course_storage.get_course(body.course_id)
                 if course:
-                    enrollment = course_storage.get_user_enrollment(request.user_id, request.course_id)
+                    enrollment = course_storage.get_user_enrollment(body.user_id, body.course_id)
                     course_context = {
                         "title": course.get("title", ""),
                         "description": course.get("description", ""),
@@ -1050,11 +1055,11 @@ async def ask_question(http_request: Request, request: QuestionRequest):
         
         # Responder pregunta (model=None usa modo automático)
         answer, usage_info = system.ask_question(
-            request.question, 
-            request.user_id, 
-            model=request.model if request.model else None,
-            chat_id=request.chat_id,
-            topic=chat_topic or request.subtopic_name,
+            body.question, 
+            body.user_id, 
+            model=body.model if body.model else None,
+            chat_id=body.chat_id,
+            topic=chat_topic or body.subtopic_name,
             initial_form_data=initial_form,
             course_context=course_context,
             exam_info=exam_info
@@ -1063,15 +1068,15 @@ async def ask_question(http_request: Request, request: QuestionRequest):
         # Calcular y guardar coste
         input_tokens = usage_info.get("inputTokens", 0)
         output_tokens = usage_info.get("outputTokens", 0)
-        model_used = usage_info.get("model") or request.model or "gpt-3.5-turbo"
+        model_used = usage_info.get("model") or body.model or "gpt-3.5-turbo"
         
-        if request.user_id:
-            save_user_cost(request.user_id, input_tokens, output_tokens, model_used, system)
+        if body.user_id:
+            save_user_cost(body.user_id, input_tokens, output_tokens, model_used, system)
         
         return {
             "success": True,
             "answer": answer,
-            "question": request.question,
+            "question": body.question,
             "inputTokens": input_tokens,
             "outputTokens": output_tokens
         }
@@ -1086,7 +1091,7 @@ async def ask_question(http_request: Request, request: QuestionRequest):
 
 @app.post("/api/generate-test")
 @_rate_limit("30/minute")
-async def generate_test(http_request: Request, request: TestRequest):
+async def generate_test(request: Request, body: TestRequest):
     """
     Genera un test personalizado
     
@@ -1097,41 +1102,41 @@ async def generate_test(http_request: Request, request: TestRequest):
         Test generado
     """
     try:
-        if not request.apiKey:
+        if not body.apiKey:
             raise HTTPException(status_code=400, detail="API key requerida")
         
-        system = get_or_create_system(request.apiKey, mode="auto")
+        system = get_or_create_system(body.apiKey, mode="auto")
         
         # Obtener nivel del usuario desde la conversación si hay chat_id
         user_level = None
-        if request.user_id and request.chat_id:
+        if body.user_id and body.chat_id:
             try:
-                chat_data = progress_tracker_instance.get_chat_level(request.user_id, request.chat_id)
+                chat_data = progress_tracker_instance.get_chat_level(body.user_id, body.chat_id)
                 user_level = chat_data.get("level", 0)
-                print(f"📊 Nivel del usuario en conversación '{request.chat_id}': {user_level}/10")
+                print(f"📊 Nivel del usuario en conversación '{body.chat_id}': {user_level}/10")
             except Exception as e:
                 print(f"⚠️ No se pudo obtener el nivel del usuario: {e}")
         
         # Generar test (model=None usa modo automático)
         test, usage_info = system.generate_test(
-            difficulty=request.difficulty,
-            num_questions=request.num_questions,
-            topics=request.topics,
-            constraints=request.constraints,
-            model=request.model if request.model else None,
-            conversation_history=request.conversation_history,
-            user_id=request.user_id,
-            chat_id=request.chat_id,
+            difficulty=body.difficulty,
+            num_questions=body.num_questions,
+            topics=body.topics,
+            constraints=body.constraints,
+            model=body.model if body.model else None,
+            conversation_history=body.conversation_history,
+            user_id=body.user_id,
+            chat_id=body.chat_id,
             user_level=user_level
         )
         
         # Calcular y guardar coste
         input_tokens = usage_info.get("inputTokens", 0)
         output_tokens = usage_info.get("outputTokens", 0)
-        model_used = usage_info.get("model") or request.model or "gpt-3.5-turbo"
+        model_used = usage_info.get("model") or body.model or "gpt-3.5-turbo"
         
-        if request.user_id:
-            save_user_cost(request.user_id, input_tokens, output_tokens, model_used, system)
+        if body.user_id:
+            save_user_cost(body.user_id, input_tokens, output_tokens, model_used, system)
         
         return {
             "success": True,
@@ -2671,7 +2676,7 @@ async def update_chat_color_endpoint(request: UpdateChatColorRequest):
 
 @app.post("/api/execute-code")
 @_rate_limit("30/minute")
-async def execute_code_endpoint(http_request: Request, request: ExecuteCodeRequest):
+async def execute_code_endpoint(request: Request, body: ExecuteCodeRequest):
     """
     Ejecuta código en el servidor (Python, JavaScript, SQL, Java, HTML, React, C++)
     
@@ -2687,13 +2692,13 @@ async def execute_code_endpoint(http_request: Request, request: ExecuteCodeReque
     from pathlib import Path
     
     try:
-        language_lower = request.language.lower()
+        language_lower = body.language.lower()
         
         # Python
         if "python" in language_lower:
             # Detectar si el código usa input() y si hay inputs proporcionados
-            code_uses_input = "input(" in request.code
-            has_inputs = request.inputs and request.inputs.strip()
+            code_uses_input = "input(" in body.code
+            has_inputs = body.inputs and body.inputs.strip()
             
             if code_uses_input and not has_inputs:
                 return {
@@ -2705,15 +2710,15 @@ async def execute_code_endpoint(http_request: Request, request: ExecuteCodeReque
             # Crear un archivo temporal para el código con codificación UTF-8
             with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
                 f.write("# -*- coding: utf-8 -*-\n")
-                f.write(request.code)
+                f.write(body.code)
                 temp_file = f.name
             
             try:
                 # Preparar inputs si están presentes
                 # Si hay múltiples inputs, cada línea debe terminar con \n
                 input_data = None
-                if request.inputs:
-                    input_data = request.inputs
+                if body.inputs:
+                    input_data = body.inputs
                     # Asegurar que termine con \n si no termina ya
                     if not input_data.endswith('\n'):
                         input_data += '\n'
@@ -2761,13 +2766,13 @@ async def execute_code_endpoint(http_request: Request, request: ExecuteCodeReque
         # JavaScript (Node.js)
         elif "javascript" in language_lower or "js" in language_lower:
             with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False, encoding='utf-8') as f:
-                f.write(request.code)
+                f.write(body.code)
                 temp_file = f.name
             
             try:
                 input_data = None
-                if request.inputs:
-                    input_data = request.inputs  # Ya es string, no necesitamos encode
+                if body.inputs:
+                    input_data = body.inputs  # Ya es string, no necesitamos encode
                 
                 result = subprocess.run(
                     ["node", temp_file],
@@ -2809,7 +2814,7 @@ async def execute_code_endpoint(http_request: Request, request: ExecuteCodeReque
             if use_python_sqlite:
                 # Usar Python con sqlite3 (viene incluido con Python)
                 # Crear un script Python que ejecute el SQL
-                sql_code = request.code.strip()
+                sql_code = body.code.strip()
                 # Escapar comillas y saltos de línea en el código SQL para el script Python
                 sql_code_escaped = sql_code.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
                 python_sql_script = f"""# -*- coding: utf-8 -*-
@@ -2895,7 +2900,7 @@ for line in output_lines:
             else:
                 # Usar sqlite3 como comando (método original)
                 with tempfile.NamedTemporaryFile(mode='w', suffix='.sql', delete=False, encoding='utf-8') as f:
-                    f.write(request.code)
+                    f.write(body.code)
                     temp_file = f.name
                 
                 try:
@@ -2903,7 +2908,7 @@ for line in output_lines:
                     db_file = temp_file.replace('.sql', '.db')
                     result = subprocess.run(
                         ["sqlite3", db_file],
-                        input=request.code,
+                        input=body.code,
                         capture_output=True,
                         text=True,
                         timeout=10,
@@ -2938,7 +2943,7 @@ for line in output_lines:
         elif "java" in language_lower:
             # Java requiere compilación primero
             with tempfile.NamedTemporaryFile(mode='w', suffix='.java', delete=False, encoding='utf-8') as f:
-                f.write(request.code)
+                f.write(body.code)
                 temp_file = f.name
             
             try:
@@ -2963,8 +2968,8 @@ for line in output_lines:
                 class_dir = os.path.dirname(temp_file)
                 
                 input_data = None
-                if request.inputs:
-                    input_data = request.inputs  # Ya es string, no necesitamos encode
+                if body.inputs:
+                    input_data = body.inputs  # Ya es string, no necesitamos encode
                 
                 run_result = subprocess.run(
                     ["java", "-cp", class_dir, class_name],
@@ -3002,7 +3007,7 @@ for line in output_lines:
         # C++
         elif "c++" in language_lower or "cpp" in language_lower or "cplusplus" in language_lower:
             with tempfile.NamedTemporaryFile(mode='w', suffix='.cpp', delete=False, encoding='utf-8') as f:
-                f.write(request.code)
+                f.write(body.code)
                 temp_file = f.name
             
             try:
@@ -3025,8 +3030,8 @@ for line in output_lines:
                 
                 # Ejecutar C++
                 input_data = None
-                if request.inputs:
-                    input_data = request.inputs  # Ya es string, no necesitamos encode
+                if body.inputs:
+                    input_data = body.inputs  # Ya es string, no necesitamos encode
                 
                 run_result = subprocess.run(
                     [exe_file],
@@ -3073,7 +3078,7 @@ for line in output_lines:
         else:
             return {
                 "success": False,
-                "error": f"El lenguaje '{request.language}' no está soportado. Lenguajes disponibles: Python, JavaScript, SQL, Java, C++, HTML, React.",
+                "error": f"El lenguaje '{body.language}' no está soportado. Lenguajes disponibles: Python, JavaScript, SQL, Java, C++, HTML, React.",
                 "output": ""
             }
                 
@@ -3088,7 +3093,7 @@ for line in output_lines:
         missing_cmd = str(e).split("'")[1] if "'" in str(e) else "comando"
         return {
             "success": False,
-            "error": f"El comando '{missing_cmd}' no está instalado. Por favor, instala las herramientas necesarias para ejecutar {request.language}.",
+            "error": f"El comando '{missing_cmd}' no está instalado. Por favor, instala las herramientas necesarias para ejecutar {body.language}.",
             "output": ""
         }
     except Exception as e:
