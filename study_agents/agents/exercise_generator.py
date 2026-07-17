@@ -349,6 +349,7 @@ Si no sigues este formato EXACTO, el ejercicio será inválido.
             '    "points": 10,\n'
             '    "difficulty": "{{{{difficulty}}}}",\n'  # 4 llaves para que quede {{difficulty}} en el template
             f'    "topics": {topics_list_json},\n'
+            '    "concept_ids": ["micro-concepto-1"],\n'
             '    "solution_steps": ["Paso 1 de la solución", "Paso 2", "Paso 3"]\n'
             "}}"
         )
@@ -389,7 +390,8 @@ IMPORTANTE:
 - El ejercicio NO debe ser de opción múltiple. Debe requerir que el estudiante escriba su propia respuesta.
 - El ejercicio DEBE estar directamente relacionado con el tema: {topics_str}
 - NO generes ejercicios sobre temas no relacionados con el tema especificado.
-- Si el tema es de programación, el ejercicio DEBE ser de código ejecutable."""),
+- Si el tema es de programación, el ejercicio DEBE ser de código ejecutable.
+- Incluye "concept_ids": lista de 1–3 micro-conceptos en kebab-case que evalúa el ejercicio (ej: "filtrar-pares")."""),
             ("human", ("Genera un ejercicio {difficulty} sobre el siguiente contenido:\n\n"
                       "{context}\n\n"
                       "Temas específicos: {topics}\n"
@@ -502,11 +504,31 @@ IMPORTANTE:
             exercise_data["exercise_id"] = exercise_id
             exercise_data["difficulty"] = difficulty
             exercise_data["topics"] = topics_list
+
+            # Normalizar concept_ids (knowledge tracing Fase 1)
+            raw_cids = exercise_data.get("concept_ids") or exercise_data.get("concepts") or []
+            if isinstance(raw_cids, str):
+                raw_cids = [raw_cids]
+            normalized = []
+            for cid in raw_cids:
+                if not cid:
+                    continue
+                slug = str(cid).strip().lower().replace(" ", "-")
+                slug = "".join(ch for ch in slug if ch.isalnum() or ch in "-_")
+                if slug and slug not in normalized:
+                    normalized.append(slug)
+            if not normalized and topics_list:
+                # Fallback: slug del primer tema
+                t0 = str(topics_list[0]).strip().lower().replace(" ", "-")
+                t0 = "".join(ch for ch in t0 if ch.isalnum() or ch in "-_")
+                if t0:
+                    normalized = [t0]
+            exercise_data["concept_ids"] = normalized
             
             # Guardar ejercicio generado
             self.generated_exercises[exercise_id] = exercise_data
             
-            print(f"✅ Ejercicio generado: {exercise_id}")
+            print(f"✅ Ejercicio generado: {exercise_id} (concept_ids={normalized})")
             
             return {
                 "exercise": exercise_data,

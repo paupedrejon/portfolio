@@ -1,5 +1,28 @@
 # Changelog — Study Agents
 
+## 0.3.4 — F1.5 dificultad adaptativa + ejercicios en el grafo
+
+### Pedagogía
+- `target_difficulty` desde mastery (zona de desarrollo próximo) en `generate-test` y `generate-exercise`
+- Foco automático en micro-conceptos débiles / ZPD
+- Ejercicios con `concept_ids`; `correct-exercise` actualiza mastery BKT + crea tarjetas SRS
+- Tras fallo de ejercicio: sugiere prerrequisito débil si existe
+- **ConceptMapPanel**: sección Gaps prioritarios vía `detect-gaps`
+
+### Qué probar
+1. Extraer conceptos → generar test/ejercicio (dificultad debería adaptarse al dominio)
+2. Fallar un ejercicio → ver mastery/gaps y aviso de repaso
+3. Abrir Conceptos → bloque "Gaps prioritarios"
+
+### Backend
+- Redeploy Railway requerido (`mastery.py`, `main.py`, `exercise_generator.py`)
+
+## 0.3.3 — BYOK multi-proveedor + RAG PDF + QuickActions
+
+- OpenAI opcional (basta Groq/DeepSeek/OpenRouter)
+- Tema General ya no ignora PDFs indexados
+- QuickActions con iconos SA
+
 ## 0.3.2 — Modelos chinos/gratis + sin emojis UI
 
 ### Modelos

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { outfit, spaceGrotesk } from "@/app/fonts";
 import { saFetch } from "@/hooks/study-agents/useApiClient";
-import type { ConceptNode } from "@/lib/study-agents/types";
+import type { ConceptGap, ConceptNode } from "@/lib/study-agents/types";
 
 type Props = {
   open: boolean;
@@ -38,6 +38,7 @@ export default function ConceptMapPanel({
   chatId,
 }: Props) {
   const [concepts, setConcepts] = useState<ConceptNode[]>([]);
+  const [gaps, setGaps] = useState<ConceptGap[]>([]);
   const [loading, setLoading] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,20 +46,33 @@ export default function ConceptMapPanel({
   const load = useCallback(async () => {
     if (!chatId || !apiKey) {
       setConcepts([]);
+      setGaps([]);
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      const { ok, data } = await saFetch<{
-        success?: boolean;
-        concepts?: ConceptNode[];
-        error?: string;
-      }>(`concepts/${encodeURIComponent(chatId)}?userId=${encodeURIComponent(userId)}&apiKey=${encodeURIComponent(apiKey)}`);
-      if (!ok || !data.success) {
-        throw new Error(data.error || "No se pudieron cargar los conceptos");
+      const [conceptsRes, gapsRes] = await Promise.all([
+        saFetch<{
+          success?: boolean;
+          concepts?: ConceptNode[];
+          error?: string;
+        }>(`concepts/${encodeURIComponent(chatId)}?userId=${encodeURIComponent(userId)}&apiKey=${encodeURIComponent(apiKey)}`),
+        saFetch<{
+          success?: boolean;
+          gaps?: ConceptGap[];
+          error?: string;
+        }>("detect-gaps", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ apiKey, chatId, userId, threshold: 0.5 }),
+        }),
+      ]);
+      if (!conceptsRes.ok || !conceptsRes.data.success) {
+        throw new Error(conceptsRes.data.error || "No se pudieron cargar los conceptos");
       }
-      setConcepts(data.concepts || []);
+      setConcepts(conceptsRes.data.concepts || []);
+      setGaps(gapsRes.ok && gapsRes.data.success ? gapsRes.data.gaps || [] : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar conceptos");
     } finally {
@@ -265,6 +279,55 @@ export default function ConceptMapPanel({
         )}
 
         {loading && <p style={{ color: muted, marginTop: "1rem" }}>Cargando…</p>}
+
+        {!loading && gaps.length > 0 && (
+          <div
+            style={{
+              marginTop: "1rem",
+              padding: "0.85rem 1rem",
+              borderRadius: 12,
+              border: dark ? "1px solid rgba(239, 68, 68, 0.35)" : "1px solid rgba(239, 68, 68, 0.25)",
+              background: dark ? "rgba(239, 68, 68, 0.08)" : "rgba(239, 68, 68, 0.05)",
+            }}
+          >
+            <p
+              className={spaceGrotesk.className}
+              style={{ margin: "0 0 0.5rem", fontSize: "0.9rem", fontWeight: 700, color: text }}
+            >
+              Gaps prioritarios ({gaps.length})
+            </p>
+            <p style={{ margin: "0 0 0.65rem", fontSize: "0.75rem", color: muted, lineHeight: 1.45 }}>
+              Conceptos con dominio &lt; 50%, ordenados por importancia (cuántos conceptos dependen de ellos).
+            </p>
+            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+              {gaps.slice(0, 6).map((g) => (
+                <li
+                  key={`gap-${g.concept_id}`}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: "0.75rem",
+                    fontSize: "0.8rem",
+                    color: text,
+                  }}
+                >
+                  <span>
+                    <strong>{g.name}</strong>
+                    {g.broken_prerequisites && g.broken_prerequisites.length > 0 && (
+                      <span style={{ color: muted, fontSize: "0.7rem" }}>
+                        {" "}
+                        · prerreq. débiles: {g.broken_prerequisites.length}
+                      </span>
+                    )}
+                  </span>
+                  <span style={{ color: "#ef4444", fontWeight: 600, whiteSpace: "nowrap" }}>
+                    {Math.round((g.mastery ?? 0) * 100)}%
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {!loading && chatId && concepts.length === 0 && !error && (
           <p style={{ color: muted, fontSize: "0.85rem", marginTop: "1rem", lineHeight: 1.5 }}>

@@ -50,6 +50,11 @@ export interface ConceptNode {
   mastery?: number;
 }
 
+export interface ConceptGap extends ConceptNode {
+  importance?: number;
+  broken_prerequisites?: string[];
+}
+
 export interface MasteryMap {
   [conceptId: string]: number;
 }

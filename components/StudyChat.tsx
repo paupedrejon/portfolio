@@ -2998,6 +2998,7 @@ ${contentPreview}
           model: selectedModel === "auto" ? null : selectedModel,
           conversationHistory: conversationHistory.length > 0 ? conversationHistory : null,
           userId: userId,
+          chatId: currentChatId || currentChatIdRef.current,
         }),
       });
 
@@ -3086,44 +3087,56 @@ ${contentPreview}
 
   const correctExercise = async () => {
     if (!currentExercise || (!exerciseAnswer.trim() && !exerciseAnswerImage)) return;
+    if (!hasConfiguredProviderKeys(apiKeys)) {
+      setShowAPIKeyConfig(true);
+      return;
+    }
 
     setIsLoading(true);
     setLoadingMessage("Evaluando ejercicio...");
 
     try {
-      const normalize = (s: string) =>
-        s.replace(/\s+/g, " ").trim().toLowerCase();
+      const response = await studyAgentsFetch("/api/study-agents/correct-exercise", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apiKey: getSystemApiKeyForRequest(apiKeys),
+          exercise: currentExercise,
+          studentAnswer: exerciseAnswer?.trim() || "",
+          studentAnswerImage: exerciseAnswerImage || null,
+          userId: userId,
+          chatId: currentChatId || currentChatIdRef.current,
+          model: selectedModel === "auto" ? null : selectedModel,
+        }),
+      });
 
-      const studentText = exerciseAnswer?.trim() || "";
-      const expected = currentExercise.expected_answer || "";
+      const data = await response.json();
+      if (!data.success || !data.correction) {
+        throw new Error(data.error || "No se pudo corregir el ejercicio");
+      }
 
-      // Evaluación rápida local: evita el agente corrector (FastAPI + LLM) para que sea instantáneo.
-      const isCorrect = studentText ? normalize(studentText) === normalize(expected) : false;
-
-      const score = isCorrect ? currentExercise.points : 0;
-      const score_percentage = isCorrect ? 100 : 0;
-
-      const correction: ExerciseCorrection = {
-        score,
-        score_percentage,
-        is_correct: isCorrect,
-        feedback: isCorrect
-          ? "Correcto. Tu respuesta coincide con la esperada."
-          : "No coincide exactamente con la respuesta esperada. Revisa el enunciado y vuelve a intentarlo.",
-        strengths: isCorrect ? ["Coincidencia con la respuesta esperada."] : [],
-        weaknesses: isCorrect ? [] : ["La respuesta no coincide (comparación rápida)."],
-        suggestions: isCorrect ? [] : ["Ajusta tu respuesta para que sea idéntica a la esperada."],
-        detailed_analysis: isCorrect
-          ? "La respuesta cumple el criterio de coincidencia."
-          : `Esperado (normalizado): ${normalize(expected)}`,
-        correct_answer_explanation: `La respuesta correcta es: ${expected}`,
-      };
-
+      const correction = data.correction as ExerciseCorrection;
       setExerciseCorrection(correction);
+
+      let content = JSON.stringify(correction);
+      if (data.weak_prerequisite?.name) {
+        content = JSON.stringify({
+          ...correction,
+          weak_prerequisite: data.weak_prerequisite,
+          next_hint: `Antes de seguir, refuerza el prerrequisito: ${data.weak_prerequisite.name}`,
+        });
+      }
+      if (data.srs_due_hint) {
+        addMessage({
+          role: "assistant",
+          content: `Se han creado ${data.srs_cards_created || 1} tarjeta(s) de repaso a partir de este error. Abre Repaso cuando quieras practicar.`,
+          type: "message",
+        });
+      }
 
       addMessage({
         role: "assistant",
-        content: JSON.stringify(correction),
+        content,
         type: "exercise_result",
       });
     } catch (error: unknown) {

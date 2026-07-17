@@ -616,6 +616,7 @@ class CorrectExerciseRequest(BaseModel):
     model: Optional[str] = None
     course_id: Optional[str] = None  # ID del curso si está en contexto de curso
     topic: Optional[str] = None  # Tema del curso
+    provider_keys: Optional[Dict[str, str]] = None
 
 
 class UploadDocumentsRequest(BaseModel):
@@ -1427,6 +1428,39 @@ async def generate_test(request: Request, body: TestRequest):
         
         system = get_or_create_system(openai_key, mode="auto")
         
+        # F1.5: dificultad adaptativa desde mastery (zona de desarrollo próximo)
+        difficulty = body.difficulty or "medium"
+        focus_hint = ""
+        adaptive_meta = {}
+        if body.chat_id:
+            try:
+                from core import concept_store
+                from core.mastery import (
+                    target_difficulty_from_mastery,
+                    user_level_from_mastery,
+                    focus_concepts_for_practice,
+                    average_mastery,
+                )
+                m_map = concept_store.get_mastery_map(body.chat_id)
+                concepts = concept_store.concepts_with_mastery(body.chat_id)
+                if m_map:
+                    difficulty = target_difficulty_from_mastery(m_map)
+                    adaptive_meta = {
+                        "target_difficulty": difficulty,
+                        "requested_difficulty": body.difficulty,
+                        "average_mastery": round(average_mastery(m_map), 4),
+                    }
+                    print(f"🎯 Dificultad adaptativa: {body.difficulty} → {difficulty} (avg mastery={adaptive_meta['average_mastery']})")
+                focus = focus_concepts_for_practice(concepts, limit=5)
+                if focus:
+                    focus_hint = (
+                        "PRIORIZA evaluar estos micro-conceptos (zona de desarrollo próximo): "
+                        + "; ".join(focus)
+                    )
+                    adaptive_meta["focus_concepts"] = focus
+            except Exception as e:
+                print(f"⚠️ No se pudo calcular dificultad adaptativa: {e}")
+
         # Obtener nivel del usuario desde la conversación si hay chat_id
         user_level = None
         if body.user_id and body.chat_id:
@@ -1436,13 +1470,27 @@ async def generate_test(request: Request, body: TestRequest):
                 print(f"📊 Nivel del usuario en conversación '{body.chat_id}': {user_level}/10")
             except Exception as e:
                 print(f"⚠️ No se pudo obtener el nivel del usuario: {e}")
+        # Preferir nivel derivado de mastery si hay datos
+        if body.chat_id:
+            try:
+                from core import concept_store
+                from core.mastery import user_level_from_mastery
+                m_map = concept_store.get_mastery_map(body.chat_id)
+                if m_map:
+                    user_level = user_level_from_mastery(m_map)
+            except Exception:
+                pass
+
+        constraints = body.constraints or ""
+        if focus_hint:
+            constraints = (constraints + "\n\n" + focus_hint).strip() if constraints else focus_hint
         
         # Generar test (model=None usa modo automático)
         test, usage_info = system.generate_test(
-            difficulty=body.difficulty,
+            difficulty=difficulty,
             num_questions=body.num_questions,
             topics=body.topics,
-            constraints=body.constraints,
+            constraints=constraints or None,
             model=body.model if body.model else None,
             conversation_history=body.conversation_history,
             user_id=body.user_id,
@@ -1462,7 +1510,8 @@ async def generate_test(request: Request, body: TestRequest):
             "success": True,
             "test": test,
             "inputTokens": input_tokens,
-            "outputTokens": output_tokens
+            "outputTokens": output_tokens,
+            "adaptive": adaptive_meta or None,
         }
     except HTTPException:
         raise
@@ -1625,8 +1674,37 @@ async def generate_exercise(request: GenerateExerciseRequest):
         # Log para debug
         print(f"[FastAPI] generate-exercise recibido: topics={request.topics}, difficulty={request.difficulty}, user_id={request.user_id}")
         
-        # Generar ejercicio (model=None usa modo automático)
-        # Obtener nivel del usuario si hay user_id y topics
+        # F1.5: dificultad adaptativa + foco en gaps
+        difficulty = request.difficulty or "medium"
+        constraints = request.constraints or ""
+        adaptive_meta = {}
+        if request.chat_id:
+            try:
+                from core import concept_store
+                from core.mastery import (
+                    target_difficulty_from_mastery,
+                    user_level_from_mastery,
+                    focus_concepts_for_practice,
+                    average_mastery,
+                )
+                m_map = concept_store.get_mastery_map(request.chat_id)
+                concepts = concept_store.concepts_with_mastery(request.chat_id)
+                if m_map:
+                    difficulty = target_difficulty_from_mastery(m_map)
+                    adaptive_meta = {
+                        "target_difficulty": difficulty,
+                        "requested_difficulty": request.difficulty,
+                        "average_mastery": round(average_mastery(m_map), 4),
+                    }
+                    print(f"🎯 Ejercicio dificultad adaptativa: {request.difficulty} → {difficulty}")
+                focus = focus_concepts_for_practice(concepts, limit=3)
+                if focus:
+                    hint = "PRIORIZA estos micro-conceptos: " + "; ".join(focus)
+                    constraints = (constraints + "\n\n" + hint).strip() if constraints else hint
+                    adaptive_meta["focus_concepts"] = focus
+            except Exception as e:
+                print(f"⚠️ No se pudo calcular dificultad adaptativa (ejercicio): {e}")
+
         user_level = None
         if request.user_id and request.topics and len(request.topics) > 0:
             try:
@@ -1636,12 +1714,21 @@ async def generate_exercise(request: GenerateExerciseRequest):
                 print(f"📊 Nivel del usuario en '{main_topic}': {user_level}/10")
             except Exception as e:
                 print(f"⚠️ No se pudo obtener el nivel del usuario: {e}")
+        if request.chat_id:
+            try:
+                from core import concept_store
+                from core.mastery import user_level_from_mastery
+                m_map = concept_store.get_mastery_map(request.chat_id)
+                if m_map:
+                    user_level = user_level_from_mastery(m_map)
+            except Exception:
+                pass
         
         exercise, usage_info = system.generate_exercise(
-            difficulty=request.difficulty,
+            difficulty=difficulty,
             topics=request.topics,
             exercise_type=request.exercise_type,
-            constraints=request.constraints,
+            constraints=constraints or None,
             model=request.model if request.model else None,
             conversation_history=request.conversation_history,
             user_id=request.user_id if request.user_id else None,
@@ -1662,7 +1749,8 @@ async def generate_exercise(request: GenerateExerciseRequest):
             "exercise": exercise,
             "exercise_id": exercise.get("exercise_id", ""),
             "inputTokens": input_tokens,
-            "outputTokens": output_tokens
+            "outputTokens": output_tokens,
+            "adaptive": adaptive_meta or None,
         }
     except HTTPException:
         raise
@@ -1685,10 +1773,16 @@ async def correct_exercise(request: CorrectExerciseRequest):
         Corrección detallada
     """
     try:
-        if not request.apiKey:
-            raise HTTPException(status_code=400, detail="API key requerida")
+        openai_key, has_llm = resolve_openai_and_llm_access(
+            request.apiKey, getattr(request, "provider_keys", None)
+        )
+        if not has_llm:
+            raise HTTPException(
+                status_code=400,
+                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+            )
         
-        system = get_or_create_system(request.apiKey, mode="auto")
+        system = get_or_create_system(openai_key, mode="auto")
         
         # Si hay imagen, incluirla en la respuesta del estudiante
         # Asegurar que student_answer sea un string
@@ -1956,6 +2050,58 @@ async def correct_exercise(request: CorrectExerciseRequest):
         
         if request.user_id:
             save_user_cost(request.user_id, input_tokens, output_tokens, model_used, system)
+
+        # Knowledge tracing + SRS desde fallos de ejercicio (F1.2 / F1.5)
+        mastery_updates = []
+        srs_cards_created = []
+        weak_prerequisite = None
+        chat_id_for_kt = getattr(request, "chat_id", None)
+        if isinstance(correction, dict) and chat_id_for_kt:
+            try:
+                from core import concept_store, card_store
+                from core.mastery import suggest_weak_prerequisite
+
+                uid = request.user_id or "default"
+                cids = request.exercise.get("concept_ids") or []
+                if isinstance(cids, str):
+                    cids = [cids]
+                score = float(correction.get("score") or 0)
+                max_score = float(request.exercise.get("points") or 10) or 10
+                correct = (score / max_score) >= 0.7 if max_score else False
+                if "is_correct" in correction:
+                    correct = bool(correction.get("is_correct"))
+                elif "passed" in correction:
+                    correct = bool(correction.get("passed"))
+
+                for cid in cids:
+                    new_m = concept_store.apply_mastery_update(
+                        chat_id_for_kt, str(cid), correct
+                    )
+                    mastery_updates.append({
+                        "concept_id": cid,
+                        "correct": correct,
+                        "mastery": new_m,
+                    })
+
+                if not correct and cids:
+                    concepts = concept_store.concepts_with_mastery(chat_id_for_kt)
+                    weak_prerequisite = suggest_weak_prerequisite(
+                        [str(c) for c in cids], concepts
+                    )
+                    srs_cards_created = card_store.generate_from_errors(
+                        uid,
+                        chat_id_for_kt,
+                        [{
+                            "question": request.exercise.get("statement"),
+                            "explanation": correction.get("feedback")
+                            or correction.get("explanation")
+                            or correction.get("comments"),
+                            "correct_answer": request.exercise.get("expected_answer"),
+                            "concept_ids": cids,
+                        }],
+                    )
+            except Exception as e:
+                print(f"[FastAPI] mastery/SRS post exercise: {e}")
         
         return {
             "success": True,
@@ -1963,7 +2109,11 @@ async def correct_exercise(request: CorrectExerciseRequest):
             "progress_update": progress_update,
             "inputTokens": input_tokens,
             "outputTokens": output_tokens,
-            "xp_gained": xp_gained if request.course_id else None
+            "xp_gained": xp_gained if request.course_id else None,
+            "mastery_updates": mastery_updates,
+            "srs_cards_created": len(srs_cards_created),
+            "srs_due_hint": True if srs_cards_created else False,
+            "weak_prerequisite": weak_prerequisite,
         }
     except HTTPException:
         raise
