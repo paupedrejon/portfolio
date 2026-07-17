@@ -65,7 +65,9 @@ import ChatToolbar from "@/components/study-agents/chat/ChatToolbar";
 import ChatDocumentsPanel from "@/components/study-agents/chat/ChatDocumentsPanel";
 import QuickActionsBar from "@/components/study-agents/chat/QuickActionsBar";
 import UploadSuccessCard from "@/components/study-agents/chat/UploadSuccessCard";
+import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
 import StudyPlanPanel from "@/components/study-agents/panels/StudyPlanPanel";
+import { SA_PRIMARY } from "@/lib/study-agents/brand";
 import ConceptMapPanel from "@/components/study-agents/panels/ConceptMapPanel";
 import ReviewPanel from "@/components/study-agents/panels/ReviewPanel";
 import { isStudyAgentsFlagEnabled } from "@/lib/study-agents/flags";
@@ -5348,15 +5350,26 @@ ${contentPreview}
               style={{
                 display: "flex",
                 justifyContent: message.role === "user" ? "flex-end" : "flex-start",
+                alignItems: "flex-start",
+                gap: message.role === "assistant" ? "0.65rem" : 0,
                 marginBottom: "1.5rem",
                 animation: "none",
               }}
             >
+              {message.role === "assistant" && (
+                <StudyAgentsBotAvatar
+                  size={isMobile ? 32 : 38}
+                  color={colorTheme === "dark" ? "#7dd3fc" : SA_PRIMARY}
+                  state="idle"
+                />
+              )}
               <div
                 className="message-bubble-premium"
                 style={{
                   maxWidth: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" ? "100%" : "85%",
                   width: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" ? "100%" : undefined,
+                  flex: message.role === "assistant" && (message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning") ? 1 : undefined,
+                  minWidth: 0,
                   padding:
                     message.role === "user"
                       ? "1.1rem 1.25rem"
@@ -6228,11 +6241,18 @@ ${contentPreview}
               style={{
                 display: "flex",
                 justifyContent: "flex-start",
+                alignItems: "flex-start",
+                gap: "0.65rem",
                 marginBottom: "1.5rem",
                 animation: "loadingMessageEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
                 opacity: 1,
               }}
             >
+              <StudyAgentsBotAvatar
+                size={isMobile ? 32 : 38}
+                color={colorTheme === "dark" ? "#7dd3fc" : SA_PRIMARY}
+                state="thinking"
+              />
               <div
                 className="premium-loading-card"
                 style={{
@@ -6247,16 +6267,6 @@ ${contentPreview}
                   minWidth: isMobile ? "unset" : "360px",
                 }}
               >
-                <div
-                  aria-hidden
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    background: colorTheme === "dark" ? "rgba(26, 140, 161, 0.95)" : "rgba(26, 140, 161, 0.8)",
-                    flexShrink: 0,
-                  }}
-                />
                 <div style={{ flex: 1 }}>
                   <div
                     style={{

@@ -6,6 +6,9 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import StudyChat from "@/components/StudyChat";
 import Onboarding from "@/components/study-agents/Onboarding";
+import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
+import { SA_PRIMARY } from "@/lib/study-agents/brand";
+import "@/components/study-agents/study-agents-bot.css";
 
 export default function StudyAgentsPageClient() {
   const [mounted, setMounted] = useState(false);
@@ -208,19 +211,11 @@ export default function StudyAgentsPageClient() {
               marginBottom: '2rem',
             }}
           >
-            <img 
-              src="/StudyAgentsLogo.png" 
-              alt="Study Agents Logo"
-              style={{
-                maxWidth: '180px',
-                height: 'auto',
-                opacity: 0.95,
-                filter: 'drop-shadow(0 8px 24px rgba(99, 102, 241, 0.3))',
-              }}
-              onError={(e) => {
-                // Si el logo no se carga, ocultar el contenedor
-                (e.target as HTMLElement).style.display = 'none';
-              }}
+            <StudyAgentsBotAvatar
+              size={120}
+              color={SA_PRIMARY}
+              state="idle"
+              title="Study Agents"
             />
           </div>
 

@@ -6,15 +6,19 @@ import { signOut, useSession } from "next-auth/react";
 import { HiHome, HiKey, HiUserCircle } from "react-icons/hi2";
 import {
   getStoredAPIKeys,
+  hasConfiguredProviderKeys,
   openAPIKeyModal,
 } from "@/lib/study-agents/api-keys";
+import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
+import { SA_PRIMARY } from "@/lib/study-agents/brand";
+import "@/components/study-agents/study-agents-bot.css";
 
 export default function StudyAgentsNav() {
   const { data: session } = useSession();
   const [hasApiKey, setHasApiKey] = useState(false);
 
   useEffect(() => {
-    const sync = () => setHasApiKey(!!getStoredAPIKeys()?.openai);
+    const sync = () => setHasApiKey(hasConfiguredProviderKeys(getStoredAPIKeys()));
     sync();
     window.addEventListener("apiKeysUpdated", sync);
     return () => window.removeEventListener("apiKeysUpdated", sync);
@@ -39,6 +43,24 @@ export default function StudyAgentsNav() {
         boxShadow: "0 8px 32px rgba(0, 0, 0, 0.25)",
       }}
     >
+      <Link
+        href="/study-agents"
+        title="Study Agents"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "40px",
+          height: "40px",
+          borderRadius: "50%",
+          textDecoration: "none",
+          background: "rgba(37, 150, 190, 0.12)",
+          border: "1px solid rgba(37, 150, 190, 0.3)",
+        }}
+      >
+        <StudyAgentsBotAvatar size={26} color={SA_PRIMARY} state="idle" />
+      </Link>
+
       <Link
         href="/"
         title="Volver al portfolio"

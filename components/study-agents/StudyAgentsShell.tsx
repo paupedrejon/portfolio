@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { usePathname } from "next/navigation";
 import StudyAgentsNav from "@/components/StudyAgentsNav";
+import "./study-agents-bot.css";
 
 export default function StudyAgentsShell({
   children,

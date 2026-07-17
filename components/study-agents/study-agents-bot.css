@@ -1,0 +1,45 @@
+/* Avatar / logo animado Study Agents */
+@keyframes sa-bot-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes sa-bot-think {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(-5px) scale(1.05);
+  }
+  70% {
+    transform: translateY(-1px) scale(0.97);
+  }
+}
+
+@keyframes sa-bot-glow-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 4px var(--sa-bot-color, #2596be));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px var(--sa-bot-color, #2596be));
+  }
+}
+
+.sa-bot-float {
+  animation: sa-bot-float 3.2s ease-in-out infinite;
+}
+
+.sa-bot-think {
+  animation: sa-bot-think 1.05s ease-in-out infinite;
+}
+
+.sa-bot-glow {
+  animation: sa-bot-glow-pulse 1.05s ease-in-out infinite;
+}
