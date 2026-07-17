@@ -87,7 +87,6 @@ export default function QuickActionsBar({
   const border = dark ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.28)";
   const bg = dark ? "rgba(26, 26, 36, 0.85)" : "rgba(255, 255, 255, 0.95)";
   const text = dark ? "#e2e8f0" : "#1e293b";
-  const muted = dark ? "#94a3b8" : "#64748b";
   const accent = "#6366f1";
 
   return (
