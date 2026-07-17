@@ -93,7 +93,7 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
 
   const handleSave = () => {
     const newErrors: Record<string, string> = {};
-    const trimmedOpenAI = keys.openai.trim();
+    const trimmedOpenAI = (keys.openai || "").trim();
 
     if (trimmedOpenAI && !isValidOpenAIKey(trimmedOpenAI)) {
       newErrors.openai =
