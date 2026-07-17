@@ -56,3 +56,8 @@ __pycache__/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Study Agents runtime data (Fase 1)
+study_agents/data/concepts/*.json
+study_agents/data/mastery/*.json
+

@@ -60,6 +60,10 @@ import { saFetch, studyAgentsFetch } from "@/hooks/study-agents/useApiClient";
 import { useChatDocuments } from "@/hooks/study-agents/useChatDocuments";
 import ChatToolbar from "@/components/study-agents/chat/ChatToolbar";
 import ChatDocumentsPanel from "@/components/study-agents/chat/ChatDocumentsPanel";
+import QuickActionsBar from "@/components/study-agents/chat/QuickActionsBar";
+import StudyPlanPanel from "@/components/study-agents/panels/StudyPlanPanel";
+import ConceptMapPanel from "@/components/study-agents/panels/ConceptMapPanel";
+import { isStudyAgentsFlagEnabled } from "@/lib/study-agents/flags";
 import ChatSidebar from "./ChatSidebar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -383,6 +387,8 @@ export default function StudyChat() {
   const [exerciseCorrection, setExerciseCorrection] = useState<ExerciseCorrection | null>(null);
   const exerciseImageInputRef = useRef<HTMLInputElement>(null);
   const [showDocumentsPanel, setShowDocumentsPanel] = useState(false);
+  const [showStudyPlanPanel, setShowStudyPlanPanel] = useState(false);
+  const [showConceptMapPanel, setShowConceptMapPanel] = useState(false);
   const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
   const [apiKeys, setApiKeys] = useState<{ openai: string } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -4170,6 +4176,18 @@ ${contentPreview}
         documentCount={chatDocuments.length}
         onToggleDocuments={() => setShowDocumentsPanel((v) => !v)}
         showDocuments={showDocumentsPanel}
+        onOpenStudyPlan={
+          isStudyAgentsFlagEnabled("studyPlan")
+            ? () => setShowStudyPlanPanel(true)
+            : undefined
+        }
+        showStudyPlan={showStudyPlanPanel}
+        onOpenConcepts={
+          isStudyAgentsFlagEnabled("conceptMap")
+            ? () => setShowConceptMapPanel(true)
+            : undefined
+        }
+        showConcepts={showConceptMapPanel}
       />
       {showDocumentsPanel && (
         <ChatDocumentsPanel
@@ -4179,6 +4197,40 @@ ${contentPreview}
           onRefresh={() => void reloadChatDocuments()}
           onDelete={(docId) => void deleteChatDocument(docId)}
           onClose={() => setShowDocumentsPanel(false)}
+        />
+      )}
+      {isStudyAgentsFlagEnabled("studyPlan") && (
+        <StudyPlanPanel
+          open={showStudyPlanPanel}
+          onClose={() => setShowStudyPlanPanel(false)}
+          colorTheme={colorTheme}
+          apiKey={apiKeys?.openai || null}
+          userId={userId}
+          chatId={currentChatId}
+          defaultTopic={currentChatLevel?.topic && currentChatLevel.topic !== "General" ? currentChatLevel.topic : ""}
+          model={selectedModel === "auto" ? null : selectedModel}
+          onPlanGenerated={(planMarkdown, meta) => {
+            addMessage({
+              role: "user",
+              content: `Genera un plan de estudio de ${meta.days} días sobre: ${meta.topic}`,
+              type: "message",
+            });
+            addMessage({
+              role: "assistant",
+              content: planMarkdown,
+              type: "notes",
+            });
+          }}
+        />
+      )}
+      {isStudyAgentsFlagEnabled("conceptMap") && (
+        <ConceptMapPanel
+          open={showConceptMapPanel}
+          onClose={() => setShowConceptMapPanel(false)}
+          colorTheme={colorTheme}
+          apiKey={apiKeys?.openai || null}
+          userId={userId}
+          chatId={currentChatId}
         />
       )}
       {/* Chat Container */}
@@ -7004,6 +7056,31 @@ ${contentPreview}
               </div>
             )}
           </div>
+
+          <QuickActionsBar
+            colorTheme={colorTheme}
+            disabled={isLoading}
+            onStudyPlan={() => {
+              if (!apiKeys?.openai) {
+                setShowAPIKeyConfig(true);
+                return;
+              }
+              setShowStudyPlanPanel(true);
+            }}
+            onConcepts={() => {
+              if (!apiKeys?.openai) {
+                setShowAPIKeyConfig(true);
+                return;
+              }
+              setShowConceptMapPanel(true);
+            }}
+            onNotes={() => {
+              void generateNotes();
+            }}
+            onTest={() => {
+              void generateTest("medium", 5);
+            }}
+          />
 
           {/* Text Input - Premium Design */}
           <div style={{ 

@@ -3,7 +3,7 @@
  * Activar gradualmente en Fase 1+.
  */
 export const studyAgentsFlags = {
-  conceptMap: false,
+  conceptMap: true,
   srsReview: false,
   studyPlan: true,
   tutorOrchestrator: false,

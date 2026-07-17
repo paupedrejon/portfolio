@@ -38,3 +38,18 @@ export interface StudyAgentsApiResponse<T = Record<string, unknown>> {
   detail?: string;
   data?: T;
 }
+
+/** Micro-concepto del grafo por chat (Fase 1). */
+export interface ConceptNode {
+  concept_id: string;
+  name: string;
+  description?: string;
+  prerequisites?: string[];
+  source_doc?: string;
+  source_pages?: number[];
+  mastery?: number;
+}
+
+export interface MasteryMap {
+  [conceptId: string]: number;
+}

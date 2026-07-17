@@ -279,6 +279,7 @@ export default function StudyAgentsPageClient() {
             style={{ animationDelay: '0.4s', animationFillMode: 'both', maxWidth: '700px' }}
           >
             Tu asistente inteligente para generar apuntes, resolver dudas y crear tests personalizados. 
+            ChatGPT te responde. Study Agents sabe qué no sabes y te lo hace practicar.
             Sube tus documentos y empieza a aprender de manera más eficiente.
           </p>
         </div>

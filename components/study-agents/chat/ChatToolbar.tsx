@@ -20,6 +20,10 @@ type Props = {
   documentCount?: number;
   onToggleDocuments?: () => void;
   showDocuments?: boolean;
+  onOpenStudyPlan?: () => void;
+  onOpenConcepts?: () => void;
+  showStudyPlan?: boolean;
+  showConcepts?: boolean;
 };
 
 export default function ChatToolbar({
@@ -37,6 +41,10 @@ export default function ChatToolbar({
   documentCount = 0,
   onToggleDocuments,
   showDocuments = false,
+  onOpenStudyPlan,
+  onOpenConcepts,
+  showStudyPlan = false,
+  showConcepts = false,
 }: Props) {
   const modelLabel =
     selectedModel === "auto"
@@ -114,7 +122,61 @@ export default function ChatToolbar({
             border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.25)"}`,
           }}
         >
-          📄 Docs{documentCount > 0 ? ` (${documentCount})` : ""}
+          Docs{documentCount > 0 ? ` (${documentCount})` : ""}
+        </button>
+      )}
+
+      {isMounted && onOpenStudyPlan && (
+        <button
+          type="button"
+          onClick={onOpenStudyPlan}
+          title="Generar plan de estudio adaptativo"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.35rem",
+            padding: "0.625rem 1rem",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "0.8125rem",
+            fontWeight: 600,
+            color: showStudyPlan ? "#c4b5fd" : colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
+            background: showStudyPlan
+              ? "rgba(139, 92, 246, 0.25)"
+              : colorTheme === "dark"
+                ? "rgba(139, 92, 246, 0.12)"
+                : "rgba(139, 92, 246, 0.1)",
+            border: `1px solid ${colorTheme === "dark" ? "rgba(139, 92, 246, 0.4)" : "rgba(139, 92, 246, 0.3)"}`,
+          }}
+        >
+          Plan
+        </button>
+      )}
+
+      {isMounted && onOpenConcepts && (
+        <button
+          type="button"
+          onClick={onOpenConcepts}
+          title="Mapa de conceptos y dominio"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.35rem",
+            padding: "0.625rem 1rem",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "0.8125rem",
+            fontWeight: 600,
+            color: showConcepts ? "#67e8f9" : colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
+            background: showConcepts
+              ? "rgba(6, 182, 212, 0.25)"
+              : colorTheme === "dark"
+                ? "rgba(6, 182, 212, 0.12)"
+                : "rgba(6, 182, 212, 0.1)",
+            border: `1px solid ${colorTheme === "dark" ? "rgba(6, 182, 212, 0.4)" : "rgba(6, 182, 212, 0.3)"}`,
+          }}
+        >
+          Conceptos
         </button>
       )}
 
