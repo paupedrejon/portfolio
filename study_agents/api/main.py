@@ -834,6 +834,193 @@ async def delete_chat_document(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class ExtractConceptsRequest(BaseModel):
+    apiKey: str
+    chatId: str
+    userId: str = "default"
+    max_concepts: int = 25
+
+
+class PredictMasteryRequest(BaseModel):
+    apiKey: Optional[str] = None
+    chatId: str
+    userId: Optional[str] = None
+
+
+class DetectGapsRequest(BaseModel):
+    apiKey: Optional[str] = None
+    chatId: str
+    userId: Optional[str] = None
+    threshold: float = 0.5
+
+
+class SaveStatsRequest(BaseModel):
+    chatId: str
+    userId: str = "default"
+    stats: Optional[Dict] = None
+
+
+@app.get("/api/concepts/{chat_id}")
+async def get_concepts(
+    chat_id: str,
+    userId: str = Query("default"),
+    apiKey: Optional[str] = Query(None),
+):
+    """Grafo de conceptos del chat con mastery actual."""
+    try:
+        from core import concept_store
+
+        concepts = concept_store.concepts_with_mastery(chat_id)
+        return {"success": True, "concepts": concepts, "chat_id": chat_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/concepts/extract")
+async def extract_concepts(body: ExtractConceptsRequest):
+    """Extrae micro-conceptos del corpus RAG del chat."""
+    try:
+        from core import concept_store
+        from agents.concept_extractor import ConceptExtractorAgent
+        from langchain_openai import ChatOpenAI
+
+        if not body.apiKey:
+            raise HTTPException(status_code=400, detail="API key requerida")
+        if not body.chatId:
+            raise HTTPException(status_code=400, detail="chatId requerido")
+
+        system = get_or_create_system(body.apiKey, mode="auto")
+        corpus = system.memory.get_chat_corpus_text(body.chatId, body.userId)
+        if not corpus.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="No hay documentos indexados en este chat. Sube un PDF primero.",
+            )
+
+        llm = ChatOpenAI(
+            model="gpt-3.5-turbo",
+            temperature=0.2,
+            openai_api_key=body.apiKey,
+        )
+        extractor = ConceptExtractorAgent(llm=llm)
+        docs = system.memory.list_chat_documents(body.chatId, body.userId)
+        source = docs[0]["filename"] if docs else None
+        concepts = extractor.extract_from_text(
+            corpus,
+            source_doc=source,
+            max_concepts=min(max(body.max_concepts, 10), 40),
+        )
+        concept_store.save_concepts(body.chatId, concepts, meta={"user_id": body.userId})
+        enriched = concept_store.concepts_with_mastery(body.chatId)
+        return {"success": True, "concepts": enriched, "count": len(enriched)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[FastAPI] Error extract_concepts: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/predict-mastery")
+async def predict_mastery(body: PredictMasteryRequest):
+    """Devuelve el mapa de mastery del chat."""
+    try:
+        from core import concept_store
+
+        mastery = concept_store.get_mastery_map(body.chatId)
+        concepts = concept_store.concepts_with_mastery(body.chatId)
+        avg = (
+            sum(float(c.get("mastery") or 0) for c in concepts) / len(concepts)
+            if concepts
+            else 0.0
+        )
+        return {
+            "success": True,
+            "chat_id": body.chatId,
+            "mastery": mastery,
+            "average": round(avg, 4),
+            "concepts": concepts,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/detect-gaps")
+async def detect_gaps_endpoint(body: DetectGapsRequest):
+    """Conceptos débiles ordenados por importancia + prerrequisitos rotos."""
+    try:
+        from core import concept_store
+
+        gaps = concept_store.detect_gaps(body.chatId, threshold=body.threshold)
+        return {"success": True, "chat_id": body.chatId, "gaps": gaps, "count": len(gaps)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/temporal-progress")
+async def temporal_progress(
+    chatId: str = Query(...),
+    userId: str = Query("default"),
+):
+    """Serie temporal simple de mastery medio (snapshots en mastery file)."""
+    try:
+        from core import concept_store
+        from pathlib import Path
+        import json as _json
+
+        concepts = concept_store.concepts_with_mastery(chatId)
+        avg = (
+            sum(float(c.get("mastery") or 0) for c in concepts) / len(concepts)
+            if concepts
+            else 0.0
+        )
+        # Historial de snapshots (si existe)
+        snap_path = concept_store.MASTERY_DIR / f"{concept_store._safe_id(chatId)}_history.json"
+        series = []
+        if snap_path.exists():
+            try:
+                series = _json.loads(snap_path.read_text(encoding="utf-8")).get("series") or []
+            except Exception:
+                series = []
+        series.append({
+            "ts": datetime.now().isoformat(),
+            "average_mastery": round(avg, 4),
+            "concept_count": len(concepts),
+        })
+        # Persistir últimos 60 puntos
+        concept_store.MASTERY_DIR.mkdir(parents=True, exist_ok=True)
+        snap_path.write_text(
+            _json.dumps({"series": series[-60:]}, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        return {"success": True, "chat_id": chatId, "series": series[-60:]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/save-stats")
+async def save_stats_endpoint(body: SaveStatsRequest):
+    """Snapshot de sesión para métricas."""
+    try:
+        from core import concept_store
+        import json as _json
+
+        concept_store.MASTERY_DIR.mkdir(parents=True, exist_ok=True)
+        path = concept_store.MASTERY_DIR / f"session_{concept_store._safe_id(body.chatId)}_{body.userId}.json"
+        payload = {
+            "chat_id": body.chatId,
+            "user_id": body.userId,
+            "saved_at": datetime.now().isoformat(),
+            "stats": body.stats or {},
+            "mastery": concept_store.get_mastery_map(body.chatId),
+        }
+        path.write_text(_json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/generate-notes")
 @_rate_limit("30/minute")
 async def generate_notes(request: Request, body: GenerateNotesRequest):
@@ -842,7 +1029,7 @@ async def generate_notes(request: Request, body: GenerateNotesRequest):
     
     Args:
         request: Solicitud con API key y temas opcionales
-        
+       
     Returns:
         Apuntes en formato Markdown
     """

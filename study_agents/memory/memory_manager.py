@@ -288,6 +288,34 @@ class MemoryManager:
                 print(f"❌ list_chat_documents: {e2}")
                 return []
 
+    def get_chat_corpus_text(self, chat_id: str, user_id: str, max_chars: int = 14000) -> str:
+        """Concatena chunks del chat para extracción de conceptos."""
+        try:
+            if self.collection.count() == 0:
+                return ""
+            results = self.collection.get(
+                where={"$and": [{"chat_id": chat_id}, {"user_id": user_id}]},
+                limit=80,
+            )
+            documents = results.get("documents") or []
+            parts: List[str] = []
+            total = 0
+            for doc in documents:
+                if not doc:
+                    continue
+                chunk = str(doc)
+                if total + len(chunk) > max_chars:
+                    remain = max_chars - total
+                    if remain > 100:
+                        parts.append(chunk[:remain])
+                    break
+                parts.append(chunk)
+                total += len(chunk)
+            return "\n\n".join(parts)
+        except Exception as e:
+            print(f"⚠️ get_chat_corpus_text: {e}")
+            return ""
+
     def delete_chat_document(self, chat_id: str, user_id: str, doc_id: str) -> bool:
         """Elimina todos los chunks de un documento en un chat."""
         try:
