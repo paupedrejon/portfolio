@@ -63,6 +63,7 @@ import ChatDocumentsPanel from "@/components/study-agents/chat/ChatDocumentsPane
 import QuickActionsBar from "@/components/study-agents/chat/QuickActionsBar";
 import StudyPlanPanel from "@/components/study-agents/panels/StudyPlanPanel";
 import ConceptMapPanel from "@/components/study-agents/panels/ConceptMapPanel";
+import ReviewPanel from "@/components/study-agents/panels/ReviewPanel";
 import { isStudyAgentsFlagEnabled } from "@/lib/study-agents/flags";
 import ChatSidebar from "./ChatSidebar";
 import ReactMarkdown from "react-markdown";
@@ -389,6 +390,8 @@ export default function StudyChat() {
   const [showDocumentsPanel, setShowDocumentsPanel] = useState(false);
   const [showStudyPlanPanel, setShowStudyPlanPanel] = useState(false);
   const [showConceptMapPanel, setShowConceptMapPanel] = useState(false);
+  const [showReviewPanel, setShowReviewPanel] = useState(false);
+  const [srsDueCount, setSrsDueCount] = useState(0);
   const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
   const [apiKeys, setApiKeys] = useState<{ openai: string } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -406,6 +409,29 @@ export default function StudyChat() {
     loadDocuments: reloadChatDocuments,
     deleteDocument: deleteChatDocument,
   } = useChatDocuments(currentChatId, userId || null, apiKeys?.openai);
+
+  useEffect(() => {
+    if (!userId || !isStudyAgentsFlagEnabled("srsReview")) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const qs = new URLSearchParams({ userId, limit: "1" });
+        if (currentChatId) qs.set("chatId", currentChatId);
+        const { ok, data } = await saFetch<{ due_total?: number; count?: number }>(
+          `srs/due?${qs}`,
+        );
+        if (!cancelled && ok) {
+          setSrsDueCount(data.due_total ?? data.count ?? 0);
+        }
+      } catch {
+        /* silencioso: badge opcional */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, currentChatId]);
+
   const [currentChatLevel, setCurrentChatLevel] = useState<{ topic: string; level: number } | null>(null);
   const [messageLevels, setMessageLevels] = useState<Record<string, { topic: string; level: number }>>({});
   const [learnedWordsCount, setLearnedWordsCount] = useState<number>(0);
@@ -3253,10 +3279,21 @@ ${contentPreview}
           apiKey: apiKeys.openai,
           testId: currentTest.id,
           answers: testAnswers,
+          userId: userId || null,
+          chatId: currentChatId || currentChatIdRef.current,
         }),
       });
 
       const data = await response.json();
+
+      if (data.srs_cards_created > 0) {
+        setSrsDueCount((n) => n + Number(data.srs_cards_created));
+        addMessage({
+          role: "assistant",
+          content: `📚 Se crearon ${data.srs_cards_created} tarjeta(s) de repaso a partir de tus fallos. Ábrelo en **Repaso** (retrieval practice).`,
+          type: "success",
+        });
+      }
 
       // Calcular estadísticas y conceptos fallados
       if (!currentTest || !currentTest.questions || currentTest.questions.length === 0) {
@@ -4188,6 +4225,13 @@ ${contentPreview}
             : undefined
         }
         showConcepts={showConceptMapPanel}
+        onOpenReview={
+          isStudyAgentsFlagEnabled("srsReview")
+            ? () => setShowReviewPanel(true)
+            : undefined
+        }
+        showReview={showReviewPanel}
+        srsDueCount={srsDueCount}
       />
       {showDocumentsPanel && (
         <ChatDocumentsPanel
@@ -4231,6 +4275,16 @@ ${contentPreview}
           apiKey={apiKeys?.openai || null}
           userId={userId}
           chatId={currentChatId}
+        />
+      )}
+      {isStudyAgentsFlagEnabled("srsReview") && (
+        <ReviewPanel
+          open={showReviewPanel}
+          onClose={() => setShowReviewPanel(false)}
+          colorTheme={colorTheme}
+          userId={userId}
+          chatId={currentChatId}
+          onDueCountChange={setSrsDueCount}
         />
       )}
       {/* Chat Container */}
@@ -7074,6 +7128,12 @@ ${contentPreview}
               }
               setShowConceptMapPanel(true);
             }}
+            onReview={
+              isStudyAgentsFlagEnabled("srsReview")
+                ? () => setShowReviewPanel(true)
+                : undefined
+            }
+            srsDueCount={srsDueCount}
             onNotes={() => {
               void generateNotes();
             }}

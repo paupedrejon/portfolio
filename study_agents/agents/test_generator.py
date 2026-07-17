@@ -1043,14 +1043,16 @@ FORMATO DE RESPUESTA (JSON válido):
                 "Opción D completa"
             ],
             "correct_answer": "A",
-            "explanation": "Explicación breve de por qué esta es la respuesta correcta"
+            "explanation": "Explicación breve de por qué esta es la respuesta correcta",
+            "concept_ids": ["micro-concepto-1", "micro-concepto-2"]
         }},
         {{
             "id": "q2",
             "type": "true_false",
             "question": "Texto de la pregunta aquí",
             "correct_answer": "True",
-            "explanation": "Explicación de la respuesta"
+            "explanation": "Explicación de la respuesta",
+            "concept_ids": ["micro-concepto-1"]
         }}
     ]
 }}
@@ -1058,6 +1060,11 @@ FORMATO DE RESPUESTA (JSON válido):
 TIPOS PERMITIDOS:
 - "multiple_choice": 4 opciones (A, B, C, D)
 - "true_false": Verdadero o Falso
+
+REGLAS DE CONCEPTOS (knowledge tracing):
+- Cada pregunta DEBE incluir "concept_ids": lista de 1–3 micro-conceptos que evalúa (slugs cortos en kebab-case, ej: "regla-de-la-cadena").
+- Usa micro-conceptos, no temas amplios ("derivadas" es demasiado amplio; "regla-producto" es correcto).
+- Si varias preguntas miden el mismo concepto, reutiliza el mismo concept_id.
 
 REGLAS CRÍTICAS PARA PREGUNTAS DE OPCIÓN MÚLTIPLE:
 1. **NO HAYAS OPCIONES DUPLICADAS NI EQUIVALENTES**: Cada opción debe ser ÚNICA y MATEMÁTICAMENTE DIFERENTE de las demás. 
@@ -1129,6 +1136,23 @@ IMPORTANTE:
             for i, q in enumerate(test_data["questions"]):
                 if "id" not in q:
                     q["id"] = f"q{i+1}"
+
+                # Normalizar concept_ids (knowledge tracing Fase 1)
+                raw_cids = q.get("concept_ids") or q.get("concepts") or []
+                if isinstance(raw_cids, str):
+                    raw_cids = [raw_cids]
+                normalized = []
+                for cid in raw_cids:
+                    slug = re.sub(r"[^\w\s\-]", "", str(cid).lower(), flags=re.UNICODE)
+                    slug = re.sub(r"[\s_]+", "-", slug.strip())[:64]
+                    if slug and slug not in normalized:
+                        normalized.append(slug)
+                if not normalized:
+                    # Fallback: slug desde las primeras palabras de la pregunta
+                    words = re.findall(r"[\wÁÉÍÓÚÑáéíóúñ]+", q.get("question", ""))[:4]
+                    fallback = "-".join(w.lower() for w in words)[:48] or f"concepto-{i+1}"
+                    normalized = [fallback]
+                q["concept_ids"] = normalized
                 
                 # Validar y corregir preguntas de opción múltiple
                 if q.get("type") == "multiple_choice":

@@ -514,6 +514,7 @@ class GradeTestRequest(BaseModel):
     answers: Dict[str, str]
     apiKey: Optional[str] = None
     user_id: Optional[str] = None
+    chat_id: Optional[str] = None
     course_id: Optional[str] = None  # ID del curso si está en contexto de curso
     topic: Optional[str] = None  # Tema del curso
 
@@ -1021,6 +1022,75 @@ async def save_stats_endpoint(body: SaveStatsRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class SrsDueRequest(BaseModel):
+    userId: str
+    chatId: Optional[str] = None
+    apiKey: Optional[str] = None
+
+
+class SrsReviewRequest(BaseModel):
+    userId: str
+    cardId: str
+    rating: str  # again | hard | good | easy
+    apiKey: Optional[str] = None
+
+
+class SrsGenerateFromErrorsRequest(BaseModel):
+    userId: str
+    chatId: str
+    errors: List[Dict]
+    apiKey: Optional[str] = None
+
+
+@app.get("/api/srs/due")
+async def srs_due(
+    userId: str = Query(...),
+    chatId: Optional[str] = Query(None),
+    limit: int = Query(40),
+):
+    """Cola de tarjetas pendientes (con interleaving)."""
+    try:
+        from core import card_store
+
+        cards = card_store.due_cards(userId, chat_id=chatId, limit=limit)
+        return {
+            "success": True,
+            "cards": cards,
+            "count": len(cards),
+            "due_total": card_store.count_due(userId, chat_id=chatId),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/srs/review")
+async def srs_review(body: SrsReviewRequest):
+    """Registra rating Again/Hard/Good/Easy y reprograma la tarjeta."""
+    try:
+        from core import card_store
+
+        updated = card_store.review_card(body.userId, body.cardId, body.rating)
+        return {"success": True, "card": updated}
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/srs/generate-from-errors")
+async def srs_generate_from_errors(body: SrsGenerateFromErrorsRequest):
+    """Genera tarjetas SRS a partir de errores (también se hace auto en grade-test)."""
+    try:
+        from core import card_store
+
+        created = card_store.generate_from_errors(body.userId, body.chatId, body.errors)
+        return {"success": True, "cards": created, "count": len(created)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/generate-notes")
 @_rate_limit("30/minute")
 async def generate_notes(request: Request, body: GenerateNotesRequest):
@@ -1029,7 +1099,7 @@ async def generate_notes(request: Request, body: GenerateNotesRequest):
     
     Args:
         request: Solicitud con API key y temas opcionales
-       
+        
     Returns:
         Apuntes en formato Markdown
     """
@@ -1359,6 +1429,41 @@ async def grade_test(request: GradeTestRequest):
         
         # Corregir test
         feedback, usage_info = system.grade_test(request.test_id, request.answers)
+
+        # Knowledge tracing + SRS desde fallos (Fase 1)
+        mastery_updates = []
+        srs_cards_created = []
+        if isinstance(feedback, dict) and request.chat_id:
+            try:
+                from core import concept_store, card_store
+
+                uid = request.user_id or "default"
+                errors_for_srs = []
+                for item in feedback.get("question_feedback") or []:
+                    cids = item.get("concept_ids") or []
+                    correct = bool(item.get("is_correct"))
+                    for cid in cids:
+                        new_m = concept_store.apply_mastery_update(
+                            request.chat_id, str(cid), correct
+                        )
+                        mastery_updates.append({
+                            "concept_id": cid,
+                            "correct": correct,
+                            "mastery": new_m,
+                        })
+                    if not correct:
+                        errors_for_srs.append({
+                            "question": item.get("question"),
+                            "explanation": item.get("explanation") or item.get("feedback"),
+                            "correct_answer": item.get("correct_answer"),
+                            "concept_ids": cids,
+                        })
+                if errors_for_srs:
+                    srs_cards_created = card_store.generate_from_errors(
+                        uid, request.chat_id, errors_for_srs
+                    )
+            except Exception as e:
+                print(f"[FastAPI] mastery/SRS post grade: {e}")
         
         # Calcular y guardar coste (necesitamos user_id, pero no está en el request)
         # Por ahora, no guardamos coste para grade_test si no hay user_id
@@ -1413,7 +1518,10 @@ async def grade_test(request: GradeTestRequest):
             "feedback": feedback,
             "inputTokens": input_tokens,
             "outputTokens": output_tokens,
-            "xp_gained": xp_gained if request.course_id else None
+            "xp_gained": xp_gained if request.course_id else None,
+            "mastery_updates": mastery_updates,
+            "srs_cards_created": len(srs_cards_created),
+            "srs_due_hint": True if srs_cards_created else False,
         }
     except HTTPException:
         raise

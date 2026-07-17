@@ -17,6 +17,8 @@ type Props = {
   onNotes: () => void;
   onTest: () => void;
   onConcepts: () => void;
+  onReview?: () => void;
+  srsDueCount?: number;
 };
 
 export default function QuickActionsBar({
@@ -26,6 +28,8 @@ export default function QuickActionsBar({
   onNotes,
   onTest,
   onConcepts,
+  onReview,
+  srsDueCount = 0,
 }: Props) {
   const dark = colorTheme === "dark";
   const actions: Action[] = [
@@ -58,6 +62,16 @@ export default function QuickActionsBar({
       accent: "#f59e0b",
     },
   ];
+
+  if (onReview) {
+    actions.splice(2, 0, {
+      id: "review",
+      label: srsDueCount > 0 ? `Repaso (${srsDueCount})` : "Repaso",
+      hint: "Spaced repetition",
+      onClick: onReview,
+      accent: "#ea580c",
+    });
+  }
 
   return (
     <div

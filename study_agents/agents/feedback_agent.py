@@ -157,7 +157,10 @@ class FeedbackAgent:
                 "correct_answer": correct_answer,
                 "is_correct": is_correct,
                 "feedback": feedback_text,
-                "explanation": question.get("explanation", "")
+                "explanation": question.get("explanation", ""),
+                "concept_ids": question.get("concept_ids") or [],
+                "options": options,
+                "type": question_type,
             })
         
         score = correct_count / total_questions if total_questions > 0 else 0

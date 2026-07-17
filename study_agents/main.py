@@ -604,7 +604,7 @@ class StudyAgentsSystem:
         
         return test_clean, usage_info
     
-    def grade_test(self, test_id: str, answers: dict) -> dict:
+    def grade_test(self, test_id: str, answers: dict) -> tuple:
         """
         Corrige un test y proporciona feedback
         
@@ -613,18 +613,24 @@ class StudyAgentsSystem:
             answers: Diccionario con las respuestas del estudiante
             
         Returns:
-            Feedback detallado
+            Tupla (feedback, usage_info)
         """
         print(f"\n✏️ Corrigiendo test {test_id}...")
         
         # Obtener el test primero
         test = self.test_generator.get_test(test_id)
         if "error" in test:
-            return {"error": test["error"]}
+            return {"error": test["error"]}, {"inputTokens": 0, "outputTokens": 0}
         
         feedback = self.feedback_agent.grade_test(test_id, answers, test_data=test)
+        usage_info = {}
+        if isinstance(feedback, dict):
+            usage_info = feedback.pop("usage_info", {"inputTokens": 0, "outputTokens": 0}) or {
+                "inputTokens": 0,
+                "outputTokens": 0,
+            }
         print("✅ Feedback generado")
-        return feedback
+        return feedback, usage_info
     
     def generate_exercise(
         self,

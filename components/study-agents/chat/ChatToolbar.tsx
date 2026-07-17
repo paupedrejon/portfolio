@@ -22,8 +22,11 @@ type Props = {
   showDocuments?: boolean;
   onOpenStudyPlan?: () => void;
   onOpenConcepts?: () => void;
+  onOpenReview?: () => void;
   showStudyPlan?: boolean;
   showConcepts?: boolean;
+  showReview?: boolean;
+  srsDueCount?: number;
 };
 
 export default function ChatToolbar({
@@ -43,8 +46,11 @@ export default function ChatToolbar({
   showDocuments = false,
   onOpenStudyPlan,
   onOpenConcepts,
+  onOpenReview,
   showStudyPlan = false,
   showConcepts = false,
+  showReview = false,
+  srsDueCount = 0,
 }: Props) {
   const modelLabel =
     selectedModel === "auto"
@@ -177,6 +183,52 @@ export default function ChatToolbar({
           }}
         >
           Conceptos
+        </button>
+      )}
+
+      {isMounted && onOpenReview && (
+        <button
+          type="button"
+          onClick={onOpenReview}
+          title="Repaso spaced repetition (FSRS)"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.35rem",
+            padding: "0.625rem 1rem",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "0.8125rem",
+            fontWeight: 600,
+            color: showReview ? "#fcd34d" : colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
+            background: showReview
+              ? "rgba(245, 158, 11, 0.25)"
+              : colorTheme === "dark"
+                ? "rgba(245, 158, 11, 0.12)"
+                : "rgba(245, 158, 11, 0.1)",
+            border: `1px solid ${colorTheme === "dark" ? "rgba(245, 158, 11, 0.4)" : "rgba(245, 158, 11, 0.3)"}`,
+          }}
+        >
+          Repaso
+          {srsDueCount > 0 && (
+            <span
+              style={{
+                minWidth: 18,
+                height: 18,
+                padding: "0 5px",
+                borderRadius: 999,
+                background: "#f59e0b",
+                color: "#111",
+                fontSize: "0.65rem",
+                fontWeight: 800,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {srsDueCount > 99 ? "99+" : srsDueCount}
+            </span>
+          )}
         </button>
       )}
 

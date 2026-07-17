@@ -1,5 +1,24 @@
 # Changelog — Study Agents
 
+## 0.3.1 — Fase 1 (mastery + FSRS)
+
+### Visible
+- Botón **Repaso** en toolbar (badge con pendientes) y en acciones rápidas
+- **ReviewPanel**: cola FSRS con Again/Hard/Good/Easy + interleaving
+- Tras fallar un test: se crean tarjetas automáticamente y aviso en el chat
+
+### Backend (redeploy Railway)
+- Tests etiquetan preguntas con `concept_ids`
+- `grade-test` actualiza mastery BKT y genera tarjetas SRS
+- `core/fsrs.py` + `core/card_store.py`
+- Endpoints: `GET /api/srs/due`, `POST /api/srs/review`, `POST /api/srs/generate-from-errors`
+- Fix: `grade_test` ahora devuelve `(feedback, usage_info)` correctamente
+
+### Qué probar
+1. Generar test → fallar alguna pregunta → corregir → aviso de tarjetas
+2. Abrir **Repaso** → revelar → puntuar
+3. Abrir **Conceptos** tras el test → ver dominio actualizado (si hubo extract previo)
+
 ## 0.3.0 — Fase 1 (inicio, UI visible)
 
 ### Visible en `/study-agents`

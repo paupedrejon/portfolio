@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
+import { getFastAPIUrl } from '../utils';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { apiKey, testId, answers } = body;
+    const { apiKey, testId, answers, userId, chatId } = body;
 
     if (!apiKey) {
       return NextResponse.json(
@@ -21,8 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Llamar al backend FastAPI
-    const response = await fetch(`${FASTAPI_URL}/api/grade-test`, {
+    const response = await fetch(getFastAPIUrl('/api/grade-test'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -31,6 +29,8 @@ export async function POST(request: NextRequest) {
         apiKey,
         test_id: testId,
         answers,
+        user_id: userId || null,
+        chat_id: chatId || null,
       }),
     });
 
@@ -48,16 +48,15 @@ export async function POST(request: NextRequest) {
       feedback: data.feedback,
       inputTokens: data.inputTokens || 0,
       outputTokens: data.outputTokens || 0,
+      mastery_updates: data.mastery_updates || [],
+      srs_cards_created: data.srs_cards_created || 0,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error grading test:', error);
+    const message = error instanceof Error ? error.message : 'Error al corregir test';
     return NextResponse.json(
-      { error: error.message || 'Error al corregir test' },
+      { error: message },
       { status: 500 }
     );
   }
 }
-
-
-
-

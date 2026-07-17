@@ -4,7 +4,7 @@
  */
 export const studyAgentsFlags = {
   conceptMap: true,
-  srsReview: false,
+  srsReview: true,
   studyPlan: true,
   tutorOrchestrator: false,
   socraticMode: false,
