@@ -9,6 +9,7 @@ import {
   HiOutlineArrowPath,
 } from "react-icons/hi2";
 import { outfit } from "@/app/fonts";
+import { SA_PRIMARY, SA_PRIMARY_SOFT } from "@/lib/study-agents/brand";
 
 type Action = {
   id: string;
@@ -29,7 +30,7 @@ type Props = {
   srsDueCount?: number;
 };
 
-/** Chips compactos alineados con la toolbar / input pill de Study Agents. */
+/** Pills blancos clean con iconos grandes y color marca #2596be. */
 export default function QuickActionsBar({
   colorTheme,
   disabled,
@@ -41,7 +42,7 @@ export default function QuickActionsBar({
   srsDueCount = 0,
 }: Props) {
   const dark = colorTheme === "dark";
-  const iconProps = { size: 15, strokeWidth: 1.75 } as const;
+  const iconProps = { size: 20, strokeWidth: 1.75 } as const;
 
   const actions: Action[] = [
     {
@@ -84,10 +85,8 @@ export default function QuickActionsBar({
     });
   }
 
-  const border = dark ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.28)";
-  const bg = dark ? "rgba(26, 26, 36, 0.85)" : "rgba(255, 255, 255, 0.95)";
-  const text = dark ? "#e2e8f0" : "#1e293b";
-  const accent = "#6366f1";
+  const border = dark ? "rgba(148, 163, 184, 0.22)" : "rgba(148, 163, 184, 0.35)";
+  const bg = dark ? "rgba(26, 26, 36, 0.9)" : "#ffffff";
 
   return (
     <div
@@ -98,9 +97,9 @@ export default function QuickActionsBar({
         display: "flex",
         flexWrap: "wrap",
         alignItems: "center",
-        gap: "0.4rem",
-        marginBottom: "0.65rem",
-        padding: "0.2rem 0",
+        gap: "0.5rem",
+        marginBottom: "0.7rem",
+        padding: "0.15rem 0",
       }}
     >
       {actions.map((a) => (
@@ -113,32 +112,36 @@ export default function QuickActionsBar({
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: "0.4rem",
-            padding: "0.4rem 0.75rem",
+            gap: "0.5rem",
+            padding: "0.55rem 1.05rem",
             borderRadius: 9999,
             border: `1px solid ${border}`,
             background: bg,
-            color: text,
+            color: SA_PRIMARY,
             cursor: disabled ? "not-allowed" : "pointer",
             opacity: disabled ? 0.55 : 1,
-            fontSize: "0.78rem",
+            fontSize: "0.88rem",
             fontWeight: 600,
-            boxShadow: dark
-              ? "none"
-              : "0 1px 2px rgba(15, 23, 42, 0.04)",
-            transition: "border-color 0.15s ease, color 0.15s ease, background 0.15s ease",
+            boxShadow: dark ? "none" : "0 2px 8px rgba(15, 23, 42, 0.05)",
+            transition: "background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease",
           }}
           onMouseEnter={(e) => {
             if (disabled) return;
-            e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.45)";
-            e.currentTarget.style.color = accent;
+            e.currentTarget.style.background = SA_PRIMARY_SOFT;
+            e.currentTarget.style.borderColor = SA_PRIMARY;
+            e.currentTarget.style.boxShadow = dark
+              ? "none"
+              : "0 4px 12px rgba(37, 150, 190, 0.15)";
           }}
           onMouseLeave={(e) => {
+            e.currentTarget.style.background = bg;
             e.currentTarget.style.borderColor = border;
-            e.currentTarget.style.color = text;
+            e.currentTarget.style.boxShadow = dark
+              ? "none"
+              : "0 2px 8px rgba(15, 23, 42, 0.05)";
           }}
         >
-          <span style={{ display: "inline-flex", color: accent, opacity: 0.9 }} aria-hidden>
+          <span style={{ display: "inline-flex", lineHeight: 0 }} aria-hidden>
             {a.icon}
           </span>
           {a.label}

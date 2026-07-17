@@ -75,28 +75,26 @@ export default function ChatToolbar({
   const chip = (active?: boolean) => ({
     display: "flex" as const,
     alignItems: "center" as const,
-    gap: "0.35rem",
-    padding: "0.5rem 0.9rem",
+    gap: "0.4rem",
+    padding: "0.55rem 1rem",
     borderRadius: 9999,
     cursor: "pointer" as const,
-    fontSize: "0.8125rem",
+    fontSize: "0.85rem",
     fontWeight: 600,
-    color: active ? "#6366f1" : dark ? "#e2e8f0" : "#1e293b",
+    color: active || !dark ? "#2596be" : "#e2e8f0",
     background: active
-      ? dark
-        ? "rgba(99, 102, 241, 0.18)"
-        : "rgba(99, 102, 241, 0.1)"
+      ? "rgba(37, 150, 190, 0.12)"
       : dark
-        ? "rgba(26, 26, 36, 0.7)"
-        : "rgba(255, 255, 255, 0.95)",
+        ? "rgba(26, 26, 36, 0.85)"
+        : "#ffffff",
     border: `1px solid ${
       active
-        ? "rgba(99, 102, 241, 0.45)"
+        ? "#2596be"
         : dark
-          ? "rgba(148, 163, 184, 0.2)"
-          : "rgba(148, 163, 184, 0.28)"
+          ? "rgba(148, 163, 184, 0.22)"
+          : "rgba(148, 163, 184, 0.32)"
     }`,
-    boxShadow: dark ? "none" : "0 1px 2px rgba(15, 23, 42, 0.04)",
+    boxShadow: dark ? "none" : "0 2px 6px rgba(15, 23, 42, 0.05)",
   });
 
   return (
@@ -189,7 +187,7 @@ export default function ChatToolbar({
                 height: 18,
                 padding: "0 5px",
                 borderRadius: 999,
-                background: "#6366f1",
+                background: "#2596be",
                 color: "#fff",
                 fontSize: "0.65rem",
                 fontWeight: 800,
@@ -211,7 +209,7 @@ export default function ChatToolbar({
           title={hasApiKey ? "Cambiar API keys" : "Configurar API keys"}
           style={chip(hasApiKey)}
         >
-          <HiKey size={15} color="#6366f1" />
+          <HiKey size={16} color="#2596be" />
           {hasApiKey ? "API Key" : "Configurar API"}
         </button>
       )}

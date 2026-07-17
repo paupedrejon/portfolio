@@ -64,6 +64,7 @@ import { useChatDocuments } from "@/hooks/study-agents/useChatDocuments";
 import ChatToolbar from "@/components/study-agents/chat/ChatToolbar";
 import ChatDocumentsPanel from "@/components/study-agents/chat/ChatDocumentsPanel";
 import QuickActionsBar from "@/components/study-agents/chat/QuickActionsBar";
+import UploadSuccessCard from "@/components/study-agents/chat/UploadSuccessCard";
 import StudyPlanPanel from "@/components/study-agents/panels/StudyPlanPanel";
 import ConceptMapPanel from "@/components/study-agents/panels/ConceptMapPanel";
 import ReviewPanel from "@/components/study-agents/panels/ReviewPanel";
@@ -5592,6 +5593,11 @@ ${contentPreview}
                   <SuccessMessage 
                     data={message.content}
                     colorTheme={colorTheme}
+                    onNotes={() => { void generateNotes(); }}
+                    onAsk={() => {
+                      textareaRef.current?.focus();
+                    }}
+                    onTest={() => { void generateTest("medium", 5); }}
                   />
                 ) : message.type === "warning" ? (
                   <div
@@ -10611,9 +10617,15 @@ function TestComponent({
 function SuccessMessage({
   data,
   colorTheme = "dark",
+  onNotes,
+  onAsk,
+  onTest,
 }: {
   data: unknown;
   colorTheme?: "dark" | "light";
+  onNotes?: () => void;
+  onAsk?: () => void;
+  onTest?: () => void;
 }) {
   // Detectar si es un mensaje de felicitaciones por subir de nivel
   let isLevelUpMessage = false;
@@ -10759,288 +10771,15 @@ function SuccessMessage({
   const fileNames = Array.isArray((successData as { fileNames?: unknown }).fileNames)
     ? (successData as { fileNames?: string[] }).fileNames ?? []
     : [];
-  const bgColor = colorTheme === "dark" 
-    ? "linear-gradient(135deg, rgba(26, 26, 36, 0.95), rgba(30, 30, 45, 0.95))"
-    : "linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98))";
-  const textColor = colorTheme === "dark" ? "var(--text-primary)" : "#1a1a24";
-  const secondaryTextColor = colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563";
 
   return (
-    <div
-      style={{
-        background: bgColor,
-        borderRadius: "20px",
-        padding: "2rem",
-        border: `2px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.4)" : "rgba(16, 185, 129, 0.5)"}`,
-        boxShadow: colorTheme === "dark"
-          ? "0 8px 32px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
-          : "0 8px 32px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
-      }}
-    >
-      {/* Header con icono de éxito */}
-      <div style={{ 
-        display: "flex", 
-        alignItems: "center", 
-        gap: "1rem", 
-        marginBottom: "1.5rem" 
-      }}>
-        <div style={{
-          width: "48px",
-          height: "48px",
-          borderRadius: "50%",
-          background: "linear-gradient(135deg, #10b981, #059669)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}>
-          <CheckIcon size={24} color="white" />
-        </div>
-        <div>
-          <h3 style={{
-            margin: 0,
-            fontSize: "clamp(1.5rem, 4vw, 2rem)",
-            fontWeight: 600,
-            color: textColor,
-            marginBottom: "0.5rem",
-            letterSpacing: "-0.01em",
-            lineHeight: 1.3,
-          }}>
-            ¡Documento procesado correctamente!
-          </h3>
-          <p style={{
-            margin: 0,
-            fontSize: "0.875rem",
-            color: secondaryTextColor,
-          }}>
-            {fileNames.length} archivo(s) procesado(s)
-          </p>
-        </div>
-      </div>
-
-      {/* Lista de archivos */}
-      {fileNames.length > 0 && (
-        <div style={{
-          marginBottom: "2rem",
-          padding: "1rem",
-          background: colorTheme === "dark" ? "rgba(16, 185, 129, 0.1)" : "rgba(16, 185, 129, 0.08)",
-          borderRadius: "999px",
-          border: `1px solid ${colorTheme === "dark" ? "rgba(16, 185, 129, 0.3)" : "rgba(16, 185, 129, 0.4)"}`,
-        }}>
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.75rem",
-            marginBottom: "0.75rem",
-          }}>
-            <FileIcon size={18} color="#10b981" />
-            <span style={{
-              fontSize: "0.875rem",
-              fontWeight: 600,
-              color: secondaryTextColor,
-            }}>
-              Archivo(s) procesado(s):
-            </span>
-          </div>
-          <ul style={{
-            margin: 0,
-            paddingLeft: "1.5rem",
-            listStyle: "none",
-          }}>
-            {fileNames.map((fileName: string) => (
-              <li key={fileName} style={{
-                marginBottom: "0.5rem",
-                color: textColor,
-                fontSize: "0.95rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              }}>
-                <span style={{ color: "#10b981" }}>•</span>
-                {fileName}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Opciones disponibles */}
-      <div>
-        <h4 style={{
-          margin: 0,
-          marginBottom: "1.5rem",
-          fontSize: "clamp(1.1rem, 2.5vw, 1.3rem)",
-          fontWeight: 600,
-          color: textColor,
-          display: "flex",
-          alignItems: "center",
-          gap: "0.75rem",
-          letterSpacing: "-0.01em",
-        }}>
-          <TargetIcon size={20} color="#6366f1" />
-          ¿Qué quieres hacer ahora?
-        </h4>
-        
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-        }}>
-          {/* Opción 1: Generar apuntes */}
-          <div style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "1rem",
-            padding: "1.25rem",
-            background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
-                          borderRadius: "14px",
-            border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"}`,
-            transition: "all 0.3s ease",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateX(4px)";
-            e.currentTarget.style.background = colorTheme === "dark" ? "rgba(99, 102, 241, 0.15)" : "rgba(99, 102, 241, 0.12)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateX(0)";
-            e.currentTarget.style.background = colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)";
-          }}>
-            <div style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #6366f1, #4f46e5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}>
-              <NotesIcon size={20} color="white" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{
-                fontSize: "1rem",
-                fontWeight: 600,
-                color: textColor,
-                marginBottom: "0.25rem",
-              }}>
-                Generar apuntes
-              </div>
-              <div style={{
-                fontSize: "0.875rem",
-                color: secondaryTextColor,
-                lineHeight: 1.5,
-              }}>
-                Crea apuntes visuales con esquemas conceptuales y diagramas interactivos
-              </div>
-            </div>
-          </div>
-
-          {/* Opción 2: Hacer preguntas */}
-          <div style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "1rem",
-            padding: "1.25rem",
-            background: colorTheme === "dark" ? "rgba(6, 182, 212, 0.1)" : "rgba(6, 182, 212, 0.08)",
-            borderRadius: "12px",
-            border: `1px solid ${colorTheme === "dark" ? "rgba(6, 182, 212, 0.3)" : "rgba(6, 182, 212, 0.4)"}`,
-            transition: "all 0.3s ease",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateX(4px)";
-            e.currentTarget.style.background = colorTheme === "dark" ? "rgba(6, 182, 212, 0.15)" : "rgba(6, 182, 212, 0.12)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateX(0)";
-            e.currentTarget.style.background = colorTheme === "dark" ? "rgba(6, 182, 212, 0.1)" : "rgba(6, 182, 212, 0.08)";
-          }}>
-            <div style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #06b6d4, #0891b2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}>
-              <QuestionIcon size={20} color="white" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{
-                fontSize: "1rem",
-                fontWeight: 600,
-                color: textColor,
-                marginBottom: "0.25rem",
-              }}>
-                Hacer preguntas
-              </div>
-              <div style={{
-                fontSize: "0.875rem",
-                color: secondaryTextColor,
-                lineHeight: 1.5,
-              }}>
-                Pregúntame sobre el contenido del documento y obtén respuestas detalladas
-              </div>
-            </div>
-          </div>
-
-          {/* Opción 3: Generar test */}
-          <div style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "1rem",
-            padding: "1.25rem",
-            background: colorTheme === "dark" ? "rgba(139, 92, 246, 0.1)" : "rgba(139, 92, 246, 0.08)",
-            borderRadius: "12px",
-            border: `1px solid ${colorTheme === "dark" ? "rgba(139, 92, 246, 0.3)" : "rgba(139, 92, 246, 0.4)"}`,
-            transition: "all 0.3s ease",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateX(4px)";
-            e.currentTarget.style.background = colorTheme === "dark" ? "rgba(139, 92, 246, 0.15)" : "rgba(139, 92, 246, 0.12)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateX(0)";
-            e.currentTarget.style.background = colorTheme === "dark" ? "rgba(139, 92, 246, 0.1)" : "rgba(139, 92, 246, 0.08)";
-          }}>
-            <div style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}>
-              <TestIcon size={20} color="white" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{
-                fontSize: "1rem",
-                fontWeight: 600,
-                color: textColor,
-                marginBottom: "0.25rem",
-              }}>
-                Generar test
-              </div>
-              <div style={{
-                fontSize: "0.875rem",
-                color: secondaryTextColor,
-                lineHeight: 1.5,
-              }}>
-                Genera un test completo con múltiples preguntas para evaluar tu nivel. Recibe una calificación y feedback detallado al finalizar.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <UploadSuccessCard
+      fileNames={fileNames}
+      colorTheme={colorTheme}
+      onNotes={onNotes}
+      onAsk={onAsk}
+      onTest={onTest}
+    />
   );
 }
 
