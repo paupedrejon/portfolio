@@ -1,5 +1,13 @@
 # Changelog — Study Agents
 
+## 0.3.8 — Hero al estilo home
+
+### Visible
+- Hero Study Agents con fondo `#030d14`, FloatingLines y blobs de la home
+- Tipografía League Spartan, acento `#358c9f` / `#4eb3c8`
+- CTA «Empezar a estudiar» + «Configurar API Key»
+- Marca SA alineada con la home (`brand.ts`)
+
 ## 0.3.7 — Modales SA + apuntes leen el PDF de verdad
 
 ### Visible
