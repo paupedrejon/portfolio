@@ -1,5 +1,16 @@
 # Changelog — Study Agents
 
+## 0.4.1 — Plan = camino Duolingo (quizzes, no muro de texto)
+
+### Visible
+- Generar plan crea un **camino de días** (nodos, XP, desbloqueo)
+- Cada día = lección: 1 pregunta a la vez, feedback inmediato, +XP
+- Ya no se vuelca el plan como apuntes Markdown largos
+
+### Backend
+- `generate-study-plan` devuelve JSON interactivo (`format: interactive_v1`)
+- Redeploy Railway obligatorio
+
 ## 0.4.0 — Dopamina: ghost home + pasos interactivos
 
 ### Visible

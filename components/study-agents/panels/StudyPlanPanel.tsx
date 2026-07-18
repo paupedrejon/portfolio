@@ -76,6 +76,7 @@ export default function StudyPlanPanel({
       const { ok, data } = await saPost<{
         success?: boolean;
         plan?: string;
+        plan_interactive?: unknown;
         error?: string;
         detail?: string;
       }>("generate-study-plan", {
@@ -88,14 +89,18 @@ export default function StudyPlanPanel({
         userId,
         chatId,
       });
-      if (!ok || !data.success || !data.plan) {
+      if (!ok || !data.success || (!data.plan && !data.plan_interactive)) {
         throw new Error(
           (typeof data.error === "string" && data.error) ||
             (typeof data.detail === "string" && data.detail) ||
             "No se pudo generar el plan",
         );
       }
-      onPlanGenerated(data.plan, { topic: topicVal, days });
+      const payload =
+        data.plan_interactive != null
+          ? JSON.stringify(data.plan_interactive)
+          : data.plan || "";
+      onPlanGenerated(payload, { topic: topicVal, days });
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al generar el plan");

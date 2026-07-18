@@ -69,6 +69,9 @@ import InteractiveSteps, {
   stepsFromPlanMarkdown,
   type InteractiveStep,
 } from "@/components/study-agents/chat/InteractiveSteps";
+import StudyPlanSession, {
+  parseInteractivePlan,
+} from "@/components/study-agents/chat/StudyPlanSession";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
 import StudyPlanPanel from "@/components/study-agents/panels/StudyPlanPanel";
 import { SA_PRIMARY, SA_CHAT_BG } from "@/lib/study-agents/brand";
@@ -237,7 +240,7 @@ interface Message {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
-  type?: "message" | "notes" | "test" | "feedback" | "success" | "exercise" | "exercise_result" | "warning" | "level_selection" | "interactive_steps";
+  type?: "message" | "notes" | "test" | "feedback" | "success" | "exercise" | "exercise_result" | "warning" | "level_selection" | "interactive_steps" | "study_plan";
   timestamp: Date;
   costEstimate?: CostEstimate;
   topic?: string; // Tema del mensaje si es selección de nivel
@@ -4322,27 +4325,32 @@ ${contentPreview}
           chatId={currentChatId}
           defaultTopic={currentChatLevel?.topic && currentChatLevel.topic !== "General" ? currentChatLevel.topic : ""}
           model={selectedModel === "auto" ? null : selectedModel}
-          onPlanGenerated={(planMarkdown, meta) => {
+          onPlanGenerated={(planPayload, meta) => {
             addMessage({
               role: "user",
-              content: `Genera un plan de estudio de ${meta.days} días sobre: ${meta.topic}`,
+              content: `Quiero un camino de estudio de ${meta.days} días sobre: ${meta.topic}`,
               type: "message",
             });
-            const steps = stepsFromPlanMarkdown(planMarkdown, meta.topic);
-            addMessage({
-              role: "assistant",
-              content: JSON.stringify({
-                title: `Plan: ${meta.topic}`,
-                subtitle: `${meta.days} días · toca Siguiente para avanzar`,
-                steps,
-              }),
-              type: "interactive_steps",
-            });
-            addMessage({
-              role: "assistant",
-              content: planMarkdown,
-              type: "notes",
-            });
+            const interactive = parseInteractivePlan(planPayload);
+            if (interactive) {
+              addMessage({
+                role: "assistant",
+                content: planPayload,
+                type: "study_plan",
+              });
+            } else {
+              // Fallback legacy markdown → pasos simples (sin muro)
+              const steps = stepsFromPlanMarkdown(planPayload, meta.topic);
+              addMessage({
+                role: "assistant",
+                content: JSON.stringify({
+                  title: `Plan: ${meta.topic}`,
+                  subtitle: "Camino rápido (el backend aún no devolvió lecciones)",
+                  steps,
+                }),
+                type: "interactive_steps",
+              });
+            }
           }}
         />
       )}
@@ -5393,9 +5401,9 @@ ${contentPreview}
               <div
                 className="message-bubble-premium"
                 style={{
-                  maxWidth: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" || message.type === "interactive_steps" ? "100%" : "85%",
-                  width: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" || message.type === "interactive_steps" ? "100%" : undefined,
-                  flex: message.role === "assistant" && (message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" || message.type === "interactive_steps") ? 1 : undefined,
+                  maxWidth: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" || message.type === "interactive_steps" || message.type === "study_plan" ? "100%" : "85%",
+                  width: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" || message.type === "interactive_steps" || message.type === "study_plan" ? "100%" : undefined,
+                  flex: message.role === "assistant" && (message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" || message.type === "interactive_steps" || message.type === "study_plan") ? 1 : undefined,
                   minWidth: 0,
                   padding:
                     message.role === "user"
@@ -5460,7 +5468,24 @@ ${contentPreview}
                     }}
                   />
                 )}
-                {message.type === "interactive_steps" ? (
+                {message.type === "study_plan" ? (
+                  (() => {
+                    const plan = parseInteractivePlan(message.content);
+                    if (!plan) {
+                      return (
+                        <p style={{ color: "#64748b", fontSize: "0.9rem" }}>
+                          No se pudo cargar el camino interactivo. Vuelve a generar el plan.
+                        </p>
+                      );
+                    }
+                    return (
+                      <StudyPlanSession
+                        plan={plan}
+                        storageKey={`sa_plan_${currentChatId || "local"}_${plan.topic}`}
+                      />
+                    );
+                  })()
+                ) : message.type === "interactive_steps" ? (
                   (() => {
                     let payload: { title?: string; subtitle?: string; steps?: InteractiveStep[] } = {};
                     try {

@@ -601,40 +601,63 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
 
         goal_line = goal.strip() if goal else "Mejorar comprensión y retención del tema."
 
-        prompt = f"""Eres un coach de estudio experto en ciencia del aprendizaje. Genera un PLAN DE ESTUDIO en **Markdown** (español).
+        # Plan interactivo (Duolingo-lite): JSON con días + micro-quizzes. Sin muro de texto.
+        max_days = max(1, min(int(days or 7), 14))
+        q_per_day = 4 if minutes_per_day >= 40 else 3
 
-## Datos del estudiante
-- **Tema principal**: {topic}
-- **Días disponibles**: {days} (organiza día a día del 1 al {days})
-- **Tiempo aproximado por día**: {minutes_per_day} minutos (sé realista)
-- **Nivel autopercepción / app (0-10)**: {level_display}/10 (ajusta profundidad y carga)
-- **Objetivo**: {goal_line}
+        prompt = f"""Eres un diseñador de lecciones tipo Duolingo para estudio serio.
+Devuelve SOLO un JSON válido (sin markdown, sin ```, sin prosa).
 
-## Estado de dominio (knowledge tracing — OBLIGATORIO usar)
+## Contexto
+- Tema: {topic}
+- Días: {max_days}
+- Minutos/día: {minutes_per_day}
+- Nivel 0-10: {level_display}
+- Objetivo: {goal_line}
+
+## Dominio (usar para secuenciar)
 {mastery_block}
 
-## Fragmentos del temario/material del chat (si aplica)
-{rag_text}
+## Material (si hay)
+{rag_text[:3500]}
 
-## Principios (no negociables)
-- **Secuenciación adaptativa**: prioriza gaps y prerrequisitos rotos antes que conceptos nuevos.
-- Cada día mezcla: **repaso SRS / retrieval** + foco en 1–2 gaps + un micro-test o ejercicio.
-- No rellenes con conceptos ya dominados (salvo repaso breve espaciado).
+## Esquema JSON obligatorio
+{{
+  "topic": "string corto",
+  "xp_per_correct": 10,
+  "days": [
+    {{
+      "day": 1,
+      "title": "máx 6 palabras",
+      "focus": "1 concepto concreto",
+      "minutes": {minutes_per_day},
+      "questions": [
+        {{
+          "id": "d1q1",
+          "prompt": "pregunta corta de retrieval practice",
+          "options": ["A", "B", "C", "D"],
+          "correct_index": 0,
+          "feedback_ok": "1 frase",
+          "feedback_bad": "1 frase con la idea clave"
+        }}
+      ]
+    }}
+  ]
+}}
 
-## Requisitos de formato (obligatorio)
-1. Título: `# Plan de estudio: {topic}`
-2. Sección `## Resumen` (3-5 bullets; menciona qué gaps ataca el plan)
-3. Sección `## Calendario` — para cada día: objetivos concretos, qué estudiar, y **un micro-ejercicio** (5-10 min)
-4. `## Técnicas recomendadas` (Pomodoro, FSRS/repaso espaciado, active recall, Feynman) adaptadas al tiempo
-5. `## Métricas de progreso` — cómo saber si va bien (señales observables / mastery)
-6. `## Si te quedas atrás` — plan B en 5 bullets (reinyectar el gap más crítico)
-7. `## Próximo paso en Study Agents` — sugiere Repaso, Test, Ejercicio o Conceptos según gaps
-
-**Prohibido**: bloques ```mermaid. Sin relleno genérico; sé específico al tema **{topic}**.
+## Reglas
+- Exactamente {max_days} días en "days".
+- Exactamente {q_per_day} preguntas por día (multiple choice, 4 opciones).
+- correct_index es 0-3.
+- Prioriza gaps / prerrequisitos débiles si aparecen arriba.
+- Preguntas CORTAS, prácticas, sin relleno. Nada de teoría larga.
+- Español. Sin emojis. Sin texto fuera del JSON.
 """
         try:
+            import json
+
             response = self.llm.invoke(prompt)
-            plan_md = response.content if hasattr(response, "content") else str(response)
+            raw = response.content if hasattr(response, "content") else str(response)
             usage_info: Dict = {"inputTokens": 0, "outputTokens": 0, "model": None}
             if self.current_model_config:
                 usage_info["model"] = self.current_model_config.name
@@ -650,13 +673,116 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
                 usage_info["outputTokens"] = tu.get("completion_tokens", 0)
             else:
                 usage_info["inputTokens"] = len(prompt) // 4
-                usage_info["outputTokens"] = len(plan_md) // 4
-            return plan_md, usage_info
+                usage_info["outputTokens"] = len(raw) // 4
+
+            plan_obj = self._parse_interactive_plan_json(
+                raw, topic, max_days, minutes_per_day, q_per_day
+            )
+            return json.dumps(plan_obj, ensure_ascii=False), usage_info
         except Exception as e:
             return (
                 f"# Error\n\nNo se pudo generar el plan: {e}",
                 {"inputTokens": 0, "outputTokens": 0, "model": None},
             )
+
+    def _parse_interactive_plan_json(
+        self,
+        raw: str,
+        topic: str,
+        max_days: int,
+        minutes_per_day: int,
+        q_per_day: int,
+    ) -> dict:
+        """Parsea JSON del LLM; si falla, genera un esqueleto mínimo jugable."""
+        import json
+        import re
+
+        text = (raw or "").strip()
+        if text.startswith("```"):
+            text = re.sub(r"^```(?:json)?\s*", "", text)
+            text = re.sub(r"\s*```$", "", text)
+        m = re.search(r"\{[\s\S]*\}", text)
+        if m:
+            text = m.group(0)
+        try:
+            data = json.loads(text)
+        except Exception:
+            data = {}
+
+        days_in = data.get("days") if isinstance(data, dict) else None
+        days_out = []
+        if isinstance(days_in, list):
+            for i, d in enumerate(days_in[:max_days]):
+                if not isinstance(d, dict):
+                    continue
+                qs = []
+                for j, q in enumerate((d.get("questions") or [])[:q_per_day]):
+                    if not isinstance(q, dict):
+                        continue
+                    opts = q.get("options") or []
+                    if not isinstance(opts, list) or len(opts) < 2:
+                        continue
+                    opts = [str(o) for o in opts[:4]]
+                    while len(opts) < 4:
+                        opts.append(f"Opción {len(opts)+1}")
+                    try:
+                        ci = int(q.get("correct_index", 0))
+                    except Exception:
+                        ci = 0
+                    ci = max(0, min(ci, len(opts) - 1))
+                    qs.append({
+                        "id": str(q.get("id") or f"d{i+1}q{j+1}"),
+                        "prompt": str(q.get("prompt") or "Pregunta").strip()[:220],
+                        "options": opts,
+                        "correct_index": ci,
+                        "feedback_ok": str(q.get("feedback_ok") or "Correcto.").strip()[:160],
+                        "feedback_bad": str(
+                            q.get("feedback_bad") or f"La respuesta era: {opts[ci]}"
+                        ).strip()[:200],
+                    })
+                if not qs:
+                    continue
+                days_out.append({
+                    "day": int(d.get("day") or (i + 1)),
+                    "title": str(d.get("title") or f"Día {i+1}").strip()[:48],
+                    "focus": str(d.get("focus") or topic).strip()[:80],
+                    "minutes": int(d.get("minutes") or minutes_per_day),
+                    "questions": qs,
+                })
+
+        if len(days_out) < max_days:
+            for i in range(len(days_out) + 1, max_days + 1):
+                days_out.append({
+                    "day": i,
+                    "title": f"Práctica {i}",
+                    "focus": topic,
+                    "minutes": minutes_per_day,
+                    "questions": [
+                        {
+                            "id": f"d{i}q{j}",
+                            "prompt": f"Sobre {topic}: ¿qué es más preciso? (ítem {j})",
+                            "options": [
+                                f"Idea clave de {topic}",
+                                "Concepto no relacionado",
+                                "Definición demasiado vaga",
+                                "Ejemplo incorrecto",
+                            ],
+                            "correct_index": 0,
+                            "feedback_ok": "Bien: retrieval practice.",
+                            "feedback_bad": f"Repasa el foco: {topic}.",
+                        }
+                        for j in range(1, q_per_day + 1)
+                    ],
+                })
+
+        return {
+            "format": "interactive_v1",
+            "topic": str((data.get("topic") if isinstance(data, dict) else None) or topic),
+            "xp_per_correct": int(
+                (data.get("xp_per_correct") if isinstance(data, dict) else None) or 10
+            ),
+            "days": days_out[:max_days],
+        }
 
     def generate_notes(self, topics: Optional[List[str]] = None, model: Optional[str] = None, user_level: Optional[int] = None, conversation_history: Optional[List[dict]] = None, topic: Optional[str] = None, chat_id: Optional[str] = None, user_id: Optional[str] = None) -> tuple[str, dict]:
         """

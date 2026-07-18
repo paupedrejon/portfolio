@@ -1265,6 +1265,15 @@ async def generate_study_plan(request: StudyPlanRequest):
             chat_id=request.chat_id,
         )
 
+        plan_interactive = None
+        try:
+            import json
+            parsed = json.loads(plan_md) if isinstance(plan_md, str) and plan_md.strip().startswith("{") else None
+            if isinstance(parsed, dict) and parsed.get("days"):
+                plan_interactive = parsed
+        except Exception:
+            plan_interactive = None
+
         if request.user_id:
             input_tokens = usage_info.get("inputTokens", 0)
             output_tokens = usage_info.get("outputTokens", 0)
@@ -1274,6 +1283,7 @@ async def generate_study_plan(request: StudyPlanRequest):
         return {
             "success": True,
             "plan": plan_md,
+            "plan_interactive": plan_interactive,
             "topic": topic,
             "days": request.days,
             "minutes_per_day": request.minutes_per_day,
