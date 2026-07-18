@@ -1052,66 +1052,129 @@ description: Este video explica paso a paso cómo resolver ecuaciones de segundo
                 print(f"📝 Historial de conversación contiene información sobre '{final_topics[0]}'")
         
         # Detectar si el contenido subido es un temario
-        all_content = self.memory.get_all_documents(limit=50)
+        # CRÍTICO: priorizar corpus del chat (PDF indexado). Antes, si venía `topic`
+        # (a menudo el nombre del PDF), se ignoraba el documento y se inventaban apuntes.
+        chat_corpus = ""
+        if chat_id and user_id:
+            try:
+                chat_corpus = self.memory.get_chat_corpus_text(
+                    chat_id, user_id, max_chars=24000
+                )
+                if chat_corpus and chat_corpus.strip():
+                    print(f"📄 Corpus del chat para apuntes: {len(chat_corpus)} chars")
+                else:
+                    # Fallback semántico por si get() falla / vacío
+                    query = None
+                    if final_topics:
+                        query = (
+                            final_topics[0]
+                            if isinstance(final_topics, list)
+                            else str(final_topics)
+                        )
+                    if not query or query.lower().endswith(".pdf"):
+                        query = "contenido principal del documento conceptos definiciones"
+                    chunks = self.memory.retrieve_relevant_content(
+                        query, n_results=15, chat_id=chat_id, user_id=user_id
+                    )
+                    if chunks:
+                        chat_corpus = "\n\n---\n\n".join(chunks)
+                        print(f"📄 RAG retrieve para apuntes: {len(chunks)} chunks")
+            except Exception as e:
+                print(f"⚠️ No se pudo cargar corpus del chat: {e}")
+
+        def _looks_like_filename(value: str) -> bool:
+            v = (value or "").strip().lower()
+            return bool(
+                v.endswith(".pdf")
+                or v.endswith(".png")
+                or v.endswith(".jpg")
+                or v.endswith(".jpeg")
+                or v.endswith(".webp")
+                or " (" in v and v.endswith(")")
+            )
+
+        # Si el "tema" es solo el nombre del archivo, no sirve como fuente educativa
+        topic_is_filename = False
+        if final_topics:
+            first = final_topics[0] if isinstance(final_topics, list) else str(final_topics)
+            topic_is_filename = _looks_like_filename(str(first))
+
+        all_content = []
+        if chat_corpus and chat_corpus.strip():
+            all_content = [chat_corpus]
+        else:
+            # Legacy: sin chat_id — colección global (evitar en producción multi-chat)
+            all_content = self.memory.get_all_documents(limit=50)
+
         syllabus_topics = None
         if all_content:
-            combined_doc_content = "\n\n".join(all_content[:10])  # Revisar primeros documentos
+            combined_doc_content = "\n\n".join(all_content[:10])
             syllabus_topics = detect_and_extract_topics_from_syllabus(combined_doc_content)
             
             if syllabus_topics:
                 print(f"📋 TEMARIO DETECTADO: Se encontraron {len(syllabus_topics)} temas en el documento")
                 print(f"📋 Primeros temas: {', '.join(syllabus_topics[:5])}")
-                # Si se detectó un temario y el usuario pide apuntes/tests, usar los temas del temario
                 if not final_topics or (len(final_topics) == 1 and final_topics[0].lower() in ["temario", "temas", "contenido"]):
                     final_topics = syllabus_topics
                     print(f"✅ Usando temas del temario para generar contenido educativo")
         
-        if final_topics:
-            # Si hay historial relevante, usarlo primero
+        combined_content = ""
+
+        # 1) Siempre preferir el PDF/corpus indexado del chat
+        if chat_corpus and chat_corpus.strip():
+            print("📄 Generando apuntes desde el documento indexado del chat (no solo el título)")
+            combined_content = chat_corpus
+            if conversation_text:
+                combined_content += f"\n\n---\n\nHISTORIAL DE CONVERSACIÓN (contexto):\n{conversation_text}"
+            if final_topics and not topic_is_filename:
+                topics_hint = (
+                    ", ".join(final_topics[:8])
+                    if isinstance(final_topics, list)
+                    else str(final_topics)
+                )
+                combined_content = (
+                    f"FOCO DEL ESTUDIANTE: {topics_hint}\n\n"
+                    f"Usa PRIORITARIAMENTE el CONTENIDO FUENTE del documento. "
+                    f"No inventes material ajeno al PDF.\n\n---\n\n{combined_content}"
+                )
+        elif final_topics and not topic_is_filename:
+            # 2) Sin PDF: generar por tema educativo real (no filename)
             if has_relevant_conversation:
                 combined_content = conversation_text
                 print(f"📝 Usando historial de conversación sobre '{final_topics[0]}'")
             else:
-                # Si no hay historial relevante pero hay tema, generar desde cero
-                # NO buscar en documentos genéricos que pueden no ser relevantes
                 if conversation_text:
-                    # Si hay historial pero no es relevante, aún así incluirlo pero priorizar el tema
-                    print(f"📝 Historial de conversación no es relevante para '{final_topics[0]}', generando desde cero con el tema")
+                    print(f"📝 Historial no relevante para '{final_topics[0]}', generando desde cero con el tema")
                 else:
-                    print(f"📝 No hay historial de conversación, generando apuntes educativos desde cero para '{final_topics[0]}'")
+                    print(f"📝 Sin documentos ni historial; generando desde cero para '{final_topics[0]}'")
                 
-                # Si hay múltiples temas (temario), generar contenido sobre todos ellos
                 if isinstance(final_topics, list) and len(final_topics) > 1:
-                    topics_list = "\n".join([f"- {t}" for t in final_topics[:15]])  # Limitar a 15 temas
+                    topics_list = "\n".join([f"- {t}" for t in final_topics[:15]])
                     combined_content = f"TEMARIO - TEMAS A PREPARAR:\n\n{topics_list}\n\n🚨 INSTRUCCIÓN CRÍTICA: El usuario quiere preparar estos temas de una oposición/examen. NO generes contenido sobre 'el temario' o 'qué temas entran'. En su lugar, genera contenido educativo COMPLETO sobre CADA UNO de estos temas. Crea apuntes detallados que cubran el contenido real de cada tema, como si fueras a enseñar ese tema desde cero. Organiza el contenido por tema y cubre todos los temas listados."
                 else:
                     main_topic = final_topics[0] if isinstance(final_topics, list) else str(final_topics)
                     combined_content = f"TEMA: {main_topic}\n\nEste resumen se generará basándose en el conocimiento educativo sobre {main_topic}, adaptado al nivel del estudiante."
                 
-                # Si hay historial no relevante, añadirlo al final pero con menor prioridad
                 if conversation_text:
                     combined_content += f"\n\n---\n\nHISTORIAL DE CONVERSACIÓN (contexto adicional):\n{conversation_text}"
         else:
-            # Obtener contenido pero limitar usando conteo real de tokens
-            all_content = self.memory.get_all_documents(limit=100)  # Aumentar límite para obtener más contenido
+            # 3) Fallback: documentos globales o historial
+            if not all_content:
+                all_content = self.memory.get_all_documents(limit=100)
             
-            # Si hay historial de conversación pero no hay documentos, usar solo el historial
             if conversation_text and (not all_content or len(all_content) == 0):
                 print("📝 Usando solo historial de conversación (no hay documentos)")
                 combined_content = conversation_text
             elif not all_content or len(all_content) == 0:
-                # Si no hay historial ni documentos
                 if not conversation_text:
                     print("❌ No hay documentos en la memoria ni historial de conversación")
                     return "# Resumen\n\n⚠️ No hay contenido disponible. Por favor, sube documentos o inicia una conversación primero."
                 else:
                     combined_content = conversation_text
             else:
-                # Filtrar documentos vacíos o muy cortos
                 all_content = [doc for doc in all_content if doc and doc.strip() and len(doc.strip()) > 10]
                 
                 if not all_content or len(all_content) == 0:
-                    # Si no hay documentos válidos pero hay historial, usar solo historial
                     if conversation_text:
                         print("📝 Usando solo historial de conversación (documentos vacíos)")
                         combined_content = conversation_text
@@ -1122,23 +1185,19 @@ description: Este video explica paso a paso cómo resolver ecuaciones de segundo
                     print(f"📄 Encontrados {len(all_content)} documentos con contenido válido")
                     print(f"📄 Primer documento (primeros 200 chars): {all_content[0][:200]}...")
                     
-                    # Calcular tokens usando tiktoken para asegurar que no excedemos el límite
                     try:
                         encoding = tiktoken.encoding_for_model("gpt-4")
-                    except:
+                    except Exception:
                         encoding = tiktoken.get_encoding("cl100k_base")
                     
-                    # Aumentar límite de tokens ya que estamos usando gpt-4-turbo o gpt-4o que tienen más contexto
-                    MAX_CONTENT_TOKENS = 8000  # Aumentado para modelos con más contexto
+                    MAX_CONTENT_TOKENS = 8000
                     combined_content = ""
                     combined_tokens = 0
                     
-                    # Calcular tokens del prompt base (sin contenido)
                     prompt_base_tokens = len(encoding.encode(prompt_template.replace("{content}", "")))
                     print(f"📊 Tokens del prompt base: {prompt_base_tokens}")
                     print(f"📊 Límite de tokens para contenido: {MAX_CONTENT_TOKENS}")
                     
-                    # Añadir historial primero si está disponible (tiene prioridad)
                     if conversation_text:
                         hist_tokens = len(encoding.encode(conversation_text))
                         if hist_tokens + prompt_base_tokens <= MAX_CONTENT_TOKENS:
@@ -1150,10 +1209,8 @@ description: Este video explica paso a paso cómo resolver ecuaciones de segundo
                         doc_text = f"\n\n---\n\n{doc}" if combined_content else doc
                         doc_tokens = len(encoding.encode(doc_text))
                         
-                        # Verificar si añadir este documento excedería el límite
                         if combined_tokens + doc_tokens + prompt_base_tokens > MAX_CONTENT_TOKENS:
                             print(f"📊 Límite alcanzado después de {i} documentos ({combined_tokens} tokens)")
-                            # Añadir nota de que hay más contenido
                             combined_content += f"\n\n---\n\n[Nota: Hay más contenido disponible. Se han incluido {i} documentos de {len(all_content)} disponibles. Para ver todo, puedes hacer preguntas específicas sobre temas concretos.]"
                             break
                         combined_content += doc_text
@@ -1161,7 +1218,15 @@ description: Este video explica paso a paso cómo resolver ecuaciones de segundo
                         print(f"📄 Documento {i+1} añadido ({doc_tokens} tokens, total: {combined_tokens})")
                     
                     print(f"📊 Contenido final: {combined_tokens} tokens, {len(combined_content)} caracteres")
-        
+
+        if topic_is_filename and (not chat_corpus or not chat_corpus.strip()) and (
+            not combined_content or combined_content.strip().startswith("TEMA:")
+        ):
+            return (
+                "# Resumen\n\n⚠️ Hay un PDF en el chat pero **no está indexado en la memoria** "
+                "(o el backend no tiene los chunks). Vuelve a subir el documento y espera a "
+                "«Documento procesado». Si el problema continúa, redeploy del backend Railway."
+            )
         # Si no hay contenido ni temas, retornar error
         if not combined_content or not combined_content.strip():
             return "# Resumen\n\n⚠️ No hay contenido disponible. Por favor, sube documentos, inicia una conversación, o especifica un tema."

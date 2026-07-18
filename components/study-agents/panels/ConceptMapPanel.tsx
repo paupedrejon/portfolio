@@ -1,10 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { outfit, spaceGrotesk } from "@/app/fonts";
 import { saFetch } from "@/hooks/study-agents/useApiClient";
 import type { ConceptGap, ConceptNode } from "@/lib/study-agents/types";
+import SaModal, {
+  saGhostButtonStyle,
+  saModalTokens,
+  saPrimaryButtonStyle,
+} from "@/components/study-agents/ui/SaModal";
+import { spaceGrotesk } from "@/app/fonts";
 
 type Props = {
   open: boolean;
@@ -105,6 +109,7 @@ export default function ConceptMapPanel({
         throw new Error(data.error || "No se pudieron extraer conceptos");
       }
       setConcepts(data.concepts || []);
+      await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al extraer conceptos");
     } finally {
@@ -112,288 +117,222 @@ export default function ConceptMapPanel({
     }
   };
 
-  if (!open || typeof document === "undefined") return null;
-
-  const dark = colorTheme === "dark";
-  const bg = dark ? "rgba(22, 22, 32, 0.98)" : "#ffffff";
-  const text = dark ? "#f1f5f9" : "#0f172a";
-  const muted = dark ? "#94a3b8" : "#64748b";
-  const border = dark ? "rgba(6, 182, 212, 0.35)" : "rgba(6, 182, 212, 0.3)";
-
+  const t = saModalTokens(colorTheme);
   const avg =
     concepts.length > 0
       ? concepts.reduce((s, c) => s + (c.mastery ?? 0), 0) / concepts.length
       : 0;
 
-  return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="concept-map-title"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 10050,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "1rem",
-        background: "rgba(0,0,0,0.55)",
-      }}
-      onClick={onClose}
+  return (
+    <SaModal
+      open={open}
+      onClose={onClose}
+      colorTheme={colorTheme}
+      title="Mapa de conceptos"
+      titleId="concept-map-title"
+      subtitle="Knowledge tracing: el tutor ve qué micro-conceptos dominas."
+      maxWidth={560}
     >
       <div
-        className={outfit.className}
         style={{
-          width: "100%",
-          maxWidth: 560,
-          maxHeight: "85vh",
-          overflow: "auto",
-          background: bg,
-          border: `1px solid ${border}`,
-          borderRadius: 16,
-          padding: "1.5rem",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.4)",
-          color: text,
+          marginTop: "0.85rem",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "0.5rem",
+          alignItems: "center",
         }}
-        onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem" }}>
-          <div>
-            <h2
-              id="concept-map-title"
-              className={spaceGrotesk.className}
-              style={{ margin: 0, fontSize: "1.25rem" }}
-            >
-              Mapa de conceptos
-            </h2>
-            <p style={{ margin: "0.35rem 0 0", fontSize: "0.8rem", color: muted }}>
-              Knowledge tracing: el tutor ve qué micro-conceptos dominas.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            style={{
-              background: "transparent",
-              border: "none",
-              color: muted,
-              fontSize: "1.4rem",
-              cursor: "pointer",
-              lineHeight: 1,
-            }}
-          >
-            ×
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => void extract()}
+          disabled={extracting || !chatId}
+          style={{
+            ...saPrimaryButtonStyle({ dark: t.dark, loading: extracting }),
+            opacity: extracting || !chatId ? 0.55 : 1,
+          }}
+        >
+          {extracting ? "Extrayendo…" : concepts.length ? "Re-extraer del material" : "Extraer del material"}
+        </button>
+        <button
+          type="button"
+          onClick={() => void load()}
+          disabled={loading}
+          style={saGhostButtonStyle({ dark: t.dark, border: t.border, text: t.text })}
+        >
+          Actualizar
+        </button>
+        {concepts.length > 0 && (
+          <span style={{ fontSize: "0.75rem", color: t.muted, marginLeft: "auto" }}>
+            Dominio medio: {Math.round(avg * 100)}% · {concepts.length} conceptos
+          </span>
+        )}
+      </div>
 
+      <div
+        style={{
+          display: "flex",
+          gap: "0.75rem",
+          flexWrap: "wrap",
+          marginTop: "0.85rem",
+          fontSize: "0.7rem",
+          color: t.muted,
+        }}
+      >
+        {[
+          ["Sin evaluar", "#64748b"],
+          ["Débil", "#ef4444"],
+          ["En progreso", "#f59e0b"],
+          ["Dominado", "#22c55e"],
+        ].map(([label, color]) => (
+          <span key={label} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 999,
+                background: color,
+              }}
+            />
+            {label}
+          </span>
+        ))}
+      </div>
+
+      {error && (
+        <p style={{ color: "#f87171", fontSize: "0.8rem", marginTop: "0.75rem" }}>{error}</p>
+      )}
+
+      {!chatId && (
+        <p style={{ color: t.muted, fontSize: "0.85rem", marginTop: "1rem" }}>
+          Abre o crea un chat y sube un PDF para extraer conceptos.
+        </p>
+      )}
+
+      {loading && <p style={{ color: t.muted, marginTop: "1rem" }}>Cargando…</p>}
+
+      {!loading && gaps.length > 0 && (
         <div
           style={{
             marginTop: "1rem",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "0.5rem",
-            alignItems: "center",
+            padding: "0.85rem 1rem",
+            borderRadius: 14,
+            border: t.dark ? "1px solid rgba(239, 68, 68, 0.35)" : "1px solid rgba(239, 68, 68, 0.25)",
+            background: t.dark ? "rgba(239, 68, 68, 0.08)" : "rgba(239, 68, 68, 0.05)",
           }}
         >
-          <button
-            type="button"
-            onClick={() => void extract()}
-            disabled={extracting || !chatId}
-            style={{
-              padding: "0.5rem 0.9rem",
-              borderRadius: 8,
-              border: "none",
-              cursor: extracting ? "wait" : "pointer",
-              fontWeight: 700,
-              fontSize: "0.8rem",
-              color: "#fff",
-              background: "linear-gradient(135deg, #06b6d4, #0891b2)",
-              opacity: extracting ? 0.6 : 1,
-            }}
+          <p
+            className={spaceGrotesk.className}
+            style={{ margin: "0 0 0.5rem", fontSize: "0.9rem", fontWeight: 700, color: t.text }}
           >
-            {extracting ? "Extrayendo…" : concepts.length ? "Re-extraer del material" : "Extraer del material"}
-          </button>
-          <button
-            type="button"
-            onClick={() => void load()}
-            disabled={loading}
-            style={{
-              padding: "0.5rem 0.9rem",
-              borderRadius: 8,
-              border: `1px solid ${border}`,
-              background: "transparent",
-              color: text,
-              cursor: "pointer",
-              fontSize: "0.8rem",
-            }}
-          >
-            Actualizar
-          </button>
-          {concepts.length > 0 && (
-            <span style={{ fontSize: "0.75rem", color: muted, marginLeft: "auto" }}>
-              Dominio medio: {Math.round(avg * 100)}% · {concepts.length} conceptos
-            </span>
-          )}
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            gap: "0.75rem",
-            flexWrap: "wrap",
-            marginTop: "0.85rem",
-            fontSize: "0.7rem",
-            color: muted,
-          }}
-        >
-          {[
-            ["Sin evaluar", "#64748b"],
-            ["Débil", "#ef4444"],
-            ["En progreso", "#f59e0b"],
-            ["Dominado", "#22c55e"],
-          ].map(([label, color]) => (
-            <span key={label} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: color,
-                }}
-              />
-              {label}
-            </span>
-          ))}
-        </div>
-
-        {error && (
-          <p style={{ color: "#f87171", fontSize: "0.8rem", marginTop: "0.75rem" }}>{error}</p>
-        )}
-
-        {!chatId && (
-          <p style={{ color: muted, fontSize: "0.85rem", marginTop: "1rem" }}>
-            Abre o crea un chat y sube un PDF para extraer conceptos.
+            Gaps prioritarios ({gaps.length})
           </p>
-        )}
-
-        {loading && <p style={{ color: muted, marginTop: "1rem" }}>Cargando…</p>}
-
-        {!loading && gaps.length > 0 && (
-          <div
-            style={{
-              marginTop: "1rem",
-              padding: "0.85rem 1rem",
-              borderRadius: 12,
-              border: dark ? "1px solid rgba(239, 68, 68, 0.35)" : "1px solid rgba(239, 68, 68, 0.25)",
-              background: dark ? "rgba(239, 68, 68, 0.08)" : "rgba(239, 68, 68, 0.05)",
-            }}
-          >
-            <p
-              className={spaceGrotesk.className}
-              style={{ margin: "0 0 0.5rem", fontSize: "0.9rem", fontWeight: 700, color: text }}
-            >
-              Gaps prioritarios ({gaps.length})
-            </p>
-            <p style={{ margin: "0 0 0.65rem", fontSize: "0.75rem", color: muted, lineHeight: 1.45 }}>
-              Conceptos con dominio &lt; 50%, ordenados por importancia (cuántos conceptos dependen de ellos).
-            </p>
-            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-              {gaps.slice(0, 6).map((g) => (
-                <li
-                  key={`gap-${g.concept_id}`}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: "0.75rem",
-                    fontSize: "0.8rem",
-                    color: text,
-                  }}
-                >
-                  <span>
-                    <strong>{g.name}</strong>
-                    {g.broken_prerequisites && g.broken_prerequisites.length > 0 && (
-                      <span style={{ color: muted, fontSize: "0.7rem" }}>
-                        {" "}
-                        · prerreq. débiles: {g.broken_prerequisites.length}
-                      </span>
-                    )}
-                  </span>
-                  <span style={{ color: "#ef4444", fontWeight: 600, whiteSpace: "nowrap" }}>
-                    {Math.round((g.mastery ?? 0) * 100)}%
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {!loading && chatId && concepts.length === 0 && !error && (
-          <p style={{ color: muted, fontSize: "0.85rem", marginTop: "1rem", lineHeight: 1.5 }}>
-            Aún no hay grafo de conceptos. Sube un documento y pulsa{" "}
-            <strong>Extraer del material</strong>.
+          <p style={{ margin: "0 0 0.65rem", fontSize: "0.75rem", color: t.muted, lineHeight: 1.45 }}>
+            Conceptos con dominio &lt; 50%, ordenados por importancia.
           </p>
-        )}
-
-        <ul
-          style={{
-            listStyle: "none",
-            margin: "1rem 0 0",
-            padding: 0,
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          {concepts.map((c) => {
-            const m = c.mastery ?? 0;
-            const color = masteryColor(m);
-            return (
+          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            {gaps.slice(0, 6).map((g) => (
               <li
-                key={c.concept_id}
+                key={`gap-${g.concept_id}`}
                 style={{
-                  padding: "0.75rem 0.9rem",
-                  borderRadius: 10,
-                  border: `1px solid ${color}44`,
-                  background: dark ? `${color}12` : `${color}0d`,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: "0.75rem",
+                  fontSize: "0.8rem",
+                  color: t.text,
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem" }}>
-                  <strong style={{ fontSize: "0.9rem" }}>{c.name}</strong>
-                  <span style={{ fontSize: "0.7rem", fontWeight: 700, color, whiteSpace: "nowrap" }}>
-                    {masteryLabel(m)} · {Math.round(m * 100)}%
-                  </span>
-                </div>
-                {c.description && (
-                  <p style={{ margin: "0.35rem 0 0", fontSize: "0.75rem", color: muted, lineHeight: 1.4 }}>
-                    {c.description}
-                  </p>
-                )}
+                <span>
+                  <strong>{g.name}</strong>
+                  {g.broken_prerequisites && g.broken_prerequisites.length > 0 && (
+                    <span style={{ color: t.muted, fontSize: "0.7rem" }}>
+                      {" "}
+                      · prerreq. débiles: {g.broken_prerequisites.length}
+                    </span>
+                  )}
+                </span>
+                <span style={{ color: "#ef4444", fontWeight: 600, whiteSpace: "nowrap" }}>
+                  {Math.round((g.mastery ?? 0) * 100)}%
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!loading && chatId && concepts.length === 0 && !error && (
+        <div
+          style={{
+            marginTop: "1rem",
+            padding: "1rem",
+            borderRadius: 14,
+            border: `1px dashed ${t.border}`,
+            background: t.softBg,
+            color: t.muted,
+            fontSize: "0.85rem",
+            lineHeight: 1.5,
+          }}
+        >
+          Aún no hay grafo de conceptos. Sube un documento y pulsa{" "}
+          <strong style={{ color: t.primarySoft }}>Extraer del material</strong>.
+        </div>
+      )}
+
+      <ul
+        style={{
+          listStyle: "none",
+          margin: "1rem 0 0",
+          padding: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.5rem",
+        }}
+      >
+        {concepts.map((c) => {
+          const m = c.mastery ?? 0;
+          const color = masteryColor(m);
+          return (
+            <li
+              key={c.concept_id}
+              style={{
+                padding: "0.75rem 0.9rem",
+                borderRadius: 14,
+                border: `1px solid ${color}44`,
+                background: t.dark ? `${color}12` : `${color}0d`,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem" }}>
+                <strong style={{ fontSize: "0.9rem" }}>{c.name}</strong>
+                <span style={{ fontSize: "0.7rem", fontWeight: 700, color, whiteSpace: "nowrap" }}>
+                  {masteryLabel(m)} · {Math.round(m * 100)}%
+                </span>
+              </div>
+              {c.description && (
+                <p style={{ margin: "0.35rem 0 0", fontSize: "0.75rem", color: t.muted, lineHeight: 1.4 }}>
+                  {c.description}
+                </p>
+              )}
+              <div
+                style={{
+                  marginTop: "0.5rem",
+                  height: 4,
+                  borderRadius: 999,
+                  background: t.dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+                  overflow: "hidden",
+                }}
+              >
                 <div
                   style={{
-                    marginTop: "0.5rem",
-                    height: 4,
-                    borderRadius: 2,
-                    background: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-                    overflow: "hidden",
+                    width: `${Math.round(m * 100)}%`,
+                    height: "100%",
+                    background: color,
+                    transition: "width 0.3s ease",
                   }}
-                >
-                  <div
-                    style={{
-                      width: `${Math.round(m * 100)}%`,
-                      height: "100%",
-                      background: color,
-                      transition: "width 0.3s ease",
-                    }}
-                  />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </div>,
-    document.body,
+                />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </SaModal>
   );
 }

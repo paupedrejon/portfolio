@@ -2715,10 +2715,13 @@ ${contentPreview}
           content: msg.content,
         }));
       
-      // Obtener el tema y nivel del chat actual
-      // const topic = currentChatLevel?.topic || null;
-      // const level = currentChatLevel?.level || null;
-      
+      // No pasar el nombre del PDF como "tema": el backend lo tomaba como contenido fuente.
+      const rawTopic = currentChatLevel?.topic || undefined;
+      const topicForNotes =
+        rawTopic && !/\.(pdf|png|jpe?g|webp)$/i.test(rawTopic.trim())
+          ? rawTopic
+          : undefined;
+
       // Llamar a la API con la key del usuario y el modelo seleccionado
       const response = await studyAgentsFetch("/api/study-agents/generate-notes", {
         method: "POST",
@@ -2730,7 +2733,7 @@ ${contentPreview}
           userId: userId,
           chatId: currentChatId, // Pasar chatId para obtener el nivel
           conversationHistory: conversationHistory,
-          topic: currentChatLevel?.topic || undefined,
+          topic: topicForNotes,
         }),
         signal: controller.signal,
       });

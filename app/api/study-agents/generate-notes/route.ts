@@ -42,7 +42,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Llamar al backend FastAPI
+    // No forzar topics=[nombre.pdf]: eso hacía que el backend inventara apuntes sin leer el PDF.
+    const topicLooksLikeFile =
+      typeof topic === "string" &&
+      /\.(pdf|png|jpe?g|webp)$/i.test(topic.trim());
+
     const response = await fetch(`${FASTAPI_URL}/api/generate-notes`, {
       method: 'POST',
       headers: {
@@ -50,11 +54,15 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         apiKey,
-        topics: topic ? [topic] : (topics || null), // Usar topic si está disponible, sino topics
+        topics: topicLooksLikeFile
+          ? null
+          : topic
+            ? [topic]
+            : topics || null,
         model: model || null, // null = modo automático
         user_id: userId || null,
         conversation_history: conversationHistory || null,
-        topic: topic || null,
+        topic: topicLooksLikeFile ? null : topic || null,
         chat_id: chatId || null,
         provider_keys: providerKeys || provider_keys || null,
       }),

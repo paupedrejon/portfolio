@@ -1,5 +1,17 @@
 # Changelog — Study Agents
 
+## 0.3.7 — Modales SA + apuntes leen el PDF de verdad
+
+### Visible
+- Modales Plan / Conceptos / Repaso con shell unificado (`SaModal`): bot animado, `#2596be`, pills, blur
+
+### Fix crítico
+- Apuntes ya no usan el **nombre del PDF** como tema y inventan contenido: priorizan el **corpus RAG del chat**
+- Proxy `generate-notes` no fuerza `topics=[archivo.pdf]`
+
+### Backend
+- Redeploy Railway obligatorio (`explanation_agent.py`)
+
 ## 0.3.6 — Parpadeo fijado + plan adaptativo (F1.4) + extracción F0.1
 
 ### Visible
