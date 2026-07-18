@@ -1,5 +1,17 @@
 # Changelog — Study Agents
 
+## 0.4.3 — Lecciones gráficas Duolingo (intro → aprende → test)
+
+### Visible
+- Cada día: **1 Intro** (bot + big word/chips/html) → **2 Aprende** (vs/code/taps) → **3 Test**
+- Bot animado protagonista en burbujas; mucho menos texto
+- Preguntas **deduplicadas** (no se repiten en el curso)
+- HTML visual sanitizado (`dompurify`) para bloques ricos
+
+### Backend
+- Plan `interactive_v3` con intro/teach/questions
+- Redeploy Railway obligatorio
+
 ## 0.4.2 — Curso diario Duolingo + conceptos con contexto
 
 ### Visible (Plan)
