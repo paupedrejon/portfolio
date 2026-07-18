@@ -1,5 +1,18 @@
 # Changelog — Study Agents
 
+## 0.3.6 — Parpadeo fijado + plan adaptativo (F1.4) + extracción F0.1
+
+### Visible
+- Bot: parpadeo SMIL centrado (ya no baja los ojos con `scaleY`)
+- Tras corregir un test: aviso para **regenerar el Plan** con los gaps nuevos
+- `SuccessMessage` extraído de `StudyChat` → `chat/SuccessMessage.tsx`
+
+### Pedagogía
+- `generate-study-plan` inyecta mastery + gaps prioritarios en el prompt (secuenciación adaptativa)
+
+### Backend
+- Redeploy Railway requerido (`explanation_agent.py`)
+
 ## 0.3.5 — Bot cute animado (avatar de marca)
 
 ### Visible

@@ -29,44 +29,6 @@
   }
 }
 
-@keyframes sa-bot-blink {
-  0%,
-  42%,
-  48%,
-  100% {
-    transform: scaleY(1);
-  }
-  45% {
-    transform: scaleY(0.08);
-  }
-  /* doble pestañeo ocasional */
-  78%,
-  86% {
-    transform: scaleY(1);
-  }
-  81%,
-  83% {
-    transform: scaleY(0.08);
-  }
-}
-
-@keyframes sa-bot-blink-fast {
-  0%,
-  18%,
-  28%,
-  55%,
-  65%,
-  100% {
-    transform: scaleY(1);
-  }
-  22%,
-  25%,
-  59%,
-  62% {
-    transform: scaleY(0.08);
-  }
-}
-
 @keyframes sa-bot-antenna-left {
   0%,
   100% {
@@ -97,18 +59,6 @@
   }
 }
 
-@keyframes sa-bot-sparkle {
-  0%,
-  100% {
-    opacity: 0.85;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.25);
-  }
-}
-
 .sa-bot-float {
   animation: sa-bot-float 3.4s ease-in-out infinite;
 }
@@ -121,19 +71,6 @@
   animation: sa-bot-glow-pulse 0.95s ease-in-out infinite;
 }
 
-.sa-bot-eye {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.sa-bot-eye-blink {
-  animation: sa-bot-blink 4.2s ease-in-out infinite;
-}
-
-.sa-bot-eye-think {
-  animation: sa-bot-blink-fast 1.6s ease-in-out infinite;
-}
-
 .sa-bot-antenna {
   transform-box: fill-box;
 }
@@ -144,12 +81,6 @@
 
 .sa-bot-antenna-wiggle.sa-bot-antenna-right {
   animation: sa-bot-antenna-right 0.7s ease-in-out infinite;
-}
-
-.sa-bot-sparkle {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: sa-bot-sparkle 2.4s ease-in-out infinite;
 }
 
 /* Cara clara sobre fondo oscuro del chat: se puede overridear */

@@ -523,6 +523,41 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
         if not rag_text.strip():
             rag_text = "(No hay extractos de documentos en este chat; basa el plan en buenas prácticas de estudio y el tema.)"
 
+        # Knowledge tracing: gaps + mastery para secuenciación adaptativa (F1.4)
+        mastery_block = "(Sin grafo de conceptos aún; prioriza fundamentos del tema y retrieval practice.)"
+        if chat_id:
+            try:
+                from core import concept_store
+
+                gaps = concept_store.detect_gaps(chat_id, threshold=0.5)
+                concepts = concept_store.concepts_with_mastery(chat_id)
+                if concepts:
+                    strong = [
+                        c for c in concepts
+                        if float(c.get("mastery") or 0) >= 0.7
+                    ][:8]
+                    lines = []
+                    if gaps:
+                        lines.append("### Gaps prioritarios (mastery < 0.5, por importancia)")
+                        for g in gaps[:12]:
+                            name = g.get("name") or g.get("concept_id")
+                            m = float(g.get("mastery") or 0)
+                            imp = g.get("importance", 0)
+                            prereqs = g.get("broken_prerequisites") or []
+                            extra = f" | prerreqs rotos: {', '.join(prereqs)}" if prereqs else ""
+                            lines.append(f"- {name} (m={m:.2f}, deps={imp}){extra}")
+                    if strong:
+                        lines.append("### Ya razonablemente dominados (no sobrecargar)")
+                        for c in strong:
+                            name = c.get("name") or c.get("concept_id")
+                            m = float(c.get("mastery") or 0)
+                            lines.append(f"- {name} (m={m:.2f})")
+                    avg = sum(float(c.get("mastery") or 0) for c in concepts) / len(concepts)
+                    lines.append(f"### Mastery medio del chat: {avg:.2f}")
+                    mastery_block = "\n".join(lines)
+            except Exception as e:
+                print(f"⚠️ generate_study_plan mastery: {e}")
+
         # Inicializar LLM (mismo criterio que apuntes: generación media)
         if self.model_manager:
             try:
@@ -566,7 +601,7 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
 
         goal_line = goal.strip() if goal else "Mejorar comprensión y retención del tema."
 
-        prompt = f"""Eres un coach de estudio experto. Genera un PLAN DE ESTUDIO en **Markdown** (español).
+        prompt = f"""Eres un coach de estudio experto en ciencia del aprendizaje. Genera un PLAN DE ESTUDIO en **Markdown** (español).
 
 ## Datos del estudiante
 - **Tema principal**: {topic}
@@ -575,17 +610,25 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
 - **Nivel autopercepción / app (0-10)**: {level_display}/10 (ajusta profundidad y carga)
 - **Objetivo**: {goal_line}
 
+## Estado de dominio (knowledge tracing — OBLIGATORIO usar)
+{mastery_block}
+
 ## Fragmentos del temario/material del chat (si aplica)
 {rag_text}
 
+## Principios (no negociables)
+- **Secuenciación adaptativa**: prioriza gaps y prerrequisitos rotos antes que conceptos nuevos.
+- Cada día mezcla: **repaso SRS / retrieval** + foco en 1–2 gaps + un micro-test o ejercicio.
+- No rellenes con conceptos ya dominados (salvo repaso breve espaciado).
+
 ## Requisitos de formato (obligatorio)
 1. Título: `# Plan de estudio: {topic}`
-2. Sección `## Resumen` (3-5 bullets)
+2. Sección `## Resumen` (3-5 bullets; menciona qué gaps ataca el plan)
 3. Sección `## Calendario` — para cada día: objetivos concretos, qué estudiar, y **un micro-ejercicio** (5-10 min)
-4. `## Técnicas recomendadas` (p. ej. Pomodoro, repaso espaciado, active recall, Feynman) adaptadas al tiempo disponible
-5. `## Métricas de progreso` — cómo saber si va bien (señales observables)
-6. `## Si te quedas atrás` — plan B en 5 bullets
-7. `## Próximo paso en Study Agents` — sugiere usar apuntes, test, ejercicio o flashcards según el tema
+4. `## Técnicas recomendadas` (Pomodoro, FSRS/repaso espaciado, active recall, Feynman) adaptadas al tiempo
+5. `## Métricas de progreso` — cómo saber si va bien (señales observables / mastery)
+6. `## Si te quedas atrás` — plan B en 5 bullets (reinyectar el gap más crítico)
+7. `## Próximo paso en Study Agents` — sugiere Repaso, Test, Ejercicio o Conceptos según gaps
 
 **Prohibido**: bloques ```mermaid. Sin relleno genérico; sé específico al tema **{topic}**.
 """

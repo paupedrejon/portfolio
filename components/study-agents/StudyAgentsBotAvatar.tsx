@@ -14,6 +14,69 @@ type Props = {
   title?: string;
 };
 
+/** Ojo con parpadeo SMIL (height/y centrado — evita el salto de scaleY en SVG). */
+function BotEye({
+  cx,
+  color,
+  fast,
+  animate,
+}: {
+  cx: number;
+  color: string;
+  fast: boolean;
+  animate: boolean;
+}) {
+  const w = 5.5;
+  const h = 12;
+  const x = cx - w / 2;
+  const yOpen = 26.5;
+  const yClosed = yOpen + (h - 1) / 2; // ~32 — párpado centrado
+
+  return (
+    <g>
+      <rect x={x} y={yOpen} width={w} height={h} rx={2.75} fill={color}>
+        {animate && (
+          <>
+            <animate
+              attributeName="height"
+              values={fast ? "12;12;1;1;12;12;12;1;1;12;12" : "12;12;1;12;12;12;1;1;12;12"}
+              keyTimes={fast ? "0;0.18;0.22;0.25;0.28;0.55;0.59;0.62;0.65;0.68;1" : "0;0.42;0.45;0.48;0.78;0.81;0.83;0.86;0.9;1"}
+              dur={fast ? "1.6s" : "4.2s"}
+              repeatCount="indefinite"
+              calcMode="linear"
+            />
+            <animate
+              attributeName="y"
+              values={
+                fast
+                  ? `${yOpen};${yOpen};${yClosed};${yClosed};${yOpen};${yOpen};${yOpen};${yClosed};${yClosed};${yOpen};${yOpen}`
+                  : `${yOpen};${yOpen};${yClosed};${yOpen};${yOpen};${yOpen};${yClosed};${yClosed};${yOpen};${yOpen}`
+              }
+              keyTimes={fast ? "0;0.18;0.22;0.25;0.28;0.55;0.59;0.62;0.65;0.68;1" : "0;0.42;0.45;0.48;0.78;0.81;0.83;0.86;0.9;1"}
+              dur={fast ? "1.6s" : "4.2s"}
+              repeatCount="indefinite"
+              calcMode="linear"
+            />
+          </>
+        )}
+      </rect>
+      {/* Brillo — se oculta al cerrar el párpado */}
+      <circle cx={cx - 1.05} cy={29} r={1.1} fill="#fff" opacity={0.9}>
+        {animate && (
+          <animate
+            attributeName="opacity"
+            values={fast ? "0.9;0.9;0;0;0.9;0.9;0.9;0;0;0.9;0.9" : "0.9;0.9;0;0.9;0.9;0.9;0;0;0.9;0.9"}
+            keyTimes={fast ? "0;0.18;0.22;0.25;0.28;0.55;0.59;0.62;0.65;0.68;1" : "0;0.42;0.45;0.48;0.78;0.81;0.83;0.86;0.9;1"}
+            dur={fast ? "1.6s" : "4.2s"}
+            repeatCount="indefinite"
+            calcMode="linear"
+          />
+        )}
+      </circle>
+    </g>
+  );
+}
+
 /**
  * Avatar Study Agents (SVG cute): flota, pestañea y “piensa” con glow + antenas.
  */
@@ -30,14 +93,10 @@ export default function StudyAgentsBotAvatar({
       : state === "idle"
         ? "sa-bot-float"
         : "";
-  const eyeClass =
-    state === "thinking"
-      ? "sa-bot-eye sa-bot-eye-think"
-      : state === "static"
-        ? "sa-bot-eye"
-        : "sa-bot-eye sa-bot-eye-blink";
   const antennaClass =
     state === "thinking" ? "sa-bot-antenna sa-bot-antenna-wiggle" : "sa-bot-antenna";
+  const blink = state !== "static";
+  const blinkFast = state === "thinking";
 
   return (
     <span
@@ -111,7 +170,7 @@ export default function StudyAgentsBotAvatar({
           fill={color}
         />
 
-        {/* Pantalla interior (recortada) */}
+        {/* Pantalla interior */}
         <path
           d="M18 22
              H46
@@ -126,33 +185,8 @@ export default function StudyAgentsBotAvatar({
           opacity="0.96"
         />
 
-        {/* Ojos — pestañean con scaleY */}
-        <g className="sa-bot-eyes" style={{ transformOrigin: "32px 32px" }}>
-          <rect
-            className={eyeClass}
-            x="22.5"
-            y="26.5"
-            width="5.5"
-            height="12"
-            rx="2.75"
-            fill={color}
-            style={{ transformOrigin: "25.25px 32.5px" }}
-          />
-          <rect
-            className={eyeClass}
-            x="36"
-            y="26.5"
-            width="5.5"
-            height="12"
-            rx="2.75"
-            fill={color}
-            style={{ transformOrigin: "38.75px 32.5px" }}
-          />
-        </g>
-
-        {/* Brillos cute en ojos */}
-        <circle className="sa-bot-sparkle" cx="24.2" cy="29" r="1.1" fill="#fff" opacity="0.9" />
-        <circle className="sa-bot-sparkle" cx="37.7" cy="29" r="1.1" fill="#fff" opacity="0.9" />
+        <BotEye cx={25.25} color={color} fast={blinkFast} animate={blink} />
+        <BotEye cx={38.75} color={color} fast={blinkFast} animate={blink} />
       </svg>
     </span>
   );

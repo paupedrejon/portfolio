@@ -151,8 +151,8 @@ export default function StudyPlanPanel({
           </button>
         </div>
         <p style={{ margin: "0 0 1.25rem", fontSize: "0.85rem", color: muted, lineHeight: 1.5 }}>
-          El tutor arma un calendario con repaso, conceptos nuevos y tests cortos
-          (retrieval practice), no solo apuntes para releer.
+          Usa tu grafo de conceptos y mastery: prioriza gaps, mezcla repaso SRS y
+          tests cortos. Tras un test, regenera el plan para reinyectar lo débil.
         </p>
 
         <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, marginBottom: 6, color: muted }}>

@@ -337,7 +337,7 @@ export default function ChatToolbar({
                                 </span>
                               )
                             )}
-                            {isSelected && <HiCheck size={14} color="#6366f1" />}
+                            {isSelected && <HiCheck size={14} color="#2596be" />}
                           </span>
                         </button>
                       );
