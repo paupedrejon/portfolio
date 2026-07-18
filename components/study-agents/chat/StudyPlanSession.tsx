@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import DOMPurify from "dompurify";
 import { outfit, spaceGrotesk } from "@/app/fonts";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
-import { SA_PRIMARY, SA_CYAN } from "@/lib/study-agents/brand";
+import { SA_PRIMARY } from "@/lib/study-agents/brand";
 import "@/components/study-agents/study-agents-chat.css";
 import "@/components/study-agents/study-agents-bot.css";
 
