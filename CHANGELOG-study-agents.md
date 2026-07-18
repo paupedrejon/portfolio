@@ -1,5 +1,12 @@
 # Changelog — Study Agents
 
+## 0.3.5 — Bot cute animado (avatar de marca)
+
+### Visible
+- Avatar SVG del robot Study Agents con **parpadeo**, flotación y modo thinking (glow + antenas)
+- Color de marca `#2596be` (claro) / `#7dd3fc` (oscuro)
+- En mensajes del asistente, loading, hero y nav
+
 ## 0.3.4 — F1.5 dificultad adaptativa + ejercicios en el grafo
 
 ### Pedagogía
