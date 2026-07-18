@@ -601,20 +601,20 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
 
         goal_line = goal.strip() if goal else "Mejorar comprensión y retención del tema."
 
-        # Curso diario Duolingo v3: INTRO visual → LEARN gráfico → TEST único
+        # Curso diario Duolingo v4: SLIDES densas (bot + visual + check) → TEST
         max_days = max(1, min(int(days or 7), 30))
         if minutes_per_day <= 10:
-            intro_n, teach_n, q_per_day = 3, 3, 2
+            slides_n, q_per_day = 4, 2
         elif minutes_per_day <= 25:
-            intro_n, teach_n, q_per_day = 3, 4, 3
+            slides_n, q_per_day = 5, 3
         else:
-            intro_n, teach_n, q_per_day = 4, 5, 3
+            slides_n, q_per_day = 6, 3
 
-        prompt = f"""Eres el diseñador pedagógico de un curso DIARIO estilo Duolingo (super gráfico, casi sin texto).
-Devuelve SOLO un JSON válido (sin markdown, sin ```, sin prosa fuera del JSON).
+        prompt = f"""Eres diseñador de un curso DIARIO estilo Duolingo (super gráfico).
+Devuelve SOLO un JSON válido (sin markdown, sin ```).
 
 ## Contexto
-- Tema del curso: {topic}
+- Tema: {topic}
 - Días: {max_days}
 - Minutos/lección: {minutes_per_day}
 - Nivel 0-10: {level_display}
@@ -623,17 +623,19 @@ Devuelve SOLO un JSON válido (sin markdown, sin ```, sin prosa fuera del JSON).
 ## Dominio
 {mastery_block}
 
-## Material (si hay)
-{rag_text[:3000]}
+## Material
+{rag_text[:2800]}
 
-## Flujo OBLIGATORIO de cada día (3 actos)
-1) intro — qué es / por qué importa HOY (muy visual, poco texto)
-2) teach — lo más básico y práctico del foco del día (gráfico + 1 check)
-3) questions — TEST FINAL solo sobre lo enseñado HOY (preguntas ÚNICAS)
+## Formato: pantallas (slides), NO bloques sueltos
+Cada slide = UNA pantalla completa con:
+1) bot: frase COMPLETA del tutor (mín 45 chars, máx 140). NUNCA cortes ("React es" PROHIBIDO).
+2) visual: un bloque gráfico (big_word | vs | chips | steps | code)
+3) html opcional: markup visual corto (tags: div,span,strong,em,code,p,br; class viz/row/pill)
+4) check opcional: mini-test en la misma pantalla (2 de cada 3 slides DEBEN tener check)
 
-## Esquema JSON
+## JSON
 {{
-  "format": "interactive_v3",
+  "format": "interactive_v4",
   "topic": "{topic}",
   "minutes_per_day": {minutes_per_day},
   "xp_per_correct": 10,
@@ -641,48 +643,66 @@ Devuelve SOLO un JSON válido (sin markdown, sin ```, sin prosa fuera del JSON).
     {{
       "day": 1,
       "title": "máx 4 palabras",
-      "focus": "1 micro-concepto concreto y distinto",
+      "focus": "1 micro-concepto",
       "minutes": {minutes_per_day},
-      "intro": [
-        {{"id":"d1i1","kind":"bot_say","text":"frase corta del tutor (máx 90 chars)"}},
-        {{"id":"d1i2","kind":"big_word","word":"1-2 PALABRAS","sub":"etiqueta corta"}},
-        {{"id":"d1i3","kind":"chips","items":["chip1","chip2","chip3"]}},
-        {{"id":"d1i4","kind":"html","html":"<div class='viz'><strong>Idea</strong><span>detalle mínimo</span></div>"}}
-      ],
-      "teach": [
-        {{"id":"d1t1","kind":"bot_say","text":"vamos a lo práctico"}},
-        {{"id":"d1t2","kind":"vs","left":{{"title":"Antes","body":"máx 40 chars"}},"right":{{"title":"Ahora","body":"máx 40 chars"}}}},
-        {{"id":"d1t3","kind":"code","label":"Ejemplo","code":"código mínimo 1-3 líneas"}},
-        {{"id":"d1t4","kind":"tap","prompt":"check inmediato","options":["A","B","C","D"],"correct_index":0,"feedback_ok":"ok","feedback_bad":"pista"}}
+      "slides": [
+        {{
+          "id": "d1s1",
+          "phase": "intro",
+          "bot": "React es una biblioteca de JavaScript para construir interfaces de usuario.",
+          "visual": {{"kind":"big_word","word":"UI","sub":"con componentes"}},
+          "html": "<div class='viz'><div class='row'><span class='pill'>componentes</span><span class='pill'>reutilizables</span></div></div>",
+          "check": null
+        }},
+        {{
+          "id": "d1s2",
+          "phase": "intro",
+          "bot": "Piensa en LEGO: cada pieza es un componente que puedes reutilizar.",
+          "visual": {{"kind":"vs","left":{{"title":"Página entera","body":"Todo mezclado"}},"right":{{"title":"Componentes","body":"Piezas claras"}}}},
+          "check": {{
+            "prompt": "React organiza la UI principalmente con…",
+            "options": ["Componentes","Tablas SQL","Archivos .exe","Hojas Excel"],
+            "correct_index": 0,
+            "feedback_ok": "Sí: componentes.",
+            "feedback_bad": "La unidad básica es el componente."
+          }}
+        }},
+        {{
+          "id": "d1s3",
+          "phase": "learn",
+          "bot": "Un componente es una función que devuelve UI (JSX).",
+          "visual": {{"kind":"code","label":"Ejemplo","code":"function App() {{\\n  return <h1>Hola</h1>;\\n}}"}},
+          "check": {{
+            "prompt": "¿Qué devuelve App?",
+            "options": ["Un título Hola","Una base de datos","Un servidor","CSS puro"],
+            "correct_index": 0,
+            "feedback_ok": "Devuelve UI.",
+            "feedback_bad": "Mira el return."
+          }}
+        }}
       ],
       "questions": [
-        {{"id":"d1q1","prompt":"pregunta del TEST distinta a cualquier otra","options":["A","B","C","D"],"correct_index":0,"feedback_ok":"ok","feedback_bad":"pista"}}
+        {{
+          "id": "d1q1",
+          "prompt": "pregunta ÚNICA del test final",
+          "options": ["A","B","C","D"],
+          "correct_index": 0,
+          "feedback_ok": "ok",
+          "feedback_bad": "pista"
+        }}
       ]
     }}
   ]
 }}
 
-## Kinds permitidos
-- bot_say: {{text}}
-- big_word: {{word, sub?}}
-- chips: {{items: 3-5 strings cortos}}
-- vs: {{left:{{title,body}}, right:{{title,body}}}}
-- steps: {{items: [{{n, label}}]}}  // 2-3 pasos
-- code: {{label?, code}}
-- html: {{html}} — SOLO tags: div,span,strong,em,code,pre,ul,ol,li,p,br,b,i. Sin scripts. Usa class viz/row/pill. Máx 400 chars.
-- tap: igual que pregunta MCQ (check durante teach)
-- card: {{title, body}} legacy (evitar si puedes)
-
-## Reglas CRÍTICAS (anti-aburrido + anti-repetición)
-- Exactamente {max_days} días. Cada día UN focus distinto y progresivo.
-- Día 1 intro = qué es {topic} en esencia (no detalles avanzados).
-- Cada día: ~{intro_n} bloques intro, ~{teach_n} teach (incluye exactamente 1 tap), {q_per_day} questions de test.
-- TEXTOS CORTOS: bot_say ≤90 chars; body ≤50; word ≤18; sin párrafos.
-- CERO muros de texto. Prioriza big_word, chips, vs, code, html visual.
-- PROHIBIDO repetir el mismo prompt (ni similar) en teach taps ni en questions del CURSO ENTERO.
-- PROHIBIDO preguntas genéricas tipo "¿qué es más preciso?" / "ítem 1".
-- Cada question debe comprobar UN hecho concreto enseñado ese día.
-- Opciones plausibles (distractores realistas). correct_index 0-3.
+## Reglas CRÍTICAS
+- Exactamente {max_days} días. Cada día focus distinto y progresivo.
+- Día 1 intro = qué es {topic} de verdad (frase completa).
+- Cada día: exactamente {slides_n} slides + {q_per_day} questions de test.
+- Al menos la mitad de slides con phase=intro; el resto phase=learn.
+- bot SIEMPRE frase completa ≥45 caracteres. Prohibido: "Vamos", "React es", "Hola", cortes.
+- visual obligatorio en cada slide (no dejes solo el bot).
+- Preguntas del test ÚNICAS en todo el curso (nada de genéricas tipo "qué es más preciso").
 - Español. Sin emojis. Sin texto fuera del JSON.
 """
         try:
@@ -708,7 +728,7 @@ Devuelve SOLO un JSON válido (sin markdown, sin ```, sin prosa fuera del JSON).
                 usage_info["outputTokens"] = len(raw) // 4
 
             plan_obj = self._parse_interactive_plan_json(
-                raw, topic, max_days, minutes_per_day, q_per_day, teach_n, intro_n
+                raw, topic, max_days, minutes_per_day, q_per_day, slides_n, slides_n
             )
             return json.dumps(plan_obj, ensure_ascii=False), usage_info
         except Exception as e:
@@ -724,12 +744,14 @@ Devuelve SOLO un JSON válido (sin markdown, sin ```, sin prosa fuera del JSON).
         max_days: int,
         minutes_per_day: int,
         q_per_day: int,
-        teach_per_day: int = 3,
-        intro_per_day: int = 3,
+        teach_per_day: int = 4,
+        intro_per_day: int = 4,
     ) -> dict:
-        """Parsea JSON v3 (intro/teach/test); deduplica prompts; esqueleto si falla."""
+        """Parsea plan v4 (slides densas); deduplica; rellena si el LLM falla."""
         import json
         import re
+
+        slides_target = max(teach_per_day, intro_per_day, 4)
 
         text = (raw or "").strip()
         if text.startswith("```"):
@@ -745,14 +767,22 @@ Devuelve SOLO un JSON válido (sin markdown, sin ```, sin prosa fuera del JSON).
 
         seen_prompts: set = set()
 
-        def _norm_prompt(s: str) -> str:
+        def _norm(s: str) -> str:
             s = re.sub(r"\s+", " ", (s or "").lower().strip())
-            s = re.sub(r"[¿?¡!.,;:\"']", "", s)
-            return s[:160]
+            return re.sub(r"[¿?¡!.,;:\"']", "", s)[:160]
+
+        def _weak_bot(s: str) -> bool:
+            t = (s or "").strip()
+            if len(t) < 40:
+                return True
+            if re.match(r"^(vamos|hola|ok|sí|si|ahora|hoy)[.!]?$", t, re.I):
+                return True
+            if re.search(r"\bes\s*$", t, re.I):
+                return True
+            return False
 
         def _sanitize_html(raw_html: str) -> str:
             allowed = {"div", "span", "strong", "em", "code", "pre", "ul", "ol", "li", "p", "br", "b", "i"}
-            # strip tags not in allowlist (simple)
             cleaned = re.sub(
                 r"</?(?!/?(?:" + "|".join(allowed) + r")\b)[^>]*>",
                 "",
@@ -763,196 +793,228 @@ Devuelve SOLO un JSON válido (sin markdown, sin ```, sin prosa fuera del JSON).
             cleaned = re.sub(r"javascript:", "", cleaned, flags=re.I)
             return cleaned[:500]
 
-        def _parse_mcq(q: dict, fallback_id: str, *, allow_dup: bool = False) -> Optional[dict]:
+        def _parse_mcq(q: dict, fallback_id: str) -> Optional[dict]:
             if not isinstance(q, dict):
                 return None
             opts = q.get("options") or []
             if not isinstance(opts, list) or len(opts) < 2:
                 return None
-            opts = [str(o)[:80] for o in opts[:4]]
+            opts = [str(o)[:90] for o in opts[:4]]
             while len(opts) < 4:
                 opts.append(f"Opción {len(opts)+1}")
-            # uniquify options within question
-            seen_o = set()
-            uniq_opts = []
-            for o in opts:
-                key = o.lower().strip()
-                if key in seen_o:
-                    o = f"{o} *"
-                seen_o.add(o.lower().strip())
-                uniq_opts.append(o)
-            opts = uniq_opts
             try:
                 ci = int(q.get("correct_index", 0))
             except Exception:
                 ci = 0
             ci = max(0, min(ci, len(opts) - 1))
             prompt = str(q.get("prompt") or "Pregunta").strip()[:220]
-            np = _norm_prompt(prompt)
-            if not allow_dup and np in seen_prompts:
+            np = _norm(prompt)
+            if not np or np in seen_prompts:
                 return None
-            if np:
-                seen_prompts.add(np)
+            seen_prompts.add(np)
             return {
                 "id": str(q.get("id") or fallback_id),
                 "prompt": prompt,
                 "options": opts,
                 "correct_index": ci,
-                "feedback_ok": str(q.get("feedback_ok") or "¡Bien!").strip()[:120],
-                "feedback_bad": str(
-                    q.get("feedback_bad") or f"Era: {opts[ci]}"
-                ).strip()[:160],
+                "feedback_ok": str(q.get("feedback_ok") or "¡Bien!").strip()[:140],
+                "feedback_bad": str(q.get("feedback_bad") or f"Era: {opts[ci]}").strip()[:180],
             }
 
-        def _parse_block(t: dict, fallback_id: str, focus: str) -> Optional[dict]:
-            if not isinstance(t, dict):
-                return None
-            kind = str(t.get("kind") or "card").lower().strip()
-            bid = str(t.get("id") or fallback_id)
-
-            if kind == "tap":
-                mcq = _parse_mcq(t, bid)
-                if not mcq:
-                    return None
-                return {"kind": "tap", **mcq}
-
-            if kind == "bot_say":
-                txt = str(t.get("text") or t.get("body") or "").strip()[:90]
-                if not txt:
-                    txt = f"Hoy: {focus}"
-                return {"id": bid, "kind": "bot_say", "text": txt}
-
-            if kind == "big_word":
-                word = str(t.get("word") or t.get("title") or focus).strip()[:24]
-                sub = str(t.get("sub") or t.get("body") or "").strip()[:60]
-                return {"id": bid, "kind": "big_word", "word": word, "sub": sub}
-
-            if kind == "chips":
-                items = t.get("items") or t.get("chips") or []
-                if not isinstance(items, list):
-                    items = []
-                items = [str(x).strip()[:28] for x in items if str(x).strip()][:5]
-                if len(items) < 2:
-                    items = [focus, "práctica", "retención"][:3]
-                return {"id": bid, "kind": "chips", "items": items}
-
+        def _parse_visual(v: dict, focus: str) -> dict:
+            if not isinstance(v, dict):
+                return {"kind": "big_word", "word": focus[:16], "sub": "foco de hoy"}
+            kind = str(v.get("kind") or "big_word").lower()
             if kind == "vs":
-                left = t.get("left") if isinstance(t.get("left"), dict) else {}
-                right = t.get("right") if isinstance(t.get("right"), dict) else {}
+                left = v.get("left") if isinstance(v.get("left"), dict) else {}
+                right = v.get("right") if isinstance(v.get("right"), dict) else {}
                 return {
-                    "id": bid,
                     "kind": "vs",
-                    "left": {
-                        "title": str(left.get("title") or "A").strip()[:24],
-                        "body": str(left.get("body") or "").strip()[:60],
-                    },
-                    "right": {
-                        "title": str(right.get("title") or "B").strip()[:24],
-                        "body": str(right.get("body") or "").strip()[:60],
-                    },
+                    "left": {"title": str(left.get("title") or "A")[:28], "body": str(left.get("body") or "")[:70]},
+                    "right": {"title": str(right.get("title") or "B")[:28], "body": str(right.get("body") or "")[:70]},
                 }
-
+            if kind == "chips":
+                items = [str(x)[:28] for x in (v.get("items") or []) if str(x).strip()][:5]
+                if len(items) < 2:
+                    items = [focus, "práctica", "test"]
+                return {"kind": "chips", "items": items}
             if kind == "steps":
-                items = t.get("items") or []
-                out_items = []
-                if isinstance(items, list):
-                    for idx, it in enumerate(items[:3]):
-                        if isinstance(it, dict):
-                            out_items.append({
-                                "n": int(it.get("n") or (idx + 1)),
-                                "label": str(it.get("label") or it.get("text") or "").strip()[:50],
-                            })
-                        else:
-                            out_items.append({"n": idx + 1, "label": str(it).strip()[:50]})
-                if not out_items:
-                    out_items = [{"n": 1, "label": focus}]
-                return {"id": bid, "kind": "steps", "items": out_items}
-
+                items = []
+                for idx, it in enumerate((v.get("items") or [])[:3]):
+                    if isinstance(it, dict):
+                        items.append({"n": int(it.get("n") or idx + 1), "label": str(it.get("label") or "")[:55]})
+                    else:
+                        items.append({"n": idx + 1, "label": str(it)[:55]})
+                if not items:
+                    items = [{"n": 1, "label": focus}]
+                return {"kind": "steps", "items": items}
             if kind == "code":
-                code = str(t.get("code") or "").strip()[:220]
-                if not code:
-                    code = f"// {focus}"
                 return {
-                    "id": bid,
                     "kind": "code",
-                    "label": str(t.get("label") or "Ejemplo").strip()[:24],
-                    "code": code,
+                    "label": str(v.get("label") or "Ejemplo")[:24],
+                    "code": str(v.get("code") or f"// {focus}")[:260],
                 }
-
             if kind == "html":
-                return {
-                    "id": bid,
-                    "kind": "html",
-                    "html": _sanitize_html(str(t.get("html") or t.get("body") or "")),
-                }
-
-            # card / default
-            body = str(t.get("body") or t.get("text") or "").strip()
-            if not body:
-                body = f"Hoy: {focus}"
+                return {"kind": "html", "html": _sanitize_html(str(v.get("html") or ""))}
             return {
-                "id": bid,
-                "kind": "card",
-                "title": str(t.get("title") or "Idea").strip()[:40],
-                "body": body[:160],
+                "kind": "big_word",
+                "word": str(v.get("word") or v.get("title") or focus)[:20],
+                "sub": str(v.get("sub") or v.get("body") or "")[:70],
             }
 
-        def _default_intro(day_i: int, focus: str) -> list:
-            if day_i == 1:
-                return [
-                    {"id": f"d{day_i}i1", "kind": "bot_say", "text": f"Hoy empiezas {topic}. Poco texto, mucha práctica."},
-                    {"id": f"d{day_i}i2", "kind": "big_word", "word": topic[:18], "sub": "qué es, en una idea"},
-                    {"id": f"d{day_i}i3", "kind": "chips", "items": [focus, "bases", "práctica"]},
-                ]
-            return [
-                {"id": f"d{day_i}i1", "kind": "bot_say", "text": f"Día {day_i}: {focus}"},
-                {"id": f"d{day_i}i2", "kind": "big_word", "word": focus[:18], "sub": "foco de hoy"},
-                {"id": f"d{day_i}i3", "kind": "chips", "items": ["ver", "tocar", "test"]},
-            ]
+        def _parse_check(c: dict, fallback_id: str) -> Optional[dict]:
+            if not isinstance(c, dict):
+                return None
+            mcq = _parse_mcq(c, fallback_id)
+            if not mcq:
+                return None
+            return {
+                "prompt": mcq["prompt"],
+                "options": mcq["options"],
+                "correct_index": mcq["correct_index"],
+                "feedback_ok": mcq["feedback_ok"],
+                "feedback_bad": mcq["feedback_bad"],
+            }
 
-        def _default_teach(day_i: int, focus: str) -> list:
+        def _quality_slides(day_i: int, focus: str) -> list:
+            is_react = "react" in topic.lower()
             return [
-                {"id": f"d{day_i}t1", "kind": "bot_say", "text": f"Lo básico de {focus}"},
                 {
-                    "id": f"d{day_i}t2",
-                    "kind": "vs",
-                    "left": {"title": "Confusión", "body": "Memorizar párrafos"},
-                    "right": {"title": "Hoy", "body": f"Practicar {focus}"},
+                    "id": f"d{day_i}s1",
+                    "phase": "intro",
+                    "bot": f"{topic} se aprende mejor con pasos cortos: hoy toca {focus}.",
+                    "visual": {
+                        "kind": "big_word",
+                        "word": (focus if day_i > 1 else topic)[:16],
+                        "sub": "idea clara, sin muro de texto",
+                    },
+                    "html": (
+                        f"<div class='viz'><div class='row'>"
+                        f"<span class='pill'>ver</span><span class='pill'>tocar</span>"
+                        f"<span class='pill'>test</span></div><p><strong>{focus}</strong></p></div>"
+                    ),
+                    "check": None,
                 },
                 {
-                    "id": f"d{day_i}t3",
-                    "kind": "tap",
-                    "prompt": f"¿Qué practicas hoy sobre {focus}?",
-                    "options": [
-                        f"El concepto {focus}",
-                        "Un tema distinto",
-                        "Solo leer sin practicar",
-                        "Saltar al final",
-                    ],
-                    "correct_index": 0,
-                    "feedback_ok": "Eso es.",
-                    "feedback_bad": f"Hoy toca {focus}.",
+                    "id": f"d{day_i}s2",
+                    "phase": "intro",
+                    "bot": f"Compara leer un PDF largo frente a practicar {focus} en pantallas cortas.",
+                    "visual": {
+                        "kind": "vs",
+                        "left": {"title": "Aburrido", "body": "Párrafos eternos"},
+                        "right": {"title": "Hoy", "body": f"Micro-práctica de {focus}"},
+                    },
+                    "check": {
+                        "prompt": f"¿Cómo practicarás {focus} hoy?",
+                        "options": [
+                            "Con pasos cortos e interactivos",
+                            "Leyendo un muro",
+                            "Saltando sin mirar",
+                            "Copiando sin entender",
+                        ],
+                        "correct_index": 0,
+                        "feedback_ok": "Así se queda mejor.",
+                        "feedback_bad": "Hoy tocamos y practicamos.",
+                    },
+                },
+                {
+                    "id": f"d{day_i}s3",
+                    "phase": "learn",
+                    "bot": f"Lo esencial de {focus}: una idea, un ejemplo mínimo, un check.",
+                    "visual": {
+                        "kind": "steps",
+                        "items": [
+                            {"n": 1, "label": f"Qué es {focus}"},
+                            {"n": 2, "label": "Ejemplo mínimo"},
+                            {"n": 3, "label": "Check + test"},
+                        ],
+                    },
+                    "check": None,
+                },
+                {
+                    "id": f"d{day_i}s4",
+                    "phase": "learn",
+                    "bot": f"Mira el ejemplo y responde: esto fija {focus} en la memoria.",
+                    "visual": {
+                        "kind": "code",
+                        "label": "Ejemplo",
+                        "code": (
+                            "function App() {\n  return <h1>Hola</h1>;\n}"
+                            if is_react
+                            else f"// {focus}\n// idea clave en 2 líneas"
+                        ),
+                    },
+                    "check": {
+                        "prompt": (
+                            "¿Qué devuelve este componente?"
+                            if is_react
+                            else f"¿Qué representa el ejemplo de {focus}?"
+                        ),
+                        "options": (
+                            ["UI con un título Hola", "Una base de datos", "Un servidor HTTP", "Solo CSS"]
+                            if is_react
+                            else [
+                                f"La idea práctica de {focus}",
+                                "Un tema distinto",
+                                "Decoración",
+                                "Nada útil",
+                            ]
+                        ),
+                        "correct_index": 0,
+                        "feedback_ok": "Exacto.",
+                        "feedback_bad": f"Vuelve al ejemplo de {focus}.",
+                    },
                 },
             ]
 
         def _unique_question(day_i: int, j: int, focus: str) -> dict:
             variants = [
-                (f"En {focus}, ¿qué es lo esencial?", [f"La idea central de {focus}", "Un detalle irrelevante", "Memorizar el índice", "Ignorar la práctica"]),
-                (f"Si aplicas {focus} bien, ¿qué ganas?", ["Claridad práctica", "Más texto que leer", "Confusión", "Nada"]),
-                (f"¿Cuál NO encaja con {focus}?", ["Concepto opuesto", f"Uso típico de {focus}", f"Definición de {focus}", f"Ejemplo de {focus}"]),
+                (
+                    f"¿Qué resume mejor {focus}?",
+                    [f"La idea práctica de {focus}", "Un detalle irrelevante", "El índice del PDF", "Nada"],
+                ),
+                (
+                    f"Si aplicas {focus} bien, ¿qué haces?",
+                    ["Practicar con un ejemplo mínimo", "Solo leer", "Copiar sin entender", "Saltar"],
+                ),
+                (
+                    f"¿Qué NO encaja con {focus}?",
+                    ["Concepto opuesto", f"Uso típico de {focus}", f"Definición de {focus}", f"Ejemplo de {focus}"],
+                ),
             ]
             prompt, opts = variants[(day_i + j) % len(variants)]
-            # force uniqueness
-            prompt = f"{prompt} (d{day_i}.{j})"
-            np = _norm_prompt(prompt)
-            seen_prompts.add(np)
+            seen_prompts.add(_norm(f"{prompt} d{day_i}q{j}"))
             return {
                 "id": f"d{day_i}q{j}",
-                "prompt": prompt.replace(f" (d{day_i}.{j})", ""),
+                "prompt": prompt,
                 "options": opts,
                 "correct_index": 0,
                 "feedback_ok": "Correcto.",
                 "feedback_bad": f"Repasa {focus}.",
+            }
+
+        def _parse_slide(s: dict, day_i: int, idx: int, focus: str) -> Optional[dict]:
+            if not isinstance(s, dict):
+                return None
+            bot = str(s.get("bot") or s.get("text") or "").strip()[:160]
+            if _weak_bot(bot):
+                bot = f"Hoy practicamos {focus}: mira el visual y responde si hay check."
+            phase = "learn" if str(s.get("phase") or "").lower() == "learn" else "intro"
+            visual_raw = s.get("visual") if isinstance(s.get("visual"), dict) else {
+                "kind": "big_word",
+                "word": focus[:16],
+                "sub": "foco",
+            }
+            visual = _parse_visual(visual_raw, focus)
+            html = _sanitize_html(str(s.get("html") or "")) if s.get("html") else None
+            check = _parse_check(s.get("check"), f"d{day_i}c{idx}") if s.get("check") else None
+            return {
+                "id": str(s.get("id") or f"d{day_i}s{idx}"),
+                "phase": phase,
+                "bot": bot,
+                "visual": visual,
+                "html": html,
+                "check": check,
             }
 
         days_in = data.get("days") if isinstance(data, dict) else None
@@ -963,31 +1025,23 @@ Devuelve SOLO un JSON válido (sin markdown, sin ```, sin prosa fuera del JSON).
                     continue
                 day_num = int(d.get("day") or (i + 1))
                 focus = str(d.get("focus") or topic).strip()[:80]
-                intro = []
-                for j, t in enumerate((d.get("intro") or [])[:intro_per_day + 1]):
-                    parsed = _parse_block(t, f"d{day_num}i{j+1}", focus)
-                    if parsed:
-                        intro.append(parsed)
-                teach = []
-                for j, t in enumerate((d.get("teach") or [])[:teach_per_day + 1]):
-                    parsed = _parse_block(t, f"d{day_num}t{j+1}", focus)
-                    if parsed:
-                        teach.append(parsed)
+                slides = []
+                raw_slides = d.get("slides")
+                if isinstance(raw_slides, list) and raw_slides:
+                    for j, s in enumerate(raw_slides[: slides_target + 2]):
+                        parsed = _parse_slide(s, day_num, j + 1, focus)
+                        if parsed:
+                            slides.append(parsed)
+                if len(slides) < 2:
+                    slides = _quality_slides(day_num, focus)
+
                 qs = []
-                for j, q in enumerate((d.get("questions") or [])[: q_per_day + 2]):
-                    parsed_q = _parse_mcq(q, f"d{day_num}q{j+1}")
-                    if parsed_q:
-                        qs.append(parsed_q)
+                for j, q in enumerate((d.get("questions") or [])[: q_per_day + 3]):
+                    pq = _parse_mcq(q, f"d{day_num}q{j+1}")
+                    if pq:
+                        qs.append(pq)
                     if len(qs) >= q_per_day:
                         break
-
-                if not intro:
-                    intro = _default_intro(day_num, focus)
-                if not teach:
-                    teach = _default_teach(day_num, focus)
-                # ensure one tap in teach
-                if not any(x.get("kind") == "tap" for x in teach):
-                    teach.append(_default_teach(day_num, focus)[-1])
                 while len(qs) < q_per_day:
                     qs.append(_unique_question(day_num, len(qs) + 1, focus))
 
@@ -996,27 +1050,24 @@ Devuelve SOLO un JSON válido (sin markdown, sin ```, sin prosa fuera del JSON).
                     "title": str(d.get("title") or f"Día {day_num}").strip()[:48],
                     "focus": focus,
                     "minutes": int(d.get("minutes") or minutes_per_day),
-                    "intro": intro,
-                    "teach": teach,
+                    "slides": slides[:slides_target],
                     "questions": qs[:q_per_day],
                 })
 
         if len(days_out) < max_days:
             for i in range(len(days_out) + 1, max_days + 1):
                 focus = f"{topic} · unidad {i}"
-                qs = [_unique_question(i, j, focus) for j in range(1, q_per_day + 1)]
                 days_out.append({
                     "day": i,
                     "title": f"Unidad {i}",
                     "focus": focus[:80],
                     "minutes": minutes_per_day,
-                    "intro": _default_intro(i, focus),
-                    "teach": _default_teach(i, focus),
-                    "questions": qs,
+                    "slides": _quality_slides(i, focus)[:slides_target],
+                    "questions": [_unique_question(i, j, focus) for j in range(1, q_per_day + 1)],
                 })
 
         return {
-            "format": "interactive_v3",
+            "format": "interactive_v4",
             "topic": str((data.get("topic") if isinstance(data, dict) else None) or topic),
             "minutes_per_day": minutes_per_day,
             "xp_per_correct": int(

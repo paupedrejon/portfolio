@@ -1,5 +1,16 @@
 # Changelog — Study Agents
 
+## 0.4.4 — Pantallas densas (ya no “React es” / “Vamos”)
+
+### Visible
+- Cada pantalla = **bot + visual + check** (no un bloque vacío)
+- Si el contenido del LLM viene truncado, se sustituye por lección de calidad
+- Bot más grande; VS / código / pasos / HTML en la misma vista
+
+### Backend
+- Plan `interactive_v4` con `slides` densas y frases ≥45 chars
+- Redeploy Railway + **genera un curso nuevo** (o recarga: el front arregla basura vieja)
+
 ## 0.4.3 — Lecciones gráficas Duolingo (intro → aprende → test)
 
 ### Visible

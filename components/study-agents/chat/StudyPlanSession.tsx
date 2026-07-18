@@ -18,7 +18,7 @@ export type PlanQuestion = {
 };
 
 export type PlanBlock = {
-  id: string;
+  id?: string;
   kind: string;
   text?: string;
   title?: string;
@@ -38,6 +38,22 @@ export type PlanBlock = {
   feedback_bad?: string;
 };
 
+/** Una pantalla Duolingo: bot + visual + (opcional) check en la misma vista. */
+export type LessonSlide = {
+  id: string;
+  phase: "intro" | "learn";
+  bot: string;
+  visual?: PlanBlock | null;
+  html?: string;
+  check?: {
+    prompt: string;
+    options: string[];
+    correct_index: number;
+    feedback_ok?: string;
+    feedback_bad?: string;
+  } | null;
+};
+
 export type PlanDay = {
   day: number;
   title: string;
@@ -45,6 +61,7 @@ export type PlanDay = {
   minutes: number;
   intro?: PlanBlock[];
   teach?: PlanBlock[];
+  slides?: LessonSlide[];
   questions: PlanQuestion[];
 };
 
@@ -64,8 +81,6 @@ type Progress = {
   startedAt: string;
   lastCompletedDate?: string;
 };
-
-type Phase = "intro" | "learn" | "test";
 
 type Props = {
   plan: InteractivePlan;
@@ -112,13 +127,12 @@ function normalizePrompt(s: string): string {
     .slice(0, 160);
 }
 
-/** Deduplica preguntas del plan en cliente (por si el backend viejo aún está). */
-function dedupeDayQuestions(day: PlanDay, globalSeen: Set<string>): PlanQuestion[] {
+function dedupeQuestions(questions: PlanQuestion[], seen: Set<string>): PlanQuestion[] {
   const out: PlanQuestion[] = [];
-  for (const q of day.questions || []) {
+  for (const q of questions || []) {
     const key = normalizePrompt(q.prompt || "");
-    if (!key || globalSeen.has(key)) continue;
-    globalSeen.add(key);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
     out.push(q);
   }
   return out;
@@ -132,43 +146,222 @@ function sanitizeLessonHtml(html: string): string {
   });
 }
 
-function LessonBlockView({
-  block,
-  onTapAnswer,
-  picked,
-  revealed,
-}: {
-  block: PlanBlock;
-  onTapAnswer?: (idx: number) => void;
-  picked?: number | null;
-  revealed?: boolean;
-}) {
-  const kind = (block.kind || "card").toLowerCase();
+function isWeakBot(text: string): boolean {
+  const t = (text || "").trim();
+  if (t.length < 28) return true;
+  // frases cortadas típicas del LLM truncado
+  if (/^(vamos|hola|ok|sí|si|ahora|hoy)[.!]?$/i.test(t)) return true;
+  if (/\bes\s*$/i.test(t) || /\bes\s+[a-záéíóú]{1,3}$/i.test(t)) return true;
+  return false;
+}
 
-  if (kind === "bot_say") {
-    return (
-      <div className="sa-duo-botrow sa-pop">
-        <StudyAgentsBotAvatar size={64} color={SA_PRIMARY} state="idle" />
-        <div className="sa-duo-bubble">
-          <p>{block.text || block.body}</p>
-        </div>
-      </div>
-    );
+/** Plantillas densas cuando el LLM manda basura truncada. */
+function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
+  const focus = day.focus || topic;
+  const t = topic;
+  const d = day.day;
+  return [
+    {
+      id: `q-${d}-1`,
+      phase: "intro",
+      bot: d === 1
+        ? `${t} sirve para construir interfaces de usuario con piezas reutilizables.`
+        : `Hoy el foco es ${focus}: lo verás, lo tocarás y harás el test.`,
+      visual: {
+        kind: "big_word",
+        word: d === 1 ? t.slice(0, 16) : focus.slice(0, 16),
+        sub: d === 1 ? "en una idea clara" : "concepto de hoy",
+      },
+      html: `<div class="viz"><div class="row"><span class="pill">ver</span><span class="pill">tocar</span><span class="pill">test</span></div><p><strong>${focus}</strong> · sin muro de texto</p></div>`,
+      check: null,
+    },
+    {
+      id: `q-${d}-2`,
+      phase: "intro",
+      bot: `Compara: memorizar un PDF vs practicar ${focus} en pasos cortos.`,
+      visual: {
+        kind: "vs",
+        left: { title: "Aburrido", body: "Párrafos largos" },
+        right: { title: "Hoy", body: `Micro-práctica de ${focus}` },
+      },
+      check: {
+        prompt: `¿Qué vas a hacer hoy con ${focus}?`,
+        options: [
+          "Practicar con pasos cortos",
+          "Leer un muro de texto",
+          "Saltar al final sin mirar",
+          "Copiar sin entender",
+        ],
+        correct_index: 0,
+        feedback_ok: "Así se queda: poco texto, mucha práctica.",
+        feedback_bad: "Hoy tocamos y practicamos, no solo leemos.",
+      },
+    },
+    {
+      id: `q-${d}-3`,
+      phase: "learn",
+      bot: `Lo esencial de ${focus}: una idea, un ejemplo, un check.`,
+      visual: {
+        kind: "steps",
+        items: [
+          { n: 1, label: `Idea: qué es ${focus}` },
+          { n: 2, label: "Ejemplo mínimo" },
+          { n: 3, label: "Check + test del día" },
+        ],
+      },
+      html: `<div class="viz"><p>Recuerda solo esto:</p><div class="row"><span class="pill">${focus}</span></div></div>`,
+      check: null,
+    },
+    {
+      id: `q-${d}-4`,
+      phase: "learn",
+      bot: `Ejemplo mínimo de ${focus}. Léelo y responde.`,
+      visual: {
+        kind: "code",
+        label: "Ejemplo",
+        code: t.toLowerCase().includes("react")
+          ? `function App() {\n  return <h1>Hola</h1>;\n}`
+          : `// ${focus}\n// idea clave en 2 líneas`,
+      },
+      check: {
+        prompt: t.toLowerCase().includes("react")
+          ? "¿Qué devuelve este componente?"
+          : `¿Qué representa este ejemplo sobre ${focus}?`,
+        options: t.toLowerCase().includes("react")
+          ? ["UI con un título Hola", "Una base de datos", "Un servidor HTTP", "Un archivo CSS"]
+          : [
+              `La idea práctica de ${focus}`,
+              "Un tema no relacionado",
+              "Solo decoración",
+              "Nada útil",
+            ],
+        correct_index: 0,
+        feedback_ok: "Exacto.",
+        feedback_bad: `Vuelve a mirar el ejemplo de ${focus}.`,
+      },
+    },
+  ];
+}
+
+/**
+ * Empaqueta bloques sueltos en pantallas densas (bot + visual + check).
+ * Si el contenido es débil, usa plantillas de calidad.
+ */
+function buildSlides(topic: string, day: PlanDay): LessonSlide[] {
+  if (day.slides && day.slides.length >= 2) {
+    const cleaned = day.slides
+      .map((s, i) => ({
+        ...s,
+        id: s.id || `s-${day.day}-${i}`,
+        bot: (s.bot || "").trim(),
+        phase: s.phase === "learn" ? ("learn" as const) : ("intro" as const),
+      }))
+      .filter((s) => s.bot || s.visual || s.html || s.check);
+    const weak = cleaned.filter((s) => isWeakBot(s.bot)).length >= Math.ceil(cleaned.length / 2);
+    if (!weak && cleaned.length >= 2) return cleaned;
   }
+
+  const rawBlocks = [...(day.intro || []), ...(day.teach || [])];
+  const slides: LessonSlide[] = [];
+  let i = 0;
+  let phase: "intro" | "learn" = "intro";
+  const introLen = day.intro?.length || 0;
+
+  while (i < rawBlocks.length) {
+    const block = rawBlocks[i];
+    phase = i < introLen ? "intro" : "learn";
+    const kind = (block.kind || "").toLowerCase();
+
+    let bot = "";
+    let visual: PlanBlock | null = null;
+    let html: string | undefined;
+    let check: LessonSlide["check"] = null;
+
+    if (kind === "bot_say" || kind === "card") {
+      bot = (block.text || block.body || "").trim();
+      i += 1;
+    }
+
+    // absorber visual siguiente
+    if (i < rawBlocks.length) {
+      const n = rawBlocks[i];
+      const nk = (n.kind || "").toLowerCase();
+      if (["big_word", "chips", "vs", "steps", "code", "html", "card"].includes(nk) && nk !== "tap") {
+        if (nk === "html") html = n.html;
+        else if (nk === "card" && !bot) {
+          bot = (n.body || n.text || "").trim();
+          visual = { kind: "big_word", word: n.title || day.focus, sub: (n.body || "").slice(0, 60) };
+        } else {
+          visual = n;
+        }
+        i += 1;
+      }
+    }
+
+    // absorber check
+    if (i < rawBlocks.length && (rawBlocks[i].kind || "").toLowerCase() === "tap") {
+      const t = rawBlocks[i];
+      check = {
+        prompt: t.prompt || "¿Qué es correcto?",
+        options: t.options || [],
+        correct_index: t.correct_index ?? 0,
+        feedback_ok: t.feedback_ok,
+        feedback_bad: t.feedback_bad,
+      };
+      i += 1;
+    }
+
+    // si empezamos con visual sin bot
+    if (!bot && (visual || html)) {
+      bot = `Mira esto sobre ${day.focus}.`;
+    }
+    if (!bot && check) {
+      bot = check.prompt;
+      check = { ...check };
+    }
+
+    if (bot || visual || html || check) {
+      slides.push({
+        id: `pack-${day.day}-${slides.length}`,
+        phase,
+        bot: bot || `Sobre ${day.focus}`,
+        visual,
+        html,
+        check,
+      });
+    } else {
+      i += 1;
+    }
+  }
+
+  const weakBots = slides.filter((s) => isWeakBot(s.bot)).length;
+  const orphanVisuals = slides.filter((s) => !s.check && s.visual && isWeakBot(s.bot)).length;
+  const weak =
+    slides.length < 2 ||
+    weakBots >= Math.max(1, Math.ceil(slides.length / 2)) ||
+    orphanVisuals >= slides.length; // solo palabras sueltas sin explicación
+
+  if (weak) return qualitySlidesForDay(topic, day);
+  return slides;
+}
+
+function VisualOnly({ block }: { block: PlanBlock }) {
+  const kind = (block.kind || "card").toLowerCase();
 
   if (kind === "big_word") {
     return (
-      <div className="sa-duo-bigword sa-pop">
+      <div className="sa-duo-bigword">
         <span className="sa-duo-bigword__word">{block.word || block.title}</span>
         {block.sub ? <span className="sa-duo-bigword__sub">{block.sub}</span> : null}
       </div>
     );
   }
-
   if (kind === "chips") {
-    const items = (block.items || []).map((it) => (typeof it === "string" ? it : it.label || "")).filter(Boolean);
+    const items = (block.items || [])
+      .map((it) => (typeof it === "string" ? it : it.label || ""))
+      .filter(Boolean);
     return (
-      <div className="sa-duo-chips sa-pop">
+      <div className="sa-duo-chips">
         {items.map((item) => (
           <span key={item} className="sa-duo-chip">
             {item}
@@ -177,10 +370,9 @@ function LessonBlockView({
       </div>
     );
   }
-
   if (kind === "vs") {
     return (
-      <div className="sa-duo-vs sa-pop">
+      <div className="sa-duo-vs">
         <div className="sa-duo-vs__card sa-duo-vs__card--left">
           <strong>{block.left?.title || "A"}</strong>
           <p>{block.left?.body}</p>
@@ -193,17 +385,16 @@ function LessonBlockView({
       </div>
     );
   }
-
   if (kind === "steps") {
     const items = (block.items || [])
-      .map((it, i) =>
+      .map((it, idx) =>
         typeof it === "string"
-          ? { n: i + 1, label: it }
-          : { n: it.n || i + 1, label: it.label || "" },
+          ? { n: idx + 1, label: it }
+          : { n: it.n || idx + 1, label: it.label || "" },
       )
       .filter((it) => it.label);
     return (
-      <div className="sa-duo-steps sa-pop">
+      <div className="sa-duo-steps">
         {items.map((it) => (
           <div key={`${it.n}-${it.label}`} className="sa-duo-step">
             <span className="sa-duo-step__n">{it.n}</span>
@@ -213,10 +404,9 @@ function LessonBlockView({
       </div>
     );
   }
-
   if (kind === "code") {
     return (
-      <div className="sa-duo-code sa-pop">
+      <div className="sa-duo-code">
         {block.label ? <span className="sa-duo-code__label">{block.label}</span> : null}
         <pre>
           <code>{block.code}</code>
@@ -224,74 +414,63 @@ function LessonBlockView({
       </div>
     );
   }
-
   if (kind === "html" && block.html) {
-    const clean = sanitizeLessonHtml(block.html);
     return (
       <div
-        className="sa-duo-html sa-pop"
-        dangerouslySetInnerHTML={{ __html: clean }}
+        className="sa-duo-html"
+        dangerouslySetInnerHTML={{ __html: sanitizeLessonHtml(block.html) }}
       />
     );
   }
-
-  if (kind === "tap" && block.options && onTapAnswer) {
-    const correct = block.correct_index ?? 0;
-    return (
-      <div className="sa-pop">
-        <div className="sa-duo-botrow" style={{ marginBottom: "1rem" }}>
-          <StudyAgentsBotAvatar size={52} color={SA_PRIMARY} state="idle" />
-          <div className="sa-duo-bubble">
-            <p>{block.prompt}</p>
-          </div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}>
-          {block.options.map((opt, idx) => {
-            let border = "2px solid rgba(15,23,42,0.12)";
-            let bg = "#fff";
-            if (revealed) {
-              if (idx === correct) {
-                border = "2px solid #22c55e";
-                bg = "rgba(34,197,94,0.12)";
-              } else if (idx === picked) {
-                border = "2px solid #ef4444";
-                bg = "rgba(239,68,68,0.1)";
-              }
-            }
-            return (
-              <button
-                key={`${block.id}-${idx}`}
-                type="button"
-                disabled={!!revealed}
-                className="sa-choice"
-                style={{ border, background: bg }}
-                onClick={() => onTapAnswer(idx)}
-              >
-                {opt}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // card / fallback
   return (
-    <div className="sa-duo-card sa-pop">
-      <div className="sa-duo-botrow">
-        <StudyAgentsBotAvatar size={48} color={SA_PRIMARY} state="idle" />
-        <div>
-          <p className="sa-duo-card__title">{block.title || "Idea"}</p>
-          <p className="sa-duo-card__body">{block.body || block.text}</p>
-        </div>
-      </div>
+    <div className="sa-duo-bigword">
+      <span className="sa-duo-bigword__word">{block.title || block.word || "Idea"}</span>
+      <span className="sa-duo-bigword__sub">{block.body || block.text}</span>
+    </div>
+  );
+}
+
+function ChoiceList({
+  options,
+  correctIndex,
+  picked,
+  revealed,
+  onPick,
+}: {
+  options: string[];
+  correctIndex: number;
+  picked: number | null;
+  revealed: boolean;
+  onPick: (idx: number) => void;
+}) {
+  return (
+    <div className="sa-duo-choices">
+      {options.map((opt, idx) => {
+        let cls = "sa-choice";
+        if (revealed) {
+          if (idx === correctIndex) cls += " sa-duo-choice--ok";
+          else if (idx === picked) cls += " sa-duo-choice--bad";
+        } else if (picked === idx) {
+          cls += " sa-choice--on";
+        }
+        return (
+          <button
+            key={`${opt}-${idx}`}
+            type="button"
+            disabled={revealed}
+            className={cls}
+            onClick={() => onPick(idx)}
+          >
+            {opt}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
 /**
- * Lección Duolingo: INTRO → LEARN (gráfico + bot) → TEST (preguntas únicas).
+ * Lección Duolingo densa: pantallas con bot + visual + check, luego test.
  */
 export default function StudyPlanSession({ plan, storageKey }: Props) {
   const key = storageKey || `sa_plan_${plan.topic}`;
@@ -300,38 +479,51 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
 
   const daysPrepared = useMemo(() => {
     const seen = new Set<string>();
-    return days.map((d) => ({
-      ...d,
-      intro: d.intro?.length
-        ? d.intro
-        : [
-            {
-              id: `${d.day}-i1`,
-              kind: "bot_say",
-              text: `Hoy: ${d.focus}. Poco texto, mucha práctica.`,
-            },
-            { id: `${d.day}-i2`, kind: "big_word", word: d.focus.slice(0, 18), sub: d.title },
-          ],
-      teach: d.teach?.length
-        ? d.teach
-        : [
-            { id: `${d.day}-t1`, kind: "bot_say", text: `Lo básico de ${d.focus}` },
-            {
-              id: `${d.day}-t2`,
-              kind: "chips",
-              items: [d.focus, "práctica", "test"],
-            },
-          ],
-      questions: dedupeDayQuestions(d, seen),
-    }));
-  }, [days]);
+    return days.map((d) => {
+      const slides = buildSlides(plan.topic, d);
+      let questions = dedupeQuestions(d.questions || [], seen);
+      if (questions.length < 2) {
+        const focus = d.focus || plan.topic;
+        const extras: PlanQuestion[] = [
+          {
+            id: `${d.day}-fq1`,
+            prompt: `¿Qué resume mejor ${focus}?`,
+            options: [
+              `La idea práctica de ${focus}`,
+              "Un detalle sin importancia",
+              "Memorizar el índice",
+              "Ignorar ejemplos",
+            ],
+            correct_index: 0,
+            feedback_ok: "Bien.",
+            feedback_bad: `Repasa ${focus}.`,
+          },
+          {
+            id: `${d.day}-fq2`,
+            prompt: `Si aplicas ${focus}, ¿qué haces?`,
+            options: [
+              "Practicar con un ejemplo mínimo",
+              "Leer sin tocar nada",
+              "Copiar sin entender",
+              "Saltar el test",
+            ],
+            correct_index: 0,
+            feedback_ok: "Eso es.",
+            feedback_bad: "Hay que practicar.",
+          },
+        ];
+        questions = dedupeQuestions([...questions, ...extras], seen);
+      }
+      return { ...d, slides, questions };
+    });
+  }, [days, plan.topic]);
 
   const [progress, setProgress] = useState<Progress>(() =>
     loadProgress(key, days.length || 1, plan.started_at),
   );
   const [activeDay, setActiveDay] = useState<(typeof daysPrepared)[0] | null>(null);
-  const [phase, setPhase] = useState<Phase>("intro");
-  const [bIndex, setBIndex] = useState(0);
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [inTest, setInTest] = useState(false);
   const [qIndex, setQIndex] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
@@ -359,32 +551,20 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
     ) ||
     null;
 
-  const phaseBlocks =
-    phase === "intro" ? activeDay?.intro || [] : phase === "learn" ? activeDay?.teach || [] : [];
-  const currentBlock = phaseBlocks[bIndex];
+  const slides = activeDay?.slides || [];
+  const slide = slides[slideIndex];
   const currentQ = activeDay?.questions[qIndex];
-
-  const totalSteps =
-    (activeDay?.intro?.length || 0) +
-    (activeDay?.teach?.length || 0) +
-    (activeDay?.questions?.length || 0);
-  const doneSteps =
-    phase === "intro"
-      ? bIndex
-      : phase === "learn"
-        ? (activeDay?.intro?.length || 0) + bIndex
-        : (activeDay?.intro?.length || 0) + (activeDay?.teach?.length || 0) + qIndex;
-  const dayProgress = totalSteps ? ((doneSteps + (revealed ? 0.4 : 0)) / totalSteps) * 100 : 0;
-
-  const phaseLabel =
-    phase === "intro" ? "Intro" : phase === "learn" ? "Aprende" : "Test del día";
+  const totalSteps = slides.length + (activeDay?.questions.length || 0);
+  const doneSteps = inTest ? slides.length + qIndex : slideIndex;
+  const dayProgress = totalSteps ? ((doneSteps + (revealed ? 0.35 : 0)) / totalSteps) * 100 : 0;
+  const phase = inTest ? "test" : slide?.phase === "learn" ? "learn" : "intro";
 
   const startDay = (d: (typeof daysPrepared)[0]) => {
     if (d.day > progress.unlockedDay) return;
     if (d.day > calendarDay && !progress.completedDays.includes(d.day)) return;
     setActiveDay(d);
-    setPhase("intro");
-    setBIndex(0);
+    setSlideIndex(0);
+    setInTest(false);
     setQIndex(0);
     setPicked(null);
     setRevealed(false);
@@ -417,34 +597,22 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
     setDayDone(true);
   };
 
-  const advanceBlock = () => {
-    if (!activeDay) return;
-    if (bIndex < phaseBlocks.length - 1) {
-      setBIndex((i) => i + 1);
-      setPicked(null);
-      setRevealed(false);
-      return;
-    }
-    // fin de fase
-    if (phase === "intro") {
-      setPhase("learn");
-      setBIndex(0);
-      setPicked(null);
-      setRevealed(false);
-      return;
-    }
-    if (phase === "learn") {
-      setPhase("test");
+  const nextAfterSlide = () => {
+    if (slideIndex >= slides.length - 1) {
+      setInTest(true);
       setQIndex(0);
       setPicked(null);
       setRevealed(false);
       return;
     }
+    setSlideIndex((i) => i + 1);
+    setPicked(null);
+    setRevealed(false);
   };
 
-  const advanceTest = () => {
+  const nextAfterTest = () => {
     if (!activeDay) return;
-    if (qIndex >= (activeDay.questions?.length || 0) - 1) {
+    if (qIndex >= activeDay.questions.length - 1) {
       finishDay();
       return;
     }
@@ -456,22 +624,23 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
   const backToMap = () => {
     setActiveDay(null);
     setDayDone(false);
+    setInTest(false);
     setPicked(null);
     setRevealed(false);
-    setBIndex(0);
+    setSlideIndex(0);
     setQIndex(0);
-    setPhase("intro");
   };
 
-  // —— Día completado ——
   if (activeDay && dayDone) {
     return (
       <div className={`${outfit.className} sa-steps-card sa-duo-shell sa-pop`}>
         <div className="sa-duo-celebrate">
-          <StudyAgentsBotAvatar size={72} color={SA_PRIMARY} state="idle" />
+          <StudyAgentsBotAvatar size={80} color={SA_PRIMARY} state="idle" />
           <h3 className={spaceGrotesk.className}>¡Día {activeDay.day} listo!</h3>
           <p className="sa-duo-celebrate__xp">+{dayXp} XP</p>
-          <p className="sa-duo-celebrate__sub">{activeDay.title} · Total {celebrateXp} XP</p>
+          <p className="sa-duo-celebrate__sub">
+            {activeDay.title} · Total {celebrateXp} XP
+          </p>
           <p className="sa-duo-celebrate__hint">Vuelve mañana a este chat para la siguiente lección.</p>
         </div>
         <button type="button" className="sa-btn sa-btn--primary" style={{ width: "100%" }} onClick={backToMap}>
@@ -481,13 +650,17 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
     );
   }
 
-  // —— Lección activa ——
-  if (activeDay) {
-    const isTap = phase !== "test" && currentBlock?.kind === "tap";
-    const needsAnswer = isTap || phase === "test";
+  if (activeDay && slide && !inTest) {
+    const hasCheck = !!(slide.check && slide.check.options && slide.check.options.length >= 2);
+    const botText = isWeakBot(slide.bot)
+      ? `Hoy practicamos ${activeDay.focus}. Mira el visual y sigue.`
+      : slide.bot;
 
     return (
-      <div className={`${outfit.className} sa-steps-card sa-duo-shell sa-pop`} key={`${phase}-${bIndex}-${qIndex}`}>
+      <div
+        className={`${outfit.className} sa-steps-card sa-duo-shell sa-pop`}
+        key={slide.id}
+      >
         <div className="sa-duo-top">
           <button type="button" className="sa-chip" onClick={backToMap} style={{ borderRadius: 12 }}>
             ← Camino
@@ -503,127 +676,149 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
           <span style={{ width: `${Math.max(8, dayProgress)}%` }} />
         </div>
         <p className="sa-duo-focus">
-          {phaseLabel} · {activeDay.focus}
+          {phase === "intro" ? "Intro" : "Aprende"} · {activeDay.focus}
         </p>
 
-        {phase !== "test" && currentBlock && (
-          <>
-            <LessonBlockView
-              block={currentBlock}
-              picked={picked}
-              revealed={revealed}
-              onTapAnswer={
-                isTap
-                  ? (idx) => choose(idx, currentBlock.correct_index ?? 0)
-                  : undefined
-              }
+        <div className="sa-duo-screen">
+          <div className="sa-duo-botrow sa-duo-botrow--lg">
+            <StudyAgentsBotAvatar size={72} color={SA_PRIMARY} state="idle" />
+            <div className="sa-duo-bubble">
+              <p>{botText}</p>
+            </div>
+          </div>
+
+          {slide.visual ? (
+            <div className="sa-duo-visual">
+              <VisualOnly block={slide.visual} />
+            </div>
+          ) : null}
+
+          {slide.html ? (
+            <div
+              className="sa-duo-html sa-duo-visual"
+              dangerouslySetInnerHTML={{ __html: sanitizeLessonHtml(slide.html) }}
             />
-            {isTap && revealed && (
-              <div
-                className={`sa-duo-feedback sa-pop ${picked === (currentBlock.correct_index ?? 0) ? "ok" : "bad"}`}
-              >
-                <p className="sa-duo-feedback__title">
-                  {picked === (currentBlock.correct_index ?? 0) ? "¡Bien!" : "Casi"}
-                </p>
-                <p>
-                  {picked === (currentBlock.correct_index ?? 0)
-                    ? currentBlock.feedback_ok
-                    : currentBlock.feedback_bad}
-                </p>
-                <button type="button" className="sa-btn sa-btn--primary" style={{ width: "100%", marginTop: "0.75rem" }} onClick={advanceBlock}>
-                  Seguir →
-                </button>
-              </div>
-            )}
-            {!needsAnswer && (
-              <button
-                type="button"
-                className="sa-btn sa-btn--primary"
-                style={{ width: "100%", marginTop: "1.25rem" }}
-                onClick={advanceBlock}
-              >
-                {bIndex >= phaseBlocks.length - 1
-                  ? phase === "intro"
-                    ? "Empezar a aprender →"
-                    : "Ir al test →"
-                  : "Siguiente →"}
-              </button>
-            )}
-          </>
-        )}
+          ) : null}
 
-        {phase === "test" && currentQ && (
-          <>
-            <div className="sa-duo-botrow" style={{ marginBottom: "1rem" }}>
-              <StudyAgentsBotAvatar size={56} color={SA_PRIMARY} state="thinking" />
-              <div className="sa-duo-bubble sa-duo-bubble--test">
-                <p className="sa-duo-test-label">TEST · {qIndex + 1}/{activeDay.questions.length}</p>
-                <p>{currentQ.prompt}</p>
-              </div>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}>
-              {currentQ.options.map((opt, idx) => {
-                let border = "2px solid rgba(15,23,42,0.12)";
-                let bg = "#fff";
-                if (revealed) {
-                  if (idx === currentQ.correct_index) {
-                    border = "2px solid #22c55e";
-                    bg = "rgba(34,197,94,0.12)";
-                  } else if (idx === picked) {
-                    border = "2px solid #ef4444";
-                    bg = "rgba(239,68,68,0.1)";
-                  }
-                } else if (picked === idx) {
-                  border = `2px solid ${SA_CYAN}`;
-                  bg = "rgba(0,217,255,0.1)";
-                }
-                return (
-                  <button
-                    key={`${currentQ.id}-${idx}`}
-                    type="button"
-                    disabled={revealed}
-                    className="sa-choice"
-                    style={{ border, background: bg }}
-                    onClick={() => choose(idx, currentQ.correct_index)}
+          {hasCheck && (
+            <div className="sa-duo-checkblock">
+              <p className="sa-duo-checkblock__label">TOCA LA RESPUESTA</p>
+              {!revealed || picked === null ? (
+                <ChoiceList
+                  options={slide.check!.options}
+                  correctIndex={slide.check!.correct_index}
+                  picked={picked}
+                  revealed={revealed}
+                  onPick={(idx) => choose(idx, slide.check!.correct_index)}
+                />
+              ) : (
+                <>
+                  <ChoiceList
+                    options={slide.check!.options}
+                    correctIndex={slide.check!.correct_index}
+                    picked={picked}
+                    revealed={revealed}
+                    onPick={() => {}}
+                  />
+                  <div
+                    className={`sa-duo-feedback ${picked === slide.check!.correct_index ? "ok" : "bad"}`}
                   >
-                    {opt}
-                  </button>
-                );
-              })}
+                    <p className="sa-duo-feedback__title">
+                      {picked === slide.check!.correct_index ? "¡Bien!" : "Casi"}
+                    </p>
+                    <p>
+                      {picked === slide.check!.correct_index
+                        ? slide.check!.feedback_ok
+                        : slide.check!.feedback_bad}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
-            {revealed && (
-              <div
-                className={`sa-duo-feedback sa-pop ${picked === currentQ.correct_index ? "ok" : "bad"}`}
-              >
-                <p className="sa-duo-feedback__title">
-                  {picked === currentQ.correct_index ? "¡Correcto!" : "Casi — sigue"}
-                </p>
-                <p>
-                  {picked === currentQ.correct_index ? currentQ.feedback_ok : currentQ.feedback_bad}
-                </p>
-                <button
-                  type="button"
-                  className="sa-btn sa-btn--primary"
-                  style={{ width: "100%", marginTop: "0.75rem" }}
-                  onClick={advanceTest}
-                >
-                  {qIndex >= activeDay.questions.length - 1 ? "Terminar día →" : "Siguiente →"}
-                </button>
-              </div>
-            )}
-          </>
-        )}
+          )}
+        </div>
 
-        {phase === "test" && (!activeDay.questions || activeDay.questions.length === 0) && (
-          <button type="button" className="sa-btn sa-btn--primary" style={{ width: "100%" }} onClick={finishDay}>
-            Terminar día →
+        {(!hasCheck || revealed) && (
+          <button
+            type="button"
+            className="sa-btn sa-btn--primary"
+            style={{ width: "100%", marginTop: "1.1rem" }}
+            onClick={nextAfterSlide}
+          >
+            {slideIndex >= slides.length - 1 ? "Ir al test →" : "Siguiente →"}
           </button>
         )}
       </div>
     );
   }
 
-  // —— Mapa ——
+  if (activeDay && inTest && currentQ) {
+    return (
+      <div className={`${outfit.className} sa-steps-card sa-duo-shell sa-pop`} key={currentQ.id}>
+        <div className="sa-duo-top">
+          <button type="button" className="sa-chip" onClick={backToMap} style={{ borderRadius: 12 }}>
+            ← Camino
+          </button>
+          <div className="sa-duo-phase">
+            <span>1 Intro</span>
+            <span>2 Aprende</span>
+            <span className="on">3 Test</span>
+          </div>
+          <span className="sa-duo-xp">+{dayXp} XP</span>
+        </div>
+        <div className="sa-steps-progress">
+          <span style={{ width: `${Math.max(8, dayProgress)}%` }} />
+        </div>
+        <p className="sa-duo-focus">
+          Test · {qIndex + 1}/{activeDay.questions.length}
+        </p>
+
+        <div className="sa-duo-screen">
+          <div className="sa-duo-botrow sa-duo-botrow--lg">
+            <StudyAgentsBotAvatar size={72} color={SA_PRIMARY} state="thinking" />
+            <div className="sa-duo-bubble sa-duo-bubble--test">
+              <p className="sa-duo-test-label">TEST DEL DÍA</p>
+              <p>{currentQ.prompt}</p>
+            </div>
+          </div>
+          <ChoiceList
+            options={currentQ.options}
+            correctIndex={currentQ.correct_index}
+            picked={picked}
+            revealed={revealed}
+            onPick={(idx) => choose(idx, currentQ.correct_index)}
+          />
+          {revealed && (
+            <div className={`sa-duo-feedback ${picked === currentQ.correct_index ? "ok" : "bad"}`}>
+              <p className="sa-duo-feedback__title">
+                {picked === currentQ.correct_index ? "¡Correcto!" : "Casi — sigue"}
+              </p>
+              <p>{picked === currentQ.correct_index ? currentQ.feedback_ok : currentQ.feedback_bad}</p>
+              <button
+                type="button"
+                className="sa-btn sa-btn--primary"
+                style={{ width: "100%", marginTop: "0.75rem" }}
+                onClick={nextAfterTest}
+              >
+                {qIndex >= activeDay.questions.length - 1 ? "Terminar día →" : "Siguiente →"}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (activeDay && inTest) {
+    return (
+      <div className={`${outfit.className} sa-steps-card`}>
+        <button type="button" className="sa-btn sa-btn--primary" style={{ width: "100%" }} onClick={finishDay}>
+          Terminar día →
+        </button>
+      </div>
+    );
+  }
+
   const allDone = daysPrepared.length > 0 && progress.completedDays.length >= daysPrepared.length;
   const streakHint =
     progress.completedDays.length === 0
@@ -635,7 +830,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
   return (
     <div className={`${outfit.className} sa-steps-card sa-duo-shell sa-pop`}>
       <div className="sa-duo-maphead">
-        <StudyAgentsBotAvatar size={48} color={SA_PRIMARY} state="idle" />
+        <StudyAgentsBotAvatar size={52} color={SA_PRIMARY} state="idle" />
         <div style={{ flex: 1, minWidth: 0 }}>
           <h3 className={spaceGrotesk.className}>{plan.topic} · Diario</h3>
           <p>
@@ -647,9 +842,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
 
       {!allDone && todayLesson && (
         <button type="button" className="sa-duo-today" onClick={() => startDay(todayLesson)}>
-          <div className="sa-duo-today__bot">
-            <StudyAgentsBotAvatar size={44} color={SA_PRIMARY} state="idle" />
-          </div>
+          <StudyAgentsBotAvatar size={48} color={SA_PRIMARY} state="idle" />
           <div style={{ flex: 1, textAlign: "left" }}>
             <p className="sa-duo-today__label">HOY · RECORDATORIO</p>
             <p className={spaceGrotesk.className} style={{ margin: "0.2rem 0 0", fontWeight: 800, fontSize: "1.05rem" }}>
@@ -662,9 +855,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
         </button>
       )}
 
-      {allDone && (
-        <p className="sa-duo-donebanner">Curso completado. ¡Buen trabajo!</p>
-      )}
+      {allDone && <p className="sa-duo-donebanner">Curso completado. ¡Buen trabajo!</p>}
 
       <div className="sa-duo-path">
         {daysPrepared.map((d, i) => {
@@ -675,14 +866,16 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
           const isToday = todayLesson?.day === d.day;
           return (
             <div key={d.day} className="sa-duo-path__item">
-              {i > 0 && <div className={`sa-duo-path__line ${done || d.day <= progress.unlockedDay ? "on" : ""}`} />}
+              {i > 0 && (
+                <div className={`sa-duo-path__line ${done || d.day <= progress.unlockedDay ? "on" : ""}`} />
+              )}
               <button
                 type="button"
                 disabled={locked}
                 onClick={() => startDay(d)}
                 className={`sa-duo-node ${locked ? "locked" : ""} ${done ? "done" : ""} ${isToday ? "today" : ""}`}
               >
-                <span className="sa-duo-node__icon">{done ? "✓" : locked ? "🔒" : "▶"}</span>
+                <span className="sa-duo-node__icon">{done ? "✓" : locked ? "·" : "▶"}</span>
                 <span className="sa-duo-node__text">
                   <strong>
                     Día {d.day}: {d.title}
@@ -707,6 +900,7 @@ export function parseInteractivePlan(raw: string): InteractivePlan | null {
       data.format === "interactive_v1" ||
       data.format === "interactive_v2" ||
       data.format === "interactive_v3" ||
+      data.format === "interactive_v4" ||
       data.topic
     ) {
       return data as InteractivePlan;
