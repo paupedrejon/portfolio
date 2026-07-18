@@ -1,5 +1,13 @@
 # Changelog — Study Agents
 
+## 0.4.0 — Dopamina: ghost home + pasos interactivos
+
+### Visible
+- Botones estilo **home** (outline 12px, hover `#00d9ff` + glow)
+- Plan de estudio = wizard de 3 toques (sin formulario denso)
+- Nuevo tipo de mensaje `interactive_steps` (una cosa a la vez, barra de progreso)
+- Tras crear un plan: pasos del calendario + apuntes
+
 ## 0.3.9 — Estética home + chat blanco
 
 ### Visible

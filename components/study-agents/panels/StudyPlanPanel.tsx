@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { saPost } from "@/hooks/study-agents/useApiClient";
-import SaModal, {
-  saInputStyle,
-  saModalTokens,
-  saPrimaryButtonStyle,
-} from "@/components/study-agents/ui/SaModal";
+import SaModal, { saModalTokens } from "@/components/study-agents/ui/SaModal";
+import { spaceGrotesk } from "@/app/fonts";
+import "@/components/study-agents/study-agents-chat.css";
 
 type Props = {
   open: boolean;
@@ -20,6 +18,18 @@ type Props = {
   onPlanGenerated: (planMarkdown: string, meta: { topic: string; days: number }) => void;
 };
 
+const DAY_OPTIONS = [
+  { days: 3, label: "Sprint 3 días", hint: "Intensivo" },
+  { days: 7, label: "1 semana", hint: "Equilibrado" },
+  { days: 14, label: "2 semanas", hint: "Con margen" },
+] as const;
+
+const TIME_OPTIONS = [
+  { minutes: 25, label: "25 min", hint: "Pomodoro" },
+  { minutes: 45, label: "45 min", hint: "Estándar" },
+  { minutes: 90, label: "90 min", hint: "Bloque largo" },
+] as const;
+
 export default function StudyPlanPanel({
   open,
   onClose,
@@ -31,17 +41,19 @@ export default function StudyPlanPanel({
   model = null,
   onPlanGenerated,
 }: Props) {
+  const [step, setStep] = useState(0);
   const [topic, setTopic] = useState(defaultTopic);
   const [days, setDays] = useState(7);
   const [minutes, setMinutes] = useState(45);
-  const [goal, setGoal] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       setTopic(defaultTopic);
+      setStep(0);
       setError(null);
+      setLoading(false);
     }
   }, [open, defaultTopic]);
 
@@ -54,7 +66,8 @@ export default function StudyPlanPanel({
     }
     const topicVal = topic.trim() || defaultTopic.trim();
     if (!topicVal) {
-      setError("Indica un tema para el plan.");
+      setError("Elige o escribe un tema.");
+      setStep(0);
       return;
     }
     setLoading(true);
@@ -70,7 +83,7 @@ export default function StudyPlanPanel({
         topic: topicVal,
         days,
         minutes_per_day: minutes,
-        goal: goal.trim() || null,
+        goal: null,
         model: model || null,
         userId,
         chatId,
@@ -91,93 +104,156 @@ export default function StudyPlanPanel({
     }
   };
 
+  const titles = ["¿Qué estudias?", "¿Cuánto tiempo?", "¡A por ello!"];
+  const subs = [
+    "Una sola pregunta. Toca y sigue.",
+    "Elige ritmo. Sin formularios eternos.",
+    "Generamos un plan con gaps + repaso.",
+  ];
+
   return (
     <SaModal
       open={open}
       onClose={onClose}
       colorTheme={colorTheme}
-      title="Plan de estudio"
+      title={titles[step]}
       titleId="study-plan-title"
-      subtitle="Prioriza gaps, mezcla repaso SRS y tests cortos. Regenera tras un test."
-      maxWidth={440}
+      subtitle={subs[step]}
+      maxWidth={420}
+      light
     >
-      <div
-        style={{
-          margin: "0.85rem 0 1.1rem",
-          padding: "0.7rem 0.85rem",
-          borderRadius: 12,
-          background: t.softBg,
-          border: `1px solid ${t.border}`,
-          fontSize: "0.78rem",
-          color: t.muted,
-          lineHeight: 1.45,
-        }}
-      >
-        Secuenciación adaptativa: el plan usa tu grafo de conceptos y mastery, no un calendario genérico.
+      <div className="sa-step-dots" aria-hidden>
+        {[0, 1, 2].map((i) => (
+          <span key={i} className={`sa-step-dot ${i === step ? "sa-step-dot--on" : ""}`} />
+        ))}
       </div>
 
-      <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, marginBottom: 6, color: t.muted }}>
-        Tema
-      </label>
-      <input
-        value={topic}
-        onChange={(e) => setTopic(e.target.value)}
-        placeholder={defaultTopic || "Ej: derivadas, SQL, biología celular…"}
-        style={saInputStyle({ ...t, marginBottom: "0.85rem" })}
-      />
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-        <div>
-          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, marginBottom: 6, color: t.muted }}>
-            Días
-          </label>
+      {step === 0 && (
+        <div className="sa-pop">
           <input
-            type="number"
-            min={3}
-            max={30}
-            value={days}
-            onChange={(e) => setDays(Number(e.target.value) || 7)}
-            style={saInputStyle(t)}
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder={defaultTopic || "Ej: derivadas, SQL…"}
+            autoFocus
+            style={{
+              width: "100%",
+              padding: "1rem 1.1rem",
+              borderRadius: 14,
+              border: "2px solid rgba(15,23,42,0.12)",
+              fontSize: "1.05rem",
+              fontWeight: 600,
+              boxSizing: "border-box",
+              marginBottom: "0.85rem",
+              outline: "none",
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && topic.trim()) setStep(1);
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#00d9ff";
+              e.currentTarget.style.boxShadow = "0 0 0 4px rgba(0,217,255,0.15)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "rgba(15,23,42,0.12)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           />
+          {defaultTopic && (
+            <button
+              type="button"
+              className={`sa-choice ${topic === defaultTopic ? "sa-choice--on" : ""}`}
+              onClick={() => setTopic(defaultTopic)}
+              style={{ marginBottom: "0.5rem" }}
+            >
+              Usar tema del chat: {defaultTopic}
+            </button>
+          )}
+          <button
+            type="button"
+            className="sa-btn sa-btn--primary"
+            style={{ width: "100%", marginTop: "0.75rem" }}
+            disabled={!topic.trim() && !defaultTopic.trim()}
+            onClick={() => setStep(1)}
+          >
+            Siguiente →
+          </button>
         </div>
-        <div>
-          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, marginBottom: 6, color: t.muted }}>
-            Min / día
-          </label>
-          <input
-            type="number"
-            min={15}
-            max={180}
-            step={5}
-            value={minutes}
-            onChange={(e) => setMinutes(Number(e.target.value) || 45)}
-            style={saInputStyle(t)}
-          />
-        </div>
-      </div>
-
-      <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, margin: "0.85rem 0 6px", color: t.muted }}>
-        Objetivo (opcional)
-      </label>
-      <input
-        value={goal}
-        onChange={(e) => setGoal(e.target.value)}
-        placeholder="Ej: aprobar el parcial del viernes"
-        style={saInputStyle({ ...t, marginBottom: "1rem" })}
-      />
-
-      {error && (
-        <p style={{ margin: "0 0 0.75rem", color: "#f87171", fontSize: "0.8rem" }}>{error}</p>
       )}
 
-      <button
-        type="button"
-        onClick={() => void generate()}
-        disabled={loading}
-        style={saPrimaryButtonStyle({ dark: t.dark, loading, fullWidth: true })}
-      >
-        {loading ? "Generando plan…" : "Crear mi plan"}
-      </button>
+      {step === 1 && (
+        <div className="sa-pop" style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}>
+          <p className={spaceGrotesk.className} style={{ margin: "0 0 0.35rem", fontWeight: 700, fontSize: "0.9rem" }}>
+            Duración
+          </p>
+          {DAY_OPTIONS.map((o) => (
+            <button
+              key={o.days}
+              type="button"
+              className={`sa-choice ${days === o.days ? "sa-choice--on" : ""}`}
+              onClick={() => setDays(o.days)}
+            >
+              <span style={{ flex: 1 }}>{o.label}</span>
+              <span style={{ fontSize: "0.8rem", color: t.muted, fontWeight: 500 }}>{o.hint}</span>
+            </button>
+          ))}
+          <p className={spaceGrotesk.className} style={{ margin: "0.85rem 0 0.35rem", fontWeight: 700, fontSize: "0.9rem" }}>
+            Cada día
+          </p>
+          {TIME_OPTIONS.map((o) => (
+            <button
+              key={o.minutes}
+              type="button"
+              className={`sa-choice ${minutes === o.minutes ? "sa-choice--on" : ""}`}
+              onClick={() => setMinutes(o.minutes)}
+            >
+              <span style={{ flex: 1 }}>{o.label}</span>
+              <span style={{ fontSize: "0.8rem", color: t.muted, fontWeight: 500 }}>{o.hint}</span>
+            </button>
+          ))}
+          <div style={{ display: "flex", gap: "0.55rem", marginTop: "0.85rem" }}>
+            <button type="button" className="sa-btn sa-btn--ghost" onClick={() => setStep(0)}>
+              Atrás
+            </button>
+            <button type="button" className="sa-btn sa-btn--primary" style={{ flex: 1 }} onClick={() => setStep(2)}>
+              Siguiente →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="sa-pop">
+          <div
+            style={{
+              padding: "1rem 1.1rem",
+              borderRadius: 14,
+              border: "2px solid rgba(53,140,159,0.2)",
+              background: "rgba(53,140,159,0.06)",
+              marginBottom: "1rem",
+            }}
+          >
+            <p style={{ margin: 0, fontWeight: 700, color: "#0f172a" }}>{topic.trim() || defaultTopic}</p>
+            <p style={{ margin: "0.35rem 0 0", fontSize: "0.85rem", color: "#64748b" }}>
+              {days} días · {minutes} min/día · gaps + SRS
+            </p>
+          </div>
+          {error && <p style={{ color: "#ef4444", fontSize: "0.85rem", margin: "0 0 0.75rem" }}>{error}</p>}
+          <div style={{ display: "flex", gap: "0.55rem" }}>
+            <button type="button" className="sa-btn sa-btn--ghost" onClick={() => setStep(1)} disabled={loading}>
+              Atrás
+            </button>
+            <button
+              type="button"
+              className="sa-btn sa-btn--primary"
+              style={{ flex: 1 }}
+              disabled={loading}
+              onClick={() => void generate()}
+            >
+              {loading ? "Generando…" : "Crear plan →"}
+            </button>
+          </div>
+        </div>
+      )}
     </SaModal>
   );
 }

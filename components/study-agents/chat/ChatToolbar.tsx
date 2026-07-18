@@ -80,18 +80,16 @@ export default function ChatToolbar({
   const chip = (active?: boolean) => ({
     display: "inline-flex" as const,
     alignItems: "center" as const,
-    gap: "0.4rem",
-    padding: "0.55rem 1rem",
-    borderRadius: 9999,
+    gap: "0.35rem",
+    padding: "0.5rem 0.95rem",
+    borderRadius: 12,
     cursor: "pointer" as const,
-    fontSize: "0.85rem",
+    fontSize: "0.82rem",
     fontWeight: 600,
-    color: SA_PRIMARY,
-    background: active ? SA_PRIMARY_SOFT : "#ffffff",
-    border: `1px solid ${active ? SA_PRIMARY : SA_PRIMARY_BORDER}`,
-    boxShadow: active
-      ? "0 4px 12px rgba(53, 140, 159, 0.18)"
-      : "0 2px 6px rgba(15, 23, 42, 0.05)",
+    color: "#0f172a",
+    background: active ? "rgba(0, 217, 255, 0.12)" : "transparent",
+    border: `1.5px solid ${active ? "#00d9ff" : "rgba(15, 23, 42, 0.14)"}`,
+    boxShadow: active ? "0 0 18px rgba(0, 217, 255, 0.22)" : "none",
   });
 
   return (

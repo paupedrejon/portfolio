@@ -65,6 +65,10 @@ import ChatToolbar from "@/components/study-agents/chat/ChatToolbar";
 import ChatDocumentsPanel from "@/components/study-agents/chat/ChatDocumentsPanel";
 import QuickActionsBar from "@/components/study-agents/chat/QuickActionsBar";
 import SuccessMessage from "@/components/study-agents/chat/SuccessMessage";
+import InteractiveSteps, {
+  stepsFromPlanMarkdown,
+  type InteractiveStep,
+} from "@/components/study-agents/chat/InteractiveSteps";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
 import StudyPlanPanel from "@/components/study-agents/panels/StudyPlanPanel";
 import { SA_PRIMARY, SA_CHAT_BG } from "@/lib/study-agents/brand";
@@ -233,7 +237,7 @@ interface Message {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
-  type?: "message" | "notes" | "test" | "feedback" | "success" | "exercise" | "exercise_result" | "warning" | "level_selection";
+  type?: "message" | "notes" | "test" | "feedback" | "success" | "exercise" | "exercise_result" | "warning" | "level_selection" | "interactive_steps";
   timestamp: Date;
   costEstimate?: CostEstimate;
   topic?: string; // Tema del mensaje si es selección de nivel
@@ -4324,6 +4328,16 @@ ${contentPreview}
               content: `Genera un plan de estudio de ${meta.days} días sobre: ${meta.topic}`,
               type: "message",
             });
+            const steps = stepsFromPlanMarkdown(planMarkdown, meta.topic);
+            addMessage({
+              role: "assistant",
+              content: JSON.stringify({
+                title: `Plan: ${meta.topic}`,
+                subtitle: `${meta.days} días · toca Siguiente para avanzar`,
+                steps,
+              }),
+              type: "interactive_steps",
+            });
             addMessage({
               role: "assistant",
               content: planMarkdown,
@@ -5379,9 +5393,9 @@ ${contentPreview}
               <div
                 className="message-bubble-premium"
                 style={{
-                  maxWidth: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" ? "100%" : "85%",
-                  width: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" ? "100%" : undefined,
-                  flex: message.role === "assistant" && (message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning") ? 1 : undefined,
+                  maxWidth: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" || message.type === "interactive_steps" ? "100%" : "85%",
+                  width: message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" || message.type === "interactive_steps" ? "100%" : undefined,
+                  flex: message.role === "assistant" && (message.type === "notes" || message.type === "test" || message.type === "exercise" || message.type === "exercise_result" || message.type === "success" || message.type === "warning" || message.type === "interactive_steps") ? 1 : undefined,
                   minWidth: 0,
                   padding:
                     message.role === "user"
@@ -5446,7 +5460,24 @@ ${contentPreview}
                     }}
                   />
                 )}
-                {message.type === "notes" ? (
+                {message.type === "interactive_steps" ? (
+                  (() => {
+                    let payload: { title?: string; subtitle?: string; steps?: InteractiveStep[] } = {};
+                    try {
+                      payload = JSON.parse(message.content);
+                    } catch {
+                      payload = { title: "Pasos", steps: [] };
+                    }
+                    return (
+                      <InteractiveSteps
+                        title={payload.title || "Siguiente paso"}
+                        subtitle={payload.subtitle}
+                        steps={payload.steps || []}
+                        colorTheme={colorTheme}
+                      />
+                    );
+                  })()
+                ) : message.type === "notes" ? (
                   <>
                     <NotesViewer 
                       content={message.content} 
