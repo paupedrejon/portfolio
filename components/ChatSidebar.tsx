@@ -1546,13 +1546,13 @@ export default function ChatSidebar({
                                   justifyContent: "center",
                                   transition: "all 0.2s ease",
                                   color: (chat.metadata?.icon || "chat") === icon.value
-                                    ? (chatColor ? "white" : "#6366f1")
+                                    ? (chatColor ? "white" : "#358c9f")
                                     : (colorTheme === "dark" ? "rgba(226, 232, 240, 0.8)" : "rgba(26, 36, 52, 0.8)"),
                                 }}
                                 onMouseEnter={(e) => {
                                   e.currentTarget.style.transform = "scale(1.1)";
                                   e.currentTarget.style.background = chatColor || (colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.2)");
-                                  e.currentTarget.style.color = chatColor ? "white" : "#6366f1";
+                                  e.currentTarget.style.color = chatColor ? "white" : "#358c9f";
                                   e.currentTarget.style.border = `2px solid ${chatColor || "#358c9f"}`;
                                 }}
                                 onMouseLeave={(e) => {
@@ -1561,7 +1561,7 @@ export default function ChatSidebar({
                                     ? (chatColor || (colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.2)"))
                                     : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.1)");
                                   e.currentTarget.style.color = (chat.metadata?.icon || "chat") === icon.value
-                                    ? (chatColor ? "white" : "#6366f1")
+                                    ? (chatColor ? "white" : "#358c9f")
                                     : (colorTheme === "dark" ? "rgba(226, 232, 240, 0.8)" : "rgba(26, 36, 52, 0.8)");
                                   e.currentTarget.style.border = (chat.metadata?.icon || "chat") === icon.value
                                     ? `2px solid ${chatColor || "#358c9f"}`
