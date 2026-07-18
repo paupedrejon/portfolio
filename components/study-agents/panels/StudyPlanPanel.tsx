@@ -15,19 +15,23 @@ type Props = {
   chatId: string | null;
   defaultTopic?: string;
   model?: string | null;
-  onPlanGenerated: (planMarkdown: string, meta: { topic: string; days: number }) => void;
+  /** Crea un chat-curso diario con el plan interactivo */
+  onPlanGenerated: (
+    planMarkdown: string,
+    meta: { topic: string; days: number; minutes: number },
+  ) => void | Promise<void>;
 };
 
 const DAY_OPTIONS = [
-  { days: 3, label: "Sprint 3 días", hint: "Intensivo" },
-  { days: 7, label: "1 semana", hint: "Equilibrado" },
+  { days: 7, label: "1 semana", hint: "Ideal" },
   { days: 14, label: "2 semanas", hint: "Con margen" },
+  { days: 30, label: "30 días", hint: "Hábito" },
 ] as const;
 
 const TIME_OPTIONS = [
+  { minutes: 5, label: "5 min", hint: "Micro · Duolingo" },
+  { minutes: 15, label: "15 min", hint: "Rápido" },
   { minutes: 25, label: "25 min", hint: "Pomodoro" },
-  { minutes: 45, label: "45 min", hint: "Estándar" },
-  { minutes: 90, label: "90 min", hint: "Bloque largo" },
 ] as const;
 
 export default function StudyPlanPanel({
@@ -44,7 +48,7 @@ export default function StudyPlanPanel({
   const [step, setStep] = useState(0);
   const [topic, setTopic] = useState(defaultTopic);
   const [days, setDays] = useState(7);
-  const [minutes, setMinutes] = useState(45);
+  const [minutes, setMinutes] = useState(5);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,6 +58,8 @@ export default function StudyPlanPanel({
       setStep(0);
       setError(null);
       setLoading(false);
+      setMinutes(5);
+      setDays(7);
     }
   }, [open, defaultTopic]);
 
@@ -84,7 +90,7 @@ export default function StudyPlanPanel({
         topic: topicVal,
         days,
         minutes_per_day: minutes,
-        goal: null,
+        goal: `Curso diario de ${topicVal}: ${minutes} min al día, lecciones interactivas estilo Duolingo.`,
         model: model || null,
         userId,
         chatId,
@@ -100,7 +106,7 @@ export default function StudyPlanPanel({
         data.plan_interactive != null
           ? JSON.stringify(data.plan_interactive)
           : data.plan || "";
-      onPlanGenerated(payload, { topic: topicVal, days });
+      await onPlanGenerated(payload, { topic: topicVal, days, minutes });
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al generar el plan");
@@ -109,11 +115,11 @@ export default function StudyPlanPanel({
     }
   };
 
-  const titles = ["¿Qué estudias?", "¿Cuánto tiempo?", "¡A por ello!"];
+  const titles = ["¿Qué curso?", "¿Ritmo diario?", "Crear chat"];
   const subs = [
-    "Una sola pregunta. Toca y sigue.",
-    "Elige ritmo. Sin formularios eternos.",
-    "Generamos un plan con gaps + repaso.",
+    "Ej: React, SQL, derivadas… Se creará un chat solo para ese curso.",
+    "Como Duolingo: pocos minutos al día, una lección interactiva.",
+    "Abrimos un chat nuevo con el camino día a día.",
   ];
 
   return (
@@ -138,7 +144,7 @@ export default function StudyPlanPanel({
           <input
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder={defaultTopic || "Ej: derivadas, SQL…"}
+            placeholder={defaultTopic || "Ej: React, SQL…"}
             autoFocus
             style={{
               width: "100%",
@@ -188,7 +194,7 @@ export default function StudyPlanPanel({
       {step === 1 && (
         <div className="sa-pop" style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}>
           <p className={spaceGrotesk.className} style={{ margin: "0 0 0.35rem", fontWeight: 700, fontSize: "0.9rem" }}>
-            Duración
+            Duración del curso
           </p>
           {DAY_OPTIONS.map((o) => (
             <button
@@ -237,9 +243,11 @@ export default function StudyPlanPanel({
               marginBottom: "1rem",
             }}
           >
-            <p style={{ margin: 0, fontWeight: 700, color: "#0f172a" }}>{topic.trim() || defaultTopic}</p>
+            <p style={{ margin: 0, fontWeight: 700, color: "#0f172a" }}>
+              Chat: {(topic.trim() || defaultTopic) + " · Diario"}
+            </p>
             <p style={{ margin: "0.35rem 0 0", fontSize: "0.85rem", color: "#64748b" }}>
-              {days} días · {minutes} min/día · gaps + SRS
+              {days} lecciones · {minutes} min/día · recordatorio diario
             </p>
           </div>
           {error && <p style={{ color: "#ef4444", fontSize: "0.85rem", margin: "0 0 0.75rem" }}>{error}</p>}
@@ -254,7 +262,7 @@ export default function StudyPlanPanel({
               disabled={loading}
               onClick={() => void generate()}
             >
-              {loading ? "Generando…" : "Crear plan →"}
+              {loading ? "Creando curso…" : "Crear chat del curso →"}
             </button>
           </div>
         </div>

@@ -1,5 +1,22 @@
 # Changelog — Study Agents
 
+## 0.4.2 — Curso diario Duolingo + conceptos con contexto
+
+### Visible (Plan)
+- **Crear plan** abre un **chat nuevo** (`Tema · Diario`), no un muro en el chat actual
+- Ritmo **5 / 15 / 25 min** al día (estilo Duolingo)
+- Cada lección: **enseñar** (card) → **check** (tap) → **quiz** + XP
+- Recordatorio **HOY** en el camino; no adelantas lecciones futuras del calendario
+
+### Visible (Conceptos)
+- Extracción usa **PDF + conversación** (no solo palabras del título)
+- Ya no cae en heurística Title Case basura si el LLM falla
+
+### Backend
+- Plan JSON `interactive_v2` (teach + questions); minutos desde 5
+- `concepts/extract` vía ModelManager + RAG semántico + historial del chat
+- Redeploy Railway obligatorio
+
 ## 0.4.1 — Plan = camino Duolingo (quizzes, no muro de texto)
 
 ### Visible

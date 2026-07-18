@@ -16,10 +16,18 @@ def _slug(name: str) -> str:
     return base or uuid.uuid4().hex[:10]
 
 
+_STOP_PHRASES = {
+    "the", "this", "that", "with", "from", "página", "pagina", "índice", "indice",
+    "contenido", "introducción", "introduccion", "capítulo", "capitulo", "anexo",
+    "bibliografía", "bibliografia", "resumen", "abstract", "table of contents",
+    "copyright", "universidad", "asignatura", "pdf",
+}
+
+
 class ConceptExtractorAgent:
     """
     Extrae 10–40 micro-conceptos con prerrequisitos a partir de texto
-    (fragmentos RAG del chat o texto libre).
+    (fragmentos RAG del chat, conversación o texto libre).
     """
 
     def __init__(self, llm: Any = None):
@@ -31,18 +39,32 @@ class ConceptExtractorAgent:
         *,
         source_doc: Optional[str] = None,
         max_concepts: int = 25,
+        conversation_excerpt: Optional[str] = None,
+        topic_hint: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         text = (text or "").strip()
-        if not text:
+        if not text and not (conversation_excerpt or "").strip():
             return []
 
         if self.llm is not None:
             try:
-                return self._extract_with_llm(text, source_doc=source_doc, max_concepts=max_concepts)
+                return self._extract_with_llm(
+                    text,
+                    source_doc=source_doc,
+                    max_concepts=max_concepts,
+                    conversation_excerpt=conversation_excerpt,
+                    topic_hint=topic_hint,
+                )
             except Exception as e:
-                print(f"⚠️ ConceptExtractor LLM falló, usando heurística: {e}")
+                print(f"⚠️ ConceptExtractor LLM falló: {e}")
+                # No devolver heurística basura de Title Case / filename
+                raise
 
-        return self._extract_heuristic(text, source_doc=source_doc, max_concepts=max_concepts)
+        return self._extract_heuristic(
+            text or (conversation_excerpt or ""),
+            source_doc=source_doc,
+            max_concepts=max_concepts,
+        )
 
     def _extract_with_llm(
         self,
@@ -50,13 +72,30 @@ class ConceptExtractorAgent:
         *,
         source_doc: Optional[str],
         max_concepts: int,
+        conversation_excerpt: Optional[str] = None,
+        topic_hint: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        excerpt = text[:12000]
-        prompt = f"""Eres un experto en ciencia del aprendizaje. Extrae micro-conceptos del material de estudio.
+        material = text[:10000] if text else "(sin extractos de documento)"
+        chat_ctx = (conversation_excerpt or "").strip()[:4000]
+        topic_line = (topic_hint or "").strip()
+        source_line = source_doc or "(desconocido)"
 
-Material:
+        prompt = f"""Eres un experto en ciencia del aprendizaje. Extrae los CONCEPTOS CLAVE que el alumno debe dominar.
+
+## Tema del chat (si hay)
+{topic_line or "(no especificado)"}
+
+## Nombre del archivo (IGNORAR como fuente de conceptos; no es contenido)
+{source_line}
+
+## Conversación reciente (qué se está explicando de verdad)
 \"\"\"
-{excerpt}
+{chat_ctx or "(sin mensajes aún)"}
+\"\"\"
+
+## Extractos del material / PDF (contenido real; ignora portada, índice, metadatos, pies de página)
+\"\"\"
+{material}
 \"\"\"
 
 Devuelve SOLO un JSON válido (sin markdown) con esta forma:
@@ -64,14 +103,18 @@ Devuelve SOLO un JSON válido (sin markdown) con esta forma:
   "concepts": [
     {{
       "name": "nombre corto del micro-concepto",
-      "description": "1 frase",
+      "description": "1 frase que diga QUÉ es / por qué importa en este material",
       "prerequisites": ["nombre de otro concepto de esta lista"]
     }}
   ]
 }}
 
-Reglas:
-- Entre 10 y {max_concepts} conceptos (micro, no temas amplios).
+Reglas ESTRICTAS:
+- Entre 8 y {max_concepts} conceptos (micro, aprendibles; no temas vagos).
+- Prioriza lo que se EXPLICA en el PDF y lo que sale en la conversación.
+- PROHIBIDO: palabras sueltas del título/filename, TOC, "Capítulo 1", nombres de asignatura, autores, números de página.
+- PROHIBIDO: conceptos que solo sean capitalizaciones sin definición en el material.
+- Si el material es técnico (p.ej. React), usa términos reales (hooks, JSX, props…), no ruido tipográfico.
 - prerequisites solo con nombres que también aparezcan en la lista.
 - Español si el material está en español.
 """
@@ -83,7 +126,23 @@ Reglas:
             content = re.sub(r"\s*```$", "", content)
         parsed = json.loads(content)
         items = parsed.get("concepts") or []
-        return self._normalize(items, source_doc=source_doc, max_concepts=max_concepts)
+        normalized = self._normalize(items, source_doc=source_doc, max_concepts=max_concepts)
+        # Filtrar basura tipo filename
+        junk = self._junk_tokens(source_doc)
+        filtered = [
+            c for c in normalized
+            if c["name"].lower() not in junk
+            and len(c["name"].split()) <= 6
+            and c["name"].lower() not in _STOP_PHRASES
+        ]
+        return filtered[:max_concepts]
+
+    def _junk_tokens(self, source_doc: Optional[str]) -> set:
+        if not source_doc:
+            return set()
+        base = re.sub(r"\.[a-zA-Z0-9]+$", "", source_doc)
+        parts = re.split(r"[\s_\-\.]+", base.lower())
+        return {p for p in parts if len(p) > 2}
 
     def _extract_heuristic(
         self,
@@ -92,8 +151,9 @@ Reglas:
         source_doc: Optional[str],
         max_concepts: int,
     ) -> List[Dict[str, Any]]:
-        """Fallback sin LLM: headings + frases clave."""
+        """Fallback sin LLM: solo headings claros; nunca Title Case suelto."""
         candidates: List[str] = []
+        junk = self._junk_tokens(source_doc)
         for line in text.splitlines():
             line = line.strip()
             if not line:
@@ -101,16 +161,9 @@ Reglas:
             if re.match(r"^#{1,3}\s+\S", line) or re.match(r"^\d+[\.\)]\s+\S", line):
                 cleaned = re.sub(r"^[#\d\.\)\s]+", "", line)
                 cleaned = cleaned.strip(" -:•")
-                if 3 < len(cleaned) < 80:
-                    candidates.append(cleaned)
-            elif line.endswith(":") and 3 < len(line) < 60:
-                candidates.append(line.rstrip(":").strip())
-
-        # Frases con mayúsculas / términos técnicos cortos
-        for m in re.finditer(r"\b([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ\-]{2,}(?:\s+[A-Za-zÁÉÍÓÚÑáéíóúñ\-]{2,}){0,3})\b", text):
-            phrase = m.group(1).strip()
-            if phrase.lower() not in {"the", "this", "that", "with", "from"}:
-                candidates.append(phrase)
+                if 3 < len(cleaned) < 80 and cleaned.lower() not in junk:
+                    if cleaned.lower() not in _STOP_PHRASES:
+                        candidates.append(cleaned)
 
         seen = set()
         unique: List[str] = []
@@ -123,7 +176,10 @@ Reglas:
             if len(unique) >= max_concepts:
                 break
 
-        items = [{"name": n, "description": f"Concepto detectado en el material: {n}", "prerequisites": []} for n in unique]
+        items = [
+            {"name": n, "description": f"Concepto detectado en el material: {n}", "prerequisites": []}
+            for n in unique
+        ]
         return self._normalize(items, source_doc=source_doc, max_concepts=max_concepts)
 
     def _normalize(
@@ -140,7 +196,6 @@ Reglas:
             if not name:
                 continue
             cid = _slug(name)
-            # evitar colisiones
             base = cid
             n = 2
             while cid in name_to_id.values():
@@ -156,7 +211,6 @@ Reglas:
                 "source_pages": raw.get("source_pages") or [],
             })
 
-        # Resolver prerequisites por nombre → id
         id_by_name = {c["name"].lower(): c["concept_id"] for c in normalized}
         for i, raw in enumerate(items[: len(normalized)]):
             prereq_names = raw.get("prerequisites") or []

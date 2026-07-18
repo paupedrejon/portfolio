@@ -931,39 +931,128 @@ async def get_concepts(
 
 @app.post("/api/concepts/extract")
 async def extract_concepts(body: ExtractConceptsRequest):
-    """Extrae micro-conceptos del corpus RAG del chat."""
+    """Extrae micro-conceptos del corpus RAG + conversación del chat."""
     try:
-        apply_provider_keys_from_request(body.apiKey, body.provider_keys)
-        from core import concept_store
-        from agents.concept_extractor import ConceptExtractorAgent
-        from langchain_openai import ChatOpenAI
-
-        if not body.apiKey:
-            raise HTTPException(status_code=400, detail="API key requerida")
+        openai_key, has_llm = resolve_openai_and_llm_access(body.apiKey, body.provider_keys)
+        if not has_llm:
+            raise HTTPException(
+                status_code=400,
+                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+            )
         if not body.chatId:
             raise HTTPException(status_code=400, detail="chatId requerido")
 
-        system = get_or_create_system(body.apiKey, mode="auto")
-        corpus = system.memory.get_chat_corpus_text(body.chatId, body.userId)
-        if not corpus.strip():
+        from core import concept_store
+        from agents.concept_extractor import ConceptExtractorAgent
+        from chat_storage import load_chat
+
+        system = get_or_create_system(openai_key, mode="auto")
+
+        # 1) Material: RAG semántico (no solo primeros chunks = portada/TOC)
+        corpus_parts: List[str] = []
+        try:
+            for q in (
+                "conceptos clave definiciones ideas principales",
+                "explicación teoría ejemplos importantes",
+            ):
+                chunks = system.memory.retrieve_relevant_content(
+                    q, n_results=6, chat_id=body.chatId, user_id=body.userId
+                )
+                for c in chunks or []:
+                    if c and str(c) not in corpus_parts:
+                        corpus_parts.append(str(c))
+        except Exception as e:
+            print(f"⚠️ extract_concepts RAG: {e}")
+
+        if not corpus_parts:
+            raw_corpus = system.memory.get_chat_corpus_text(body.chatId, body.userId)
+            if raw_corpus.strip():
+                corpus_parts.append(raw_corpus)
+
+        # 2) Conversación: qué se está explicando de verdad
+        conversation_excerpt = ""
+        topic_hint = None
+        try:
+            chat_data = load_chat(body.userId, body.chatId)
+            if chat_data:
+                topic_hint = (chat_data.get("metadata") or {}).get("topic")
+                msgs = chat_data.get("messages") or []
+                lines = []
+                for m in msgs[-24:]:
+                    role = m.get("role") or "?"
+                    content = (m.get("content") or "").strip()
+                    mtype = m.get("type") or "message"
+                    if mtype in ("study_plan", "test", "exercise", "notes") and len(content) > 500:
+                        content = content[:400] + "…"
+                    if content:
+                        lines.append(f"{role}: {content[:600]}")
+                conversation_excerpt = "\n".join(lines)
+                if not topic_hint and chat_data.get("title"):
+                    topic_hint = str(chat_data.get("title")).replace(" · Diario", "").strip()
+        except Exception as e:
+            print(f"⚠️ extract_concepts load_chat: {e}")
+
+        corpus = "\n\n---\n\n".join(corpus_parts)
+        if len(corpus) > 12000:
+            corpus = corpus[:12000] + "\n\n[...truncado...]"
+
+        if not corpus.strip() and not conversation_excerpt.strip():
             raise HTTPException(
                 status_code=400,
-                detail="No hay documentos indexados en este chat. Sube un PDF primero.",
+                detail="No hay documentos ni conversación en este chat. Sube un PDF o habla del tema primero.",
             )
 
-        llm = ChatOpenAI(
-            model="gpt-3.5-turbo",
-            temperature=0.2,
-            openai_api_key=body.apiKey,
-        )
+        # 3) LLM vía ModelManager (misma vía que plan/apuntes; no ChatOpenAI ciego)
+        llm = None
+        mm = None
+        if hasattr(system, "explanation_agent") and getattr(system.explanation_agent, "model_manager", None):
+            mm = system.explanation_agent.model_manager
+        elif hasattr(system, "qa_assistant") and getattr(system.qa_assistant, "model_manager", None):
+            mm = system.qa_assistant.model_manager
+        if mm:
+            try:
+                _cfg, llm = mm.select_model(
+                    task_type="generation",
+                    min_quality="medium",
+                    preferred_model=None,
+                    context_length=8000,
+                )
+                if hasattr(llm, "temperature"):
+                    llm.temperature = 0.2
+            except Exception as e:
+                print(f"⚠️ extract_concepts ModelManager: {e}")
+        if llm is None:
+            from langchain_openai import ChatOpenAI
+            if not openai_key:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No hay modelo LLM disponible para extraer conceptos.",
+                )
+            llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.2, openai_api_key=openai_key)
+
         extractor = ConceptExtractorAgent(llm=llm)
         docs = system.memory.list_chat_documents(body.chatId, body.userId)
         source = docs[0]["filename"] if docs else None
-        concepts = extractor.extract_from_text(
-            corpus,
-            source_doc=source,
-            max_concepts=min(max(body.max_concepts, 10), 40),
-        )
+        try:
+            concepts = extractor.extract_from_text(
+                corpus,
+                source_doc=source,
+                max_concepts=min(max(body.max_concepts, 8), 40),
+                conversation_excerpt=conversation_excerpt,
+                topic_hint=topic_hint,
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"No se pudieron extraer conceptos con el modelo: {e}",
+            )
+
+        if not concepts:
+            raise HTTPException(
+                status_code=422,
+                detail="El modelo no encontró conceptos útiles. Prueba con más conversación o un PDF con contenido real (no solo portada).",
+            )
+
         concept_store.save_concepts(body.chatId, concepts, meta={"user_id": body.userId})
         enriched = concept_store.concepts_with_mastery(body.chatId)
         return {"success": True, "concepts": enriched, "count": len(enriched)}

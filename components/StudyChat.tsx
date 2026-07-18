@@ -4325,31 +4325,113 @@ ${contentPreview}
           chatId={currentChatId}
           defaultTopic={currentChatLevel?.topic && currentChatLevel.topic !== "General" ? currentChatLevel.topic : ""}
           model={selectedModel === "auto" ? null : selectedModel}
-          onPlanGenerated={(planPayload, meta) => {
-            addMessage({
-              role: "user",
-              content: `Quiero un camino de estudio de ${meta.days} días sobre: ${meta.topic}`,
-              type: "message",
-            });
+          onPlanGenerated={async (planPayload, meta) => {
+            if (!userId) {
+              alert("Inicia sesión para crear el chat del curso.");
+              return;
+            }
             const interactive = parseInteractivePlan(planPayload);
+            const startedAt = new Date().toISOString().slice(0, 10);
+            let planContent = planPayload;
             if (interactive) {
-              addMessage({
-                role: "assistant",
-                content: planPayload,
-                type: "study_plan",
+              planContent = JSON.stringify({
+                ...interactive,
+                format: interactive.format || "interactive_v2",
+                topic: interactive.topic || meta.topic,
+                minutes_per_day: meta.minutes,
+                started_at: startedAt,
               });
-            } else {
-              // Fallback legacy markdown → pasos simples (sin muro)
-              const steps = stepsFromPlanMarkdown(planPayload, meta.topic);
-              addMessage({
-                role: "assistant",
-                content: JSON.stringify({
-                  title: `Plan: ${meta.topic}`,
-                  subtitle: "Camino rápido (el backend aún no devolvió lecciones)",
-                  steps,
+            }
+            const newChatId = `chat-plan-${Date.now()}`;
+            const chatTitle = `${meta.topic} · Diario`;
+            const now = new Date();
+            const courseMessages = [
+              {
+                role: "assistant" as const,
+                content: `Este chat es tu curso diario de ${meta.topic}: ${meta.minutes} min al día durante ${meta.days} días. Cada día te espera una lección interactiva (estilo Duolingo). Vuelve a este chat para el recordatorio de hoy.`,
+                type: "message" as const,
+                timestamp: now.toISOString(),
+              },
+              {
+                role: "assistant" as const,
+                content: planContent,
+                type: "study_plan" as const,
+                timestamp: new Date(now.getTime() + 1).toISOString(),
+              },
+            ];
+            try {
+              const response = await studyAgentsFetch("/api/study-agents/save-chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  userId,
+                  chatId: newChatId,
+                  title: chatTitle,
+                  messages: courseMessages,
+                  metadata: {
+                    uploadedFiles: [],
+                    selectedModel,
+                    color: "#358c9f",
+                    icon: "chat",
+                    topic: meta.topic,
+                    coursePlan: true,
+                    planDays: meta.days,
+                    planMinutes: meta.minutes,
+                    planStartedAt: startedAt,
+                  },
                 }),
-                type: "interactive_steps",
               });
+              if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+              }
+              const data = await response.json();
+              if (!data.success) {
+                throw new Error(data.error || "No se pudo crear el chat del curso");
+              }
+              setMessages(
+                courseMessages.map((m, i) => ({
+                  id: `${newChatId}-${i}`,
+                  role: m.role,
+                  content: m.content,
+                  type: m.type,
+                  timestamp: new Date(m.timestamp),
+                })),
+              );
+              setCurrentChatId(newChatId);
+              currentChatIdRef.current = newChatId;
+              setUploadedFiles([]);
+              setCurrentTest(null);
+              setTestAnswers({});
+              setShowInitialForm(false);
+              setCurrentChatLevel({ topic: meta.topic, level: 0 });
+              interface WindowWithRefresh extends Window {
+                refreshChatSidebar?: () => void;
+              }
+              if (typeof window !== "undefined") {
+                (window as WindowWithRefresh).refreshChatSidebar?.();
+              }
+            } catch (err) {
+              console.error("Error creando chat del curso:", err);
+              // Fallback: inyectar en el chat actual
+              addMessage({
+                role: "user",
+                content: `Quiero un curso diario de ${meta.days} días (${meta.minutes} min) sobre: ${meta.topic}`,
+                type: "message",
+              });
+              if (interactive) {
+                addMessage({ role: "assistant", content: planContent, type: "study_plan" });
+              } else {
+                const steps = stepsFromPlanMarkdown(planPayload, meta.topic);
+                addMessage({
+                  role: "assistant",
+                  content: JSON.stringify({
+                    title: `Curso: ${meta.topic}`,
+                    subtitle: "Camino rápido",
+                    steps,
+                  }),
+                  type: "interactive_steps",
+                });
+              }
             }
           }}
         />
