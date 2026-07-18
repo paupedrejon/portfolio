@@ -10,6 +10,12 @@ import {
   getStudyModelOption,
   type StudyModelOption,
 } from "@/lib/study-agents/models";
+import {
+  SA_PRIMARY,
+  SA_PRIMARY_SOFT,
+  SA_PRIMARY_BORDER,
+} from "@/lib/study-agents/brand";
+import "@/components/study-agents/study-agents-chat.css";
 
 type Props = {
   colorTheme: "dark" | "light";
@@ -71,9 +77,8 @@ export default function ChatToolbar({
     items: STUDY_MODEL_OPTIONS.filter((m) => m.group === group),
   }));
 
-  const dark = colorTheme === "dark";
   const chip = (active?: boolean) => ({
-    display: "flex" as const,
+    display: "inline-flex" as const,
     alignItems: "center" as const,
     gap: "0.4rem",
     padding: "0.55rem 1rem",
@@ -81,57 +86,39 @@ export default function ChatToolbar({
     cursor: "pointer" as const,
     fontSize: "0.85rem",
     fontWeight: 600,
-    color: active || !dark ? "#2596be" : "#e2e8f0",
-    background: active
-      ? "rgba(37, 150, 190, 0.12)"
-      : dark
-        ? "rgba(26, 26, 36, 0.85)"
-        : "#ffffff",
-    border: `1px solid ${
-      active
-        ? "#2596be"
-        : dark
-          ? "rgba(148, 163, 184, 0.22)"
-          : "rgba(148, 163, 184, 0.32)"
-    }`,
-    boxShadow: dark ? "none" : "0 2px 6px rgba(15, 23, 42, 0.05)",
+    color: SA_PRIMARY,
+    background: active ? SA_PRIMARY_SOFT : "#ffffff",
+    border: `1px solid ${active ? SA_PRIMARY : SA_PRIMARY_BORDER}`,
+    boxShadow: active
+      ? "0 4px 12px rgba(53, 140, 159, 0.18)"
+      : "0 2px 6px rgba(15, 23, 42, 0.05)",
   });
 
   return (
     <div
+      className="sa-chat-toolbar"
       style={{
         display: "flex",
         justifyContent: "flex-end",
         alignItems: "center",
         padding: "1rem 1.5rem",
         gap: "0.5rem",
-        background:
-          colorTheme === "dark"
-            ? "rgba(26, 26, 36, 0.6)"
-            : "rgba(255, 255, 255, 0.8)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
-        borderBottom: `1px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.25)"}`,
         flexWrap: "wrap",
         position: "relative",
         zIndex: 10,
-        boxShadow:
-          colorTheme === "dark"
-            ? "0 2px 8px rgba(0, 0, 0, 0.1)"
-            : "0 2px 8px rgba(0, 0, 0, 0.05)",
       }}
     >
       {sessionCostUsd > 0 && (
         <span
           style={{
             fontSize: "0.75rem",
-            color: colorTheme === "dark" ? "#94a3b8" : "#64748b",
+            color: "#64748b",
             padding: "0.35rem 0.65rem",
-            borderRadius: "8px",
-            background:
-              colorTheme === "dark"
-                ? "rgba(37, 150, 190, 0.08)"
-                : "rgba(37, 150, 190, 0.06)",
+            borderRadius: 999,
+            background: SA_PRIMARY_SOFT,
+            border: `1px solid ${SA_PRIMARY_BORDER}`,
           }}
           title="Coste estimado de esta sesión (BYOK)"
         >
@@ -140,45 +127,25 @@ export default function ChatToolbar({
       )}
 
       {isMounted && onToggleDocuments && (
-        <button
-          type="button"
-          onClick={onToggleDocuments}
-          title="Documentos indexados en este chat"
-          style={chip(showDocuments)}
-        >
+        <button type="button" onClick={onToggleDocuments} title="Documentos indexados" style={chip(showDocuments)}>
           Docs{documentCount > 0 ? ` (${documentCount})` : ""}
         </button>
       )}
 
       {isMounted && onOpenStudyPlan && (
-        <button
-          type="button"
-          onClick={onOpenStudyPlan}
-          title="Generar plan de estudio adaptativo"
-          style={chip(showStudyPlan)}
-        >
+        <button type="button" onClick={onOpenStudyPlan} title="Plan de estudio" style={chip(showStudyPlan)}>
           Plan
         </button>
       )}
 
       {isMounted && onOpenConcepts && (
-        <button
-          type="button"
-          onClick={onOpenConcepts}
-          title="Mapa de conceptos y dominio"
-          style={chip(showConcepts)}
-        >
+        <button type="button" onClick={onOpenConcepts} title="Mapa de conceptos" style={chip(showConcepts)}>
           Conceptos
         </button>
       )}
 
       {isMounted && onOpenReview && (
-        <button
-          type="button"
-          onClick={onOpenReview}
-          title="Repaso spaced repetition (FSRS)"
-          style={chip(showReview)}
-        >
+        <button type="button" onClick={onOpenReview} title="Repaso FSRS" style={chip(showReview)}>
           Repaso
           {srsDueCount > 0 && (
             <span
@@ -187,7 +154,7 @@ export default function ChatToolbar({
                 height: 18,
                 padding: "0 5px",
                 borderRadius: 999,
-                background: "#2596be",
+                background: SA_PRIMARY,
                 color: "#fff",
                 fontSize: "0.65rem",
                 fontWeight: 800,
@@ -209,32 +176,18 @@ export default function ChatToolbar({
           title={hasApiKey ? "Cambiar API keys" : "Configurar API keys"}
           style={chip(hasApiKey)}
         >
-          <HiKey size={16} color="#2596be" />
+          <HiKey size={16} color={SA_PRIMARY} />
           {hasApiKey ? "API Key" : "Configurar API"}
         </button>
       )}
 
       {isMounted && (
         <>
-          <span
-            style={{
-              fontSize: "0.875rem",
-              color: colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563",
-              marginRight: "0.25rem",
-              fontWeight: 500,
-            }}
-          >
+          <span style={{ fontSize: "0.875rem", color: "#64748b", marginRight: "0.25rem", fontWeight: 500 }}>
             Modelo:
           </span>
           <div ref={modelDropdownRef} style={{ position: "relative", display: "inline-block" }}>
-            <button
-              type="button"
-              onClick={onToggleModelDropdown}
-              style={{
-                ...chip(false),
-                paddingRight: "1.75rem",
-              }}
-            >
+            <button type="button" onClick={onToggleModelDropdown} style={{ ...chip(false), paddingRight: "1.75rem" }}>
               <span>{modelLabel}</span>
               <span
                 style={{
@@ -256,18 +209,16 @@ export default function ChatToolbar({
                   position: "absolute",
                   top: "calc(100% + 0.5rem)",
                   left: 0,
-                  background:
-                    colorTheme === "dark"
-                      ? "rgba(26, 26, 36, 0.95)"
-                      : "rgba(255, 255, 255, 0.95)",
+                  background: "#ffffff",
                   backdropFilter: "blur(20px)",
-                  borderRadius: "12px",
+                  borderRadius: 12,
                   padding: "0.375rem",
-                  minWidth: "300px",
-                  maxHeight: "320px",
+                  minWidth: 300,
+                  maxHeight: 320,
                   overflowY: "auto",
                   zIndex: 10000,
-                  border: `1px solid ${colorTheme === "dark" ? "rgba(37, 150, 190, 0.2)" : "rgba(148, 163, 184, 0.2)"}`,
+                  border: `1px solid ${SA_PRIMARY_BORDER}`,
+                  boxShadow: "0 16px 40px rgba(15, 23, 42, 0.12)",
                 }}
               >
                 {grouped.map(({ group, label, items }) => (
@@ -279,15 +230,14 @@ export default function ChatToolbar({
                         fontWeight: 700,
                         letterSpacing: "0.06em",
                         textTransform: "uppercase",
-                        color: colorTheme === "dark" ? "#94a3b8" : "#64748b",
+                        color: "#64748b",
                       }}
                     >
                       {label}
                     </div>
                     {items.map((model: StudyModelOption) => {
                       const isSelected = selectedModel === model.value;
-                      const isFree =
-                        model.pricing.input === 0 && model.pricing.output === 0;
+                      const isFree = model.pricing.input === 0 && model.pricing.output === 0;
                       const price = !isFree
                         ? formatCost(model.pricing.input + model.pricing.output)
                         : null;
@@ -299,14 +249,10 @@ export default function ChatToolbar({
                           style={{
                             width: "100%",
                             padding: "0.5rem 0.75rem",
-                            background: isSelected
-                              ? colorTheme === "dark"
-                                ? "rgba(37, 150, 190, 0.2)"
-                                : "rgba(37, 150, 190, 0.15)"
-                              : "transparent",
+                            background: isSelected ? SA_PRIMARY_SOFT : "transparent",
                             border: "none",
-                            borderRadius: "8px",
-                            color: colorTheme === "dark" ? "#e2e8f0" : "#1a1a24",
+                            borderRadius: 8,
+                            color: "#0f172a",
                             fontSize: "0.8125rem",
                             fontWeight: isSelected ? 600 : 500,
                             cursor: "pointer",
@@ -320,24 +266,16 @@ export default function ChatToolbar({
                           <div>
                             <div>{model.label}</div>
                             {model.subtitle && (
-                              <div style={{ fontSize: "0.6875rem", color: "#94a3b8" }}>
-                                {model.subtitle}
-                              </div>
+                              <div style={{ fontSize: "0.6875rem", color: "#94a3b8" }}>{model.subtitle}</div>
                             )}
                           </div>
                           <span style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                             {isFree ? (
-                              <span style={{ fontSize: "0.65rem", fontWeight: 700, color: "#22c55e" }}>
-                                Gratis
-                              </span>
+                              <span style={{ fontSize: "0.65rem", fontWeight: 700, color: "#22c55e" }}>Gratis</span>
                             ) : (
-                              price && (
-                                <span style={{ fontSize: "0.65rem", color: "#94a3b8" }}>
-                                  {price}/1k
-                                </span>
-                              )
+                              price && <span style={{ fontSize: "0.65rem", color: "#94a3b8" }}>{price}/1k</span>
                             )}
-                            {isSelected && <HiCheck size={14} color="#2596be" />}
+                            {isSelected && <HiCheck size={14} color={SA_PRIMARY} />}
                           </span>
                         </button>
                       );
@@ -350,33 +288,21 @@ export default function ChatToolbar({
         </>
       )}
 
-      <span
-        style={{
-          fontSize: "0.875rem",
-          color: colorTheme === "dark" ? "var(--text-secondary)" : "#4b5563",
-          marginLeft: "1rem",
-          fontWeight: 500,
-        }}
-      >
+      <span style={{ fontSize: "0.875rem", color: "#64748b", marginLeft: "1rem", fontWeight: 500 }}>
         Tema:
       </span>
       <button
         type="button"
         onClick={() => onSetColorTheme("dark")}
         title="Tema oscuro"
+        className="sa-chip"
         style={{
-          display: "flex",
-          alignItems: "center",
+          width: 44,
+          height: 44,
+          padding: 0,
           justifyContent: "center",
-          width: "48px",
-          height: "48px",
-          background:
-            colorTheme === "dark"
-              ? "rgba(37, 150, 190, 0.1)"
-              : "rgba(37, 150, 190, 0.08)",
-          borderRadius: "24px",
-          border: "none",
-          cursor: "pointer",
+          background: colorTheme === "dark" ? SA_PRIMARY_SOFT : "#fff",
+          borderColor: colorTheme === "dark" ? SA_PRIMARY : SA_PRIMARY_BORDER,
         }}
       >
         <MoonIcon size={18} />
@@ -385,19 +311,14 @@ export default function ChatToolbar({
         type="button"
         onClick={() => onSetColorTheme("light")}
         title="Tema claro"
+        className="sa-chip"
         style={{
-          display: "flex",
-          alignItems: "center",
+          width: 44,
+          height: 44,
+          padding: 0,
           justifyContent: "center",
-          width: "48px",
-          height: "48px",
-          background:
-            colorTheme === "light"
-              ? "rgba(37, 150, 190, 0.1)"
-              : "rgba(37, 150, 190, 0.08)",
-          borderRadius: "24px",
-          border: "none",
-          cursor: "pointer",
+          background: colorTheme === "light" ? SA_PRIMARY_SOFT : "#fff",
+          borderColor: colorTheme === "light" ? SA_PRIMARY : SA_PRIMARY_BORDER,
         }}
       >
         <SunIcon size={18} />

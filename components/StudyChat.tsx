@@ -67,10 +67,11 @@ import QuickActionsBar from "@/components/study-agents/chat/QuickActionsBar";
 import SuccessMessage from "@/components/study-agents/chat/SuccessMessage";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
 import StudyPlanPanel from "@/components/study-agents/panels/StudyPlanPanel";
-import { SA_PRIMARY } from "@/lib/study-agents/brand";
+import { SA_PRIMARY, SA_CHAT_BG } from "@/lib/study-agents/brand";
 import ConceptMapPanel from "@/components/study-agents/panels/ConceptMapPanel";
 import ReviewPanel from "@/components/study-agents/panels/ReviewPanel";
 import { isStudyAgentsFlagEnabled } from "@/lib/study-agents/flags";
+import "@/components/study-agents/study-agents-chat.css";
 import ChatSidebar from "./ChatSidebar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -406,7 +407,7 @@ export default function StudyChat() {
   const currentChatIdRef = useRef<string | null>(null);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatName, setNewChatName] = useState("");
-  const [newChatColor, setNewChatColor] = useState<string>("#6366f1");
+  const [newChatColor, setNewChatColor] = useState<string>("#358c9f");
   const [newChatIcon, setNewChatIcon] = useState<string>("chat");
   const userId = session?.user?.id || "";
   const {
@@ -1246,7 +1247,7 @@ export default function StudyChat() {
     },
     {
       name: "Oposiciones y Leyes",
-      color: "#6366f1",
+      color: "#358c9f",
       topics: ["Constitución Española", "Derecho Administrativo", "Estatuto de los Trabajadores", "Código Penal", "Ley de Contratos del Sector Público", "Derecho Civil", "Derecho Tributario", "Protección de Datos", "Oposiciones a Administrativo", "Fuerzas y Cuerpos de Seguridad"],
     },
     {
@@ -1283,11 +1284,11 @@ export default function StudyChat() {
 
   // Función para renderizar el icono según el tipo (no usada actualmente)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const renderIcon = (iconType: string = "chat", color: string = "#6366f1", isSelected: boolean = false) => {
-    const iconColor = color || "#6366f1";
+  const renderIcon = (iconType: string = "chat", color: string = "#358c9f", isSelected: boolean = false) => {
+    const iconColor = color || "#358c9f";
     // Si está seleccionado, usar blanco. Si no, usar el color del tema
     const strokeColor = isSelected 
-      ? (iconColor ? "white" : "#6366f1")
+      ? (iconColor ? "white" : "#358c9f")
       : (colorTheme === "dark" ? "rgba(226, 232, 240, 0.9)" : "rgba(26, 36, 52, 0.9)");
     
     switch (iconType) {
@@ -2024,7 +2025,7 @@ export default function StudyChat() {
   const createNewChat = () => {
     setShowNewChatModal(true);
     setNewChatName("");
-    setNewChatColor("#6366f1");
+    setNewChatColor("#358c9f");
   };
   
   const handleCreateNewChat = async (predefinedName?: string, predefinedColor?: string, predefinedIcon?: string) => {
@@ -2084,7 +2085,7 @@ export default function StudyChat() {
         });
         setShowNewChatModal(false);
         setNewChatName("");
-        setNewChatColor("#6366f1");
+        setNewChatColor("#358c9f");
         setNewChatIcon("chat");
         
         // Mostrar formulario inicial para recopilar información del usuario SOLO si el tema NO es "General"
@@ -3629,7 +3630,7 @@ ${contentPreview}
       <div
         style={{
           minHeight: "calc(100vh - 50vh)",
-          background: "var(--bg-secondary)",
+          background: SA_CHAT_BG,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -3639,13 +3640,13 @@ ${contentPreview}
         <div style={{ 
           padding: "2rem",
           borderRadius: "16px",
-          background: "rgba(26, 26, 36, 0.8)",
+          background: "rgba(53, 140, 159, 0.06)",
         }}>
           <div style={{ 
             width: "40px", 
             height: "40px", 
-            border: "4px solid rgba(99, 102, 241, 0.2)",
-            borderTop: "4px solid #6366f1",
+            border: "4px solid rgba(53, 140, 159, 0.2)",
+            borderTop: "4px solid #358c9f",
             borderRadius: "50%",
             animation: "spin 0.8s linear infinite",
           }} />
@@ -3723,7 +3724,7 @@ ${contentPreview}
                 onClick={() => {
                   setShowNewChatModal(false);
                   setNewChatName("");
-                  setNewChatColor("#6366f1");
+                  setNewChatColor("#358c9f");
                   setNewChatIcon("chat");
                 }}
                 style={{
@@ -3773,7 +3774,7 @@ ${contentPreview}
                   } else if (e.key === "Escape") {
                     setShowNewChatModal(false);
                     setNewChatName("");
-                    setNewChatColor("#6366f1");
+                    setNewChatColor("#358c9f");
                     setNewChatIcon("chat");
                   }
                 }}
@@ -3783,7 +3784,7 @@ ${contentPreview}
                   width: "100%",
                   padding: "1rem 1.25rem",
                   background: colorTheme === "dark" ? "rgba(30, 41, 59, 0.6)" : "rgba(248, 250, 252, 0.8)",
-                  border: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.25)"}`,
+                  border: `2px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.3)" : "rgba(53, 140, 159, 0.25)"}`,
                   borderRadius: "14px",
                   color: colorTheme === "dark" ? "#f1f5f9" : "#0f172a",
                   fontSize: "1rem",
@@ -3792,11 +3793,11 @@ ${contentPreview}
                   transition: "all 0.2s ease",
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(99, 102, 241, 0.6)" : "rgba(99, 102, 241, 0.5)";
-                  e.currentTarget.style.boxShadow = `0 0 0 4px ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)"}`;
+                  e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(53, 140, 159, 0.6)" : "rgba(53, 140, 159, 0.5)";
+                  e.currentTarget.style.boxShadow = `0 0 0 4px ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.1)" : "rgba(53, 140, 159, 0.08)"}`;
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.25)";
+                  e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(53, 140, 159, 0.3)" : "rgba(53, 140, 159, 0.25)";
                   e.currentTarget.style.boxShadow = "none";
                 }}
               />
@@ -3806,7 +3807,7 @@ ${contentPreview}
                     onClick={() => handleCreateNewChat()}
                     style={{
                       padding: "0.75rem 1.5rem",
-                      background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                      background: "linear-gradient(135deg, #4eb3c8, #358c9f)",
                       border: "none",
                       borderRadius: "16px",
                       color: "white",
@@ -3814,7 +3815,7 @@ ${contentPreview}
                       fontWeight: 600,
                       cursor: "pointer",
                       transition: "all 0.2s ease",
-                      boxShadow: "0 4px 12px rgba(99, 102, 241, 0.3)",
+                      boxShadow: "0 4px 12px rgba(53, 140, 159, 0.3)",
                     }}
                   >
                     Crear chat personalizado
@@ -4156,7 +4157,7 @@ ${contentPreview}
           style={{
             width: '600px',
             height: '600px',
-            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            background: "linear-gradient(135deg, #4eb3c8, #358c9f)",
             top: "5%",
             left: "10%",
             animation: "floatOrbMain1 45s ease-in-out infinite",
@@ -4167,7 +4168,7 @@ ${contentPreview}
           style={{
             width: '500px',
             height: '500px',
-            background: "linear-gradient(135deg, #a855f7, #6366f1)",
+            background: "linear-gradient(135deg, #358c9f, #2a6f7d)",
             bottom: "10%",
             right: "10%",
             animation: "floatOrbMain2 55s ease-in-out infinite reverse",
@@ -4178,7 +4179,7 @@ ${contentPreview}
           style={{
             width: '450px',
             height: '450px',
-            background: "linear-gradient(135deg, #8b5cf6, #a855f7)",
+            background: "linear-gradient(135deg, #4eb3c8, #2a6f7d)",
             top: "50%",
             left: "50%",
             transform: 'translate(-50%, -50%)',
@@ -4195,8 +4196,8 @@ ${contentPreview}
             right: 0,
             bottom: 0,
             backgroundImage: `
-              linear-gradient(rgba(99, 102, 241, 0.02) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(99, 102, 241, 0.02) 1px, transparent 1px)
+              linear-gradient(rgba(53, 140, 159, 0.02) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(53, 140, 159, 0.02) 1px, transparent 1px)
             `,
             backgroundSize: '50px 50px',
             maskImage: 'radial-gradient(ellipse 100% 100% at 50% 50%, black 40%, transparent 70%)',
@@ -4236,13 +4237,12 @@ ${contentPreview}
       )}
 
       <div
+        className="sa-chat-shell"
         style={{
           marginLeft: isMobile ? "0" : (sidebarOpen ? (sidebarCollapsed ? "60px" : "280px") : "0"),
           transition: isMobile ? "none" : "margin-left 0.3s ease",
           minHeight: "calc(100vh - 50vh)",
-          background: colorTheme === "light" 
-            ? "linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)" 
-            : "linear-gradient(180deg, rgba(18, 18, 26, 0.95) 0%, rgba(10, 10, 15, 0.95) 100%)",
+          background: SA_CHAT_BG,
           display: "flex",
           flexDirection: "column",
           position: "relative",
@@ -4494,8 +4494,8 @@ ${contentPreview}
                       fontFamily: "inherit",
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "#6366f1";
-                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.1)";
+                      e.currentTarget.style.borderColor = "#358c9f";
+                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(53, 140, 159, 0.1)";
                     }}
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
@@ -4573,8 +4573,8 @@ ${contentPreview}
                       lineHeight: 1.6,
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "#6366f1";
-                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.1)";
+                      e.currentTarget.style.borderColor = "#358c9f";
+                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(53, 140, 159, 0.1)";
                     }}
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
@@ -4649,8 +4649,8 @@ ${contentPreview}
                       fontFamily: "inherit",
                     }}
                     onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "#6366f1";
-                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.1)";
+                      e.currentTarget.style.borderColor = "#358c9f";
+                      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(53, 140, 159, 0.1)";
                     }}
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(148, 163, 184, 0.2)" : "rgba(148, 163, 184, 0.3)";
@@ -4854,10 +4854,10 @@ ${contentPreview}
                       ? "linear-gradient(135deg, rgba(26, 26, 36, 0.8), rgba(30, 30, 45, 0.6))"
                       : "linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9))",
                     borderRadius: isMobile ? "16px" : isTablet ? "18px" : "20px",
-                    border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.25)" : "rgba(99, 102, 241, 0.2)"}`,
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.25)" : "rgba(53, 140, 159, 0.2)"}`,
                     boxShadow: colorTheme === "dark"
-                      ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
-                      : "0 8px 32px rgba(99, 102, 241, 0.12), 0 0 0 1px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                      ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(53, 140, 159, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+                      : "0 8px 32px rgba(53, 140, 159, 0.12), 0 0 0 1px rgba(53, 140, 159, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
                     transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                     cursor: "pointer",
                     position: "relative",
@@ -4867,17 +4867,17 @@ ${contentPreview}
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-6px) scale(1.02)";
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(99, 102, 241, 0.6)" : "rgba(99, 102, 241, 0.4)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(53, 140, 159, 0.6)" : "rgba(53, 140, 159, 0.4)";
                     e.currentTarget.style.boxShadow = colorTheme === "dark"
-                      ? "0 16px 48px rgba(99, 102, 241, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
-                      : "0 16px 48px rgba(99, 102, 241, 0.2), 0 0 0 1px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.9)";
+                      ? "0 16px 48px rgba(53, 140, 159, 0.4), 0 0 0 1px rgba(53, 140, 159, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                      : "0 16px 48px rgba(53, 140, 159, 0.2), 0 0 0 1px rgba(53, 140, 159, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.9)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0) scale(1)";
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(99, 102, 241, 0.25)" : "rgba(99, 102, 241, 0.2)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(53, 140, 159, 0.25)" : "rgba(53, 140, 159, 0.2)";
                     e.currentTarget.style.boxShadow = colorTheme === "dark"
-                      ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
-                      : "0 8px 32px rgba(99, 102, 241, 0.12), 0 0 0 1px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)";
+                      ? "0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(53, 140, 159, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+                      : "0 8px 32px rgba(53, 140, 159, 0.12), 0 0 0 1px rgba(53, 140, 159, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)";
                   }}
                 >
                   {/* Premium Shimmer Effect */}
@@ -4888,7 +4888,7 @@ ${contentPreview}
                       left: "-100%",
                       width: "100%",
                       height: "100%",
-                      background: "linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent)",
+                      background: "linear-gradient(90deg, transparent, rgba(53, 140, 159, 0.1), transparent)",
                       transition: "left 0.6s ease",
                     }}
                     onMouseEnter={(e) => {
@@ -4906,12 +4906,12 @@ ${contentPreview}
                   <div style={{ marginBottom: "1.25rem", display: "flex", justifyContent: "center" }}>
                     <div style={{
                       padding: "1rem",
-                      background: "linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15))",
+                      background: "linear-gradient(135deg, rgba(53, 140, 159, 0.15), rgba(78, 179, 200, 0.15))",
                       borderRadius: "12px",
                       display: "inline-flex",
-                      border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.2)"}`,
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.3)" : "rgba(53, 140, 159, 0.2)"}`,
                     }}>
-                      <FileIcon size={28} color="#6366f1" />
+                      <FileIcon size={28} color="#358c9f" />
                     </div>
                   </div>
                   <strong style={{ 
@@ -5215,10 +5215,10 @@ ${contentPreview}
                       ? "rgba(26, 26, 36, 0.6)"
                       : "rgba(255, 255, 255, 0.9)",
                     borderRadius: "16px",
-                    border: `1px solid ${colorTheme === "dark" ? "rgba(139, 92, 246, 0.2)" : "rgba(139, 92, 246, 0.15)"}`,
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(78, 179, 200, 0.2)" : "rgba(78, 179, 200, 0.15)"}`,
                     boxShadow: colorTheme === "dark"
-                      ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(139, 92, 246, 0.1)"
-                      : "0 4px 20px rgba(139, 92, 246, 0.08), 0 0 0 1px rgba(139, 92, 246, 0.1)",
+                      ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(78, 179, 200, 0.1)"
+                      : "0 4px 20px rgba(78, 179, 200, 0.08), 0 0 0 1px rgba(78, 179, 200, 0.1)",
                     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                     cursor: "pointer",
                     position: "relative",
@@ -5226,17 +5226,17 @@ ${contentPreview}
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-4px)";
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(139, 92, 246, 0.5)" : "rgba(139, 92, 246, 0.3)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(78, 179, 200, 0.5)" : "rgba(78, 179, 200, 0.3)";
                     e.currentTarget.style.boxShadow = colorTheme === "dark"
-                      ? "0 8px 30px rgba(139, 92, 246, 0.3), 0 0 0 1px rgba(139, 92, 246, 0.2)"
-                      : "0 8px 30px rgba(139, 92, 246, 0.15), 0 0 0 1px rgba(139, 92, 246, 0.2)";
+                      ? "0 8px 30px rgba(78, 179, 200, 0.3), 0 0 0 1px rgba(78, 179, 200, 0.2)"
+                      : "0 8px 30px rgba(78, 179, 200, 0.15), 0 0 0 1px rgba(78, 179, 200, 0.2)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(139, 92, 246, 0.2)" : "rgba(139, 92, 246, 0.15)";
+                    e.currentTarget.style.borderColor = colorTheme === "dark" ? "rgba(78, 179, 200, 0.2)" : "rgba(78, 179, 200, 0.15)";
                     e.currentTarget.style.boxShadow = colorTheme === "dark"
-                      ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(139, 92, 246, 0.1)"
-                      : "0 4px 20px rgba(139, 92, 246, 0.08), 0 0 0 1px rgba(139, 92, 246, 0.1)";
+                      ? "0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(78, 179, 200, 0.1)"
+                      : "0 4px 20px rgba(78, 179, 200, 0.08), 0 0 0 1px rgba(78, 179, 200, 0.1)";
                   }}
                 >
                   <div style={{
@@ -5250,10 +5250,10 @@ ${contentPreview}
                   <div style={{ marginBottom: "1.25rem", display: "flex", justifyContent: "center" }}>
                     <div style={{
                       padding: "1rem",
-                      background: "linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(124, 58, 237, 0.15))",
+                      background: "linear-gradient(135deg, rgba(78, 179, 200, 0.15), rgba(124, 58, 237, 0.15))",
                       borderRadius: "12px",
                       display: "inline-flex",
-                      border: `1px solid ${colorTheme === "dark" ? "rgba(139, 92, 246, 0.3)" : "rgba(139, 92, 246, 0.2)"}`,
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(78, 179, 200, 0.3)" : "rgba(78, 179, 200, 0.2)"}`,
                     }}>
                       <ExerciseIcon size={28} color="#8b5cf6" />
                     </div>
@@ -5440,7 +5440,7 @@ ${contentPreview}
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      background: "linear-gradient(90deg, transparent 0%, rgba(99, 102, 241, 0.25) 40%, rgba(139, 92, 246, 0.2) 50%, rgba(99, 102, 241, 0.25) 60%, transparent 100%)",
+                      background: "linear-gradient(90deg, transparent 0%, rgba(53, 140, 159, 0.25) 40%, rgba(78, 179, 200, 0.2) 50%, rgba(53, 140, 159, 0.25) 60%, transparent 100%)",
                       animation: "assistantEntryReveal 1.3s cubic-bezier(0.4, 0, 0.2, 1) forwards",
                       pointerEvents: "none",
                     }}
@@ -5458,11 +5458,11 @@ ${contentPreview}
                         marginTop: "1.5rem",
                         padding: "0.75rem 1rem",
                         background: colorTheme === "dark" 
-                          ? "rgba(99, 102, 241, 0.1)" 
-                          : "rgba(99, 102, 241, 0.08)",
+                          ? "rgba(53, 140, 159, 0.1)" 
+                          : "rgba(53, 140, 159, 0.08)",
                         border: `1px solid ${colorTheme === "dark" 
-                          ? "rgba(99, 102, 241, 0.3)" 
-                          : "rgba(99, 102, 241, 0.4)"}`,
+                          ? "rgba(53, 140, 159, 0.3)" 
+                          : "rgba(53, 140, 159, 0.4)"}`,
                         borderRadius: "8px",
                         fontSize: "0.875rem",
                         color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
@@ -5470,7 +5470,7 @@ ${contentPreview}
                         alignItems: "center",
                         gap: "0.5rem",
                       }}>
-                        <ZapIcon size={16} color="#6366f1" />
+                        <ZapIcon size={16} color="#358c9f" />
                         <span>
                           <strong>Costo estimado:</strong> {formatCost(message.costEstimate.totalCost)} 
                           {" "}({message.costEstimate.inputTokens.toLocaleString()} tokens entrada, {message.costEstimate.outputTokens.toLocaleString()} tokens salida)
@@ -5494,11 +5494,11 @@ ${contentPreview}
                         marginTop: "1.5rem",
                         padding: "0.75rem 1rem",
                         background: colorTheme === "dark" 
-                          ? "rgba(99, 102, 241, 0.1)" 
-                          : "rgba(99, 102, 241, 0.08)",
+                          ? "rgba(53, 140, 159, 0.1)" 
+                          : "rgba(53, 140, 159, 0.08)",
                         border: `1px solid ${colorTheme === "dark" 
-                          ? "rgba(99, 102, 241, 0.3)" 
-                          : "rgba(99, 102, 241, 0.4)"}`,
+                          ? "rgba(53, 140, 159, 0.3)" 
+                          : "rgba(53, 140, 159, 0.4)"}`,
                         borderRadius: "8px",
                         fontSize: "0.875rem",
                         color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
@@ -5506,7 +5506,7 @@ ${contentPreview}
                         alignItems: "center",
                         gap: "0.5rem",
                       }}>
-                        <ZapIcon size={16} color="#6366f1" />
+                        <ZapIcon size={16} color="#358c9f" />
                         <span>
                           <strong>Costo estimado:</strong> {formatCost(message.costEstimate.totalCost)} 
                           {" "}({message.costEstimate.inputTokens.toLocaleString()} tokens entrada, {message.costEstimate.outputTokens.toLocaleString()} tokens salida)
@@ -5525,11 +5525,11 @@ ${contentPreview}
                         marginTop: "1.5rem",
                         padding: "0.75rem 1rem",
                         background: colorTheme === "dark" 
-                          ? "rgba(99, 102, 241, 0.1)" 
-                          : "rgba(99, 102, 241, 0.08)",
+                          ? "rgba(53, 140, 159, 0.1)" 
+                          : "rgba(53, 140, 159, 0.08)",
                         border: `1px solid ${colorTheme === "dark" 
-                          ? "rgba(99, 102, 241, 0.3)" 
-                          : "rgba(99, 102, 241, 0.4)"}`,
+                          ? "rgba(53, 140, 159, 0.3)" 
+                          : "rgba(53, 140, 159, 0.4)"}`,
                         borderRadius: "8px",
                         fontSize: "0.875rem",
                         color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
@@ -5537,7 +5537,7 @@ ${contentPreview}
                         alignItems: "center",
                         gap: "0.5rem",
                       }}>
-                        <ZapIcon size={16} color="#6366f1" />
+                        <ZapIcon size={16} color="#358c9f" />
                         <span>
                           <strong>Costo estimado:</strong> {formatCost(message.costEstimate.totalCost)} 
                           {" "}({message.costEstimate.inputTokens.toLocaleString()} tokens entrada, {message.costEstimate.outputTokens.toLocaleString()} tokens salida)
@@ -5563,11 +5563,11 @@ ${contentPreview}
                         marginTop: "1.5rem",
                         padding: "0.75rem 1rem",
                         background: colorTheme === "dark" 
-                          ? "rgba(99, 102, 241, 0.1)" 
-                          : "rgba(99, 102, 241, 0.08)",
+                          ? "rgba(53, 140, 159, 0.1)" 
+                          : "rgba(53, 140, 159, 0.08)",
                         border: `1px solid ${colorTheme === "dark" 
-                          ? "rgba(99, 102, 241, 0.3)" 
-                          : "rgba(99, 102, 241, 0.4)"}`,
+                          ? "rgba(53, 140, 159, 0.3)" 
+                          : "rgba(53, 140, 159, 0.4)"}`,
                         borderRadius: "8px",
                         fontSize: "0.875rem",
                         color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
@@ -5575,7 +5575,7 @@ ${contentPreview}
                         alignItems: "center",
                         gap: "0.5rem",
                       }}>
-                        <ZapIcon size={16} color="#6366f1" />
+                        <ZapIcon size={16} color="#358c9f" />
                         <span>
                           <strong>Costo estimado:</strong> {formatCost(message.costEstimate.totalCost)} 
                           {" "}({message.costEstimate.inputTokens.toLocaleString()} tokens entrada, {message.costEstimate.outputTokens.toLocaleString()} tokens salida)
@@ -5595,11 +5595,11 @@ ${contentPreview}
                         marginTop: "1.5rem",
                         padding: "0.75rem 1rem",
                         background: colorTheme === "dark" 
-                          ? "rgba(99, 102, 241, 0.1)" 
-                          : "rgba(99, 102, 241, 0.08)",
+                          ? "rgba(53, 140, 159, 0.1)" 
+                          : "rgba(53, 140, 159, 0.08)",
                         border: `1px solid ${colorTheme === "dark" 
-                          ? "rgba(99, 102, 241, 0.3)" 
-                          : "rgba(99, 102, 241, 0.4)"}`,
+                          ? "rgba(53, 140, 159, 0.3)" 
+                          : "rgba(53, 140, 159, 0.4)"}`,
                         borderRadius: "8px",
                         fontSize: "0.875rem",
                         color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
@@ -5607,7 +5607,7 @@ ${contentPreview}
                         alignItems: "center",
                         gap: "0.5rem",
                       }}>
-                        <ZapIcon size={16} color="#6366f1" />
+                        <ZapIcon size={16} color="#358c9f" />
                         <span>
                           <strong>Costo estimado:</strong> {formatCost(message.costEstimate.totalCost)} 
                           {" "}({message.costEstimate.inputTokens.toLocaleString()} tokens entrada, {message.costEstimate.outputTokens.toLocaleString()} tokens salida)
@@ -5794,7 +5794,7 @@ ${contentPreview}
                         {[
                           { label: "Principiante", level: 0, icon: HiAcademicCap, color: "#10b981" },
                           { label: "Intermedio", level: 4, icon: HiArrowTrendingUp, color: "#f59e0b" },
-                          { label: "Avanzado", level: 7, icon: HiLightBulb, color: "#6366f1" },
+                          { label: "Avanzado", level: 7, icon: HiLightBulb, color: "#358c9f" },
                         ].map(({ label, level, icon: IconComponent, color }) => {
                           const isSelected = currentChatLevel?.level === level && currentChatLevel?.topic === message.topic;
                           return (
@@ -6181,8 +6181,8 @@ ${contentPreview}
                                 style={{
                                   background:
                                     colorTheme === "dark"
-                                      ? "linear-gradient(135deg, rgba(26, 140, 161, 0.10), rgba(99, 102, 241, 0.08))"
-                                      : "linear-gradient(135deg, rgba(26, 140, 161, 0.08), rgba(99, 102, 241, 0.06))",
+                                      ? "linear-gradient(135deg, rgba(26, 140, 161, 0.10), rgba(53, 140, 159, 0.08))"
+                                      : "linear-gradient(135deg, rgba(26, 140, 161, 0.08), rgba(53, 140, 159, 0.06))",
                                   border: `1px solid ${
                                     colorTheme === "dark" ? "rgba(26, 140, 161, 0.22)" : "rgba(26, 140, 161, 0.18)"
                                   }`,
@@ -6223,11 +6223,11 @@ ${contentPreview}
                         marginTop: "1rem",
                         padding: "0.75rem 1rem",
                         background: colorTheme === "dark" 
-                          ? "rgba(99, 102, 241, 0.1)" 
-                          : "rgba(99, 102, 241, 0.08)",
+                          ? "rgba(53, 140, 159, 0.1)" 
+                          : "rgba(53, 140, 159, 0.08)",
                         border: `1px solid ${colorTheme === "dark" 
-                          ? "rgba(99, 102, 241, 0.3)" 
-                          : "rgba(99, 102, 241, 0.4)"}`,
+                          ? "rgba(53, 140, 159, 0.3)" 
+                          : "rgba(53, 140, 159, 0.4)"}`,
                         borderRadius: "8px",
                         fontSize: "0.875rem",
                         color: colorTheme === "dark" ? "var(--text-secondary)" : "#64748b",
@@ -6235,7 +6235,7 @@ ${contentPreview}
                         alignItems: "center",
                         gap: "0.5rem",
                       }}>
-                        <ZapIcon size={16} color="#6366f1" />
+                        <ZapIcon size={16} color="#358c9f" />
                         <span>
                           <strong>Costo estimado:</strong> {formatCost(message.costEstimate.totalCost)} 
                           {" "}({message.costEstimate.inputTokens.toLocaleString()} tokens entrada, {message.costEstimate.outputTokens.toLocaleString()} tokens salida)
@@ -6554,17 +6554,17 @@ ${contentPreview}
               height: "40px",
               borderRadius: "50%",
               background: colorTheme === "dark"
-                ? "rgba(99, 102, 241, 0.3)"
-                : "rgba(99, 102, 241, 0.25)",
-              border: `1.5px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.5)" : "rgba(99, 102, 241, 0.4)"}`,
+                ? "rgba(53, 140, 159, 0.3)"
+                : "rgba(53, 140, 159, 0.25)",
+              border: `1.5px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.5)" : "rgba(53, 140, 159, 0.4)"}`,
               color: "white",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               boxShadow: colorTheme === "dark"
-                ? "0 2px 8px rgba(99, 102, 241, 0.3)"
-                : "0 2px 8px rgba(99, 102, 241, 0.25)",
+                ? "0 2px 8px rgba(53, 140, 159, 0.3)"
+                : "0 2px 8px rgba(53, 140, 159, 0.25)",
               transition: "all 0.2s ease",
               zIndex: 200,
               backdropFilter: "blur(8px)",
@@ -6572,14 +6572,14 @@ ${contentPreview}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "scale(1.1)";
               e.currentTarget.style.boxShadow = colorTheme === "dark"
-                ? "0 6px 16px rgba(99, 102, 241, 0.5)"
-                : "0 6px 16px rgba(99, 102, 241, 0.4)";
+                ? "0 6px 16px rgba(53, 140, 159, 0.5)"
+                : "0 6px 16px rgba(53, 140, 159, 0.4)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = "scale(1)";
               e.currentTarget.style.boxShadow = colorTheme === "dark"
-                ? "0 4px 12px rgba(99, 102, 241, 0.4)"
-                : "0 4px 12px rgba(99, 102, 241, 0.3)";
+                ? "0 4px 12px rgba(53, 140, 159, 0.4)"
+                : "0 4px 12px rgba(53, 140, 159, 0.3)";
             }}
             title="Ir al final del chat"
           >
@@ -6766,7 +6766,7 @@ ${contentPreview}
                   borderRadius: "24px",
                 cursor: "pointer",
                   transition: "all 0.2s ease",
-                  boxShadow: showLanguageTool ? "0 2px 8px rgba(99, 102, 241, 0.3)" : "0 1px 3px rgba(0, 0, 0, 0.1)",
+                  boxShadow: showLanguageTool ? "0 2px 8px rgba(53, 140, 159, 0.3)" : "0 1px 3px rgba(0, 0, 0, 0.1)",
                   flexShrink: 0,
                 }}
               >
@@ -6866,7 +6866,7 @@ ${contentPreview}
                       justifyContent: "center",
                       height: isMobile ? "36px" : "48px",
                       padding: isMobile ? "0 0.75rem" : "0 1rem",
-                      background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+                      background: colorTheme === "dark" ? "rgba(53, 140, 159, 0.1)" : "rgba(53, 140, 159, 0.08)",
                       borderRadius: "24px",
                       fontSize: isMobile ? "0.75rem" : "0.875rem",
                       fontWeight: 600,
@@ -6877,13 +6877,13 @@ ${contentPreview}
               }}
               onMouseEnter={(e) => {
                       e.currentTarget.style.background = colorTheme === "dark" 
-                        ? "rgba(99, 102, 241, 0.15)" 
-                        : "rgba(99, 102, 241, 0.12)";
+                        ? "rgba(53, 140, 159, 0.15)" 
+                        : "rgba(53, 140, 159, 0.12)";
               }}
               onMouseLeave={(e) => {
                       e.currentTarget.style.background = colorTheme === "dark" 
-                        ? "rgba(99, 102, 241, 0.1)" 
-                        : "rgba(99, 102, 241, 0.08)";
+                        ? "rgba(53, 140, 159, 0.1)" 
+                        : "rgba(53, 140, 159, 0.08)";
                     }}
                   >
                     <MdMenuBook size={18} style={{ marginRight: "0.5rem" }} />
@@ -6905,7 +6905,7 @@ ${contentPreview}
                       gap: isMobile ? "0.5rem" : "0.75rem",
                       height: isMobile ? "36px" : "48px",
                       padding: isMobile ? "0 0.75rem" : "0 1rem",
-                      background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+                      background: colorTheme === "dark" ? "rgba(53, 140, 159, 0.1)" : "rgba(53, 140, 159, 0.08)",
                       borderRadius: "24px",
                       fontSize: isMobile ? "0.75rem" : "0.875rem",
                       fontWeight: 600,
@@ -6916,13 +6916,13 @@ ${contentPreview}
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = colorTheme === "dark" 
-                        ? "rgba(99, 102, 241, 0.15)" 
-                        : "rgba(99, 102, 241, 0.12)";
+                        ? "rgba(53, 140, 159, 0.15)" 
+                        : "rgba(53, 140, 159, 0.12)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = colorTheme === "dark" 
-                        ? "rgba(99, 102, 241, 0.1)" 
-                        : "rgba(99, 102, 241, 0.08)";
+                        ? "rgba(53, 140, 159, 0.1)" 
+                        : "rgba(53, 140, 159, 0.08)";
                     }}
                   >
                     <span>Nivel {currentChatLevel.level}/10</span>
@@ -6952,7 +6952,7 @@ ${contentPreview}
                       boxShadow: colorTheme === "dark"
                         ? "0 8px 32px rgba(0, 0, 0, 0.4)"
                         : "0 8px 32px rgba(0, 0, 0, 0.15)",
-                      border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(148, 163, 184, 0.2)"}`,
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.2)" : "rgba(148, 163, 184, 0.2)"}`,
                       zIndex: 1000,
                     }}>
                       {/* Slider principal */}
@@ -7023,8 +7023,8 @@ ${contentPreview}
                             width: 100%;
                             height: 8px;
                             background: ${colorTheme === "dark" 
-                              ? "rgba(99, 102, 241, 0.2)" 
-                              : "rgba(99, 102, 241, 0.15)"};
+                              ? "rgba(53, 140, 159, 0.2)" 
+                              : "rgba(53, 140, 159, 0.15)"};
                             border-radius: 4px;
                           }
                           input[type="range"]::-webkit-slider-thumb {
@@ -7036,8 +7036,8 @@ ${contentPreview}
                             background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
                             cursor: pointer;
                             box-shadow: ${colorTheme === "dark" 
-                              ? "0 2px 8px rgba(99, 102, 241, 0.4)" 
-                              : "0 2px 8px rgba(99, 102, 241, 0.3)"};
+                              ? "0 2px 8px rgba(53, 140, 159, 0.4)" 
+                              : "0 2px 8px rgba(53, 140, 159, 0.3)"};
                             border: 2px solid ${colorTheme === "dark" ? "#1a1a24" : "#ffffff"};
                             transition: all 0.2s ease;
                             margin-top: -6px;
@@ -7045,15 +7045,15 @@ ${contentPreview}
                           input[type="range"]::-webkit-slider-thumb:hover {
                             transform: scale(1.1);
                             box-shadow: ${colorTheme === "dark" 
-                              ? "0 4px 12px rgba(99, 102, 241, 0.5)" 
-                              : "0 4px 12px rgba(99, 102, 241, 0.4)"};
+                              ? "0 4px 12px rgba(53, 140, 159, 0.5)" 
+                              : "0 4px 12px rgba(53, 140, 159, 0.4)"};
                           }
                           input[type="range"]::-moz-range-track {
                             width: 100%;
                             height: 8px;
                             background: ${colorTheme === "dark" 
-                              ? "rgba(99, 102, 241, 0.2)" 
-                              : "rgba(99, 102, 241, 0.15)"};
+                              ? "rgba(53, 140, 159, 0.2)" 
+                              : "rgba(53, 140, 159, 0.15)"};
                             border-radius: 4px;
                             border: none;
                           }
@@ -7064,16 +7064,16 @@ ${contentPreview}
                             background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
                             cursor: pointer;
                             box-shadow: ${colorTheme === "dark" 
-                              ? "0 2px 8px rgba(99, 102, 241, 0.4)" 
-                              : "0 2px 8px rgba(99, 102, 241, 0.3)"};
+                              ? "0 2px 8px rgba(53, 140, 159, 0.4)" 
+                              : "0 2px 8px rgba(53, 140, 159, 0.3)"};
                             border: 2px solid ${colorTheme === "dark" ? "#1a1a24" : "#ffffff"};
                             transition: all 0.2s ease;
                           }
                           input[type="range"]::-moz-range-thumb:hover {
                             transform: scale(1.1);
                             box-shadow: ${colorTheme === "dark" 
-                              ? "0 4px 12px rgba(99, 102, 241, 0.5)" 
-                              : "0 4px 12px rgba(99, 102, 241, 0.4)"};
+                              ? "0 4px 12px rgba(53, 140, 159, 0.5)" 
+                              : "0 4px 12px rgba(53, 140, 159, 0.4)"};
                           }
                           input[type="range"]::-ms-track {
                             width: 100%;
@@ -7145,9 +7145,9 @@ ${contentPreview}
                             flex: 1,
                             padding: "0.5rem 0.75rem",
                             background: colorTheme === "dark" 
-                              ? "rgba(99, 102, 241, 0.1)" 
-                              : "rgba(99, 102, 241, 0.08)",
-                            border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.25)"}`,
+                              ? "rgba(53, 140, 159, 0.1)" 
+                              : "rgba(53, 140, 159, 0.08)",
+                            border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.3)" : "rgba(53, 140, 159, 0.25)"}`,
                             borderRadius: "8px",
                             fontSize: "0.875rem",
                             fontWeight: 600,
@@ -7158,13 +7158,13 @@ ${contentPreview}
                           }}
                           onFocus={(e) => {
                             e.currentTarget.style.border = colorTheme === "dark" 
-                              ? "1px solid rgba(99, 102, 241, 0.5)" 
-                              : "1px solid rgba(99, 102, 241, 0.4)";
+                              ? "1px solid rgba(53, 140, 159, 0.5)" 
+                              : "1px solid rgba(53, 140, 159, 0.4)";
                           }}
                           onBlur={(e) => {
                             e.currentTarget.style.border = colorTheme === "dark" 
-                              ? "1px solid rgba(99, 102, 241, 0.3)" 
-                              : "1px solid rgba(99, 102, 241, 0.25)";
+                              ? "1px solid rgba(53, 140, 159, 0.3)" 
+                              : "1px solid rgba(53, 140, 159, 0.25)";
                           }}
                         />
                         <div style={{
@@ -7395,7 +7395,7 @@ ${contentPreview}
                 padding: 0,
                   background:
                     (isLoading || isGeneratingTest || isGeneratingExercise || !input.trim())
-                    ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(99, 102, 241, 0.3)")
+                    ? (colorTheme === "light" ? "rgba(148, 163, 184, 0.2)" : "rgba(53, 140, 159, 0.3)")
                     : "#1A8CA1",
                 border: "none",
                 borderRadius: "50%",
@@ -7432,7 +7432,7 @@ ${contentPreview}
               background: colorTheme === "light"
                 ? "rgba(248, 250, 252, 0.8)"
                 : "rgba(26, 26, 36, 0.6)",
-              borderTop: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"}`,
+              borderTop: `2px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.3)" : "rgba(53, 140, 159, 0.4)"}`,
               borderRadius: "16px 16px 0 0",
             }}
           >
@@ -7471,7 +7471,7 @@ ${contentPreview}
                   padding: "0.75rem",
                   background: colorTheme === "light" ? "#ffffff" : "rgba(15, 23, 42, 0.4)",
                   borderRadius: "10px",
-                  border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.3)"}`,
+                  border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.2)" : "rgba(53, 140, 159, 0.3)"}`,
                 }}
               >
                 <div
@@ -7499,7 +7499,7 @@ ${contentPreview}
                   padding: "0.75rem",
                   background: colorTheme === "light" ? "#ffffff" : "rgba(15, 23, 42, 0.4)",
                   borderRadius: "10px",
-                  border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.3)"}`,
+                  border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.2)" : "rgba(53, 140, 159, 0.3)"}`,
                 }}
               >
                 <div
@@ -7527,7 +7527,7 @@ ${contentPreview}
                   padding: "0.75rem",
                   background: colorTheme === "light" ? "#ffffff" : "rgba(15, 23, 42, 0.4)",
                   borderRadius: "10px",
-                  border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.3)"}`,
+                  border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.2)" : "rgba(53, 140, 159, 0.3)"}`,
                 }}
               >
                 <div
@@ -7555,7 +7555,7 @@ ${contentPreview}
                   padding: "0.75rem",
                   background: colorTheme === "light" ? "#ffffff" : "rgba(15, 23, 42, 0.4)",
                   borderRadius: "10px",
-                  border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.3)"}`,
+                  border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.2)" : "rgba(53, 140, 159, 0.3)"}`,
                 }}
               >
                 <div
@@ -7606,7 +7606,7 @@ ${contentPreview}
                         padding: "0.625rem 0.875rem",
                         background: colorTheme === "light" ? "#ffffff" : "rgba(15, 23, 42, 0.3)",
                         borderRadius: "8px",
-                        border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.15)" : "rgba(99, 102, 241, 0.2)"}`,
+                        border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.15)" : "rgba(53, 140, 159, 0.2)"}`,
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
@@ -8200,14 +8200,14 @@ ${contentPreview}
         .loading-pulse-ring-enhanced.ring-1 {
           width: 70px;
           height: 70px;
-          border: 1px solid rgba(99, 102, 241, 0.3);
+          border: 1px solid rgba(53, 140, 159, 0.3);
           animation: loadingPulseRingEnhanced 2s ease-out infinite;
         }
         
         .loading-pulse-ring-enhanced.ring-2 {
           width: 70px;
           height: 70px;
-          border: 1px solid rgba(139, 92, 246, 0.25);
+          border: 1px solid rgba(78, 179, 200, 0.25);
           animation: loadingPulseRingEnhanced 2s ease-out infinite 0.5s;
         }
         
@@ -8306,7 +8306,7 @@ ${contentPreview}
           background-size: 200% 100%;
           border-radius: 3px;
           animation: loadingProgressBar 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-          box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+          box-shadow: 0 0 10px rgba(53, 140, 159, 0.5);
         }
         
         @keyframes loadingProgressBar {
@@ -8350,34 +8350,34 @@ ${contentPreview}
         .loading-orb.orb-1 {
           width: 20px;
           height: 20px;
-          background: linear-gradient(135deg, #6366f1, #8b5cf6);
+          background: linear-gradient(135deg, #4eb3c8, #358c9f);
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
           animation-delay: 0s;
-          box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+          box-shadow: 0 0 20px rgba(53, 140, 159, 0.6);
         }
         
         .loading-orb.orb-2 {
           width: 16px;
           height: 16px;
-          background: linear-gradient(135deg, #8b5cf6, #a855f7);
+          background: linear-gradient(135deg, #4eb3c8, #2a6f7d);
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
           animation-delay: 0.3s;
-          box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+          box-shadow: 0 0 15px rgba(78, 179, 200, 0.5);
         }
         
         .loading-orb.orb-3 {
           width: 12px;
           height: 12px;
-          background: linear-gradient(135deg, #a855f7, #6366f1);
+          background: linear-gradient(135deg, #358c9f, #2a6f7d);
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
           animation-delay: 0.6s;
-          box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+          box-shadow: 0 0 10px rgba(42, 111, 125, 0.4);
         }
         
         .loading-pulse-ring {
@@ -8387,7 +8387,7 @@ ${contentPreview}
           transform: translate(-50%, -50%);
           width: 64px;
           height: 64px;
-          border: 3px solid rgba(99, 102, 241, 0.3);
+          border: 3px solid rgba(53, 140, 159, 0.3);
           border-radius: 50%;
           animation: loadingPulseRing 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
@@ -8411,17 +8411,17 @@ ${contentPreview}
           0% {
             transform: translate(-50%, -50%) scale(0.8);
             opacity: 1;
-            border-color: rgba(99, 102, 241, 0.5);
+            border-color: rgba(53, 140, 159, 0.5);
           }
           50% {
             transform: translate(-50%, -50%) scale(1.2);
             opacity: 0.6;
-            border-color: rgba(139, 92, 246, 0.3);
+            border-color: rgba(78, 179, 200, 0.3);
           }
           100% {
             transform: translate(-50%, -50%) scale(1.5);
             opacity: 0;
-            border-color: rgba(168, 85, 247, 0.1);
+            border-color: rgba(42, 111, 125, 0.1);
           }
         }
         
@@ -8483,8 +8483,8 @@ ${contentPreview}
             90deg,
             transparent,
             ${colorTheme === "dark" 
-              ? "rgba(99, 102, 241, 0.2)" 
-              : "rgba(99, 102, 241, 0.15)"},
+              ? "rgba(53, 140, 159, 0.2)" 
+              : "rgba(53, 140, 159, 0.15)"},
             transparent
           );
           animation: skeletonShine 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
@@ -9270,8 +9270,8 @@ function NotesViewer({
           border-radius: 12px;
           overflow-x: auto;
           border: 1px solid ${colorTheme === "dark" 
-            ? "rgba(99, 102, 241, 0.3)"
-            : "rgba(99, 102, 241, 0.4)"};
+            ? "rgba(53, 140, 159, 0.3)"
+            : "rgba(53, 140, 159, 0.4)"};
           margin: 1.5rem 0;
           box-shadow: ${colorTheme === "dark"
             ? "0 4px 16px rgba(0, 0, 0, 0.3)"
@@ -9320,8 +9320,8 @@ function NotesViewer({
             ? "0 4px 16px rgba(0, 0, 0, 0.2)"
             : "0 4px 16px rgba(0, 0, 0, 0.1)"};
           border: 1px solid ${colorTheme === "dark"
-            ? "rgba(99, 102, 241, 0.2)"
-            : "rgba(99, 102, 241, 0.3)"};
+            ? "rgba(53, 140, 159, 0.2)"
+            : "rgba(53, 140, 159, 0.3)"};
         }
         .notes-viewer :global(th), .notes-viewer :global(td) {
           border-left: 1px solid ${colorTheme === "dark"
@@ -9366,7 +9366,7 @@ function NotesViewer({
         }
         .notes-viewer :global(hr) {
           border: none;
-          border-top: 3px solid rgba(99, 102, 241, 0.3);
+          border-top: 3px solid rgba(53, 140, 159, 0.3);
           margin: 3rem 0;
           border-radius: 2px;
         }
@@ -9396,12 +9396,12 @@ function NotesViewer({
         }
         /* Tarjetas especiales para conceptos clave */
         .notes-viewer :global(.concept-card) {
-          background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(6, 182, 212, 0.1));
-          border: 2px solid rgba(99, 102, 241, 0.3);
+          background: linear-gradient(135deg, rgba(53, 140, 159, 0.15), rgba(6, 182, 212, 0.1));
+          border: 2px solid rgba(53, 140, 159, 0.3);
           border-radius: 16px;
           padding: 1.5rem;
           margin: 1.5rem 0;
-          box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+          box-shadow: 0 8px 24px rgba(53, 140, 159, 0.15);
         }
         .notes-viewer :global(.definition-box) {
           background: ${colorTheme === "dark"
@@ -10541,7 +10541,7 @@ function TestComponent({
                       padding: "0.75rem",
                       background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.5)" : "rgba(255, 255, 255, 0.5)",
                       borderRadius: "8px",
-                      border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"}`,
+                      border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.3)" : "rgba(53, 140, 159, 0.4)"}`,
                     }}>
                       <div style={{ fontSize: "0.875rem", color: secondaryTextColor, marginBottom: "0.25rem" }}>
                         Respuesta correcta:
@@ -10723,7 +10723,7 @@ function FeedbackComponent({
   const getPerformanceLevel = (score: number) => {
     if (score >= 90) return { level: "Excelente", color: "#10b981", icon: <StarIcon size={24} color="#10b981" />, message: "¡Increíble! Dominas perfectamente estos conceptos." };
     if (score >= 80) return { level: "Muy Bueno", color: "#06b6d4", icon: <TargetIcon size={24} color="#06b6d4" />, message: "¡Muy bien! Tienes una comprensión sólida." };
-    if (score >= 70) return { level: "Bueno", color: "#6366f1", icon: <CheckIcon size={24} color="#6366f1" />, message: "Buen trabajo, pero hay espacio para mejorar." };
+    if (score >= 70) return { level: "Bueno", color: "#358c9f", icon: <CheckIcon size={24} color="#358c9f" />, message: "Buen trabajo, pero hay espacio para mejorar." };
     if (score >= 60) return { level: "Regular", color: "#f59e0b", icon: <AlertIcon size={24} color="#f59e0b" />, message: "Necesitas repasar algunos conceptos importantes." };
     return { level: "Necesita Mejora", color: "#ef4444", icon: <XIcon size={24} color="#ef4444" />, message: "Es importante que repases el material antes de continuar." };
   };
@@ -10736,10 +10736,10 @@ function FeedbackComponent({
         background: bgColor,
         borderRadius: "20px",
         padding: "2rem",
-        border: `2px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.4)" : "rgba(99, 102, 241, 0.5)"}`,
+        border: `2px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.4)" : "rgba(53, 140, 159, 0.5)"}`,
         boxShadow: colorTheme === "dark"
-          ? "0 8px 32px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
-          : "0 8px 32px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+          ? "0 8px 32px rgba(53, 140, 159, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+          : "0 8px 32px rgba(53, 140, 159, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
       }}
     >
       {/* Header con Puntuación */}
@@ -10784,7 +10784,7 @@ function FeedbackComponent({
         <div style={{
           marginTop: "1rem",
           padding: "0.75rem 1.5rem",
-          background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+          background: colorTheme === "dark" ? "rgba(53, 140, 159, 0.1)" : "rgba(53, 140, 159, 0.08)",
           borderRadius: "12px",
           display: "inline-block",
         }}>
@@ -10879,7 +10879,7 @@ function FeedbackComponent({
                     padding: "1rem",
                     background: colorTheme === "dark" ? "rgba(26, 26, 36, 0.5)" : "rgba(255, 255, 255, 0.5)",
                     borderRadius: "12px",
-                    border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"}`,
+                    border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.3)" : "rgba(53, 140, 159, 0.4)"}`,
                   }}>
                     <div style={{
                       display: "flex",
@@ -10924,7 +10924,7 @@ function FeedbackComponent({
             gap: "0.75rem",
             marginBottom: "1rem",
           }}>
-            <SparkleIcon size={24} color="#6366f1" />
+            <SparkleIcon size={24} color="#358c9f" />
             <h3 style={{
               margin: 0,
               fontSize: "clamp(1.25rem, 3vw, 1.5rem)",
@@ -10950,17 +10950,17 @@ function FeedbackComponent({
                 style={{
                   padding: "1rem 1.25rem",
                   background: colorTheme === "dark"
-                    ? "linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05))"
-                    : "linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.05))",
+                    ? "linear-gradient(135deg, rgba(53, 140, 159, 0.1), rgba(78, 179, 200, 0.05))"
+                    : "linear-gradient(135deg, rgba(53, 140, 159, 0.08), rgba(78, 179, 200, 0.05))",
                   borderRadius: "12px",
-                  border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"}`,
+                  border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.3)" : "rgba(53, 140, 159, 0.4)"}`,
                   display: "flex",
                   gap: "0.75rem",
                   alignItems: "flex-start",
                 }}
               >
             <div style={{ marginTop: "0.125rem", flexShrink: 0 }}>
-              <ZapIcon size={18} color="#6366f1" />
+              <ZapIcon size={18} color="#358c9f" />
             </div>
                 <span style={{ color: textColor, lineHeight: 1.6 }}>{rec}</span>
               </li>
@@ -11062,10 +11062,10 @@ function ExerciseComponent({
         </h3>
         <div style={{
           padding: "1.5rem",
-          background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+          background: colorTheme === "dark" ? "rgba(53, 140, 159, 0.1)" : "rgba(53, 140, 159, 0.08)",
           borderRadius: "12px",
           marginBottom: "1rem",
-          border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.15)"}`,
+          border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.2)" : "rgba(53, 140, 159, 0.15)"}`,
         }}>
           <div style={{
             color: textColor,
@@ -11346,7 +11346,7 @@ function ExerciseComponent({
           padding: "0.75rem 1.5rem",
           background: answer.trim()
             ? (colorTheme === "dark" ? "#6366f1" : "#6366f1")
-            : (colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(148, 163, 184, 0.2)"),
+            : (colorTheme === "dark" ? "rgba(53, 140, 159, 0.3)" : "rgba(148, 163, 184, 0.2)"),
           border: "none",
           borderRadius: "8px",
           color: "white",
@@ -11455,9 +11455,9 @@ function ExerciseResultComponent({
         </h3>
         <div style={{
           padding: "1rem",
-          background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+          background: colorTheme === "dark" ? "rgba(53, 140, 159, 0.1)" : "rgba(53, 140, 159, 0.08)",
           borderRadius: "8px",
-          border: `1px solid ${colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.4)"}`,
+          border: `1px solid ${colorTheme === "dark" ? "rgba(53, 140, 159, 0.3)" : "rgba(53, 140, 159, 0.4)"}`,
         }}>
           <p style={{
             margin: 0,
@@ -11524,7 +11524,7 @@ function ExerciseResultComponent({
             margin: "0 0 0.75rem 0",
             fontSize: "1rem",
             fontWeight: 600,
-            color: "#6366f1",
+            color: "#358c9f",
           }}>
             Sugerencias:
           </h4>
@@ -11733,8 +11733,8 @@ function AudioButton({
         justifyContent: "center",
         padding: "0.5rem",
         background: colorTheme === "dark" 
-          ? "rgba(99, 102, 241, 0.15)" 
-          : "rgba(99, 102, 241, 0.12)",
+          ? "rgba(53, 140, 159, 0.15)" 
+          : "rgba(53, 140, 159, 0.12)",
         border: "none",
         borderRadius: "50%",
         cursor: "pointer",
@@ -11749,8 +11749,8 @@ function AudioButton({
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = colorTheme === "dark" 
-          ? "rgba(99, 102, 241, 0.25)" 
-          : "rgba(99, 102, 241, 0.2)";
+          ? "rgba(53, 140, 159, 0.25)" 
+          : "rgba(53, 140, 159, 0.2)";
         e.currentTarget.style.opacity = "1";
         e.currentTarget.style.transform = "scale(1.1)";
         e.currentTarget.style.boxShadow = colorTheme === "dark" 
@@ -11759,8 +11759,8 @@ function AudioButton({
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = colorTheme === "dark" 
-          ? "rgba(99, 102, 241, 0.15)" 
-          : "rgba(99, 102, 241, 0.12)";
+          ? "rgba(53, 140, 159, 0.15)" 
+          : "rgba(53, 140, 159, 0.12)";
         e.currentTarget.style.opacity = isSpeaking ? "1" : "0.9";
         e.currentTarget.style.transform = "scale(1)";
         e.currentTarget.style.boxShadow = colorTheme === "dark" 
@@ -12576,7 +12576,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
       <div 
         className={showAnswer && isCorrect ? "flashcard-flip" : ""}
         style={{
-          background: colorTheme === "dark" ? "rgba(99, 102, 241, 0.1)" : "rgba(99, 102, 241, 0.08)",
+          background: colorTheme === "dark" ? "rgba(53, 140, 159, 0.1)" : "rgba(53, 140, 159, 0.08)",
           borderRadius: isMobileView ? "14px" : "16px",
           padding: isMobileView ? "1rem" : "2rem",
           marginBottom: "1.25rem",
@@ -12717,7 +12717,7 @@ Responde SOLO con un JSON array válido en este formato exacto (sin texto adicio
                               ? (colorTheme === "dark" ? "rgba(239, 68, 68, 0.2)" : "rgba(239, 68, 68, 0.15)")
                               : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.08)" : "rgba(148, 163, 184, 0.05)")))
                       : (isSelected
-                          ? (colorTheme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.15)")
+                          ? (colorTheme === "dark" ? "rgba(53, 140, 159, 0.2)" : "rgba(53, 140, 159, 0.15)")
                           : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.08)" : "rgba(148, 163, 184, 0.05)")),
                     border: showAnswer
                       ? (isCorrectOption

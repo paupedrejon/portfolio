@@ -1,5 +1,12 @@
 # Changelog — Study Agents
 
+## 0.3.9 — Estética home + chat blanco
+
+### Visible
+- Botones / chips / nav / sidebar al teal de la home (`#358c9f`, hover `#00d9ff`)
+- Canvas del chat **siempre blanco**
+- Toolbar y quick actions estilo home sobre fondo claro
+
 ## 0.3.8 — Hero al estilo home
 
 ### Visible

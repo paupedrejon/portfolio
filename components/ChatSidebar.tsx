@@ -380,7 +380,7 @@ export default function ChatSidebar({
   };
 
   // Función para renderizar el icono según el tipo
-  const renderIcon = (iconType: string = "chat", color: string = "#6366f1", isSelected: boolean = false, topic?: string) => {
+  const renderIcon = (iconType: string = "chat", color: string = "#358c9f", isSelected: boolean = false, topic?: string) => {
     // Si hay un tema guardado, usar el icono del tema
     if (topic) {
       return getTopicIconForSidebar(topic, isSelected);
@@ -388,9 +388,9 @@ export default function ChatSidebar({
     
     // Si el icono es un identificador de tema (comienza con "icon_" o "flag_"), intentar obtener el tema
     // Por ahora, solo usar el sistema de iconos básicos si no hay tema
-    const iconColor = color || "#6366f1";
+    const iconColor = color || "#358c9f";
     const strokeColor = isSelected 
-      ? (iconColor ? "white" : "#6366f1")
+      ? (iconColor ? "white" : "#358c9f")
       : (colorTheme === "dark" ? "rgba(226, 232, 240, 0.8)" : "rgba(26, 36, 52, 0.8)");
     
     switch (iconType) {
@@ -685,7 +685,7 @@ export default function ChatSidebar({
             transform: "translateY(-50%)",
             zIndex: 1000,
             padding: "0.75rem",
-            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            background: "linear-gradient(135deg, #4eb3c8, #358c9f)",
             border: "none",
             borderRadius: "50%",
             width: "48px",
@@ -725,7 +725,7 @@ export default function ChatSidebar({
           transform: "translateY(-50%)",
           zIndex: 1000,
           padding: "0.75rem",
-          background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+          background: "linear-gradient(135deg, #4eb3c8, #358c9f)",
           border: "none",
           borderTopRightRadius: "12px",
           borderBottomRightRadius: "12px",
@@ -1046,7 +1046,7 @@ export default function ChatSidebar({
             style={{
               width: "100%",
               padding: "0.75rem 1rem",
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              background: "linear-gradient(135deg, #4eb3c8, #358c9f)",
               border: "none",
               borderRadius: "10px",
               color: "white",
@@ -1069,7 +1069,7 @@ export default function ChatSidebar({
                 : "0 6px 16px rgba(99, 102, 241, 0.3)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "linear-gradient(135deg, #6366f1, #8b5cf6)";
+              e.currentTarget.style.background = "linear-gradient(135deg, #4eb3c8, #358c9f)";
               e.currentTarget.style.boxShadow = colorTheme === "dark" 
                 ? "0 4px 12px rgba(99, 102, 241, 0.3)" 
                 : "0 4px 12px rgba(99, 102, 241, 0.2)";
@@ -1211,7 +1211,7 @@ export default function ChatSidebar({
                 }}
                 title="Cambiar color e icono"
               >
-                {renderIcon(chat.metadata?.icon || "chat", chatColor || "#6366f1", true, chat.metadata?.topic)}
+                {renderIcon(chat.metadata?.icon || "chat", chatColor || "#358c9f", true, chat.metadata?.topic)}
               </div>
               {!isCollapsed && (
                 <>
@@ -1331,7 +1331,7 @@ export default function ChatSidebar({
                             transition: "all 0.2s ease",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.color = "#6366f1";
+                            e.currentTarget.style.color = "#358c9f";
                             e.currentTarget.style.background = colorTheme === "dark" 
                               ? "rgba(99, 102, 241, 0.1)" 
                               : "rgba(99, 102, 241, 0.08)";
@@ -1538,7 +1538,7 @@ export default function ChatSidebar({
                                     ? (chatColor || (colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.2)"))
                                     : (colorTheme === "dark" ? "rgba(148, 163, 184, 0.15)" : "rgba(148, 163, 184, 0.1)"),
                                   border: (chat.metadata?.icon || "chat") === icon.value
-                                    ? `2px solid ${chatColor || "#6366f1"}`
+                                    ? `2px solid ${chatColor || "#358c9f"}`
                                     : `2px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.3)" : "rgba(148, 163, 184, 0.4)"}`,
                                   cursor: "pointer",
                                   display: "flex",
@@ -1553,7 +1553,7 @@ export default function ChatSidebar({
                                   e.currentTarget.style.transform = "scale(1.1)";
                                   e.currentTarget.style.background = chatColor || (colorTheme === "dark" ? "rgba(99, 102, 241, 0.3)" : "rgba(99, 102, 241, 0.2)");
                                   e.currentTarget.style.color = chatColor ? "white" : "#6366f1";
-                                  e.currentTarget.style.border = `2px solid ${chatColor || "#6366f1"}`;
+                                  e.currentTarget.style.border = `2px solid ${chatColor || "#358c9f"}`;
                                 }}
                                 onMouseLeave={(e) => {
                                   e.currentTarget.style.transform = "scale(1)";
@@ -1564,12 +1564,12 @@ export default function ChatSidebar({
                                     ? (chatColor ? "white" : "#6366f1")
                                     : (colorTheme === "dark" ? "rgba(226, 232, 240, 0.8)" : "rgba(26, 36, 52, 0.8)");
                                   e.currentTarget.style.border = (chat.metadata?.icon || "chat") === icon.value
-                                    ? `2px solid ${chatColor || "#6366f1"}`
+                                    ? `2px solid ${chatColor || "#358c9f"}`
                                     : `2px solid ${colorTheme === "dark" ? "rgba(148, 163, 184, 0.3)" : "rgba(148, 163, 184, 0.4)"}`;
                                 }}
                                 title={icon.name}
                               >
-                                {renderIcon(icon.value, chatColor || "#6366f1", (chat.metadata?.icon || "chat") === icon.value)}
+                                {renderIcon(icon.value, chatColor || "#358c9f", (chat.metadata?.icon || "chat") === icon.value)}
                               </button>
                             ))}
                           </div>

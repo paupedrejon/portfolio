@@ -10,8 +10,9 @@ import {
   openAPIKeyModal,
 } from "@/lib/study-agents/api-keys";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
-import { SA_PRIMARY } from "@/lib/study-agents/brand";
+import { SA_PRIMARY, SA_PRIMARY_BRIGHT } from "@/lib/study-agents/brand";
 import "@/components/study-agents/study-agents-bot.css";
+import "@/components/study-agents/study-agents-chat.css";
 
 export default function StudyAgentsNav() {
   const { data: session } = useSession();
@@ -26,6 +27,7 @@ export default function StudyAgentsNav() {
 
   return (
     <div
+      className="sa-nav"
       style={{
         position: "fixed",
         top: "1rem",
@@ -36,11 +38,8 @@ export default function StudyAgentsNav() {
         alignItems: "center",
         gap: "0.5rem",
         padding: "0.5rem 0.75rem",
-        background: "var(--bg-overlay-05, rgba(18, 18, 26, 0.85))",
-        border: "1px solid var(--border-overlay-1, rgba(148, 163, 184, 0.2))",
         borderRadius: "50px",
         backdropFilter: "blur(20px)",
-        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.25)",
       }}
     >
       <Link
@@ -50,15 +49,15 @@ export default function StudyAgentsNav() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          width: "40px",
-          height: "40px",
+          width: 40,
+          height: 40,
           borderRadius: "50%",
           textDecoration: "none",
-          background: "rgba(37, 150, 190, 0.12)",
-          border: "1px solid rgba(37, 150, 190, 0.3)",
+          background: "rgba(53, 140, 159, 0.18)",
+          border: "1px solid rgba(53, 140, 159, 0.4)",
         }}
       >
-        <StudyAgentsBotAvatar size={26} color={SA_PRIMARY} state="idle" />
+        <StudyAgentsBotAvatar size={26} color={SA_PRIMARY_BRIGHT} state="idle" />
       </Link>
 
       <Link
@@ -68,13 +67,13 @@ export default function StudyAgentsNav() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          width: "40px",
-          height: "40px",
+          width: 40,
+          height: 40,
           borderRadius: "50%",
-          color: "var(--text-secondary)",
+          color: "rgba(255,255,255,0.75)",
           textDecoration: "none",
-          background: "rgba(255, 255, 255, 0.05)",
-          border: "1px solid var(--border-subtle, rgba(148, 163, 184, 0.15))",
+          background: "rgba(255, 255, 255, 0.06)",
+          border: "1px solid rgba(53, 140, 159, 0.3)",
         }}
       >
         <HiHome size={20} />
@@ -83,24 +82,22 @@ export default function StudyAgentsNav() {
       <button
         type="button"
         onClick={openAPIKeyModal}
-        title={hasApiKey ? "Cambiar API Key de OpenAI" : "Configurar API Key de OpenAI"}
+        title={hasApiKey ? "Cambiar API Key" : "Configurar API Key"}
         style={{
           display: "flex",
           alignItems: "center",
           gap: "0.4rem",
-          height: "40px",
+          height: 40,
           padding: "0 0.9rem",
-          borderRadius: "20px",
+          borderRadius: 20,
           cursor: "pointer",
           fontSize: "0.8rem",
           fontWeight: 600,
-          color: hasApiKey ? "#86efac" : "#fbbf24",
-          background: hasApiKey
-            ? "rgba(34, 197, 94, 0.12)"
-            : "rgba(245, 158, 11, 0.12)",
+          color: hasApiKey ? "#86efac" : SA_PRIMARY_BRIGHT,
+          background: hasApiKey ? "rgba(34, 197, 94, 0.12)" : "rgba(53, 140, 159, 0.16)",
           border: hasApiKey
             ? "1px solid rgba(34, 197, 94, 0.35)"
-            : "1px solid rgba(245, 158, 11, 0.35)",
+            : "1px solid rgba(53, 140, 159, 0.4)",
         }}
       >
         <HiKey size={16} />
@@ -110,21 +107,19 @@ export default function StudyAgentsNav() {
       {session?.user && (
         <button
           type="button"
-          onClick={() =>
-            signOut({ callbackUrl: "/auth/signin", redirect: true })
-          }
+          onClick={() => signOut({ callbackUrl: "/auth/signin", redirect: true })}
           title={session.user.email ?? "Cerrar sesión"}
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            width: "40px",
-            height: "40px",
+            width: 40,
+            height: 40,
             borderRadius: "50%",
             cursor: "pointer",
-            color: "var(--text-secondary)",
-            background: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid var(--border-subtle, rgba(148, 163, 184, 0.15))",
+            color: "rgba(255,255,255,0.75)",
+            background: "rgba(255, 255, 255, 0.06)",
+            border: "1px solid rgba(53, 140, 159, 0.3)",
           }}
         >
           {session.user.image ? (

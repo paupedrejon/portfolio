@@ -302,7 +302,7 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
           </label>
           <p className={outfit.className} style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "0.75rem" }}>
             Recomendada para RAG de mejor calidad.{" "}
-            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: "#6366f1" }}>
+            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: "#358c9f" }}>
               platform.openai.com/api-keys
             </a>
           </p>
@@ -332,7 +332,7 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
             </label>
             <p className={outfit.className} style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "0.65rem" }}>
               {field.hint}{" "}
-              <a href={field.href} target="_blank" rel="noopener noreferrer" style={{ color: "#6366f1" }}>
+              <a href={field.href} target="_blank" rel="noopener noreferrer" style={{ color: "#358c9f" }}>
                 {field.hrefLabel}
               </a>
             </p>
@@ -349,7 +349,7 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
             marginBottom: "1.5rem",
           }}
         >
-          <h3 className={outfit.className} style={{ fontSize: "0.875rem", fontWeight: 600, color: "#6366f1", marginTop: 0 }}>
+          <h3 className={outfit.className} style={{ fontSize: "0.875rem", fontWeight: 600, color: "#358c9f", marginTop: 0 }}>
             Costes orientativos
           </h3>
           <ul className={outfit.className} style={{ fontSize: "0.75rem", color: "var(--text-secondary)", margin: 0, paddingLeft: "1.25rem", lineHeight: 1.6 }}>
@@ -381,7 +381,7 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
             onClick={handleSave}
             style={{
               padding: "0.75rem 1.5rem",
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              background: "linear-gradient(135deg, #4eb3c8, #358c9f)",
               border: "none",
               borderRadius: "10px",
               color: "white",

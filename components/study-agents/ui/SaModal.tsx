@@ -21,7 +21,7 @@ type Props = {
   children: ReactNode;
 };
 
-/** Shell de modal unificado al estilo Study Agents (#2596be, bot, pills). */
+/** Shell de modal unificado al estilo home (#358c9f, bot, pills). */
 export default function SaModal({
   open,
   onClose,
@@ -35,10 +35,10 @@ export default function SaModal({
   if (!open || typeof document === "undefined") return null;
 
   const dark = colorTheme === "dark";
-  const bg = dark ? "rgba(22, 26, 32, 0.98)" : "#ffffff";
+  const bg = dark ? "rgba(4, 16, 24, 0.98)" : "#ffffff";
   const text = dark ? "#f1f5f9" : "#0f172a";
   const muted = dark ? "#94a3b8" : "#64748b";
-  const border = dark ? "rgba(37, 150, 190, 0.4)" : SA_PRIMARY_BORDER;
+  const border = dark ? "rgba(53, 140, 159, 0.4)" : SA_PRIMARY_BORDER;
 
   return createPortal(
     <div

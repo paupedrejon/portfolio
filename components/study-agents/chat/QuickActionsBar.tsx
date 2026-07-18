@@ -9,7 +9,11 @@ import {
   HiOutlineArrowPath,
 } from "react-icons/hi2";
 import { outfit } from "@/app/fonts";
-import { SA_PRIMARY, SA_PRIMARY_SOFT } from "@/lib/study-agents/brand";
+import {
+  SA_PRIMARY,
+  SA_CYAN,
+} from "@/lib/study-agents/brand";
+import "@/components/study-agents/study-agents-chat.css";
 
 type Action = {
   id: string;
@@ -30,9 +34,9 @@ type Props = {
   srsDueCount?: number;
 };
 
-/** Pills blancos clean con iconos grandes y color marca #2596be. */
+/** Pills estilo home sobre canvas blanco. */
 export default function QuickActionsBar({
-  colorTheme,
+  colorTheme: _colorTheme,
   disabled,
   onStudyPlan,
   onNotes,
@@ -41,7 +45,6 @@ export default function QuickActionsBar({
   onReview,
   srsDueCount = 0,
 }: Props) {
-  const dark = colorTheme === "dark";
   const iconProps = { size: 20, strokeWidth: 1.75 } as const;
 
   const actions: Action[] = [
@@ -85,9 +88,6 @@ export default function QuickActionsBar({
     });
   }
 
-  const border = dark ? "rgba(148, 163, 184, 0.22)" : "rgba(148, 163, 184, 0.35)";
-  const bg = dark ? "rgba(26, 26, 36, 0.9)" : "#ffffff";
-
   return (
     <div
       className={outfit.className}
@@ -109,36 +109,28 @@ export default function QuickActionsBar({
           disabled={disabled}
           onClick={a.onClick}
           title={a.hint}
+          className="sa-btn sa-btn--ghost sa-btn--pill"
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.5rem",
+            minHeight: "2.5rem",
             padding: "0.55rem 1.05rem",
-            borderRadius: 9999,
-            border: `1px solid ${border}`,
-            background: bg,
             color: SA_PRIMARY,
-            cursor: disabled ? "not-allowed" : "pointer",
             opacity: disabled ? 0.55 : 1,
-            fontSize: "0.88rem",
-            fontWeight: 600,
-            boxShadow: dark ? "none" : "0 2px 8px rgba(15, 23, 42, 0.05)",
-            transition: "background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease",
+            cursor: disabled ? "not-allowed" : "pointer",
           }}
           onMouseEnter={(e) => {
             if (disabled) return;
-            e.currentTarget.style.background = SA_PRIMARY_SOFT;
-            e.currentTarget.style.borderColor = SA_PRIMARY;
-            e.currentTarget.style.boxShadow = dark
-              ? "none"
-              : "0 4px 12px rgba(37, 150, 190, 0.15)";
+            e.currentTarget.style.background = SA_CYAN;
+            e.currentTarget.style.borderColor = SA_CYAN;
+            e.currentTarget.style.color = "#041018";
+            e.currentTarget.style.transform = "translateY(-2px)";
+            e.currentTarget.style.boxShadow = "0 8px 20px rgba(0, 217, 255, 0.28)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = bg;
-            e.currentTarget.style.borderColor = border;
-            e.currentTarget.style.boxShadow = dark
-              ? "none"
-              : "0 2px 8px rgba(15, 23, 42, 0.05)";
+            e.currentTarget.style.background = "#ffffff";
+            e.currentTarget.style.borderColor = "rgba(53, 140, 159, 0.4)";
+            e.currentTarget.style.color = SA_PRIMARY;
+            e.currentTarget.style.transform = "none";
+            e.currentTarget.style.boxShadow = "0 2px 8px rgba(15, 23, 42, 0.04)";
           }}
         >
           <span style={{ display: "inline-flex", lineHeight: 0 }} aria-hidden>
