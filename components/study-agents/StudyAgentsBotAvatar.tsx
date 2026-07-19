@@ -78,8 +78,7 @@ function BotEye({
 }
 
 /**
- * Bot Study Agents: cuerpo/antenas/ojos blancos, pantalla interior oscura.
- * (Lo que antes era azul → blanco; interior oscuro.)
+ * Bot Study Agents: cuerpo/antenas/ojos blancos, pantalla interior azul.
  */
 export default function StudyAgentsBotAvatar({
   size = 36,
@@ -89,7 +88,7 @@ export default function StudyAgentsBotAvatar({
   title = "Study Agents",
 }: Props) {
   const body = "#ffffff";
-  const face = "#061018";
+  const face = color; // azul (pantalla)
   const eyes = "#ffffff";
 
   const animClass =

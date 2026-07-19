@@ -83,9 +83,9 @@
   animation: sa-bot-antenna-right 0.7s ease-in-out infinite;
 }
 
-/* Cuerpo blanco + cara oscura */
+/* Cuerpo blanco + cara azul */
 .sa-bot-avatar {
-  --sa-bot-face: #061018;
+  --sa-bot-face: #358c9f;
   overflow: visible !important;
 }
 
