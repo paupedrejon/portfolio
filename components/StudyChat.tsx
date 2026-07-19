@@ -4532,8 +4532,8 @@ ${contentPreview}
         }}
       >
         {courseMode && onBackToCourses && (
-          <button type="button" className="sa-course-back" onClick={onBackToCourses}>
-            ← Mis cursos
+          <button type="button" className="sa-course-back" onClick={onBackToCourses} title="Mis cursos" aria-label="Mis cursos">
+            ←
           </button>
         )}
         {/* Messages */}

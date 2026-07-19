@@ -380,20 +380,26 @@
 .sa-course-back {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  width: 2.55rem;
+  height: 2.55rem;
   margin: 0.5rem 0 0.75rem;
-  padding: 0.45rem 0.9rem;
+  padding: 0;
   border-radius: 12px;
-  border: 2px solid rgba(15, 23, 42, 0.12);
-  background: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.04);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 1.15rem;
+  line-height: 1;
   cursor: pointer;
-  color: #0f172a;
+  color: #ffffff;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
 .sa-course-back:hover {
-  border-color: #00d9ff;
-  box-shadow: 0 0 16px rgba(0, 217, 255, 0.2);
+  border-color: rgba(78, 179, 200, 0.55);
+  background: rgba(53, 140, 159, 0.16);
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.25);
+  transform: translateY(-1px);
 }
 

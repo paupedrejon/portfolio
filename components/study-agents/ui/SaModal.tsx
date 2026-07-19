@@ -6,6 +6,7 @@ import { outfit, spaceGrotesk } from "@/app/fonts";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
 import {
   SA_PRIMARY,
+  SA_CYAN,
   SA_PRIMARY_BORDER,
 } from "@/lib/study-agents/brand";
 import "@/components/study-agents/study-agents-chat.css";
@@ -91,7 +92,7 @@ export default function SaModal({
           }}
         >
           <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", minWidth: 0 }}>
-            <StudyAgentsBotAvatar size={38} color={SA_PRIMARY} state="idle" />
+            <StudyAgentsBotAvatar size={56} color={SA_CYAN} state="idle" className="sa-bot-avatar--bright" />
             <div style={{ minWidth: 0 }}>
               <h2
                 id={titleId}

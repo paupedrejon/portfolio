@@ -88,9 +88,9 @@ export default function ChatToolbar({
     cursor: "pointer" as const,
     fontSize: "0.82rem",
     fontWeight: 600,
-    color: "#0f172a",
-    background: active ? "rgba(0, 217, 255, 0.12)" : "transparent",
-    border: `1.5px solid ${active ? "#00d9ff" : "rgba(15, 23, 42, 0.14)"}`,
+    color: "#ffffff",
+    background: active ? "rgba(0, 217, 255, 0.14)" : "rgba(255, 255, 255, 0.04)",
+    border: `1.5px solid ${active ? "#00d9ff" : "rgba(255, 255, 255, 0.28)"}`,
     boxShadow: active ? "0 0 18px rgba(0, 217, 255, 0.22)" : "none",
   });
 
@@ -114,7 +114,7 @@ export default function ChatToolbar({
         <span
           style={{
             fontSize: "0.75rem",
-            color: "#64748b",
+            color: "#e2e8f0",
             padding: "0.35rem 0.65rem",
             borderRadius: 999,
             background: SA_PRIMARY_SOFT,
@@ -176,22 +176,23 @@ export default function ChatToolbar({
           title={hasApiKey ? "Cambiar API keys" : "Configurar API keys"}
           style={chip(hasApiKey)}
         >
-          <HiKey size={16} color={SA_PRIMARY} />
-          {hasApiKey ? "API Key" : "Configurar API"}
+          <HiKey size={16} color="#00d9ff" />
+          <span style={{ color: "#ffffff" }}>{hasApiKey ? "API Key" : "Configurar API"}</span>
         </button>
       )}
 
       {isMounted && (
         <>
-          <span style={{ fontSize: "0.875rem", color: "#64748b", marginRight: "0.25rem", fontWeight: 500 }}>
+          <span style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.72)", marginRight: "0.25rem", fontWeight: 500 }}>
             Modelo:
           </span>
           <div ref={modelDropdownRef} style={{ position: "relative", display: "inline-block" }}>
             <button type="button" onClick={onToggleModelDropdown} style={{ ...chip(false), paddingRight: "1.75rem" }}>
-              <span>{modelLabel}</span>
+              <span style={{ color: "#ffffff" }}>{modelLabel}</span>
               <span
                 style={{
                   fontSize: "0.625rem",
+                  color: "#ffffff",
                   transform: showModelDropdown ? "rotate(180deg)" : "rotate(0deg)",
                   transition: "transform 0.2s ease",
                 }}
@@ -209,7 +210,7 @@ export default function ChatToolbar({
                   position: "absolute",
                   top: "calc(100% + 0.5rem)",
                   left: 0,
-                  background: "#ffffff",
+                  background: "#041018",
                   backdropFilter: "blur(20px)",
                   borderRadius: 12,
                   padding: "0.375rem",
@@ -217,8 +218,8 @@ export default function ChatToolbar({
                   maxHeight: 320,
                   overflowY: "auto",
                   zIndex: 10000,
-                  border: `1px solid ${SA_PRIMARY_BORDER}`,
-                  boxShadow: "0 16px 40px rgba(15, 23, 42, 0.12)",
+                  border: "1px solid rgba(255,255,255,0.16)",
+                  boxShadow: "0 16px 40px rgba(0, 0, 0, 0.45)",
                 }}
               >
                 {grouped.map(({ group, label, items }) => (
@@ -230,7 +231,7 @@ export default function ChatToolbar({
                         fontWeight: 700,
                         letterSpacing: "0.06em",
                         textTransform: "uppercase",
-                        color: "#64748b",
+                        color: "rgba(255,255,255,0.55)",
                       }}
                     >
                       {label}
@@ -252,7 +253,7 @@ export default function ChatToolbar({
                             background: isSelected ? SA_PRIMARY_SOFT : "transparent",
                             border: "none",
                             borderRadius: 8,
-                            color: "#0f172a",
+                            color: "#f1f5f9",
                             fontSize: "0.8125rem",
                             fontWeight: isSelected ? 600 : 500,
                             cursor: "pointer",
@@ -266,16 +267,16 @@ export default function ChatToolbar({
                           <div>
                             <div>{model.label}</div>
                             {model.subtitle && (
-                              <div style={{ fontSize: "0.6875rem", color: "#94a3b8" }}>{model.subtitle}</div>
+                              <div style={{ fontSize: "0.6875rem", color: "rgba(255,255,255,0.5)" }}>{model.subtitle}</div>
                             )}
                           </div>
                           <span style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                             {isFree ? (
-                              <span style={{ fontSize: "0.65rem", fontWeight: 700, color: "#22c55e" }}>Gratis</span>
+                              <span style={{ fontSize: "0.65rem", fontWeight: 700, color: "#4ade80" }}>Gratis</span>
                             ) : (
-                              price && <span style={{ fontSize: "0.65rem", color: "#94a3b8" }}>{price}/1k</span>
+                              price && <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.5)" }}>{price}/1k</span>
                             )}
-                            {isSelected && <HiCheck size={14} color={SA_PRIMARY} />}
+                            {isSelected && <HiCheck size={14} color="#00d9ff" />}
                           </span>
                         </button>
                       );

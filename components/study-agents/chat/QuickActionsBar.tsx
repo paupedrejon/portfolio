@@ -117,10 +117,11 @@ export default function QuickActionsBar({
           disabled={disabled}
           onClick={a.onClick}
           title={a.hint}
-          className="sa-btn sa-btn--ghost"
+          aria-label={a.label}
+          className={`sa-btn sa-btn--ghost ${courseMode ? "sa-btn--icon" : ""}`}
           style={{
             minHeight: "2.55rem",
-            padding: "0.55rem 1.1rem",
+            padding: courseMode ? undefined : "0.55rem 1.1rem",
             fontSize: "0.88rem",
             opacity: disabled ? 0.5 : 1,
             cursor: disabled ? "not-allowed" : "pointer",
@@ -129,7 +130,7 @@ export default function QuickActionsBar({
           <span style={{ display: "inline-flex", lineHeight: 0 }} aria-hidden>
             {a.icon}
           </span>
-          {a.label}
+          {!courseMode && a.label}
         </button>
       ))}
     </div>

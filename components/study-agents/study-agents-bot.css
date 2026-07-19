@@ -87,3 +87,11 @@
 .sa-bot-avatar {
   --sa-bot-face: #ffffff;
 }
+
+.sa-bot-avatar--bright {
+  filter: drop-shadow(0 0 10px rgba(0, 217, 255, 0.55)) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+}
+
+.sa-bot-avatar--bright svg {
+  overflow: visible;
+}

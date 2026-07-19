@@ -37,7 +37,7 @@ const TIME_OPTIONS = [
 export default function StudyPlanPanel({
   open,
   onClose,
-  colorTheme,
+  colorTheme: _colorTheme,
   apiKey,
   userId,
   chatId,
@@ -63,7 +63,7 @@ export default function StudyPlanPanel({
     }
   }, [open, defaultTopic]);
 
-  const t = saModalTokens(colorTheme);
+  const t = saModalTokens("dark");
 
   const generate = async () => {
     if (!apiKey) {
@@ -126,12 +126,11 @@ export default function StudyPlanPanel({
     <SaModal
       open={open}
       onClose={onClose}
-      colorTheme={colorTheme}
+      colorTheme="dark"
       title={titles[step]}
       titleId="study-plan-title"
       subtitle={subs[step]}
       maxWidth={420}
-      light
     >
       <div className="sa-step-dots" aria-hidden>
         {[0, 1, 2].map((i) => (
@@ -150,7 +149,9 @@ export default function StudyPlanPanel({
               width: "100%",
               padding: "1rem 1.1rem",
               borderRadius: 14,
-              border: "2px solid rgba(15,23,42,0.12)",
+              border: "2px solid rgba(255,255,255,0.18)",
+              background: t.inputBg,
+              color: "#ffffff",
               fontSize: "1.05rem",
               fontWeight: 600,
               boxSizing: "border-box",
@@ -165,7 +166,7 @@ export default function StudyPlanPanel({
               e.currentTarget.style.boxShadow = "0 0 0 4px rgba(0,217,255,0.15)";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "rgba(15,23,42,0.12)";
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)";
               e.currentTarget.style.boxShadow = "none";
             }}
           />
@@ -193,7 +194,7 @@ export default function StudyPlanPanel({
 
       {step === 1 && (
         <div className="sa-pop" style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}>
-          <p className={spaceGrotesk.className} style={{ margin: "0 0 0.35rem", fontWeight: 700, fontSize: "0.9rem" }}>
+          <p className={spaceGrotesk.className} style={{ margin: "0 0 0.35rem", fontWeight: 700, fontSize: "0.9rem", color: "#ffffff" }}>
             Duración del curso
           </p>
           {DAY_OPTIONS.map((o) => (
@@ -207,7 +208,7 @@ export default function StudyPlanPanel({
               <span style={{ fontSize: "0.8rem", color: t.muted, fontWeight: 500 }}>{o.hint}</span>
             </button>
           ))}
-          <p className={spaceGrotesk.className} style={{ margin: "0.85rem 0 0.35rem", fontWeight: 700, fontSize: "0.9rem" }}>
+          <p className={spaceGrotesk.className} style={{ margin: "0.85rem 0 0.35rem", fontWeight: 700, fontSize: "0.9rem", color: "#ffffff" }}>
             Cada día
           </p>
           {TIME_OPTIONS.map((o) => (
@@ -222,8 +223,14 @@ export default function StudyPlanPanel({
             </button>
           ))}
           <div style={{ display: "flex", gap: "0.55rem", marginTop: "0.85rem" }}>
-            <button type="button" className="sa-btn sa-btn--ghost" onClick={() => setStep(0)}>
-              Atrás
+            <button
+              type="button"
+              className="sa-btn sa-btn--ghost sa-btn--icon"
+              onClick={() => setStep(0)}
+              title="Atrás"
+              aria-label="Atrás"
+            >
+              ←
             </button>
             <button type="button" className="sa-btn sa-btn--primary" style={{ flex: 1 }} onClick={() => setStep(2)}>
               Siguiente →
@@ -238,22 +245,29 @@ export default function StudyPlanPanel({
             style={{
               padding: "1rem 1.1rem",
               borderRadius: 14,
-              border: "2px solid rgba(53,140,159,0.2)",
-              background: "rgba(53,140,159,0.06)",
+              border: "2px solid rgba(53,140,159,0.4)",
+              background: "rgba(53,140,159,0.12)",
               marginBottom: "1rem",
             }}
           >
-            <p style={{ margin: 0, fontWeight: 700, color: "#0f172a" }}>
+            <p style={{ margin: 0, fontWeight: 700, color: "#ffffff" }}>
               Chat: {(topic.trim() || defaultTopic) + " · Diario"}
             </p>
-            <p style={{ margin: "0.35rem 0 0", fontSize: "0.85rem", color: "#64748b" }}>
+            <p style={{ margin: "0.35rem 0 0", fontSize: "0.85rem", color: "rgba(255,255,255,0.7)" }}>
               {days} lecciones · {minutes} min/día · recordatorio diario
             </p>
           </div>
-          {error && <p style={{ color: "#ef4444", fontSize: "0.85rem", margin: "0 0 0.75rem" }}>{error}</p>}
+          {error && <p style={{ color: "#f87171", fontSize: "0.85rem", margin: "0 0 0.75rem" }}>{error}</p>}
           <div style={{ display: "flex", gap: "0.55rem" }}>
-            <button type="button" className="sa-btn sa-btn--ghost" onClick={() => setStep(1)} disabled={loading}>
-              Atrás
+            <button
+              type="button"
+              className="sa-btn sa-btn--ghost sa-btn--icon"
+              onClick={() => setStep(1)}
+              disabled={loading}
+              title="Atrás"
+              aria-label="Atrás"
+            >
+              ←
             </button>
             <button
               type="button"
@@ -262,7 +276,7 @@ export default function StudyPlanPanel({
               disabled={loading}
               onClick={() => void generate()}
             >
-              {loading ? "Creando curso…" : "Crear chat del curso →"}
+              {loading ? "Creando curso…" : "Crear curso →"}
             </button>
           </div>
         </div>

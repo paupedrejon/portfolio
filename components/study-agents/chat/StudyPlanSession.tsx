@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import DOMPurify from "dompurify";
 import { outfit, spaceGrotesk } from "@/app/fonts";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
-import { SA_PRIMARY } from "@/lib/study-agents/brand";
+import { SA_CYAN } from "@/lib/study-agents/brand";
 import "@/components/study-agents/study-agents-chat.css";
 import "@/components/study-agents/study-agents-bot.css";
 
@@ -430,7 +430,7 @@ function PathKindIcon({
   locked: boolean;
   active?: boolean;
 }) {
-  const stroke = done || active ? "#ffffff" : locked ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.9)";
+  const stroke = "#ffffff";
   const common = {
     width: 30,
     height: 30,
@@ -450,8 +450,8 @@ function PathKindIcon({
   }
   if (locked) {
     return (
-      <svg {...common}>
-        <rect x="5" y="11" width="14" height="10" rx="2" />
+      <svg {...common} stroke="#ffffff" strokeWidth={2.6}>
+        <rect x="5" y="11" width="14" height="10" rx="2" fill="rgba(255,255,255,0.18)" />
         <path d="M8 11V8a4 4 0 0 1 8 0v3" />
       </svg>
     );
@@ -1420,7 +1420,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
     return (
       <div className={`${outfit.className} sa-steps-card sa-duo-shell sa-pop`}>
         <div className="sa-duo-celebrate">
-          <StudyAgentsBotAvatar size={80} color={SA_PRIMARY} state="idle" />
+          <StudyAgentsBotAvatar size={80} color={SA_CYAN} state="idle" className="sa-bot-avatar--bright" />
           <h3 className={spaceGrotesk.className}>¡Día {activeDay.day} listo!</h3>
           <p className="sa-duo-celebrate__xp">+{dayXp} XP</p>
           <p className="sa-duo-celebrate__sub">
@@ -1447,13 +1447,19 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
         key={slide.id}
       >
         <div className="sa-duo-top">
-          <button type="button" className="sa-chip" onClick={backToMap} style={{ borderRadius: 12 }}>
-            ← Camino
+          <button
+            type="button"
+            className="sa-chip sa-chip--icon"
+            onClick={backToMap}
+            title="Volver al camino"
+            aria-label="Volver al camino"
+          >
+            ←
           </button>
           <div className="sa-duo-phase">
-            <span className={phase === "intro" ? "on" : ""}>1 Intro</span>
-            <span className={phase === "learn" ? "on" : ""}>2 Aprende</span>
-            <span className={phase === "test" ? "on" : ""}>3 Test</span>
+            <span className={phase === "intro" ? "on" : ""}>1</span>
+            <span className={phase === "learn" ? "on" : ""}>2</span>
+            <span className={phase === "test" ? "on" : ""}>3</span>
           </div>
           <span className="sa-duo-xp">+{dayXp} XP</span>
         </div>
@@ -1465,8 +1471,8 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
         </p>
 
         <div className="sa-duo-screen">
-          <div className="sa-duo-botrow sa-duo-botrow--lg">
-            <StudyAgentsBotAvatar size={72} color={SA_PRIMARY} state="idle" />
+          <div className="sa-duo-botrow">
+            <StudyAgentsBotAvatar size={52} color={SA_CYAN} state="idle" className="sa-bot-avatar--bright" />
             <div className="sa-duo-bubble">
               <p>{botText}</p>
             </div>
@@ -1542,13 +1548,19 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
     return (
       <div className={`${outfit.className} sa-steps-card sa-duo-shell sa-pop`} key={currentQ.id}>
         <div className="sa-duo-top">
-          <button type="button" className="sa-chip" onClick={backToMap} style={{ borderRadius: 12 }}>
-            ← Camino
+          <button
+            type="button"
+            className="sa-chip sa-chip--icon"
+            onClick={backToMap}
+            title="Volver al camino"
+            aria-label="Volver al camino"
+          >
+            ←
           </button>
           <div className="sa-duo-phase">
-            <span>1 Intro</span>
-            <span>2 Aprende</span>
-            <span className="on">3 Test</span>
+            <span>1</span>
+            <span>2</span>
+            <span className="on">3</span>
           </div>
           <span className="sa-duo-xp">+{dayXp} XP</span>
         </div>
@@ -1560,8 +1572,8 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
         </p>
 
         <div className="sa-duo-screen">
-          <div className="sa-duo-botrow sa-duo-botrow--lg">
-            <StudyAgentsBotAvatar size={72} color={SA_PRIMARY} state="thinking" />
+          <div className="sa-duo-botrow">
+            <StudyAgentsBotAvatar size={52} color={SA_CYAN} state="thinking" className="sa-bot-avatar--bright" />
             <div className="sa-duo-bubble sa-duo-bubble--test">
               <p className="sa-duo-test-label">PREGUNTA</p>
               <p>{currentQ.prompt}</p>
@@ -1636,49 +1648,59 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
           const done = progress.completedDays.includes(d.day);
           const isCurrent = todayLesson?.day === d.day;
           const side = i % 2 === 0 ? "left" : "right";
+          const prevSide = (i - 1) % 2 === 0 ? "left" : "right";
           const showChest = (i + 1) % 3 === 0 && i < daysPrepared.length - 1;
+          const wireOn = done || !locked;
           return (
-            <div key={d.day} className={`sa-pathmap__row sa-pathmap__row--${side}`}>
+            <div key={d.day} className="sa-pathmap__step">
               {i > 0 && (
-                <svg className={`sa-pathmap__wire ${done || !locked ? "on" : ""}`} viewBox="0 0 120 56" preserveAspectRatio="none" aria-hidden>
-                  <path
-                    d={side === "right" ? "M20 0 C 20 28, 100 28, 100 56" : "M100 0 C 100 28, 20 28, 20 56"}
-                    fill="none"
-                    strokeWidth="6"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              )}
-
-              {isCurrent && (
-                <div className="sa-pathmap__bubble" aria-hidden>
-                  START
+                <div className={`sa-pathmap__bridge ${wireOn ? "on" : ""}`} aria-hidden>
+                  <svg viewBox="0 0 200 36" preserveAspectRatio="none">
+                    <path
+                      d={
+                        prevSide === "left"
+                          ? "M52 2 C 52 18, 148 18, 148 34"
+                          : "M148 2 C 148 18, 52 18, 52 34"
+                      }
+                      fill="none"
+                      strokeWidth="5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
                 </div>
               )}
 
-              <button
-                type="button"
-                disabled={locked}
-                onClick={() => startDay(d)}
-                className={`sa-pathmap__node ${locked ? "locked" : ""} ${done ? "done" : ""} ${isCurrent ? "current" : ""}`}
-                title={`${d.title} — ${d.focus}`}
-              >
-                <span className="sa-pathmap__ring" />
-                <span className="sa-pathmap__disc">
-                  <PathKindIcon kind={d.kind} done={done} locked={locked} active={isCurrent} />
-                </span>
-              </button>
+              <div className={`sa-pathmap__row sa-pathmap__row--${side}`}>
+                {isCurrent && (
+                  <div className="sa-pathmap__bubble" aria-hidden>
+                    START
+                  </div>
+                )}
 
-              <div className={`sa-pathmap__caption ${locked ? "locked" : ""}`}>
-                <strong>{d.title}</strong>
-                <small>{d.focus}</small>
+                <button
+                  type="button"
+                  disabled={locked}
+                  onClick={() => startDay(d)}
+                  className={`sa-pathmap__node ${locked ? "locked" : ""} ${done ? "done" : ""} ${isCurrent ? "current" : ""}`}
+                  title={`${d.title} — ${d.focus}`}
+                >
+                  <span className="sa-pathmap__ring" />
+                  <span className="sa-pathmap__disc">
+                    <PathKindIcon kind={d.kind} done={done} locked={locked} active={isCurrent} />
+                  </span>
+                </button>
+
+                <div className={`sa-pathmap__caption ${locked ? "locked" : ""}`}>
+                  <strong>{d.title}</strong>
+                  <small>{d.focus}</small>
+                </div>
+
+                {showChest && (
+                  <div className="sa-pathmap__extra">
+                    <StudyAgentsBotAvatar size={48} color={SA_CYAN} state="idle" className="sa-bot-avatar--bright" />
+                  </div>
+                )}
               </div>
-
-              {showChest && (
-                <div className={`sa-pathmap__extra ${locked && d.day >= progress.unlockedDay ? "dim" : ""}`}>
-                  <StudyAgentsBotAvatar size={36} color={SA_PRIMARY} state="static" />
-                </div>
-              )}
             </div>
           );
         })}
