@@ -1,5 +1,17 @@
 # Changelog — Study Agents
 
+## 0.5.0 — Study Agents = cursos (no chats)
+
+### Visible
+- Home: hero **fullscreen** + **Continuar curso** / **Empezar curso** + lista de cursos
+- Sin sidebar Conversaciones en modo curso
+- Vista curso: camino Duolingo, input para dudas, solo botón **Apuntes**
+- Varias lecciones seguidas (sin bloqueo de 1/día)
+- Lecciones React con contenido real (no preguntas meta PDF vs práctica)
+
+### Backend
+- Redeploy recomendado para planes nuevos v4
+
 ## 0.4.4 — Pantallas densas (ya no “React es” / “Vamos”)
 
 ### Visible

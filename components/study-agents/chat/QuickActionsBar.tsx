@@ -22,6 +22,8 @@ type Action = {
 type Props = {
   colorTheme: "dark" | "light";
   disabled?: boolean;
+  /** En cursos solo mostramos Apuntes */
+  courseMode?: boolean;
   onStudyPlan: () => void;
   onNotes: () => void;
   onTest: () => void;
@@ -34,6 +36,7 @@ type Props = {
 export default function QuickActionsBar({
   colorTheme: _colorTheme,
   disabled,
+  courseMode = false,
   onStudyPlan,
   onNotes,
   onTest,
@@ -43,38 +46,48 @@ export default function QuickActionsBar({
 }: Props) {
   const iconProps = { size: 18, strokeWidth: 1.75 } as const;
 
-  const actions: Action[] = [
-    {
-      id: "plan",
-      label: "Plan",
-      hint: "Calendario adaptativo",
-      onClick: onStudyPlan,
-      icon: <HiOutlineCalendarDays {...iconProps} />,
-    },
-    {
-      id: "concepts",
-      label: "Conceptos",
-      hint: "Qué dominas / qué no",
-      onClick: onConcepts,
-      icon: <HiOutlineLightBulb {...iconProps} />,
-    },
-    {
-      id: "notes",
-      label: "Apuntes",
-      hint: "Resumen del material",
-      onClick: onNotes,
-      icon: <HiOutlineBookOpen {...iconProps} />,
-    },
-    {
-      id: "test",
-      label: "Test",
-      hint: "Retrieval practice",
-      onClick: onTest,
-      icon: <HiOutlineClipboardDocumentCheck {...iconProps} />,
-    },
-  ];
+  const actions: Action[] = courseMode
+    ? [
+        {
+          id: "notes",
+          label: "Apuntes",
+          hint: "PDF académico de lo practicado",
+          onClick: onNotes,
+          icon: <HiOutlineBookOpen {...iconProps} />,
+        },
+      ]
+    : [
+        {
+          id: "plan",
+          label: "Plan",
+          hint: "Calendario adaptativo",
+          onClick: onStudyPlan,
+          icon: <HiOutlineCalendarDays {...iconProps} />,
+        },
+        {
+          id: "concepts",
+          label: "Conceptos",
+          hint: "Qué dominas / qué no",
+          onClick: onConcepts,
+          icon: <HiOutlineLightBulb {...iconProps} />,
+        },
+        {
+          id: "notes",
+          label: "Apuntes",
+          hint: "Resumen del material",
+          onClick: onNotes,
+          icon: <HiOutlineBookOpen {...iconProps} />,
+        },
+        {
+          id: "test",
+          label: "Test",
+          hint: "Retrieval practice",
+          onClick: onTest,
+          icon: <HiOutlineClipboardDocumentCheck {...iconProps} />,
+        },
+      ];
 
-  if (onReview) {
+  if (!courseMode && onReview) {
     actions.splice(2, 0, {
       id: "review",
       label: srsDueCount > 0 ? `Repaso · ${srsDueCount}` : "Repaso",

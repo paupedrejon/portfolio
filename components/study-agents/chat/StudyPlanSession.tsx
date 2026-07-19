@@ -155,89 +155,513 @@ function isWeakBot(text: string): boolean {
   return false;
 }
 
-/** Plantillas densas cuando el LLM manda basura truncada. */
+/** Currículo real por tema (no meta sobre “cómo estudiar”). */
 function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
-  const focus = day.focus || topic;
-  const t = topic;
+  const t = topic.trim() || "el tema";
+  const tl = t.toLowerCase();
   const d = day.day;
+  const unit = ((d - 1) % 7) + 1;
+
+  if (tl.includes("react")) {
+    const units: LessonSlide[][] = [
+      // 1 Qué es React
+      [
+        {
+          id: `r${d}-1`,
+          phase: "intro",
+          bot: "React es una biblioteca de JavaScript para construir interfaces de usuario con piezas reutilizables.",
+          visual: { kind: "big_word", word: "React", sub: "UI con componentes" },
+          html: `<div class="viz"><div class="row"><span class="pill">biblioteca</span><span class="pill">JavaScript</span><span class="pill">UI</span></div><p>No es un framework completo: se centra en la vista.</p></div>`,
+          check: {
+            prompt: "React sirve principalmente para…",
+            options: [
+              "Construir interfaces de usuario",
+              "Gestionar bases de datos SQL",
+              "Enviar emails del servidor",
+              "Compilar código C++",
+            ],
+            correct_index: 0,
+            feedback_ok: "Sí: UI con componentes.",
+            feedback_bad: "React está en la capa de interfaz.",
+          },
+        },
+        {
+          id: `r${d}-2`,
+          phase: "learn",
+          bot: "La unidad básica es el componente: una función que describe un trozo de UI.",
+          visual: {
+            kind: "vs",
+            left: { title: "Página entera", body: "HTML mezclado" },
+            right: { title: "Componente", body: "Pieza reutilizable" },
+          },
+          check: {
+            prompt: "¿Qué es un componente en React?",
+            options: [
+              "Una pieza reutilizable de UI",
+              "Un archivo CSS obligatorio",
+              "Una tabla de base de datos",
+              "Un servidor Node",
+            ],
+            correct_index: 0,
+            feedback_ok: "Exacto.",
+            feedback_bad: "Piensa en piezas de LEGO de interfaz.",
+          },
+        },
+        {
+          id: `r${d}-3`,
+          phase: "learn",
+          bot: "JSX parece HTML, pero es JavaScript: se transforma a llamadas que crean elementos.",
+          visual: {
+            kind: "code",
+            label: "JSX",
+            code: "function App() {\n  return <h1>Hola React</h1>;\n}",
+          },
+          check: {
+            prompt: "¿Qué devuelve App en este ejemplo?",
+            options: [
+              "Un elemento UI con un título",
+              "Una consulta SQL",
+              "Un archivo .exe",
+              "Nada: es solo un comentario",
+            ],
+            correct_index: 0,
+            feedback_ok: "Devuelve UI descrita en JSX.",
+            feedback_bad: "Mira el return <h1>…",
+          },
+        },
+      ],
+      // 2 JSX
+      [
+        {
+          id: `r${d}-1`,
+          phase: "intro",
+          bot: "JSX te deja escribir UI con una sintaxis parecida a HTML dentro de JavaScript.",
+          visual: { kind: "big_word", word: "JSX", sub: "HTML en JS" },
+          check: {
+            prompt: "JSX se usa para…",
+            options: [
+              "Describir la UI en el código",
+              "Sustituir CSS por completo",
+              "Crear tablas SQL",
+              "Configurar el DNS",
+            ],
+            correct_index: 0,
+            feedback_ok: "Correcto.",
+            feedback_bad: "JSX describe interfaz.",
+          },
+        },
+        {
+          id: `r${d}-2`,
+          phase: "learn",
+          bot: "En JSX, class se escribe className y las expresiones van entre llaves { }.",
+          visual: {
+            kind: "code",
+            label: "className + { }",
+            code: 'const name = "Ana";\nreturn <p className="hi">Hola {name}</p>;',
+          },
+          check: {
+            prompt: "En JSX, ¿cómo pones una clase CSS?",
+            options: ["className", "class", "cssClass", "styleName"],
+            correct_index: 0,
+            feedback_ok: "className, porque class es reservada en JS.",
+            feedback_bad: "Usa className.",
+          },
+        },
+        {
+          id: `r${d}-3`,
+          phase: "learn",
+          bot: "Un componente debe devolver un único raíz (o un Fragment <>…</>).",
+          visual: {
+            kind: "vs",
+            left: { title: "Mal", body: "Dos roots sueltos" },
+            right: { title: "Bien", body: "Un padre o <>…</>" },
+          },
+          check: {
+            prompt: "Si devuelves dos <div> hermanos sin padre…",
+            options: [
+              "Hay error: hace falta un contenedor",
+              "React lo une solo",
+              "Se convierte en CSS",
+              "Se ignora el segundo",
+            ],
+            correct_index: 0,
+            feedback_ok: "Necesitas un único padre.",
+            feedback_bad: "Envuelve en un div o Fragment.",
+          },
+        },
+      ],
+      // 3 Props
+      [
+        {
+          id: `r${d}-1`,
+          phase: "intro",
+          bot: "Las props pasan datos de un componente padre a un hijo (como argumentos de función).",
+          visual: { kind: "big_word", word: "props", sub: "datos de entrada" },
+          check: {
+            prompt: "Las props sirven para…",
+            options: [
+              "Pasar datos al componente hijo",
+              "Guardar secretos del servidor",
+              "Reemplazar el bundler",
+              "Crear la base de datos",
+            ],
+            correct_index: 0,
+            feedback_ok: "De padre a hijo.",
+            feedback_bad: "Props = parámetros del componente.",
+          },
+        },
+        {
+          id: `r${d}-2`,
+          phase: "learn",
+          bot: "Así se ven las props en JSX y en la función.",
+          visual: {
+            kind: "code",
+            label: "Props",
+            code: "function Hi({ name }) {\n  return <p>Hola {name}</p>;\n}\n<Hi name=\"Luis\" />",
+          },
+          check: {
+            prompt: "En <Hi name=\"Luis\" />, name es…",
+            options: ["Una prop", "Un hook", "Un reducer", "Un CSS module"],
+            correct_index: 0,
+            feedback_ok: "Es una prop.",
+            feedback_bad: "name se pasa como prop.",
+          },
+        },
+        {
+          id: `r${d}-3`,
+          phase: "learn",
+          bot: "Las props son de solo lectura: el hijo no debe mutarlas; pide cambios al padre.",
+          visual: {
+            kind: "steps",
+            items: [
+              { n: 1, label: "Padre pasa props" },
+              { n: 2, label: "Hijo las muestra" },
+              { n: 3, label: "Cambios vía callback" },
+            ],
+          },
+          check: {
+            prompt: "Si el hijo necesita cambiar un dato…",
+            options: [
+              "Llama a una función prop del padre",
+              "Modifica la prop directamente",
+              "Borra el componente",
+              "Usa solo CSS",
+            ],
+            correct_index: 0,
+            feedback_ok: "Flujo de datos hacia abajo; eventos hacia arriba.",
+            feedback_bad: "No mutes props: avisa al padre.",
+          },
+        },
+      ],
+      // 4 useState
+      [
+        {
+          id: `r${d}-1`,
+          phase: "intro",
+          bot: "useState guarda datos que cambian con el tiempo y provocan un re-render.",
+          visual: { kind: "big_word", word: "useState", sub: "estado local" },
+          check: {
+            prompt: "useState se usa para…",
+            options: [
+              "Estado que cambia en el componente",
+              "Consultas SQL",
+              "Rutas del servidor",
+              "Fuentes tipográficas",
+            ],
+            correct_index: 0,
+            feedback_ok: "Estado local reactivo.",
+            feedback_bad: "Es el hook de estado.",
+          },
+        },
+        {
+          id: `r${d}-2`,
+          phase: "learn",
+          bot: "Devuelve el valor actual y una función para actualizarlo.",
+          visual: {
+            kind: "code",
+            label: "Contador",
+            code: "const [n, setN] = useState(0);\n<button onClick={() => setN(n + 1)}>{n}</button>",
+          },
+          check: {
+            prompt: "Al hacer clic, ¿qué actualiza el número?",
+            options: ["setN", "useState otra vez", "document.write", "innerHTML"],
+            correct_index: 0,
+            feedback_ok: "Siempre el setter.",
+            feedback_bad: "Usa setN, no mutes n a mano.",
+          },
+        },
+        {
+          id: `r${d}-3`,
+          phase: "learn",
+          bot: "Si el nuevo valor depende del anterior, usa la forma funcional: setN(prev => prev + 1).",
+          visual: {
+            kind: "vs",
+            left: { title: "Frágil", body: "setN(n + 1) en cadena" },
+            right: { title: "Seguro", body: "setN(p => p + 1)" },
+          },
+          check: {
+            prompt: "La forma funcional del setter sirve cuando…",
+            options: [
+              "El valor nuevo depende del anterior",
+              "No hay estado",
+              "Solo usas CSS",
+              "Renderizas en el servidor sin JS",
+            ],
+            correct_index: 0,
+            feedback_ok: "Evita estados obsoletos.",
+            feedback_bad: "Usa prev => …",
+          },
+        },
+      ],
+      // 5 Eventos
+      [
+        {
+          id: `r${d}-1`,
+          phase: "intro",
+          bot: "Los eventos en React se escriben en camelCase: onClick, onChange, onSubmit.",
+          visual: { kind: "big_word", word: "onClick", sub: "eventos React" },
+          check: {
+            prompt: "El click en React se declara como…",
+            options: ["onClick", "onclick", "on-click", "click="],
+            correct_index: 0,
+            feedback_ok: "camelCase: onClick.",
+            feedback_bad: "Es onClick.",
+          },
+        },
+        {
+          id: `r${d}-2`,
+          phase: "learn",
+          bot: "Pasas una función, no el resultado de llamarla: onClick={fn} y no onClick={fn()}.",
+          visual: {
+            kind: "code",
+            label: "Handler",
+            code: "function save() { /* … */ }\n<button onClick={save}>Guardar</button>",
+          },
+          check: {
+            prompt: "onClick={save()} (con paréntesis)…",
+            options: [
+              "Ejecuta save al renderizar (casi siempre mal)",
+              "Es la forma recomendada",
+              "Desactiva el botón",
+              "Solo funciona en CSS",
+            ],
+            correct_index: 0,
+            feedback_ok: "Pasa la función, no la llamada.",
+            feedback_bad: "Sin () al asignar el handler.",
+          },
+        },
+        {
+          id: `r${d}-3`,
+          phase: "learn",
+          bot: "En formularios, onChange + estado controlan el input (controlled component).",
+          visual: {
+            kind: "steps",
+            items: [
+              { n: 1, label: "Estado value" },
+              { n: 2, label: "onChange → setValue" },
+              { n: 3, label: "UI siempre sincronizada" },
+            ],
+          },
+          check: {
+            prompt: "Un input controlado toma su valor de…",
+            options: ["El estado de React", "Solo el DOM nativo", "localStorage obligatorio", "El CSS"],
+            correct_index: 0,
+            feedback_ok: "value={estado}.",
+            feedback_bad: "React manda con estado.",
+          },
+        },
+      ],
+      // 6 Listas
+      [
+        {
+          id: `r${d}-1`,
+          phase: "intro",
+          bot: "Para pintar listas usas .map() y cada ítem necesita una key estable.",
+          visual: { kind: "big_word", word: "key", sub: "listas en React" },
+          check: {
+            prompt: "La prop key ayuda a React a…",
+            options: [
+              "Identificar qué ítem cambió",
+              "Sustituir CSS",
+              "Conectar a MySQL",
+              "Compilar TypeScript",
+            ],
+            correct_index: 0,
+            feedback_ok: "Reconciliación eficiente.",
+            feedback_bad: "key = identidad del ítem.",
+          },
+        },
+        {
+          id: `r${d}-2`,
+          phase: "learn",
+          bot: "Prefiere un id real como key; el índice del array solo si la lista es fija.",
+          visual: {
+            kind: "code",
+            label: "map + key",
+            code: "items.map(item => (\n  <li key={item.id}>{item.name}</li>\n))",
+          },
+          check: {
+            prompt: "¿Qué key es mejor para usuarios?",
+            options: ["user.id", "El índice 0,1,2 siempre", "Math.random()", "La clase CSS"],
+            correct_index: 0,
+            feedback_ok: "Ids estables.",
+            feedback_bad: "Usa un id del dato.",
+          },
+        },
+        {
+          id: `r${d}-3`,
+          phase: "learn",
+          bot: "Si filtras o reordenas la lista, keys malas provocan bugs de estado en inputs.",
+          visual: {
+            kind: "vs",
+            left: { title: "key={i}", body: "Frágil al reordenar" },
+            right: { title: "key={id}", body: "Estable" },
+          },
+          check: {
+            prompt: "Tras reordenar con key={index}, los inputs pueden…",
+            options: [
+              "Mostrar valores en el ítem equivocado",
+              "Mejorar el SEO solos",
+              "Borrar la base de datos",
+              "Nada nunca",
+            ],
+            correct_index: 0,
+            feedback_ok: "Por eso ids estables.",
+            feedback_bad: "El estado se asocia mal sin buenas keys.",
+          },
+        },
+      ],
+      // 7 useEffect intro
+      [
+        {
+          id: `r${d}-1`,
+          phase: "intro",
+          bot: "useEffect ejecuta código después del render: datos, suscripciones, timers.",
+          visual: { kind: "big_word", word: "useEffect", sub: "efectos secundarios" },
+          check: {
+            prompt: "useEffect sirve para…",
+            options: [
+              "Efectos tras pintar la UI",
+              "Definir el color del botón",
+              "Crear el package.json",
+              "Sustituir JSX",
+            ],
+            correct_index: 0,
+            feedback_ok: "Efectos secundarios.",
+            feedback_bad: "No es para el JSX principal.",
+          },
+        },
+        {
+          id: `r${d}-2`,
+          phase: "learn",
+          bot: "El array de dependencias decide cuándo se vuelve a ejecutar el efecto.",
+          visual: {
+            kind: "code",
+            label: "deps",
+            code: "useEffect(() => {\n  fetchUser(id);\n}, [id]);",
+          },
+          check: {
+            prompt: "Si pones [id], el efecto corre cuando…",
+            options: ["Cambia id", "Cambia cualquier estado", "Nunca", "Solo al cerrar la pestaña"],
+            correct_index: 0,
+            feedback_ok: "Deps = disparadores.",
+            feedback_bad: "Mira el array [id].",
+          },
+        },
+        {
+          id: `r${d}-3`,
+          phase: "learn",
+          bot: "Si el efecto crea un timer o suscripción, devuelve una función de cleanup.",
+          visual: {
+            kind: "steps",
+            items: [
+              { n: 1, label: "Montas el efecto" },
+              { n: 2, label: "Trabaja (fetch/timer)" },
+              { n: 3, label: "Cleanup al desmontar" },
+            ],
+          },
+          check: {
+            prompt: "La función que retorna useEffect sirve para…",
+            options: [
+              "Limpiar al desmontar o antes de re-ejecutar",
+              "Renderizar JSX",
+              "Definir props",
+              "Crear el Vite config",
+            ],
+            correct_index: 0,
+            feedback_ok: "Cleanup.",
+            feedback_bad: "Evita memory leaks.",
+          },
+        },
+      ],
+    ];
+    return units[unit - 1] || units[0];
+  }
+
+  // Genérico: contenido del TEMA, nunca meta de estudio
+  const focus = day.focus && !/unidad/i.test(day.focus) ? day.focus : `${t} · base ${unit}`;
   return [
     {
-      id: `q-${d}-1`,
+      id: `g${d}-1`,
       phase: "intro",
-      bot: d === 1
-        ? `${t} sirve para construir interfaces de usuario con piezas reutilizables.`
-        : `Hoy el foco es ${focus}: lo verás, lo tocarás y harás el test.`,
-      visual: {
-        kind: "big_word",
-        word: d === 1 ? t.slice(0, 16) : focus.slice(0, 16),
-        sub: d === 1 ? "en una idea clara" : "concepto de hoy",
-      },
-      html: `<div class="viz"><div class="row"><span class="pill">ver</span><span class="pill">tocar</span><span class="pill">test</span></div><p><strong>${focus}</strong> · sin muro de texto</p></div>`,
-      check: null,
-    },
-    {
-      id: `q-${d}-2`,
-      phase: "intro",
-      bot: `Compara: memorizar un PDF vs practicar ${focus} en pasos cortos.`,
-      visual: {
-        kind: "vs",
-        left: { title: "Aburrido", body: "Párrafos largos" },
-        right: { title: "Hoy", body: `Micro-práctica de ${focus}` },
-      },
+      bot: `Hoy aprendes ${focus}: qué es y para qué sirve en ${t}.`,
+      visual: { kind: "big_word", word: focus.slice(0, 18), sub: t },
+      html: `<div class="viz"><p><strong>${focus}</strong> dentro de <strong>${t}</strong></p><div class="row"><span class="pill">concepto</span><span class="pill">ejemplo</span><span class="pill">check</span></div></div>`,
       check: {
-        prompt: `¿Qué vas a hacer hoy con ${focus}?`,
+        prompt: `¿Qué practicas hoy?`,
         options: [
-          "Practicar con pasos cortos",
-          "Leer un muro de texto",
-          "Saltar al final sin mirar",
-          "Copiar sin entender",
+          focus,
+          "Un tema no relacionado",
+          "Solo el índice de un PDF",
+          "Nada concreto",
         ],
         correct_index: 0,
-        feedback_ok: "Así se queda: poco texto, mucha práctica.",
-        feedback_bad: "Hoy tocamos y practicamos, no solo leemos.",
+        feedback_ok: `Sí: ${focus}.`,
+        feedback_bad: `El foco es ${focus}.`,
       },
     },
     {
-      id: `q-${d}-3`,
+      id: `g${d}-2`,
       phase: "learn",
-      bot: `Lo esencial de ${focus}: una idea, un ejemplo, un check.`,
+      bot: `Idea clave de ${focus}: recuérdala en una frase corta.`,
       visual: {
-        kind: "steps",
-        items: [
-          { n: 1, label: `Idea: qué es ${focus}` },
-          { n: 2, label: "Ejemplo mínimo" },
-          { n: 3, label: "Check + test del día" },
-        ],
+        kind: "vs",
+        left: { title: "Confusión", body: "Definición vaga" },
+        right: { title: "Claro", body: `${focus} con ejemplo` },
       },
-      html: `<div class="viz"><p>Recuerda solo esto:</p><div class="row"><span class="pill">${focus}</span></div></div>`,
-      check: null,
+      check: {
+        prompt: `¿Qué describe mejor ${focus}?`,
+        options: [
+          `Una idea concreta de ${t}`,
+          "Un detalle irrelevante",
+          "Solo decoración",
+          "Un error tipográfico",
+        ],
+        correct_index: 0,
+        feedback_ok: "Bien.",
+        feedback_bad: `Vuelve a ${focus}.`,
+      },
     },
     {
-      id: `q-${d}-4`,
+      id: `g${d}-3`,
       phase: "learn",
-      bot: `Ejemplo mínimo de ${focus}. Léelo y responde.`,
+      bot: `Ejemplo mínimo de ${focus}. Luego el test del día.`,
       visual: {
         kind: "code",
         label: "Ejemplo",
-        code: t.toLowerCase().includes("react")
-          ? `function App() {\n  return <h1>Hola</h1>;\n}`
-          : `// ${focus}\n// idea clave en 2 líneas`,
+        code: `// ${focus}\n// aplica esto en ${t}`,
       },
       check: {
-        prompt: t.toLowerCase().includes("react")
-          ? "¿Qué devuelve este componente?"
-          : `¿Qué representa este ejemplo sobre ${focus}?`,
-        options: t.toLowerCase().includes("react")
-          ? ["UI con un título Hola", "Una base de datos", "Un servidor HTTP", "Un archivo CSS"]
-          : [
-              `La idea práctica de ${focus}`,
-              "Un tema no relacionado",
-              "Solo decoración",
-              "Nada útil",
-            ],
+        prompt: `Este ejemplo ilustra…`,
+        options: [
+          focus,
+          "Otro curso distinto",
+          "Configuración de red",
+          "Nada útil",
+        ],
         correct_index: 0,
         feedback_ok: "Exacto.",
-        feedback_bad: `Vuelve a mirar el ejemplo de ${focus}.`,
+        feedback_bad: `Es sobre ${focus}.`,
       },
     },
   ];
@@ -248,6 +672,18 @@ function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
  * Si el contenido es débil, usa plantillas de calidad.
  */
 function buildSlides(topic: string, day: PlanDay): LessonSlide[] {
+  // Si el backend mandó fallbacks meta ("unidad N", PDF vs práctica), usa currículo real
+  const focusBad =
+    !day.focus ||
+    /unidad\s*\d+/i.test(day.focus) ||
+    /micro-pr[aá]ctica|p[aá]rrafos eternos|pasos cortos e interactivos/i.test(
+      JSON.stringify(day.slides || day.intro || day.teach || []),
+    );
+
+  if (focusBad) {
+    return qualitySlidesForDay(topic, day);
+  }
+
   if (day.slides && day.slides.length >= 2) {
     const cleaned = day.slides
       .map((s, i) => ({
@@ -257,8 +693,14 @@ function buildSlides(topic: string, day: PlanDay): LessonSlide[] {
         phase: s.phase === "learn" ? ("learn" as const) : ("intro" as const),
       }))
       .filter((s) => s.bot || s.visual || s.html || s.check);
+    const metaish = cleaned.some(
+      (s) =>
+        /pdf largo|p[aá]rrafos eternos|pasos cortos e interactivos|leyendo un muro/i.test(
+          `${s.bot} ${s.check?.prompt || ""} ${(s.check?.options || []).join(" ")}`,
+        ),
+    );
     const weak = cleaned.filter((s) => isWeakBot(s.bot)).length >= Math.ceil(cleaned.length / 2);
-    if (!weak && cleaned.length >= 2) return cleaned;
+    if (!weak && !metaish && cleaned.length >= 2) return cleaned;
   }
 
   const rawBlocks = [...(day.intro || []), ...(day.teach || [])];
@@ -561,7 +1003,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
 
   const startDay = (d: (typeof daysPrepared)[0]) => {
     if (d.day > progress.unlockedDay) return;
-    if (d.day > calendarDay && !progress.completedDays.includes(d.day)) return;
+    // Puedes hacer varias lecciones seguidas (sin bloqueo por calendario)
     setActiveDay(d);
     setSlideIndex(0);
     setInTest(false);
@@ -859,9 +1301,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
 
       <div className="sa-duo-path">
         {daysPrepared.map((d, i) => {
-          const locked =
-            d.day > progress.unlockedDay ||
-            (d.day > calendarDay && !progress.completedDays.includes(d.day));
+          const locked = d.day > progress.unlockedDay;
           const done = progress.completedDays.includes(d.day);
           const isToday = todayLesson?.day === d.day;
           return (

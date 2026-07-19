@@ -385,7 +385,34 @@ function AssistantYoutubeChatEmbed({
   );
 }
 
-export default function StudyChat() {
+export type StudyChatCourseInfo = {
+  chatId: string;
+  title: string;
+  topic: string;
+  planDays?: number;
+  planMinutes?: number;
+};
+
+type StudyChatProps = {
+  /** Modo cursos: sin sidebar de conversaciones, UI limpia */
+  courseMode?: boolean;
+  hideSidebar?: boolean;
+  /** Chat de curso a cargar */
+  focusChatId?: string | null;
+  /** Incrementar para abrir el wizard de nuevo curso (Plan) */
+  openPlanNonce?: number;
+  onBackToCourses?: () => void;
+  onCourseCreated?: (course: StudyChatCourseInfo) => void;
+};
+
+export default function StudyChat({
+  courseMode = false,
+  hideSidebar = false,
+  focusChatId = null,
+  openPlanNonce = 0,
+  onBackToCourses,
+  onCourseCreated,
+}: StudyChatProps = {}) {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -408,7 +435,7 @@ export default function StudyChat() {
   const [srsDueCount, setSrsDueCount] = useState(0);
   const [showAPIKeyConfig, setShowAPIKeyConfig] = useState(false);
   const [apiKeys, setApiKeys] = useState<import("@/lib/study-agents/api-keys").StudyAgentsAPIKeys | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(!hideSidebar && !courseMode);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const currentChatIdRef = useRef<string | null>(null);
@@ -423,6 +450,18 @@ export default function StudyChat() {
     loadDocuments: reloadChatDocuments,
     deleteDocument: deleteChatDocument,
   } = useChatDocuments(currentChatId, userId || null, getEmbeddingApiKey(apiKeys));
+
+  useEffect(() => {
+    if (hideSidebar || courseMode) {
+      setSidebarOpen(false);
+    }
+  }, [hideSidebar, courseMode]);
+
+  useEffect(() => {
+    if (openPlanNonce > 0) {
+      setShowStudyPlanPanel(true);
+    }
+  }, [openPlanNonce]);
 
   useEffect(() => {
     if (!userId || !isStudyAgentsFlagEnabled("srsReview")) return;
@@ -1342,13 +1381,14 @@ export default function StudyChat() {
     currentChatIdRef.current = currentChatId;
   }, [currentChatId]);
   
-  // Cargar chat "General" al iniciar si no hay chat seleccionado
+  // Cargar chat "General" al iniciar si no hay chat seleccionado (no en modo cursos)
   useEffect(() => {
+    if (courseMode) return;
     if (userId && !currentChatId) {
       loadOrCreateGeneralChat();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, courseMode]);
   
   const loadOrCreateGeneralChat = async () => {
     if (!userId) return;
@@ -2028,6 +2068,13 @@ export default function StudyChat() {
       console.error("Error loading chat:", error);
     }
   };
+
+  useEffect(() => {
+    if (!focusChatId || !userId) return;
+    if (focusChatId === currentChatIdRef.current) return;
+    void loadChat(focusChatId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusChatId, userId]);
 
   const createNewChat = () => {
     setShowNewChatModal(true);
@@ -2714,23 +2761,32 @@ ${contentPreview}
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutos de timeout
       
-      // Preparar historial de conversación (últimos mensajes relevantes)
       const conversationHistory = messages
-        .filter(msg => msg.type === "message")
-        .slice(-20) // Últimos 20 mensajes
-        .map(msg => ({
+        .filter((msg) => msg.type === "message" || msg.type === "study_plan")
+        .slice(-30)
+        .map((msg) => ({
           role: msg.role,
-          content: msg.content,
+          content:
+            msg.type === "study_plan"
+              ? `[PLAN DEL CURSO — usa esto para apuntes académicos]\n${msg.content.slice(0, 8000)}`
+              : msg.content,
         }));
-      
-      // No pasar el nombre del PDF como "tema": el backend lo tomaba como contenido fuente.
+
       const rawTopic = currentChatLevel?.topic || undefined;
       const topicForNotes =
         rawTopic && !/\.(pdf|png|jpe?g|webp)$/i.test(rawTopic.trim())
           ? rawTopic
           : undefined;
 
-      // Llamar a la API con la key del usuario y el modelo seleccionado
+      setLoadingMessage(courseMode ? "Generando apuntes académicos…" : "Generando apuntes...");
+
+      if (courseMode && topicForNotes) {
+        conversationHistory.unshift({
+          role: "user",
+          content: `Genera APUNTES ACADÉMICOS (estilo universidad) sobre ${topicForNotes}: portada con tema, objetivos de aprendizaje, conceptos clave con definiciones precisas, ejemplos de código si aplica, errores frecuentes, y un resumen final. Markdown limpio. Basarte en el plan del curso y la conversación.`,
+        });
+      }
+
       const response = await studyAgentsFetch("/api/study-agents/generate-notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2739,7 +2795,7 @@ ${contentPreview}
           uploadedFiles: uploadedFiles,
           model: selectedModel === "auto" ? null : selectedModel,
           userId: userId,
-          chatId: currentChatId, // Pasar chatId para obtener el nivel
+          chatId: currentChatId,
           conversationHistory: conversationHistory,
           topic: topicForNotes,
         }),
@@ -4129,6 +4185,7 @@ ${contentPreview}
         </div>
       )}
       
+      {!hideSidebar && !courseMode && (
       <ChatSidebar
         isOpen={sidebarOpen}
         onToggle={() => {
@@ -4144,6 +4201,7 @@ ${contentPreview}
         colorTheme={colorTheme}
         onCollapsedChange={setSidebarCollapsed}
       />
+      )}
       {showPremiumBackgroundEffects && (
       <div 
         style={{
@@ -4286,23 +4344,23 @@ ${contentPreview}
         onToggleDocuments={() => setShowDocumentsPanel((v) => !v)}
         showDocuments={showDocumentsPanel}
         onOpenStudyPlan={
-          isStudyAgentsFlagEnabled("studyPlan")
+          !courseMode && isStudyAgentsFlagEnabled("studyPlan")
             ? () => setShowStudyPlanPanel(true)
             : undefined
         }
-        showStudyPlan={showStudyPlanPanel}
+        showStudyPlan={!courseMode && showStudyPlanPanel}
         onOpenConcepts={
-          isStudyAgentsFlagEnabled("conceptMap")
+          !courseMode && isStudyAgentsFlagEnabled("conceptMap")
             ? () => setShowConceptMapPanel(true)
             : undefined
         }
-        showConcepts={showConceptMapPanel}
+        showConcepts={!courseMode && showConceptMapPanel}
         onOpenReview={
-          isStudyAgentsFlagEnabled("srsReview")
+          !courseMode && isStudyAgentsFlagEnabled("srsReview")
             ? () => setShowReviewPanel(true)
             : undefined
         }
-        showReview={showReviewPanel}
+        showReview={!courseMode && showReviewPanel}
         srsDueCount={srsDueCount}
       />
       {showDocumentsPanel && (
@@ -4318,7 +4376,12 @@ ${contentPreview}
       {isStudyAgentsFlagEnabled("studyPlan") && (
         <StudyPlanPanel
           open={showStudyPlanPanel}
-          onClose={() => setShowStudyPlanPanel(false)}
+          onClose={() => {
+            setShowStudyPlanPanel(false);
+            if (courseMode && !currentChatIdRef.current && onBackToCourses) {
+              onBackToCourses();
+            }
+          }}
           colorTheme={colorTheme}
           apiKey={getEmbeddingApiKey(apiKeys) || getSystemApiKeyForRequest(apiKeys)}
           userId={userId}
@@ -4336,7 +4399,7 @@ ${contentPreview}
             if (interactive) {
               planContent = JSON.stringify({
                 ...interactive,
-                format: interactive.format || "interactive_v2",
+                format: interactive.format || "interactive_v4",
                 topic: interactive.topic || meta.topic,
                 minutes_per_day: meta.minutes,
                 started_at: startedAt,
@@ -4348,7 +4411,7 @@ ${contentPreview}
             const courseMessages = [
               {
                 role: "assistant" as const,
-                content: `Este chat es tu curso diario de ${meta.topic}: ${meta.minutes} min al día durante ${meta.days} días. Cada día te espera una lección interactiva (estilo Duolingo). Vuelve a este chat para el recordatorio de hoy.`,
+                content: `Curso de ${meta.topic}: haz las lecciones del camino cuando quieras. Si tienes una duda, escríbeme abajo.`,
                 type: "message" as const,
                 timestamp: now.toISOString(),
               },
@@ -4404,15 +4467,18 @@ ${contentPreview}
               setTestAnswers({});
               setShowInitialForm(false);
               setCurrentChatLevel({ topic: meta.topic, level: 0 });
-              interface WindowWithRefresh extends Window {
-                refreshChatSidebar?: () => void;
-              }
+              onCourseCreated?.({
+                chatId: newChatId,
+                title: chatTitle,
+                topic: meta.topic,
+                planDays: meta.days,
+                planMinutes: meta.minutes,
+              });
               if (typeof window !== "undefined") {
-                (window as WindowWithRefresh).refreshChatSidebar?.();
+                window.dispatchEvent(new Event("sa-courses-refresh"));
               }
             } catch (err) {
               console.error("Error creando chat del curso:", err);
-              // Fallback: inyectar en el chat actual
               addMessage({
                 role: "user",
                 content: `Quiero un curso diario de ${meta.days} días (${meta.minutes} min) sobre: ${meta.topic}`,
@@ -4470,6 +4536,11 @@ ${contentPreview}
           zIndex: 1,
         }}
       >
+        {courseMode && onBackToCourses && (
+          <button type="button" className="sa-course-back" onClick={onBackToCourses}>
+            ← Mis cursos
+          </button>
+        )}
         {/* Messages */}
         <div
           ref={messagesContainerRef}
@@ -7330,6 +7401,7 @@ ${contentPreview}
           <QuickActionsBar
             colorTheme={colorTheme}
             disabled={isLoading}
+            courseMode={courseMode}
             onStudyPlan={() => {
               if (!hasConfiguredProviderKeys(apiKeys)) {
                 setShowAPIKeyConfig(true);
@@ -7345,7 +7417,7 @@ ${contentPreview}
               setShowConceptMapPanel(true);
             }}
             onReview={
-              isStudyAgentsFlagEnabled("srsReview")
+              !courseMode && isStudyAgentsFlagEnabled("srsReview")
                 ? () => setShowReviewPanel(true)
                 : undefined
             }

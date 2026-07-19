@@ -1,24 +1,27 @@
 "use client";
 
-import { leagueSpartan, outfit } from "@/app/fonts";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import StudyChat from "@/components/StudyChat";
 import Onboarding from "@/components/study-agents/Onboarding";
-import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
-import HomeHeroBackground from "@/components/home/HomeHeroBackground";
-import { SA_PRIMARY } from "@/lib/study-agents/brand";
-import { OPEN_API_KEY_MODAL_EVENT } from "@/lib/study-agents/api-keys";
+import StudyAgentsHome, {
+  type SaCourseSummary,
+} from "@/components/study-agents/StudyAgentsHome";
 import "@/components/study-agents/study-agents-bot.css";
 import "@/components/study-agents/study-agents-hero.css";
 import "@/app/[locale]/home.css";
+
+type View = "home" | "course";
 
 export default function StudyAgentsPageClient() {
   const [mounted, setMounted] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
   const [showAPIKeyModal, setShowAPIKeyModal] = useState(false);
+  const [view, setView] = useState<View>("home");
+  const [activeCourse, setActiveCourse] = useState<SaCourseSummary | null>(null);
+  const [openPlanNonce, setOpenPlanNonce] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -28,7 +31,6 @@ export default function StudyAgentsPageClient() {
     const handleAPIKeyModalChange = (e: CustomEvent) => {
       setShowAPIKeyModal(e.detail.isOpen);
     };
-
     window.addEventListener("apiKeyModalChange", handleAPIKeyModalChange as EventListener);
     return () => {
       window.removeEventListener("apiKeyModalChange", handleAPIKeyModalChange as EventListener);
@@ -41,9 +43,22 @@ export default function StudyAgentsPageClient() {
     }
   }, [status, router]);
 
-  const scrollToChat = () => {
-    document.getElementById("study-chat")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  const openCourse = useCallback((course: SaCourseSummary) => {
+    setActiveCourse(course);
+    setView("course");
+  }, []);
+
+  const startCourse = useCallback(() => {
+    setActiveCourse(null);
+    setView("course");
+    setOpenPlanNonce((n) => n + 1);
+  }, []);
+
+  const backHome = useCallback(() => {
+    setView("home");
+    setActiveCourse(null);
+    window.dispatchEvent(new Event("sa-courses-refresh"));
+  }, []);
 
   if (status === "loading" || !mounted) {
     return (
@@ -77,77 +92,51 @@ export default function StudyAgentsPageClient() {
     );
   }
 
-  if (!session) {
-    return null;
-  }
+  if (!session) return null;
+
+  const userId = session.user?.id || "";
 
   return (
     <>
-      <section
-        className="sa-hero"
-        style={{ display: showAPIKeyModal ? "none" : undefined }}
-        aria-label="Study Agents"
+      {view === "home" && !showAPIKeyModal && (
+        <StudyAgentsHome
+          userId={userId}
+          onStartCourse={startCourse}
+          onOpenCourse={openCourse}
+        />
+      )}
+
+      <div
+        id="study-chat"
+        style={{ display: view === "course" ? "block" : "none" }}
       >
-        <div className="sa-hero__bg" aria-hidden />
-        <HomeHeroBackground />
-
-        <div className={`sa-hero__inner ${mounted ? "sa-hero__fade" : ""}`}>
-          <div className="sa-hero__bot" style={{ animationDelay: "0s" }}>
-            <StudyAgentsBotAvatar
-              size={112}
-              color={SA_PRIMARY}
-              state="idle"
-              title="Study Agents"
-            />
-          </div>
-
-          <p className={`${outfit.className} sa-hero__kicker`}>
-            <span className="sa-hero__kicker-dot" aria-hidden />
-            AI Study Assistant
-          </p>
-
-          <h1 className={`${leagueSpartan.className} sa-hero__title`}>
-            <span className="sa-hero__title-lead">STUDY</span>
-            <br />
-            <span className="sa-hero__title-accent">AGENTS</span>
-          </h1>
-
-          <p className={`${outfit.className} sa-hero__tagline`}>
-            ChatGPT te responde. Study Agents sabe qué no sabes y te lo hace practicar.
-          </p>
-
-          <div className="sa-hero__actions">
-            <button type="button" className="sa-hero__cta" onClick={scrollToChat}>
-              Empezar a estudiar
-            </button>
-            <button
-              type="button"
-              className="sa-hero__cta-ghost"
-              onClick={() => {
-                window.dispatchEvent(new Event(OPEN_API_KEY_MODAL_EVENT));
-              }}
-            >
-              Configurar API Key
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <div id="study-chat">
-        <StudyChat />
+        <StudyChat
+          courseMode
+          hideSidebar
+          focusChatId={activeCourse?.chatId || null}
+          openPlanNonce={openPlanNonce}
+          onBackToCourses={backHome}
+          onCourseCreated={(course) => {
+            openCourse(course);
+            window.dispatchEvent(new Event("sa-courses-refresh"));
+          }}
+        />
       </div>
-      <Onboarding
-        onAskTestClick={() => {
-          const input = document.querySelector<HTMLTextAreaElement>(
-            "[data-study-chat-input]",
-          );
-          if (input) {
-            input.focus();
-            input.value = "Hazme un test de 5 preguntas sobre el documento que subí.";
-            input.dispatchEvent(new Event("input", { bubbles: true }));
-          }
-        }}
-      />
+
+      {view === "course" && (
+        <Onboarding
+          onAskTestClick={() => {
+            const input = document.querySelector<HTMLTextAreaElement>(
+              "[data-study-chat-input]",
+            );
+            if (input) {
+              input.focus();
+              input.value = "Tengo una duda sobre la lección de hoy.";
+              input.dispatchEvent(new Event("input", { bubbles: true }));
+            }
+          }}
+        />
+      )}
     </>
   );
 }
