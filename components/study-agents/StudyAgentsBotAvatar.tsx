@@ -8,6 +8,7 @@ type BotState = "idle" | "thinking" | "static";
 
 type Props = {
   size?: number;
+  /** Color de la cara (pantalla interior). El cuerpo es blanco. */
   color?: string;
   state?: BotState;
   className?: string;
@@ -61,7 +62,7 @@ function BotEye({
         )}
       </rect>
       {/* Brillo — se oculta al cerrar el párpado */}
-      <circle cx={cx - 1.05} cy={29} r={1.1} fill="#7dd3fc" opacity={0.85}>
+      <circle cx={cx - 1.05} cy={29} r={1.1} fill="rgba(255,255,255,0.55)" opacity={0.9}>
         {animate && (
           <animate
             attributeName="opacity"
@@ -78,7 +79,7 @@ function BotEye({
 }
 
 /**
- * Avatar Study Agents (SVG cute): flota, pestañea y “piensa” con glow + antenas.
+ * Avatar Study Agents (SVG cute): cuerpo blanco, cara azul, ojos blancos.
  */
 export default function StudyAgentsBotAvatar({
   size = 36,
@@ -87,6 +88,10 @@ export default function StudyAgentsBotAvatar({
   className,
   title = "Study Agents",
 }: Props) {
+  const body = "#ffffff";
+  const face = color;
+  const eyes = "#ffffff";
+
   const animClass =
     state === "thinking"
       ? "sa-bot-think"
@@ -112,7 +117,8 @@ export default function StudyAgentsBotAvatar({
         height: size,
         flexShrink: 0,
         willChange: state === "static" ? undefined : "transform",
-        ["--sa-bot-color" as string]: color,
+        ["--sa-bot-color" as string]: face,
+        ["--sa-bot-face" as string]: face,
       }}
     >
       <svg
@@ -129,31 +135,31 @@ export default function StudyAgentsBotAvatar({
         <g className={`${antennaClass} sa-bot-antenna-left`} style={{ transformOrigin: "22px 14px" }}>
           <path
             d="M18 18 L10 6"
-            stroke={color}
+            stroke={body}
             strokeWidth="3.2"
             strokeLinecap="round"
           />
-          <path d="M10 6 L7.5 4.2" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
-          <circle cx="6.8" cy="3.6" r="1.35" fill={color} opacity="0.85" />
+          <path d="M10 6 L7.5 4.2" stroke={body} strokeWidth="2.2" strokeLinecap="round" />
+          <circle cx="6.8" cy="3.6" r="1.35" fill={body} opacity="0.9" />
         </g>
 
         {/* Lápiz derecho */}
         <g className={`${antennaClass} sa-bot-antenna-right`} style={{ transformOrigin: "42px 14px" }}>
           <path
             d="M46 18 L54 6"
-            stroke={color}
+            stroke={body}
             strokeWidth="3.2"
             strokeLinecap="round"
           />
-          <path d="M54 6 L56.5 4.2" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
-          <circle cx="57.2" cy="3.6" r="1.35" fill={color} opacity="0.85" />
+          <path d="M54 6 L56.5 4.2" stroke={body} strokeWidth="2.2" strokeLinecap="round" />
+          <circle cx="57.2" cy="3.6" r="1.35" fill={body} opacity="0.9" />
         </g>
 
         {/* Orejas */}
-        <rect x="6" y="28" width="6" height="12" rx="3" fill={color} />
-        <rect x="52" y="28" width="6" height="12" rx="3" fill={color} />
+        <rect x="6" y="28" width="6" height="12" rx="3" fill={body} />
+        <rect x="52" y="28" width="6" height="12" rx="3" fill={body} />
 
-        {/* Cabeza (speech-bubble) */}
+        {/* Cabeza (speech-bubble) — blanco */}
         <path
           d="M16 18
              H48
@@ -167,10 +173,10 @@ export default function StudyAgentsBotAvatar({
              Q10 46 10 40
              V24
              Q10 18 16 18 Z"
-          fill={color}
+          fill={body}
         />
 
-        {/* Pantalla interior */}
+        {/* Pantalla interior — azul */}
         <path
           d="M18 22
              H46
@@ -181,12 +187,12 @@ export default function StudyAgentsBotAvatar({
              Q15 42 15 39
              V25
              Q15 22 18 22 Z"
-          fill="var(--sa-bot-face, #061018)"
+          fill={face}
           opacity="1"
         />
 
-        <BotEye cx={25.25} color={color} fast={blinkFast} animate={blink} />
-        <BotEye cx={38.75} color={color} fast={blinkFast} animate={blink} />
+        <BotEye cx={25.25} color={eyes} fast={blinkFast} animate={blink} />
+        <BotEye cx={38.75} color={eyes} fast={blinkFast} animate={blink} />
       </svg>
     </span>
   );

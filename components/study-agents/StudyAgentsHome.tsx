@@ -152,7 +152,7 @@ export default function StudyAgentsHome({ userId, onStartCourse, onOpenCourse }:
                 className="sa-hero__cta sa-hero__cta--continue"
                 onClick={() => onOpenCourse(continueCourse)}
               >
-                <StudyAgentsBotAvatar size={28} color="#fff" state="static" />
+                <StudyAgentsBotAvatar size={28} color={SA_PRIMARY} state="static" />
                 <span>
                   Continuar · {continueCourse.topic}
                   <small>{todayLessonHint(continueCourse.chatId, continueCourse.topic)}</small>
