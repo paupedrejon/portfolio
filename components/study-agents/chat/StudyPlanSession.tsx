@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import DOMPurify from "dompurify";
 import { outfit, spaceGrotesk } from "@/app/fonts";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
@@ -1236,17 +1236,20 @@ function ChoiceList({
   picked,
   revealed,
   onPick,
+  comic,
 }: {
   options: string[];
   correctIndex: number;
   picked: number | null;
   revealed: boolean;
   onPick: (idx: number) => void;
+  comic?: boolean;
 }) {
   return (
-    <div className="sa-duo-choices">
+    <div className={`sa-duo-choices ${comic ? "sa-duo-choices--comic" : ""}`}>
       {options.map((opt, idx) => {
         let cls = "sa-choice";
+        if (comic) cls += " sa-choice--comic";
         if (revealed) {
           if (idx === correctIndex) cls += " sa-duo-choice--ok";
           else if (idx === picked) cls += " sa-duo-choice--bad";
@@ -1259,6 +1262,7 @@ function ChoiceList({
             type="button"
             disabled={revealed}
             className={cls}
+            style={comic ? ({ ["--sa-i" as string]: idx } as CSSProperties) : undefined}
             onClick={() => onPick(idx)}
           >
             {opt}
@@ -1492,7 +1496,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
           ) : null}
 
           {hasCheck && (
-            <div className="sa-duo-checkblock">
+            <div className="sa-duo-checkblock sa-comic-pop">
               <p className="sa-duo-checkblock__label">COMPRUEBA</p>
               <p className="sa-duo-checkblock__prompt">{slide.check!.prompt}</p>
               {!revealed || picked === null ? (
@@ -1501,6 +1505,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
                   correctIndex={slide.check!.correct_index}
                   picked={picked}
                   revealed={revealed}
+                  comic
                   onPick={(idx) => choose(idx, slide.check!.correct_index)}
                 />
               ) : (
@@ -1510,10 +1515,11 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
                     correctIndex={slide.check!.correct_index}
                     picked={picked}
                     revealed={revealed}
+                    comic
                     onPick={() => {}}
                   />
                   <div
-                    className={`sa-duo-feedback ${picked === slide.check!.correct_index ? "ok" : "bad"}`}
+                    className={`sa-duo-feedback sa-comic-pop ${picked === slide.check!.correct_index ? "ok" : "bad"}`}
                   >
                     <p className="sa-duo-feedback__title">
                       {picked === slide.check!.correct_index ? "¡Bien!" : "Casi"}
@@ -1533,7 +1539,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
         {(!hasCheck || revealed) && (
           <button
             type="button"
-            className="sa-btn sa-btn--ghost"
+            className="sa-btn sa-btn--ghost sa-comic-pop sa-comic-pop--delay"
             style={{ width: "100%", marginTop: "1.1rem" }}
             onClick={nextAfterSlide}
           >
@@ -1546,7 +1552,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
 
   if (activeDay && inTest && currentQ) {
     return (
-      <div className={`${outfit.className} sa-steps-card sa-duo-shell sa-pop`} key={currentQ.id}>
+      <div className={`${outfit.className} sa-steps-card sa-duo-shell sa-duo-shell--test sa-pop`} key={currentQ.id}>
         <div className="sa-duo-top">
           <button
             type="button"
@@ -1572,20 +1578,21 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
         </p>
 
         <div className="sa-duo-screen">
-          <div className="sa-duo-botrow">
+          <div className="sa-duo-botrow sa-duo-botrow--comic">
             <StudyAgentsBotAvatar size={52} color={SA_CYAN} state="thinking" className="sa-bot-avatar--bright" />
-            <div className="sa-duo-bubble sa-duo-bubble--test">
+            <div className="sa-duo-bubble sa-duo-bubble--test sa-comic-pop">
               <p className="sa-duo-test-label">PREGUNTA</p>
               <p>{currentQ.prompt}</p>
             </div>
           </div>
-          <div className="sa-duo-checkblock">
+          <div className="sa-duo-checkblock sa-comic-pop sa-comic-pop--delay">
             <p className="sa-duo-checkblock__label">ELIGE UNA OPCIÓN</p>
             <ChoiceList
               options={currentQ.options}
               correctIndex={currentQ.correct_index}
               picked={picked}
               revealed={revealed}
+              comic
               onPick={(idx) => choose(idx, currentQ.correct_index)}
             />
           </div>

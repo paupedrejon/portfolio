@@ -2824,6 +2824,16 @@ ${contentPreview}
           type: "notes",
           costEstimate,
         });
+
+        // Descargar PDF automáticamente (apuntes = PDF descargable)
+        try {
+          downloadMarkdownNotesPdf(
+            data.notes,
+            topicForNotes || currentChatLevel?.topic || "apuntes",
+          );
+        } catch (pdfErr) {
+          console.error("Error al descargar PDF de apuntes:", pdfErr);
+        }
       } else {
         throw new Error(data.error || 'No se pudieron generar los apuntes');
       }
@@ -8720,6 +8730,70 @@ ${contentPreview}
 
 // Función eliminada: cleanMermaidCode - ya no se usa Mermaid
 
+/** PDF de apuntes a partir de markdown (sin html2canvas — fiable y descargable). */
+function downloadMarkdownNotesPdf(markdown: string, topic = "apuntes") {
+  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 16;
+  const maxW = pageW - margin * 2;
+  let y = margin;
+
+  const ensureSpace = (need: number) => {
+    if (y + need > pageH - margin) {
+      pdf.addPage();
+      y = margin;
+    }
+  };
+
+  const plain = markdown
+    .replace(/\r\n/g, "\n")
+    .replace(/```[\s\S]*?```/g, (block) => {
+      const inner = block.replace(/^```[a-zA-Z0-9]*\n?/, "").replace(/```$/, "");
+      return `\n${inner.trim()}\n`;
+    })
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/(\*\*|__)(.*?)\1/g, "$2")
+    .replace(/(\*|_)(.*?)\1/g, "$2")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/^\s*[-*+]\s+/gm, "• ")
+    .replace(/^\s*\d+\.\s+/gm, (m) => m.trim() + " ");
+
+  const title = (topic || "Apuntes").replace(/[^\w\sáéíóúñüÁÉÍÓÚÑÜ.-]+/gi, " ").trim() || "Apuntes";
+  pdf.setFillColor(3, 13, 20);
+  pdf.rect(0, 0, pageW, pageH, "F");
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(20);
+  const titleLines = pdf.splitTextToSize(`Apuntes · ${title}`, maxW);
+  pdf.text(titleLines, margin, y + 8);
+  y += 8 + titleLines.length * 8 + 6;
+  pdf.setDrawColor(0, 217, 255);
+  pdf.setLineWidth(0.6);
+  pdf.line(margin, y, pageW - margin, y);
+  y += 10;
+
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(11);
+  pdf.setTextColor(241, 245, 249);
+
+  const paragraphs = plain.split(/\n{2,}/);
+  for (const para of paragraphs) {
+    const text = para.trim();
+    if (!text) continue;
+    const lines = pdf.splitTextToSize(text, maxW);
+    const blockH = lines.length * 5.5 + 3;
+    ensureSpace(blockH);
+    pdf.text(lines, margin, y);
+    y += blockH;
+  }
+
+  const safe = title.toLowerCase().replace(/\s+/g, "-").slice(0, 40) || "apuntes";
+  pdf.save(`${safe}-${new Date().toISOString().split("T")[0]}.pdf`);
+}
+
 // Componente rediseñado para renderizar apuntes con estilo similar a flashcards
 function NotesViewer({ 
   content, 
@@ -9287,70 +9361,45 @@ function NotesViewer({
       border: "none",
       boxShadow: "none",
     }}>
-      {/* Header similar a flashcards */}
-      <div style={{
-        display: "none",
-      }}>
-        <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600, color: textColor }}>
-          Resumen de Estudio
+      {/* Cabecera con descarga PDF visible */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "0.75rem",
+          marginBottom: "0.85rem",
+          flexWrap: "wrap",
+        }}
+      >
+        <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: textColor }}>
+          Apuntes
         </h3>
         <button
-          onClick={handleDownloadPDF}
+          type="button"
+          onClick={() => {
+            try {
+              setIsGeneratingPDF(true);
+              downloadMarkdownNotesPdf(content, language || "apuntes");
+            } catch (e) {
+              console.error(e);
+              void handleDownloadPDF();
+            } finally {
+              setIsGeneratingPDF(false);
+            }
+          }}
           disabled={isGeneratingPDF}
+          className="sa-btn sa-btn--ghost"
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            padding: "0.5rem 1rem",
-            background: isGeneratingPDF
-              ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.1)" : "rgba(148, 163, 184, 0.05)")
-              : "#6366f1",
-            color: isGeneratingPDF
-              ? (colorTheme === "dark" ? "rgba(148, 163, 184, 0.5)" : "rgba(148, 163, 184, 0.7)")
-              : "white",
-            border: `1px solid ${isGeneratingPDF ? borderColor : "#6366f1"}`,
-            borderRadius: "16px",
-            fontWeight: 600,
-            fontSize: "0.875rem",
-            cursor: isGeneratingPDF ? "not-allowed" : "pointer",
-            transition: "all 0.2s ease",
-            opacity: isGeneratingPDF ? 0.5 : 1,
+            minHeight: "2.4rem",
+            padding: "0.45rem 1rem",
+            fontSize: "0.85rem",
+            opacity: isGeneratingPDF ? 0.6 : 1,
           }}
-          onMouseEnter={(e) => {
-            if (!isGeneratingPDF) {
-              e.currentTarget.style.background = "#4f46e5";
-              e.currentTarget.style.transform = "scale(1.05)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!isGeneratingPDF) {
-              e.currentTarget.style.background = "#6366f1";
-              e.currentTarget.style.transform = "scale(1)";
-            }
-          }}
+          title="Descargar PDF"
         >
-          {isGeneratingPDF ? (
-            <>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                style={{ animation: "spin 1s linear infinite" }}
-              >
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.3" />
-                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-              </svg>
-              Generando...
-            </>
-          ) : (
-            <>
-              <DownloadIcon size={16} />
-              PDF
-            </>
-          )}
+          <DownloadIcon size={16} />
+          {isGeneratingPDF ? "Generando…" : "Descargar PDF"}
         </button>
       </div>
 

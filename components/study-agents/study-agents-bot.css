@@ -83,15 +83,22 @@
   animation: sa-bot-antenna-right 0.7s ease-in-out infinite;
 }
 
-/* Cara clara sobre fondo oscuro del chat: se puede overridear */
+/* Cara oscura (home) */
 .sa-bot-avatar {
-  --sa-bot-face: #ffffff;
+  --sa-bot-face: #061018;
+  overflow: visible !important;
 }
 
 .sa-bot-avatar--bright {
-  filter: drop-shadow(0 0 10px rgba(0, 217, 255, 0.55)) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+  /* Espacio para que el glow no se recorte */
+  padding: 14px;
+  margin: -14px;
+  box-sizing: content-box;
+  overflow: visible !important;
+  filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.5)) drop-shadow(0 0 18px rgba(0, 217, 255, 0.28));
 }
 
 .sa-bot-avatar--bright svg {
   overflow: visible;
+  display: block;
 }

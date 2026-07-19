@@ -61,7 +61,7 @@ function BotEye({
         )}
       </rect>
       {/* Brillo — se oculta al cerrar el párpado */}
-      <circle cx={cx - 1.05} cy={29} r={1.1} fill="#fff" opacity={0.9}>
+      <circle cx={cx - 1.05} cy={29} r={1.1} fill="#7dd3fc" opacity={0.85}>
         {animate && (
           <animate
             attributeName="opacity"
@@ -181,8 +181,8 @@ export default function StudyAgentsBotAvatar({
              Q15 42 15 39
              V25
              Q15 22 18 22 Z"
-          fill="var(--sa-bot-face, #ffffff)"
-          opacity="0.96"
+          fill="var(--sa-bot-face, #061018)"
+          opacity="1"
         />
 
         <BotEye cx={25.25} color={color} fast={blinkFast} animate={blink} />
