@@ -161,17 +161,25 @@ function isMetaQuestion(q: PlanQuestion): boolean {
     /concepto opuesto|uso t[ií]pico de|definici[oó]n de|ejemplo de .{0,40}unidad/.test(blob) ||
     /qu[eé] resume mejor|qu[eé] no encaja|detalle irrelevante|índice del pdf|indice del pdf/.test(blob) ||
     /idea pr[aá]ctica de|memorizar el [ií]ndice|saltar el test|copiar sin entender/.test(blob) ||
-    /pasos cortos|leyendo un muro|pdf largo/.test(blob)
+    /pasos cortos|leyendo un muro|pdf largo/.test(blob) ||
+    /qu[eé] practicas hoy|tema no relacionado|nada concreto|nada [uú]til|detalle sin relaci[oó]n/.test(blob) ||
+    /solo el [ií]ndice|solo leer sin practicar|ignorar el concepto|una idea concreta de/.test(blob) ||
+    /sobre .{1,40}: \¿?qu[eé] es m[aá]s correcto/.test(blob)
+  );
+}
+
+function isMetaFocus(focus?: string, title?: string): boolean {
+  const blob = `${focus || ""} ${title || ""}`.toLowerCase().trim();
+  if (!blob) return true;
+  return (
+    /concepto clave|unidad\s*\d+|micro-pr[aá]ctica|p[aá]rrafos eternos|pasos cortos/.test(blob) ||
+    /base \d+|· base/.test(blob)
   );
 }
 
 type DayKind = "intro" | "jsx" | "props" | "state" | "events" | "lists" | "effects" | "practice";
 
 function dayKindFor(topic: string, dayNum: number): DayKind {
-  if (!topic.toLowerCase().includes("react")) {
-    const kinds: DayKind[] = ["intro", "practice", "jsx", "props", "state", "events", "lists"];
-    return kinds[(dayNum - 1) % kinds.length];
-  }
   const kinds: DayKind[] = ["intro", "jsx", "props", "state", "events", "lists", "effects"];
   return kinds[(dayNum - 1) % kinds.length];
 }
@@ -182,7 +190,9 @@ function dayLabelFor(topic: string, dayNum: number, fallbackTitle?: string, fall
   kind: DayKind;
 } {
   const kind = dayKindFor(topic, dayNum);
-  if (topic.toLowerCase().includes("react")) {
+  const tl = topic.toLowerCase();
+
+  if (tl.includes("react")) {
     const map: Record<DayKind, { title: string; focus: string }> = {
       intro: { title: "Qué es React", focus: "Componentes y UI" },
       jsx: { title: "JSX", focus: "Sintaxis de UI" },
@@ -195,21 +205,68 @@ function dayLabelFor(topic: string, dayNum: number, fallbackTitle?: string, fall
     };
     return { ...map[kind], kind };
   }
-  const bad =
-    !fallbackFocus ||
-    /unidad\s*\d+/i.test(fallbackFocus) ||
-    /unidad\s*\d+/i.test(fallbackTitle || "");
-  if (bad) {
-    return {
-      kind,
-      title: `${topic} · ${dayNum}`,
-      focus: "Concepto clave",
+
+  if (tl.includes("sql") || tl.includes("mysql") || tl.includes("postgres") || tl.includes("base de datos")) {
+    const map: Record<DayKind, { title: string; focus: string }> = {
+      intro: { title: "Qué es SQL", focus: "Consultas a tablas" },
+      jsx: { title: "SELECT", focus: "Leer filas" },
+      props: { title: "WHERE", focus: "Filtrar filas" },
+      state: { title: "JOIN", focus: "Unir tablas" },
+      events: { title: "INSERT", focus: "Añadir datos" },
+      lists: { title: "GROUP BY", focus: "Agregar" },
+      effects: { title: "Índices", focus: "Rendimiento" },
+      practice: { title: "Práctica", focus: "Repaso SQL" },
     };
+    return { ...map[kind], kind };
+  }
+
+  if (tl.includes("python")) {
+    const map: Record<DayKind, { title: string; focus: string }> = {
+      intro: { title: "Qué es Python", focus: "Lenguaje e intérprete" },
+      jsx: { title: "Variables", focus: "Tipos básicos" },
+      props: { title: "Funciones", focus: "def y return" },
+      state: { title: "Listas", focus: "list y append" },
+      events: { title: "Condicionales", focus: "if / else" },
+      lists: { title: "Bucles", focus: "for / while" },
+      effects: { title: "Módulos", focus: "import" },
+      practice: { title: "Práctica", focus: "Repaso" },
+    };
+    return { ...map[kind], kind };
+  }
+
+  if (tl.includes("javascript") || tl.includes("js") || tl === "ts" || tl.includes("typescript")) {
+    const map: Record<DayKind, { title: string; focus: string }> = {
+      intro: { title: "Qué es JS", focus: "Lenguaje de la web" },
+      jsx: { title: "Variables", focus: "let y const" },
+      props: { title: "Funciones", focus: "Declarar y llamar" },
+      state: { title: "Objetos", focus: "Claves y valores" },
+      events: { title: "Arrays", focus: "map y filter" },
+      lists: { title: "DOM", focus: "Seleccionar nodos" },
+      effects: { title: "Async", focus: "Promises" },
+      practice: { title: "Práctica", focus: "Repaso" },
+    };
+    return { ...map[kind], kind };
+  }
+
+  // Genérico con foco real (nunca "Concepto clave")
+  const genericTitles = [
+    { title: `Qué es ${topic}`, focus: "Idea central" },
+    { title: "Fundamentos", focus: "Piezas básicas" },
+    { title: "Sintaxis", focus: "Cómo se escribe" },
+    { title: "Operaciones", focus: "Acciones típicas" },
+    { title: "Estructura", focus: "Cómo se organiza" },
+    { title: "Errores", focus: "Fallos frecuentes" },
+    { title: "Práctica", focus: "Aplicar hoy" },
+  ];
+  const g = genericTitles[(dayNum - 1) % genericTitles.length];
+
+  if (isMetaFocus(fallbackFocus, fallbackTitle)) {
+    return { kind, ...g };
   }
   return {
     kind,
-    title: (fallbackTitle || `Día ${dayNum}`).slice(0, 40),
-    focus: (fallbackFocus || topic).slice(0, 48),
+    title: (fallbackTitle || g.title).slice(0, 40),
+    focus: (fallbackFocus || g.focus).slice(0, 48),
   };
 }
 
@@ -389,32 +446,181 @@ function qualityQuestionsForDay(topic: string, dayNum: number): PlanQuestion[] {
     return banks[unit - 1] || banks[0];
   }
 
+  if (tl.includes("sql") || tl.includes("mysql") || tl.includes("postgres") || tl.includes("base de datos")) {
+    const banks: PlanQuestion[][] = [
+      [
+        {
+          id: `sq${dayNum}-1`,
+          prompt: "SQL sirve principalmente para…",
+          options: [
+            "Consultar y manipular datos en tablas",
+            "Diseñar interfaces con CSS",
+            "Compilar programas C++",
+            "Enviar emails",
+          ],
+          correct_index: 0,
+          feedback_ok: "SQL habla con bases de datos relacionales.",
+          feedback_bad: "Piensa en tablas y consultas.",
+        },
+        {
+          id: `sq${dayNum}-2`,
+          prompt: "Una fila en una tabla representa…",
+          options: ["Un registro / entidad", "Una hoja de estilo", "Un servidor", "Un archivo .js"],
+          correct_index: 0,
+          feedback_ok: "Cada fila es un registro.",
+          feedback_bad: "Tabla = filas + columnas.",
+        },
+      ],
+      [
+        {
+          id: `sq${dayNum}-1`,
+          prompt: "SELECT nombre FROM users; ¿qué hace?",
+          options: [
+            "Lee la columna nombre de users",
+            "Borra la tabla users",
+            "Crea un índice",
+            "Inserta una fila",
+          ],
+          correct_index: 0,
+          feedback_ok: "SELECT lee datos.",
+          feedback_bad: "FROM indica la tabla.",
+        },
+        {
+          id: `sq${dayNum}-2`,
+          prompt: "SELECT * FROM products; el * significa…",
+          options: ["Todas las columnas", "Solo la clave primaria", "Solo 1 fila", "Borrar todo"],
+          correct_index: 0,
+          feedback_ok: "* = todas las columnas.",
+          feedback_bad: "No borra nada.",
+        },
+      ],
+      [
+        {
+          id: `sq${dayNum}-1`,
+          prompt: "WHERE sirve para…",
+          options: ["Filtrar filas", "Crear tablas", "Cambiar el color UI", "Unir CSS"],
+          correct_index: 0,
+          feedback_ok: "Condición de filtrado.",
+          feedback_bad: "WHERE reduce el resultado.",
+        },
+        {
+          id: `sq${dayNum}-2`,
+          prompt: "SELECT * FROM users WHERE age > 18; devuelve…",
+          options: ["Usuarios mayores de 18", "Todos los usuarios", "Solo columnas age", "Nada nunca"],
+          correct_index: 0,
+          feedback_ok: "Filtra por age.",
+          feedback_bad: "Mira la condición WHERE.",
+        },
+      ],
+      [
+        {
+          id: `sq${dayNum}-1`,
+          prompt: "JOIN se usa para…",
+          options: [
+            "Combinar filas de varias tablas",
+            "Borrar una base de datos",
+            "Crear un PDF",
+            "Definir CSS",
+          ],
+          correct_index: 0,
+          feedback_ok: "Une tablas por una clave.",
+          feedback_bad: "Piensa en pedidos + clientes.",
+        },
+        {
+          id: `sq${dayNum}-2`,
+          prompt: "ON a.id = b.user_id indica…",
+          options: ["La condición de unión", "Un ORDER BY", "Un DELETE", "Un índice automático"],
+          correct_index: 0,
+          feedback_ok: "Cómo se relacionan las tablas.",
+          feedback_bad: "ON = criterio del JOIN.",
+        },
+      ],
+      [
+        {
+          id: `sq${dayNum}-1`,
+          prompt: "INSERT INTO users (name) VALUES ('Ana'); …",
+          options: ["Añade una fila", "Lee todas las filas", "Borra Ana", "Crea la base"],
+          correct_index: 0,
+          feedback_ok: "INSERT escribe datos.",
+          feedback_bad: "No es un SELECT.",
+        },
+        {
+          id: `sq${dayNum}-2`,
+          prompt: "UPDATE users SET name='Luis' WHERE id=1; …",
+          options: ["Modifica filas que cumplen WHERE", "Inserta 1 fila nueva", "Borra la tabla", "Solo cuenta filas"],
+          correct_index: 0,
+          feedback_ok: "UPDATE cambia datos existentes.",
+          feedback_bad: "WHERE elige qué filas tocar.",
+        },
+      ],
+      [
+        {
+          id: `sq${dayNum}-1`,
+          prompt: "COUNT(*) con GROUP BY sirve para…",
+          options: ["Contar filas por grupo", "Ordenar alfabéticamente", "Crear un índice", "Hacer JOIN"],
+          correct_index: 0,
+          feedback_ok: "Agregación por grupos.",
+          feedback_bad: "GROUP BY agrupa; COUNT cuenta.",
+        },
+        {
+          id: `sq${dayNum}-2`,
+          prompt: "SELECT city, COUNT(*) FROM users GROUP BY city; …",
+          options: ["Usuarios por ciudad", "Borra ciudades", "Una sola fila siempre", "Solo el máximo age"],
+          correct_index: 0,
+          feedback_ok: "Un conteo por city.",
+          feedback_bad: "Agrupa por city.",
+        },
+      ],
+      [
+        {
+          id: `sq${dayNum}-1`,
+          prompt: "Un índice en SQL ayuda a…",
+          options: ["Acelerar búsquedas", "Cambiar el tema UI", "Compilar JS", "Enviar email"],
+          correct_index: 0,
+          feedback_ok: "Más rápidas las consultas filtradas.",
+          feedback_bad: "Como el índice de un libro.",
+        },
+        {
+          id: `sq${dayNum}-2`,
+          prompt: "PRIMARY KEY identifica…",
+          options: ["Cada fila de forma única", "El color de la tabla", "Un JOIN obligatorio", "Un PDF"],
+          correct_index: 0,
+          feedback_ok: "Clave única por fila.",
+          feedback_bad: "Una fila = una PK.",
+        },
+      ],
+    ];
+    return banks[unit - 1] || banks[0];
+  }
+
+  // Genérico con foco del día (nunca meta PDF / “idea concreta”)
+  const label = dayLabelFor(topic, dayNum);
   return [
     {
       id: `gq${dayNum}-1`,
-      prompt: `Sobre ${topic}: ¿qué es más correcto?`,
+      prompt: `¿Qué define mejor “${label.focus}” en ${topic}?`,
       options: [
-        `Una idea concreta de ${topic}`,
-        "Un detalle sin relación",
-        "El índice de un PDF",
-        "Nada útil",
+        `El concepto de ${label.title.toLowerCase()} aplicado a ${topic}`,
+        "Un detalle de otro curso distinto",
+        "La tipografía de un PDF",
+        "Configurar el Wi‑Fi",
       ],
       correct_index: 0,
-      feedback_ok: "Bien.",
-      feedback_bad: `Repasa ${topic}.`,
+      feedback_ok: `Sí: ${label.focus}.`,
+      feedback_bad: `El foco es ${label.focus}.`,
     },
     {
       id: `gq${dayNum}-2`,
-      prompt: `Si practicas ${topic}, ¿qué haces?`,
+      prompt: `Para practicar ${label.title} hoy, ¿qué haces?`,
       options: [
-        "Aplicar un ejemplo mínimo",
-        "Solo leer sin practicar",
-        "Copiar sin entender",
-        "Ignorar el concepto",
+        `Hacer un ejemplo mínimo de ${label.focus}`,
+        "Solo memorizar el índice",
+        "Cambiar de tema al azar",
+        "Ignorar la lección",
       ],
       correct_index: 0,
-      feedback_ok: "Práctica > relleno.",
-      feedback_bad: "Aplica el concepto.",
+      feedback_ok: "Ejemplo mínimo > relleno.",
+      feedback_bad: `Aplica ${label.focus}.`,
     },
   ];
 }
@@ -956,23 +1162,353 @@ function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
     return units[unit - 1] || units[0];
   }
 
-  // Genérico: contenido del TEMA, nunca meta de estudio
-  const focus = day.focus && !/unidad/i.test(day.focus) ? day.focus : `${t} · base ${unit}`;
+  if (tl.includes("sql") || tl.includes("mysql") || tl.includes("postgres") || tl.includes("base de datos")) {
+    const units: LessonSlide[][] = [
+      [
+        {
+          id: `s${d}-1`,
+          phase: "intro",
+          bot: "SQL es el lenguaje para consultar y modificar datos guardados en tablas (bases relacionales).",
+          visual: { kind: "big_word", word: "SQL", sub: "Structured Query Language" },
+          html: `<div class="viz"><div class="row"><span class="pill">tablas</span><span class="pill">filas</span><span class="pill">columnas</span></div><p>Leer, filtrar, unir y escribir datos.</p></div>`,
+          check: {
+            prompt: "SQL se usa para…",
+            options: ["Trabajar con datos en tablas", "Diseñar tipografías", "Compilar C++", "Montar un DNS"],
+            correct_index: 0,
+            feedback_ok: "Consultas a bases de datos.",
+            feedback_bad: "Piensa en tablas, no en CSS.",
+          },
+        },
+        {
+          id: `s${d}-2`,
+          phase: "learn",
+          bot: "Una tabla tiene columnas (campos) y filas (registros). Ejemplo: users(id, name, email).",
+          visual: {
+            kind: "vs",
+            left: { title: "Columna", body: "name, email…" },
+            right: { title: "Fila", body: "Un usuario concreto" },
+          },
+          check: {
+            prompt: "Una fila representa…",
+            options: ["Un registro", "Un archivo CSS", "Un servidor", "Un PDF"],
+            correct_index: 0,
+            feedback_ok: "Registro = fila.",
+            feedback_bad: "Cada fila es una entidad.",
+          },
+        },
+        {
+          id: `s${d}-3`,
+          phase: "learn",
+          bot: "Las consultas empiezan casi siempre por SELECT … FROM …",
+          visual: { kind: "code", label: "Esqueleto", code: "SELECT columnas\nFROM tabla;" },
+          check: {
+            prompt: "FROM indica…",
+            options: ["De qué tabla lees", "El color del resultado", "Un JOIN obligatorio", "Borrar datos"],
+            correct_index: 0,
+            feedback_ok: "La tabla origen.",
+            feedback_bad: "FROM = origen.",
+          },
+        },
+      ],
+      [
+        {
+          id: `s${d}-1`,
+          phase: "intro",
+          bot: "SELECT elige qué columnas quieres ver. FROM dice de qué tabla.",
+          visual: { kind: "big_word", word: "SELECT", sub: "Leer datos" },
+          check: {
+            prompt: "SELECT name FROM users; devuelve…",
+            options: ["La columna name de users", "Borra users", "Crea users", "Nada útil"],
+            correct_index: 0,
+            feedback_ok: "Lectura de name.",
+            feedback_bad: "Es una lectura.",
+          },
+        },
+        {
+          id: `s${d}-2`,
+          phase: "learn",
+          bot: "El asterisco * pide todas las columnas de la tabla.",
+          visual: { kind: "code", label: "Todas las columnas", code: "SELECT * FROM products;" },
+          check: {
+            prompt: "* en SELECT significa…",
+            options: ["Todas las columnas", "Solo la PK", "Borrar filas", "Ordenar"],
+            correct_index: 0,
+            feedback_ok: "Todas las columnas.",
+            feedback_bad: "No borra nada.",
+          },
+        },
+        {
+          id: `s${d}-3`,
+          phase: "learn",
+          bot: "Puedes limitar filas con LIMIT (útil al explorar).",
+          visual: { kind: "code", label: "LIMIT", code: "SELECT * FROM users\nLIMIT 5;" },
+          check: {
+            prompt: "LIMIT 5…",
+            options: ["Devuelve como máximo 5 filas", "Borra 5 filas", "Crea 5 tablas", "Obliga un JOIN"],
+            correct_index: 0,
+            feedback_ok: "Tope de filas.",
+            feedback_bad: "No es DELETE.",
+          },
+        },
+      ],
+      [
+        {
+          id: `s${d}-1`,
+          phase: "intro",
+          bot: "WHERE filtra: solo pasan las filas que cumplen la condición.",
+          visual: { kind: "big_word", word: "WHERE", sub: "Filtrar filas" },
+          check: {
+            prompt: "WHERE sirve para…",
+            options: ["Filtrar filas", "Crear índices CSS", "Renombrar la base", "Hacer PDF"],
+            correct_index: 0,
+            feedback_ok: "Filtro.",
+            feedback_bad: "Reduce el resultado.",
+          },
+        },
+        {
+          id: `s${d}-2`,
+          phase: "learn",
+          bot: "Comparadores típicos: =, <>, >, <, >=, <=. También AND / OR.",
+          visual: {
+            kind: "code",
+            label: "Filtro",
+            code: "SELECT * FROM users\nWHERE age >= 18\n  AND city = 'Madrid';",
+          },
+          check: {
+            prompt: "age >= 18 AND city = 'Madrid' deja…",
+            options: ["Mayores de edad en Madrid", "Todos los users", "Solo age", "Ninguna fila siempre"],
+            correct_index: 0,
+            feedback_ok: "Ambas condiciones.",
+            feedback_bad: "AND exige las dos.",
+          },
+        },
+        {
+          id: `s${d}-3`,
+          phase: "learn",
+          bot: "LIKE busca patrones en texto: % es comodín.",
+          visual: { kind: "code", label: "LIKE", code: "SELECT * FROM users\nWHERE name LIKE 'A%';" },
+          check: {
+            prompt: "name LIKE 'A%' busca…",
+            options: ["Nombres que empiezan por A", "Solo Ana exacto", "Borrar nombres", "Ordenar por A"],
+            correct_index: 0,
+            feedback_ok: "Patrón de texto.",
+            feedback_bad: "% = cualquier continuación.",
+          },
+        },
+      ],
+      [
+        {
+          id: `s${d}-1`,
+          phase: "intro",
+          bot: "JOIN combina tablas relacionadas (ej. pedidos + clientes) por una clave.",
+          visual: { kind: "big_word", word: "JOIN", sub: "Unir tablas" },
+          check: {
+            prompt: "JOIN se usa para…",
+            options: ["Combinar tablas", "Borrar la base", "Estilar HTML", "Compilar TS"],
+            correct_index: 0,
+            feedback_ok: "Unión de tablas.",
+            feedback_bad: "Relaciona filas.",
+          },
+        },
+        {
+          id: `s${d}-2`,
+          phase: "learn",
+          bot: "INNER JOIN solo deja filas con match. ON define la relación.",
+          visual: {
+            kind: "code",
+            label: "INNER JOIN",
+            code: "SELECT o.id, u.name\nFROM orders o\nJOIN users u ON o.user_id = u.id;",
+          },
+          check: {
+            prompt: "ON o.user_id = u.id es…",
+            options: ["La condición de unión", "Un WHERE de borrado", "Un GROUP BY", "Un índice"],
+            correct_index: 0,
+            feedback_ok: "Cómo se enlazan.",
+            feedback_bad: "ON = match del JOIN.",
+          },
+        },
+        {
+          id: `s${d}-3`,
+          phase: "learn",
+          bot: "LEFT JOIN mantiene todas las filas de la izquierda aunque no haya match a la derecha.",
+          visual: {
+            kind: "vs",
+            left: { title: "INNER", body: "Solo matches" },
+            right: { title: "LEFT", body: "Todas las izq." },
+          },
+          check: {
+            prompt: "LEFT JOIN conserva…",
+            options: ["Todas las filas de la tabla izquierda", "Solo matches", "Ninguna fila", "Solo la derecha"],
+            correct_index: 0,
+            feedback_ok: "Izquierda completa.",
+            feedback_bad: "LEFT = left kept.",
+          },
+        },
+      ],
+      [
+        {
+          id: `s${d}-1`,
+          phase: "intro",
+          bot: "INSERT añade filas. UPDATE cambia filas existentes (casi siempre con WHERE).",
+          visual: { kind: "big_word", word: "INSERT", sub: "Escribir datos" },
+          check: {
+            prompt: "INSERT INTO … VALUES …",
+            options: ["Añade filas", "Solo lee", "Borra la tabla", "Crea un índice UI"],
+            correct_index: 0,
+            feedback_ok: "Escritura nueva.",
+            feedback_bad: "No es SELECT.",
+          },
+        },
+        {
+          id: `s${d}-2`,
+          phase: "learn",
+          bot: "Sin WHERE, un UPDATE puede tocar todas las filas. ¡Cuidado!",
+          visual: {
+            kind: "code",
+            label: "UPDATE seguro",
+            code: "UPDATE users\nSET city = 'Bilbao'\nWHERE id = 42;",
+          },
+          check: {
+            prompt: "UPDATE … WHERE id = 42 modifica…",
+            options: ["La fila 42", "Todas las filas siempre", "Ninguna nunca", "Solo columnas"],
+            correct_index: 0,
+            feedback_ok: "WHERE acota.",
+            feedback_bad: "Sin WHERE sería masivo.",
+          },
+        },
+        {
+          id: `s${d}-3`,
+          phase: "learn",
+          bot: "DELETE quita filas. También usa WHERE para no vaciar la tabla entera.",
+          visual: { kind: "code", label: "DELETE", code: "DELETE FROM users\nWHERE id = 42;" },
+          check: {
+            prompt: "DELETE FROM users WHERE id=42…",
+            options: ["Borra esa fila", "Borra la base", "Inserta 42", "Hace JOIN"],
+            correct_index: 0,
+            feedback_ok: "Borrado filtrado.",
+            feedback_bad: "WHERE elige la fila.",
+          },
+        },
+      ],
+      [
+        {
+          id: `s${d}-1`,
+          phase: "intro",
+          bot: "GROUP BY agrupa filas; con COUNT/SUM/AVG obtienes totales por grupo.",
+          visual: { kind: "big_word", word: "GROUP BY", sub: "Agregar" },
+          check: {
+            prompt: "COUNT(*) con GROUP BY…",
+            options: ["Cuenta filas por grupo", "Ordena CSS", "Crea tablas", "Hace PDF"],
+            correct_index: 0,
+            feedback_ok: "Agregación.",
+            feedback_bad: "Cuenta por grupo.",
+          },
+        },
+        {
+          id: `s${d}-2`,
+          phase: "learn",
+          bot: "Ejemplo: cuántos usuarios hay por ciudad.",
+          visual: {
+            kind: "code",
+            label: "Agregación",
+            code: "SELECT city, COUNT(*)\nFROM users\nGROUP BY city;",
+          },
+          check: {
+            prompt: "Esa consulta devuelve…",
+            options: ["Conteo por ciudad", "Una sola fila fija", "Borra ciudades", "Solo emails"],
+            correct_index: 0,
+            feedback_ok: "Una fila por city.",
+            feedback_bad: "GROUP BY city.",
+          },
+        },
+        {
+          id: `s${d}-3`,
+          phase: "learn",
+          bot: "HAVING filtra grupos (después del GROUP BY); WHERE filtra filas antes.",
+          visual: {
+            kind: "vs",
+            left: { title: "WHERE", body: "Antes de agrupar" },
+            right: { title: "HAVING", body: "Sobre el grupo" },
+          },
+          check: {
+            prompt: "HAVING se aplica…",
+            options: ["A grupos ya agregados", "Solo al crear la DB", "A CSS", "Nunca con COUNT"],
+            correct_index: 0,
+            feedback_ok: "Filtro post-agregación.",
+            feedback_bad: "Después de GROUP BY.",
+          },
+        },
+      ],
+      [
+        {
+          id: `s${d}-1`,
+          phase: "intro",
+          bot: "Un índice acelera búsquedas. PRIMARY KEY identifica cada fila de forma única.",
+          visual: { kind: "big_word", word: "Índice", sub: "Más rápido" },
+          check: {
+            prompt: "Un índice ayuda a…",
+            options: ["Acelerar consultas filtradas", "Cambiar el tema UI", "Enviar email", "Compilar JS"],
+            correct_index: 0,
+            feedback_ok: "Rendimiento de lectura.",
+            feedback_bad: "No es cosmética.",
+          },
+        },
+        {
+          id: `s${d}-2`,
+          phase: "learn",
+          bot: "PRIMARY KEY: única y no nula. Suele ser id.",
+          visual: {
+            kind: "code",
+            label: "PK",
+            code: "CREATE TABLE users (\n  id INT PRIMARY KEY,\n  name TEXT\n);",
+          },
+          check: {
+            prompt: "PRIMARY KEY…",
+            options: ["Identifica filas de forma única", "Es un color", "Obliga JOIN", "Borra duplicados UI"],
+            correct_index: 0,
+            feedback_ok: "Identidad de fila.",
+            feedback_bad: "Una PK por fila.",
+          },
+        },
+        {
+          id: `s${d}-3`,
+          phase: "learn",
+          bot: "FOREIGN KEY enlaza tablas (user_id → users.id) y mantiene integridad.",
+          visual: {
+            kind: "steps",
+            items: [
+              { n: 1, label: "Tabla padre (users)" },
+              { n: 2, label: "Tabla hija (orders)" },
+              { n: 3, label: "FK user_id" },
+            ],
+          },
+          check: {
+            prompt: "FOREIGN KEY expresa…",
+            options: ["Relación entre tablas", "Un SELECT *", "Un tema CSS", "Un LIMIT"],
+            correct_index: 0,
+            feedback_ok: "Integridad referencial.",
+            feedback_bad: "Enlace entre tablas.",
+          },
+        },
+      ],
+    ];
+    return units[unit - 1] || units[0];
+  }
+
+  // Genérico con títulos reales del día (nunca “Concepto clave” / PDF)
+  const label = dayLabelFor(t, d);
+  const focus = label.focus;
+  const title = label.title;
   return [
     {
       id: `g${d}-1`,
       phase: "intro",
-      bot: `Hoy aprendes ${focus}: qué es y para qué sirve en ${t}.`,
-      visual: { kind: "big_word", word: focus.slice(0, 18), sub: t },
-      html: `<div class="viz"><p><strong>${focus}</strong> dentro de <strong>${t}</strong></p><div class="row"><span class="pill">concepto</span><span class="pill">ejemplo</span><span class="pill">check</span></div></div>`,
+      bot: `Hoy en ${t}: ${title}. Empezamos por ${focus.toLowerCase()}.`,
+      visual: { kind: "big_word", word: title.slice(0, 22), sub: t },
+      html: `<div class="viz"><p>Objetivo: entender <strong>${focus}</strong> y usarlo en un ejemplo mínimo.</p></div>`,
       check: {
-        prompt: `¿Qué practicas hoy?`,
-        options: [
-          focus,
-          "Un tema no relacionado",
-          "Solo el índice de un PDF",
-          "Nada concreto",
-        ],
+        prompt: `¿Cuál es el foco de hoy en ${t}?`,
+        options: [focus, "Un tema de otro curso", "La tipografía del PDF", "Configurar el Wi‑Fi"],
         correct_index: 0,
         feedback_ok: `Sí: ${focus}.`,
         feedback_bad: `El foco es ${focus}.`,
@@ -981,42 +1517,37 @@ function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
     {
       id: `g${d}-2`,
       phase: "learn",
-      bot: `Idea clave de ${focus}: recuérdala en una frase corta.`,
+      bot: `${focus} es una pieza central de ${t}. Si lo entiendes, el resto encaja.`,
       visual: {
         kind: "vs",
-        left: { title: "Confusión", body: "Definición vaga" },
-        right: { title: "Claro", body: `${focus} con ejemplo` },
+        left: { title: "Sin esto", body: "Solo memorizar nombres" },
+        right: { title: "Con esto", body: `Usar ${focus}` },
       },
       check: {
-        prompt: `¿Qué describe mejor ${focus}?`,
+        prompt: `¿Qué demuestra que entiendes ${focus}?`,
         options: [
-          `Una idea concreta de ${t}`,
-          "Un detalle irrelevante",
-          "Solo decoración",
-          "Un error tipográfico",
+          "Explicarlo y aplicar un ejemplo",
+          "Repetir el índice del temario",
+          "Cambiar de tema al azar",
+          "Ignorar la práctica",
         ],
         correct_index: 0,
-        feedback_ok: "Bien.",
+        feedback_ok: "Entender + aplicar.",
         feedback_bad: `Vuelve a ${focus}.`,
       },
     },
     {
       id: `g${d}-3`,
       phase: "learn",
-      bot: `Ejemplo mínimo de ${focus}. Luego el test del día.`,
+      bot: `Ejemplo mínimo de ${focus} en ${t}. Luego el test del día.`,
       visual: {
         kind: "code",
-        label: "Ejemplo",
-        code: `// ${focus}\n// aplica esto en ${t}`,
+        label: title,
+        code: `// ${t} · ${focus}\n// escribe aquí un ejemplo mínimo`,
       },
       check: {
-        prompt: `Este ejemplo ilustra…`,
-        options: [
-          focus,
-          "Otro curso distinto",
-          "Configuración de red",
-          "Nada útil",
-        ],
+        prompt: `Este bloque practica…`,
+        options: [focus, "Otro curso", "Red / DNS", "Nada relacionado"],
         correct_index: 0,
         feedback_ok: "Exacto.",
         feedback_bad: `Es sobre ${focus}.`,
@@ -1032,9 +1563,8 @@ function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
 function buildSlides(topic: string, day: PlanDay): LessonSlide[] {
   // Si el backend mandó fallbacks meta ("unidad N", PDF vs práctica), usa currículo real
   const focusBad =
-    !day.focus ||
-    /unidad\s*\d+/i.test(day.focus) ||
-    /micro-pr[aá]ctica|p[aá]rrafos eternos|pasos cortos e interactivos/i.test(
+    isMetaFocus(day.focus, day.title) ||
+    /micro-pr[aá]ctica|p[aá]rrafos eternos|pasos cortos e interactivos|qu[eé] practicas hoy|tema no relacionado/i.test(
       JSON.stringify(day.slides || day.intro || day.teach || []),
     );
 
@@ -1287,11 +1817,20 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
       const meta = dayLabelFor(plan.topic, d.day, d.title, d.focus);
       const slides = buildSlides(plan.topic, { ...d, title: meta.title, focus: meta.focus });
       let questions = dedupeQuestions(d.questions || [], new Set()).filter((q) => !isMetaQuestion(q));
-      // React (y cualquier plan con preguntas meta): usar banco real
+      const topicL = plan.topic.toLowerCase();
+      const knownBank =
+        topicL.includes("react") ||
+        topicL.includes("sql") ||
+        topicL.includes("mysql") ||
+        topicL.includes("postgres") ||
+        topicL.includes("python") ||
+        topicL.includes("javascript") ||
+        topicL.includes("typescript");
       if (
-        plan.topic.toLowerCase().includes("react") ||
+        knownBank ||
         questions.length < 2 ||
-        (d.questions || []).some(isMetaQuestion)
+        (d.questions || []).some(isMetaQuestion) ||
+        isMetaFocus(meta.focus, meta.title)
       ) {
         questions = qualityQuestionsForDay(plan.topic, d.day);
       }
