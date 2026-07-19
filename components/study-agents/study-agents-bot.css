@@ -83,9 +83,9 @@
   animation: sa-bot-antenna-right 0.7s ease-in-out infinite;
 }
 
-/* Cara oscura (home) */
+/* Cuerpo blanco + cara azul (color vía --sa-bot-face) */
 .sa-bot-avatar {
-  --sa-bot-face: #061018;
+  --sa-bot-face: #358c9f;
   overflow: visible !important;
 }
 
@@ -95,7 +95,7 @@
   margin: -14px;
   box-sizing: content-box;
   overflow: visible !important;
-  filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.5)) drop-shadow(0 0 18px rgba(0, 217, 255, 0.28));
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.35)) drop-shadow(0 0 16px rgba(53, 140, 159, 0.35));
 }
 
 .sa-bot-avatar--bright svg {
