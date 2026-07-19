@@ -1,5 +1,12 @@
 # Changelog — Study Agents
 
+## 0.5.2 — Camino dark estilo home + Duolingo
+
+### Visible
+- Mapa del curso con fondo dark de la home (`#030d14` / teal)
+- Banner de unidad, burbuja **START**, nodos grandes con glow
+- Zigzag con cable SVG + bot entre lecciones
+
 ## 0.5.1 — Camino zigzag Duolingo + tests reales
 
 ### Visible

@@ -419,9 +419,28 @@ function qualityQuestionsForDay(topic: string, dayNum: number): PlanQuestion[] {
   ];
 }
 
-function PathKindIcon({ kind, done, locked }: { kind: DayKind; done: boolean; locked: boolean }) {
-  const stroke = done ? "#166534" : locked ? "#94a3b8" : "#0f172a";
-  const common = { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke, strokeWidth: 2.2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+function PathKindIcon({
+  kind,
+  done,
+  locked,
+  active,
+}: {
+  kind: DayKind;
+  done: boolean;
+  locked: boolean;
+  active?: boolean;
+}) {
+  const stroke = done || active ? "#ffffff" : locked ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.85)";
+  const common = {
+    width: 30,
+    height: 30,
+    viewBox: "0 0 24 24",
+    fill: "none" as const,
+    stroke,
+    strokeWidth: 2.4,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
   if (done) {
     return (
       <svg {...common}>
@@ -1586,69 +1605,76 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
   }
 
   const allDone = daysPrepared.length > 0 && progress.completedDays.length >= daysPrepared.length;
-  const streakHint =
-    progress.completedDays.length === 0
-      ? "Haz lecciones cuando quieras — el camino es tuyo."
-      : progress.lastCompletedDate === today
-        ? "¡Bien! Puedes seguir con la siguiente."
-        : `Llevas ${progress.completedDays.length} lección(es).`;
+  const unitTitle = todayLesson?.title || daysPrepared[0]?.title || plan.topic;
+  const unitFocus = todayLesson?.focus || daysPrepared[0]?.focus || "Camino diario";
 
   return (
-    <div className={`${outfit.className} sa-steps-card sa-duo-shell sa-pop`}>
-      <div className="sa-duo-maphead">
-        <StudyAgentsBotAvatar size={52} color={SA_PRIMARY} state="idle" />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h3 className={spaceGrotesk.className}>{plan.topic} · Diario</h3>
-          <p>
-            {plan.minutes_per_day || daysPrepared[0]?.minutes || 5} min/lección · {streakHint}
-          </p>
+    <div className={`${outfit.className} sa-pathmap sa-pop`}>
+      <div className="sa-pathmap__unit">
+        <div className="sa-pathmap__unit-text">
+          <span>SECCIÓN 1 · {plan.topic.toUpperCase()}</span>
+          <strong className={spaceGrotesk.className}>{unitTitle}</strong>
+          <em>{unitFocus}</em>
         </div>
-        <span className="sa-duo-xp">{progress.xp} XP</span>
+        <div className="sa-pathmap__unit-stats">
+          <span title="XP">{progress.xp} XP</span>
+          <span title="Hechas">{progress.completedDays.length}/{daysPrepared.length}</span>
+        </div>
       </div>
 
-      {!allDone && todayLesson && (
-        <button type="button" className="sa-duo-today" onClick={() => startDay(todayLesson)}>
-          <span className="sa-duo-today__orb">
-            <PathKindIcon kind={todayLesson.kind} done={false} locked={false} />
-          </span>
-          <div style={{ flex: 1, textAlign: "left" }}>
-            <p className="sa-duo-today__label">SIGUIENTE LECCIÓN</p>
-            <p className={spaceGrotesk.className} style={{ margin: "0.2rem 0 0", fontWeight: 800, fontSize: "1.05rem" }}>
-              {todayLesson.title}
-            </p>
-            <p style={{ margin: "0.2rem 0 0", fontSize: "0.8rem", color: "#64748b" }}>
-              {todayLesson.focus} · ~{todayLesson.minutes} min
-            </p>
-          </div>
-        </button>
+      {allDone && (
+        <p className="sa-pathmap__done">Curso completado. ¡Buen trabajo!</p>
       )}
 
-      {allDone && <p className="sa-duo-donebanner">Curso completado. ¡Buen trabajo!</p>}
-
-      <div className="sa-duo-trail" aria-label="Camino de lecciones">
+      <div className="sa-pathmap__trail" aria-label="Camino de lecciones">
         {daysPrepared.map((d, i) => {
           const locked = d.day > progress.unlockedDay;
           const done = progress.completedDays.includes(d.day);
-          const isToday = todayLesson?.day === d.day;
+          const isCurrent = todayLesson?.day === d.day;
           const side = i % 2 === 0 ? "left" : "right";
+          const showChest = (i + 1) % 3 === 0 && i < daysPrepared.length - 1;
           return (
-            <div key={d.day} className={`sa-duo-trail__row sa-duo-trail__row--${side}`}>
-              {i > 0 && <div className={`sa-duo-trail__curve ${done || d.day <= progress.unlockedDay ? "on" : ""}`} />}
+            <div key={d.day} className={`sa-pathmap__row sa-pathmap__row--${side}`}>
+              {i > 0 && (
+                <svg className={`sa-pathmap__wire ${done || !locked ? "on" : ""}`} viewBox="0 0 120 56" preserveAspectRatio="none" aria-hidden>
+                  <path
+                    d={side === "right" ? "M20 0 C 20 28, 100 28, 100 56" : "M100 0 C 100 28, 20 28, 20 56"}
+                    fill="none"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              )}
+
+              {isCurrent && (
+                <div className="sa-pathmap__bubble" aria-hidden>
+                  START
+                </div>
+              )}
+
               <button
                 type="button"
                 disabled={locked}
                 onClick={() => startDay(d)}
-                className={`sa-duo-orb ${locked ? "locked" : ""} ${done ? "done" : ""} ${isToday ? "today" : ""}`}
+                className={`sa-pathmap__node ${locked ? "locked" : ""} ${done ? "done" : ""} ${isCurrent ? "current" : ""}`}
                 title={`${d.title} — ${d.focus}`}
               >
-                <span className="sa-duo-orb__circle">
-                  <PathKindIcon kind={d.kind} done={done} locked={locked} />
-                </span>
-                <span className="sa-duo-orb__label">
-                  <strong>{d.title}</strong>
-                  <small>{d.focus}</small>
+                <span className="sa-pathmap__ring" />
+                <span className="sa-pathmap__disc">
+                  <PathKindIcon kind={d.kind} done={done} locked={locked} active={isCurrent} />
                 </span>
               </button>
+
+              <div className={`sa-pathmap__caption ${locked ? "locked" : ""}`}>
+                <strong>{d.title}</strong>
+                <small>{d.focus}</small>
+              </div>
+
+              {showChest && (
+                <div className={`sa-pathmap__extra ${locked && d.day >= progress.unlockedDay ? "dim" : ""}`}>
+                  <StudyAgentsBotAvatar size={36} color={SA_PRIMARY} state="static" />
+                </div>
+              )}
             </div>
           );
         })}
