@@ -83,22 +83,28 @@
   animation: sa-bot-antenna-right 0.7s ease-in-out infinite;
 }
 
-/* Cuerpo blanco + cara azul (color vía --sa-bot-face) */
+/* Cuerpo blanco + cara oscura */
 .sa-bot-avatar {
-  --sa-bot-face: #358c9f;
+  --sa-bot-face: #061018;
   overflow: visible !important;
 }
 
 .sa-bot-avatar--bright {
-  /* Espacio para que el glow no se recorte */
-  padding: 14px;
-  margin: -14px;
+  padding: 16px;
+  margin: -16px;
   box-sizing: content-box;
   overflow: visible !important;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.35)) drop-shadow(0 0 16px rgba(53, 140, 159, 0.35));
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 14px rgba(53, 140, 159, 0.4));
 }
 
 .sa-bot-avatar--bright svg {
   overflow: visible;
   display: block;
+}
+
+/* Evitar que padres recorten el glow */
+.sa-duo-botrow,
+.sa-duo-screen,
+.sa-steps-card {
+  overflow: visible !important;
 }

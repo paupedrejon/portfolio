@@ -8,7 +8,7 @@ type BotState = "idle" | "thinking" | "static";
 
 type Props = {
   size?: number;
-  /** Color de la cara (pantalla interior). El cuerpo es blanco. */
+  /** Solo para glow / acentos; cuerpo blanco, cara oscura, ojos blancos. */
   color?: string;
   state?: BotState;
   className?: string;
@@ -31,7 +31,7 @@ function BotEye({
   const h = 12;
   const x = cx - w / 2;
   const yOpen = 26.5;
-  const yClosed = yOpen + (h - 1) / 2; // ~32 — párpado centrado
+  const yClosed = yOpen + (h - 1) / 2;
 
   return (
     <g>
@@ -61,12 +61,11 @@ function BotEye({
           </>
         )}
       </rect>
-      {/* Brillo — se oculta al cerrar el párpado */}
-      <circle cx={cx - 1.05} cy={29} r={1.1} fill="rgba(255,255,255,0.55)" opacity={0.9}>
+      <circle cx={cx - 1.05} cy={29} r={1.1} fill="rgba(53,140,159,0.9)" opacity={0.95}>
         {animate && (
           <animate
             attributeName="opacity"
-            values={fast ? "0.9;0.9;0;0;0.9;0.9;0.9;0;0;0.9;0.9" : "0.9;0.9;0;0.9;0.9;0.9;0;0;0.9;0.9"}
+            values={fast ? "0.95;0.95;0;0;0.95;0.95;0.95;0;0;0.95;0.95" : "0.95;0.95;0;0.95;0.95;0.95;0;0;0.95;0.95"}
             keyTimes={fast ? "0;0.18;0.22;0.25;0.28;0.55;0.59;0.62;0.65;0.68;1" : "0;0.42;0.45;0.48;0.78;0.81;0.83;0.86;0.9;1"}
             dur={fast ? "1.6s" : "4.2s"}
             repeatCount="indefinite"
@@ -79,7 +78,8 @@ function BotEye({
 }
 
 /**
- * Avatar Study Agents (SVG cute): cuerpo blanco, cara azul, ojos blancos.
+ * Bot Study Agents: cuerpo/antenas/ojos blancos, pantalla interior oscura.
+ * (Lo que antes era azul → blanco; interior oscuro.)
  */
 export default function StudyAgentsBotAvatar({
   size = 36,
@@ -89,7 +89,7 @@ export default function StudyAgentsBotAvatar({
   title = "Study Agents",
 }: Props) {
   const body = "#ffffff";
-  const face = color;
+  const face = "#061018";
   const eyes = "#ffffff";
 
   const animClass =
@@ -117,7 +117,7 @@ export default function StudyAgentsBotAvatar({
         height: size,
         flexShrink: 0,
         willChange: state === "static" ? undefined : "transform",
-        ["--sa-bot-color" as string]: face,
+        ["--sa-bot-color" as string]: color,
         ["--sa-bot-face" as string]: face,
       }}
     >
@@ -131,35 +131,22 @@ export default function StudyAgentsBotAvatar({
         className={state === "thinking" ? "sa-bot-glow" : undefined}
         style={{ overflow: "visible", display: "block" }}
       >
-        {/* Lápiz izquierdo */}
         <g className={`${antennaClass} sa-bot-antenna-left`} style={{ transformOrigin: "22px 14px" }}>
-          <path
-            d="M18 18 L10 6"
-            stroke={body}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-          />
+          <path d="M18 18 L10 6" stroke={body} strokeWidth="3.2" strokeLinecap="round" />
           <path d="M10 6 L7.5 4.2" stroke={body} strokeWidth="2.2" strokeLinecap="round" />
-          <circle cx="6.8" cy="3.6" r="1.35" fill={body} opacity="0.9" />
+          <circle cx="6.8" cy="3.6" r="1.35" fill={body} opacity="0.95" />
         </g>
 
-        {/* Lápiz derecho */}
         <g className={`${antennaClass} sa-bot-antenna-right`} style={{ transformOrigin: "42px 14px" }}>
-          <path
-            d="M46 18 L54 6"
-            stroke={body}
-            strokeWidth="3.2"
-            strokeLinecap="round"
-          />
+          <path d="M46 18 L54 6" stroke={body} strokeWidth="3.2" strokeLinecap="round" />
           <path d="M54 6 L56.5 4.2" stroke={body} strokeWidth="2.2" strokeLinecap="round" />
-          <circle cx="57.2" cy="3.6" r="1.35" fill={body} opacity="0.9" />
+          <circle cx="57.2" cy="3.6" r="1.35" fill={body} opacity="0.95" />
         </g>
 
-        {/* Orejas */}
         <rect x="6" y="28" width="6" height="12" rx="3" fill={body} />
         <rect x="52" y="28" width="6" height="12" rx="3" fill={body} />
 
-        {/* Cabeza (speech-bubble) — blanco */}
+        {/* Cáscara blanca */}
         <path
           d="M16 18
              H48
@@ -176,19 +163,18 @@ export default function StudyAgentsBotAvatar({
           fill={body}
         />
 
-        {/* Pantalla interior — azul */}
+        {/* Pantalla interior oscura */}
         <path
-          d="M18 22
-             H46
-             Q49 22 49 25
-             V39
-             Q49 42 46 42
-             H18
-             Q15 42 15 39
-             V25
-             Q15 22 18 22 Z"
+          d="M19 23.5
+             H45
+             Q47.5 23.5 47.5 26
+             V38
+             Q47.5 40.5 45 40.5
+             H19
+             Q16.5 40.5 16.5 38
+             V26
+             Q16.5 23.5 19 23.5 Z"
           fill={face}
-          opacity="1"
         />
 
         <BotEye cx={25.25} color={eyes} fast={blinkFast} animate={blink} />
