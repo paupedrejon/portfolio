@@ -1083,7 +1083,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
           <p className="sa-duo-celebrate__sub">
             {activeDay.title} · Total {celebrateXp} XP
           </p>
-          <p className="sa-duo-celebrate__hint">Vuelve mañana a este chat para la siguiente lección.</p>
+          <p className="sa-duo-celebrate__hint">Puedes seguir con la siguiente lección ahora mismo.</p>
         </div>
         <button type="button" className="sa-btn sa-btn--primary" style={{ width: "100%" }} onClick={backToMap}>
           Volver al camino →
