@@ -39,6 +39,7 @@ type Props = {
   showConcepts?: boolean;
   showReview?: boolean;
   srsDueCount?: number;
+  hideThemeToggle?: boolean;
 };
 
 export default function ChatToolbar({
@@ -63,6 +64,7 @@ export default function ChatToolbar({
   showConcepts = false,
   showReview = false,
   srsDueCount = 0,
+  hideThemeToggle = false,
 }: Props) {
   const selected = getStudyModelOption(selectedModel);
   const modelLabel = selected
@@ -286,41 +288,45 @@ export default function ChatToolbar({
         </>
       )}
 
-      <span style={{ fontSize: "0.875rem", color: "#64748b", marginLeft: "1rem", fontWeight: 500 }}>
-        Tema:
-      </span>
-      <button
-        type="button"
-        onClick={() => onSetColorTheme("dark")}
-        title="Tema oscuro"
-        className="sa-chip"
-        style={{
-          width: 44,
-          height: 44,
-          padding: 0,
-          justifyContent: "center",
-          background: colorTheme === "dark" ? SA_PRIMARY_SOFT : "#fff",
-          borderColor: colorTheme === "dark" ? SA_PRIMARY : SA_PRIMARY_BORDER,
-        }}
-      >
-        <MoonIcon size={18} />
-      </button>
-      <button
-        type="button"
-        onClick={() => onSetColorTheme("light")}
-        title="Tema claro"
-        className="sa-chip"
-        style={{
-          width: 44,
-          height: 44,
-          padding: 0,
-          justifyContent: "center",
-          background: colorTheme === "light" ? SA_PRIMARY_SOFT : "#fff",
-          borderColor: colorTheme === "light" ? SA_PRIMARY : SA_PRIMARY_BORDER,
-        }}
-      >
-        <SunIcon size={18} />
-      </button>
+      {!hideThemeToggle && (
+        <>
+          <span style={{ fontSize: "0.875rem", color: "#64748b", marginLeft: "1rem", fontWeight: 500 }}>
+            Tema:
+          </span>
+          <button
+            type="button"
+            onClick={() => onSetColorTheme("dark")}
+            title="Tema oscuro"
+            className="sa-chip"
+            style={{
+              width: 44,
+              height: 44,
+              padding: 0,
+              justifyContent: "center",
+              background: colorTheme === "dark" ? SA_PRIMARY_SOFT : "#fff",
+              borderColor: colorTheme === "dark" ? SA_PRIMARY : SA_PRIMARY_BORDER,
+            }}
+          >
+            <MoonIcon size={18} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onSetColorTheme("light")}
+            title="Tema claro"
+            className="sa-chip"
+            style={{
+              width: 44,
+              height: 44,
+              padding: 0,
+              justifyContent: "center",
+              background: colorTheme === "light" ? SA_PRIMARY_SOFT : "#fff",
+              borderColor: colorTheme === "light" ? SA_PRIMARY : SA_PRIMARY_BORDER,
+            }}
+          >
+            <SunIcon size={18} />
+          </button>
+        </>
+      )}
     </div>
   );
 }

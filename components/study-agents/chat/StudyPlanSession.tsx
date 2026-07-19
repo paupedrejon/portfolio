@@ -430,7 +430,7 @@ function PathKindIcon({
   locked: boolean;
   active?: boolean;
 }) {
-  const stroke = done || active ? "#ffffff" : locked ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.85)";
+  const stroke = done || active ? "#ffffff" : locked ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.9)";
   const common = {
     width: 30,
     height: 30,
@@ -1428,7 +1428,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
           </p>
           <p className="sa-duo-celebrate__hint">Puedes seguir con la siguiente lección ahora mismo.</p>
         </div>
-        <button type="button" className="sa-btn sa-btn--primary" style={{ width: "100%" }} onClick={backToMap}>
+        <button type="button" className="sa-btn sa-btn--ghost" style={{ width: "100%" }} onClick={backToMap}>
           Volver al camino →
         </button>
       </div>
@@ -1487,7 +1487,8 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
 
           {hasCheck && (
             <div className="sa-duo-checkblock">
-              <p className="sa-duo-checkblock__label">TOCA LA RESPUESTA</p>
+              <p className="sa-duo-checkblock__label">COMPRUEBA</p>
+              <p className="sa-duo-checkblock__prompt">{slide.check!.prompt}</p>
               {!revealed || picked === null ? (
                 <ChoiceList
                   options={slide.check!.options}
@@ -1526,7 +1527,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
         {(!hasCheck || revealed) && (
           <button
             type="button"
-            className="sa-btn sa-btn--primary"
+            className="sa-btn sa-btn--ghost"
             style={{ width: "100%", marginTop: "1.1rem" }}
             onClick={nextAfterSlide}
           >
@@ -1562,17 +1563,20 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
           <div className="sa-duo-botrow sa-duo-botrow--lg">
             <StudyAgentsBotAvatar size={72} color={SA_PRIMARY} state="thinking" />
             <div className="sa-duo-bubble sa-duo-bubble--test">
-              <p className="sa-duo-test-label">TEST DEL DÍA</p>
+              <p className="sa-duo-test-label">PREGUNTA</p>
               <p>{currentQ.prompt}</p>
             </div>
           </div>
-          <ChoiceList
-            options={currentQ.options}
-            correctIndex={currentQ.correct_index}
-            picked={picked}
-            revealed={revealed}
-            onPick={(idx) => choose(idx, currentQ.correct_index)}
-          />
+          <div className="sa-duo-checkblock">
+            <p className="sa-duo-checkblock__label">ELIGE UNA OPCIÓN</p>
+            <ChoiceList
+              options={currentQ.options}
+              correctIndex={currentQ.correct_index}
+              picked={picked}
+              revealed={revealed}
+              onPick={(idx) => choose(idx, currentQ.correct_index)}
+            />
+          </div>
           {revealed && (
             <div className={`sa-duo-feedback ${picked === currentQ.correct_index ? "ok" : "bad"}`}>
               <p className="sa-duo-feedback__title">
@@ -1581,7 +1585,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
               <p>{picked === currentQ.correct_index ? currentQ.feedback_ok : currentQ.feedback_bad}</p>
               <button
                 type="button"
-                className="sa-btn sa-btn--primary"
+                className="sa-btn sa-btn--ghost"
                 style={{ width: "100%", marginTop: "0.75rem" }}
                 onClick={nextAfterTest}
               >

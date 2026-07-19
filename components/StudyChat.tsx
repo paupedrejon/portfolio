@@ -1428,17 +1428,8 @@ export default function StudyChat({
       console.error("Error loading General chat:", error);
     }
   };
-  // Inicializar colorTheme solo en el cliente para evitar errores de hidratación
-  const [colorTheme, setColorTheme] = useState<"dark" | "light">(() => {
-    // Solo leer de localStorage en el cliente
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("study_agents_color_theme");
-      if (savedTheme === "light" || savedTheme === "dark") {
-        return savedTheme;
-      }
-    }
-    return "light";
-  });
+  // Estética home: siempre dark (sin toggle claro/oscuro)
+  const [colorTheme, setColorTheme] = useState<"dark" | "light">("dark");
   const [isMounted, setIsMounted] = useState(false);
   // Inicializar modelo solo en el cliente para evitar errores de hidratación
   const [selectedModel, setSelectedModel] = useState<string>(() => {
@@ -1474,12 +1465,14 @@ export default function StudyChat({
     setIsMounted(true);
   }, []);
   
-  // Guardar tema cuando cambie (solo en el cliente)
+  // Forzar dark home siempre
   useEffect(() => {
-    if (typeof window !== "undefined" && isMounted) {
-      localStorage.setItem("study_agents_color_theme", colorTheme);
+    if (!isMounted) return;
+    setColorTheme("dark");
+    if (typeof window !== "undefined") {
+      localStorage.setItem("study_agents_color_theme", "dark");
     }
-  }, [colorTheme, isMounted]);
+  }, [isMounted]);
   
   // Guardar modelo cuando cambie (solo en el cliente)
   useEffect(() => {
@@ -4312,6 +4305,7 @@ ${contentPreview}
           flexDirection: "column",
           position: "relative",
           zIndex: 1,
+          color: "#f1f5f9",
         }}
       >
       {/* API Key Configuration Modal — portal para evitar problemas de z-index */}
@@ -4362,6 +4356,7 @@ ${contentPreview}
         }
         showReview={!courseMode && showReviewPanel}
         srsDueCount={srsDueCount}
+        hideThemeToggle
       />
       {showDocumentsPanel && (
         <ChatDocumentsPanel
@@ -6545,7 +6540,7 @@ ${contentPreview}
           )}
 
           {/* Herramienta de intérprete SQL - al final de los mensajes */}
-          {showCodeTool && detectContextualTools.hasSQL && (
+          {!courseMode && showCodeTool && detectContextualTools.hasSQL && (
             <div style={{ marginBottom: "1.5rem" }}>
               <CodeInterpreter
                 language="SQL"
@@ -6555,7 +6550,7 @@ ${contentPreview}
           )}
 
           {/* Herramienta de intérprete para lenguajes de programación - al final de los mensajes */}
-          {showCodeTool && !detectContextualTools.hasSQL && ((currentChatLevel && isProgrammingLanguage(currentChatLevel.topic)) || detectContextualTools.hasProgramming) && (
+          {!courseMode && showCodeTool && !detectContextualTools.hasSQL && ((currentChatLevel && isProgrammingLanguage(currentChatLevel.topic)) || detectContextualTools.hasProgramming) && (
             <div style={{ marginBottom: "1.5rem" }}>
               <CodeInterpreter
                 language={detectContextualTools.detectedProgramming || currentChatLevel?.topic || "Python"}
@@ -6957,7 +6952,7 @@ ${contentPreview}
             
             {/* Botón de herramienta de idioma (flashcards) - disponible SOLO si el tema es un idioma O si se solicita explícitamente */}
             {/* Eliminada la detección automática por contexto para evitar activaciones accidentales */}
-            {((currentChatLevel && isLanguageTopic(currentChatLevel.topic)) || detectContextualTools.explicitFlashcardRequest) && (
+            {!courseMode && ((currentChatLevel && isLanguageTopic(currentChatLevel.topic)) || detectContextualTools.explicitFlashcardRequest) && (
             <button
                 onClick={() => setShowLanguageTool(!showLanguageTool)}
                 title="Flashcards de vocabulario"
@@ -6989,7 +6984,7 @@ ${contentPreview}
             )}
             
             {/* Botón de intérprete SQL - disponible si se detecta SQL en el contexto */}
-            {detectContextualTools.hasSQL && (
+            {!courseMode && detectContextualTools.hasSQL && (
               <button
                 onClick={() => setShowCodeTool(!showCodeTool)}
                 title="Intérprete SQL"
@@ -7021,7 +7016,7 @@ ${contentPreview}
             )}
             
             {/* Botón de intérprete de código - disponible si se detecta programación en el contexto */}
-            {((currentChatLevel && isProgrammingLanguage(currentChatLevel.topic)) || detectContextualTools.hasProgramming) && !detectContextualTools.hasSQL && (
+            {!courseMode && ((currentChatLevel && isProgrammingLanguage(currentChatLevel.topic)) || detectContextualTools.hasProgramming) && !detectContextualTools.hasSQL && (
               <button
                 onClick={() => setShowCodeTool(!showCodeTool)}
                 title="Intérprete de código"
@@ -7053,7 +7048,7 @@ ${contentPreview}
             )}
 
             {/* Indicador de nivel de la conversación actual */}
-            {currentChatLevel && (
+            {!courseMode && currentChatLevel && (
               <div style={{
                 display: "flex",
                 alignItems: "center",

@@ -1,0 +1,13 @@
+---
+description: Tras cada cambio en Study Agents, hacer commit y push automáticamente
+alwaysApply: true
+---
+
+# Commit + push tras cada cambio
+
+Cuando el usuario pida cambios (sobre todo en Study Agents / portfolio), al terminar el trabajo:
+
+1. Haz **commit** con mensaje al estilo del repo (`feat(sa): …`, `fix(sa): …`, versión si aplica).
+2. Haz **push** a `origin` de la rama actual.
+3. No preguntes si quiere commit/push: asúmelo salvo que diga lo contrario.
+4. Sigue el protocolo git del proyecto (status/diff/log, HEREDOC, sin `--amend` ni force push a main).
