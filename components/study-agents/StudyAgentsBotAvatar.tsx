@@ -61,7 +61,7 @@ function BotEye({
           </>
         )}
       </rect>
-      <circle cx={cx - 1.05} cy={29} r={1.1} fill="rgba(53,140,159,0.9)" opacity={0.95}>
+      <circle cx={cx - 1.05} cy={29} r={1.1} fill="rgba(6,16,24,0.55)" opacity={0.9}>
         {animate && (
           <animate
             attributeName="opacity"
@@ -162,7 +162,7 @@ export default function StudyAgentsBotAvatar({
           fill={body}
         />
 
-        {/* Pantalla interior oscura */}
+        {/* Pantalla interior azul */}
         <path
           d="M19 23.5
              H45
