@@ -93,6 +93,7 @@ import { EditorView } from "@codemirror/view";
 import SectionBasedSchemaRenderer from "./SectionBasedSchemaRenderer";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { downloadStudyNotesPdf } from "@/lib/study-agents/download-notes-pdf";
 import {
   MoonIcon,
   SunIcon,
@@ -2773,10 +2774,28 @@ ${contentPreview}
 
       setLoadingMessage(courseMode ? "Generando apuntes académicos…" : "Generando apuntes...");
 
-      if (courseMode && topicForNotes) {
+      {
+        const notesTopic = topicForNotes || "el tema de esta conversacion";
         conversationHistory.unshift({
           role: "user",
-          content: `Genera APUNTES ACADÉMICOS (estilo universidad) sobre ${topicForNotes}: portada con tema, objetivos de aprendizaje, conceptos clave con definiciones precisas, ejemplos de código si aplica, errores frecuentes, y un resumen final. Markdown limpio. Basarte en el plan del curso y la conversación.`,
+          content: `Genera APUNTES ACADEMICOS en Markdown limpio sobre ${notesTopic}.
+
+REGLAS OBLIGATORIAS:
+- SIN emojis ni simbolos raros (rompen el PDF).
+- SIN tablas markdown (usa listas con guiones).
+- SIN bloques diagram-json, image o video.
+- Solo Markdown basico: # ## ###, listas, **negritas**, \`codigo\`, bloques \`\`\`codigo\`\`\`.
+- Estructura exacta con estos encabezados:
+# ${notesTopic}
+## Objetivos de aprendizaje
+## 1. Fundamentos
+## 2. Conceptos clave
+## 3. Ejemplos practicos
+## 4. Errores frecuentes
+## 5. Resumen
+- En cada seccion: definiciones claras, bullets y codigo si aplica.
+- Contenido real del tema (no meta sobre PDFs ni "como estudiar").
+- Basate en el plan del curso y la conversacion cuando existan.`,
         });
       }
 
@@ -2824,16 +2843,6 @@ ${contentPreview}
           type: "notes",
           costEstimate,
         });
-
-        // Descargar PDF automáticamente (apuntes = PDF descargable)
-        try {
-          downloadMarkdownNotesPdf(
-            data.notes,
-            topicForNotes || currentChatLevel?.topic || "apuntes",
-          );
-        } catch (pdfErr) {
-          console.error("Error al descargar PDF de apuntes:", pdfErr);
-        }
       } else {
         throw new Error(data.error || 'No se pudieron generar los apuntes');
       }
@@ -8730,70 +8739,6 @@ ${contentPreview}
 
 // Función eliminada: cleanMermaidCode - ya no se usa Mermaid
 
-/** PDF de apuntes a partir de markdown (sin html2canvas — fiable y descargable). */
-function downloadMarkdownNotesPdf(markdown: string, topic = "apuntes") {
-  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
-  const pageW = pdf.internal.pageSize.getWidth();
-  const pageH = pdf.internal.pageSize.getHeight();
-  const margin = 16;
-  const maxW = pageW - margin * 2;
-  let y = margin;
-
-  const ensureSpace = (need: number) => {
-    if (y + need > pageH - margin) {
-      pdf.addPage();
-      y = margin;
-    }
-  };
-
-  const plain = markdown
-    .replace(/\r\n/g, "\n")
-    .replace(/```[\s\S]*?```/g, (block) => {
-      const inner = block.replace(/^```[a-zA-Z0-9]*\n?/, "").replace(/```$/, "");
-      return `\n${inner.trim()}\n`;
-    })
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
-    .replace(/(\*\*|__)(.*?)\1/g, "$2")
-    .replace(/(\*|_)(.*?)\1/g, "$2")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/^\s*[-*+]\s+/gm, "• ")
-    .replace(/^\s*\d+\.\s+/gm, (m) => m.trim() + " ");
-
-  const title = (topic || "Apuntes").replace(/[^\w\sáéíóúñüÁÉÍÓÚÑÜ.-]+/gi, " ").trim() || "Apuntes";
-  pdf.setFillColor(3, 13, 20);
-  pdf.rect(0, 0, pageW, pageH, "F");
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(20);
-  const titleLines = pdf.splitTextToSize(`Apuntes · ${title}`, maxW);
-  pdf.text(titleLines, margin, y + 8);
-  y += 8 + titleLines.length * 8 + 6;
-  pdf.setDrawColor(0, 217, 255);
-  pdf.setLineWidth(0.6);
-  pdf.line(margin, y, pageW - margin, y);
-  y += 10;
-
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(11);
-  pdf.setTextColor(241, 245, 249);
-
-  const paragraphs = plain.split(/\n{2,}/);
-  for (const para of paragraphs) {
-    const text = para.trim();
-    if (!text) continue;
-    const lines = pdf.splitTextToSize(text, maxW);
-    const blockH = lines.length * 5.5 + 3;
-    ensureSpace(blockH);
-    pdf.text(lines, margin, y);
-    y += blockH;
-  }
-
-  const safe = title.toLowerCase().replace(/\s+/g, "-").slice(0, 40) || "apuntes";
-  pdf.save(`${safe}-${new Date().toISOString().split("T")[0]}.pdf`);
-}
-
 // Componente rediseñado para renderizar apuntes con estilo similar a flashcards
 function NotesViewer({ 
   content, 
@@ -9378,15 +9323,17 @@ function NotesViewer({
         <button
           type="button"
           onClick={() => {
-            try {
+            void (async () => {
               setIsGeneratingPDF(true);
-              downloadMarkdownNotesPdf(content, language || "apuntes");
-            } catch (e) {
-              console.error(e);
-              void handleDownloadPDF();
-            } finally {
-              setIsGeneratingPDF(false);
-            }
+              try {
+                await downloadStudyNotesPdf(content, language || "Apuntes");
+              } catch (e) {
+                console.error(e);
+                alert("No se pudo generar el PDF. Inténtalo de nuevo.");
+              } finally {
+                setIsGeneratingPDF(false);
+              }
+            })();
           }}
           disabled={isGeneratingPDF}
           className="sa-btn sa-btn--ghost"
@@ -9396,10 +9343,10 @@ function NotesViewer({
             fontSize: "0.85rem",
             opacity: isGeneratingPDF ? 0.6 : 1,
           }}
-          title="Descargar PDF"
+          title="Descargar apuntes en PDF"
         >
           <DownloadIcon size={16} />
-          {isGeneratingPDF ? "Generando…" : "Descargar PDF"}
+          {isGeneratingPDF ? "Generando PDF…" : "Descargar apuntes"}
         </button>
       </div>
 

@@ -1246,39 +1246,47 @@ CONTENIDO FUENTE:
 - Uso estilístico avanzado y figuras retóricas
 - Ejemplos de textos clásicos o académicos especializados
 
-### 📐 ESTRUCTURA DE SALIDA OBLIGATORIA:
+### FORMATO PDF-FRIENDLY (OBLIGATORIO):
+
+- SIN emojis ni simbolos decorativos en titulos ni texto.
+- SIN tablas markdown (nada de | col | col |). Usa listas con guiones.
+- SIN bloques diagram-json ni image ni video (el PDF no los renderiza bien).
+- Usa solo: # ## ###, listas -, negritas **, codigo inline `x`, y bloques ```codigo```.
+- Encabezados claros por tema/subtema para que el PDF genere indice.
+
+### ESTRUCTURA DE SALIDA OBLIGATORIA:
 
 # {topic_name}
 
-## ⚡ Conceptos Blitz (Lo esencial)
-*Lista rápida de definiciones clave. Formato: **Concepto**: Definición ultra-corta.*
+## Objetivos de aprendizaje
+- 3 a 6 bullets concretos de lo que el alumno sabra hacer.
 
-## 📚 Núcleo del Conocimiento
-*Organiza el contenido por subtemas. Usa tablas siempre que sea posible para comparar.*
+## 1. Fundamentos
+- Definiciones claras y cortas. Formato: **Concepto**: definicion.
 
-*Si es IDIOMAS (ADÁPTATE AL NIVEL):*
-- **Nivel 0-3**: Tablas simples: | Palabra | Traducción | Pronunciación (letras) |
-- **Nivel 4-6**: Tablas ampliadas: | Vocabulario | Traducción | Contexto/Ejemplo | Notas |
-- **Nivel 7-9**: Tablas avanzadas: | Término | Traducción Literal | Uso | Contexto Formal/Informal | Variaciones Regionales |
-- **Nivel 10**: Tablas expertas: | Término | Etimo | Uso Arcaico/Moderno | Variantes Dialectales | Referencias Culturales |
+## 2. Conceptos clave
+- Organiza por subtemas con ### Titulo.
+- Listas, no tablas. Comparaciones en bullets: **A vs B**: ...
 
-*Si es PROGRAMACIÓN (ADÁPTATE AL NIVEL):*
-- **Nivel 0-3**: Código simple con comentarios línea por línea, sin conceptos complejos
-- **Nivel 4-6**: Bloques de código con comentarios explicativos y conceptos intermedios
-- **Nivel 7-9**: Código avanzado con patrones, mejores prácticas, optimizaciones
-- **Nivel 10**: Código experto con arquitecturas complejas, patrones avanzados, casos edge
+## 3. Ejemplos practicos
+- Casos reales. Si es programacion, bloques ``` con comentarios.
+- Si es idioma: vocabulario en listas **palabra**: traduccion / ejemplo.
 
-*Si es TEORÍA:* Usa listas anidadas, adaptando la complejidad al nivel.
+## 4. Errores frecuentes
+- Lista de trampas tipicas y como evitarlas.
 
-## ⚠️ Errores Comunes / Trampas
-*Lista de cosas donde los estudiantes suelen fallar o confundirse.*
+## 5. Resumen
+- Bullets densos para repaso rapido.
 
-## 💎 Ejemplo Práctico
-*Un caso de uso real, frase completa o snippet de código.*
+Adapta la profundidad al nivel del estudiante ({user_level}/10).
 
 ---
 
-### 🎨 INSTRUCCIONES PARA DIAGRAMAS (JSON ONLY) - REGLAS ESTRICTAS:
+### INSTRUCCIONES PARA DIAGRAMAS (DESACTIVADAS PARA APUNTES):
+Para apuntes PDF: NO generes diagramas JSON ni bloques image/video. Usa texto y listas.
+(Reglas legacy abajo se ignoran en generate_notes.)
+
+### LEGACY DIAGRAMAS (NO USAR EN APUNTES) - REGLAS ESTRICTAS:
 
 **🚫 PROHIBIDO GENERAR DIAGRAMAS PARA:**
 - Vocabulario, palabras, frases o listas de términos

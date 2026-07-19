@@ -1,5 +1,12 @@
 # Changelog — Study Agents
 
+## 0.5.10 — Apuntes PDF con portada e índice
+
+### Visible
+- Apuntes ya **no** se descargan solos: botón **Descargar apuntes**
+- PDF con portada (robotín), índice, secciones con estilo y bloques de código
+- Contenido sin emojis/tablas crudas que rompían la tipografía
+
 ## 0.5.2 — Camino dark estilo home + Duolingo
 
 ### Visible
