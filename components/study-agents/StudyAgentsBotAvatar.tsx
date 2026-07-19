@@ -65,7 +65,7 @@ function BotEye({
         {animate && (
           <animate
             attributeName="opacity"
-            values={fast ? "0.95;0.95;0;0;0.95;0.95;0.95;0;0;0.95;0.95" : "0.95;0.95;0;0.95;0.95;0.95;0;0;0.95;0.95"}
+            values={fast ? "0.9;0.9;0;0;0.9;0.9;0.9;0;0;0.9;0.9" : "0.9;0.9;0;0.9;0.9;0.9;0;0;0.9;0.9"}
             keyTimes={fast ? "0;0.18;0.22;0.25;0.28;0.55;0.59;0.62;0.65;0.68;1" : "0;0.42;0.45;0.48;0.78;0.81;0.83;0.86;0.9;1"}
             dur={fast ? "1.6s" : "4.2s"}
             repeatCount="indefinite"
@@ -162,7 +162,7 @@ export default function StudyAgentsBotAvatar({
           fill={body}
         />
 
-        {/* Pantalla interior azul */}
+        {/* Pantalla interior oscura */}
         <path
           d="M19 23.5
              H45
