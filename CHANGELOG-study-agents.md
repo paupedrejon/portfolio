@@ -1,5 +1,12 @@
 # Changelog — Study Agents
 
+## 0.5.1 — Camino zigzag Duolingo + tests reales
+
+### Visible
+- Camino en **zigzag** con nodos circulares e **icono por tipo** (JSX, props, state…)
+- Test del día: banco real de React (ya no “¿qué resume unidad 1?”)
+- Títulos de lección claros (Qué es React, JSX, Props…)
+
 ## 0.5.0 — Study Agents = cursos (no chats)
 
 ### Visible

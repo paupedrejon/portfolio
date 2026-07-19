@@ -655,6 +655,170 @@
   color: #166534;
 }
 
+.sa-duo-today__orb {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border: 3px solid #00d9ff;
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.35);
+  flex-shrink: 0;
+}
+
+/* —— Camino zigzag estilo Duolingo —— */
+.sa-duo-trail {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 0.5rem 0 1rem;
+  position: relative;
+}
+
+.sa-duo-trail__row {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  min-height: 108px;
+}
+
+.sa-duo-trail__row--left {
+  align-items: flex-start;
+  padding-left: 12%;
+}
+
+.sa-duo-trail__row--right {
+  align-items: flex-end;
+  padding-right: 12%;
+}
+
+.sa-duo-trail__curve {
+  position: absolute;
+  top: -28px;
+  width: 3px;
+  height: 36px;
+  border-radius: 2px;
+  background: rgba(15, 23, 42, 0.12);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.sa-duo-trail__row--left .sa-duo-trail__curve {
+  left: 28%;
+  transform: none;
+  background: transparent;
+  width: 44%;
+  height: 32px;
+  border-left: 3px solid rgba(15, 23, 42, 0.12);
+  border-bottom: 3px solid rgba(15, 23, 42, 0.12);
+  border-radius: 0 0 0 28px;
+  top: -30px;
+}
+
+.sa-duo-trail__row--right .sa-duo-trail__curve {
+  right: 28%;
+  left: auto;
+  transform: none;
+  background: transparent;
+  width: 44%;
+  height: 32px;
+  border-right: 3px solid rgba(15, 23, 42, 0.12);
+  border-bottom: 3px solid rgba(15, 23, 42, 0.12);
+  border-radius: 0 0 28px 0;
+  top: -30px;
+}
+
+.sa-duo-trail__row--left .sa-duo-trail__curve.on {
+  border-color: #358c9f;
+}
+
+.sa-duo-trail__row--right .sa-duo-trail__curve.on {
+  border-color: #358c9f;
+}
+
+.sa-duo-orb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  max-width: 140px;
+  transition: transform 0.18s ease;
+}
+
+.sa-duo-orb:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.04);
+}
+
+.sa-duo-orb:disabled {
+  cursor: not-allowed;
+}
+
+.sa-duo-orb__circle {
+  width: 68px;
+  height: 68px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border: 4px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.sa-duo-orb.today .sa-duo-orb__circle {
+  border-color: #00d9ff;
+  background: rgba(0, 217, 255, 0.12);
+  box-shadow: 0 0 28px rgba(0, 217, 255, 0.4);
+}
+
+.sa-duo-orb.done .sa-duo-orb__circle {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.18);
+}
+
+.sa-duo-orb.locked .sa-duo-orb__circle {
+  background: #f1f5f9;
+  border-color: rgba(148, 163, 184, 0.45);
+  box-shadow: none;
+  opacity: 0.75;
+}
+
+.sa-duo-orb__label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  text-align: center;
+}
+
+.sa-duo-orb__label strong {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.sa-duo-orb__label small {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.sa-duo-orb.locked .sa-duo-orb__label strong,
+.sa-duo-orb.locked .sa-duo-orb__label small {
+  color: #94a3b8;
+}
+
 .sa-duo-path {
   margin-top: 1.35rem;
   display: flex;

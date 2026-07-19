@@ -149,10 +149,349 @@ function sanitizeLessonHtml(html: string): string {
 function isWeakBot(text: string): boolean {
   const t = (text || "").trim();
   if (t.length < 28) return true;
-  // frases cortadas típicas del LLM truncado
   if (/^(vamos|hola|ok|sí|si|ahora|hoy)[.!]?$/i.test(t)) return true;
   if (/\bes\s*$/i.test(t) || /\bes\s+[a-záéíóú]{1,3}$/i.test(t)) return true;
   return false;
+}
+
+function isMetaQuestion(q: PlanQuestion): boolean {
+  const blob = `${q.prompt} ${(q.options || []).join(" ")}`.toLowerCase();
+  return (
+    /unidad\s*\d+/.test(blob) ||
+    /concepto opuesto|uso t[ií]pico de|definici[oó]n de|ejemplo de .{0,40}unidad/.test(blob) ||
+    /qu[eé] resume mejor|qu[eé] no encaja|detalle irrelevante|índice del pdf|indice del pdf/.test(blob) ||
+    /idea pr[aá]ctica de|memorizar el [ií]ndice|saltar el test|copiar sin entender/.test(blob) ||
+    /pasos cortos|leyendo un muro|pdf largo/.test(blob)
+  );
+}
+
+type DayKind = "intro" | "jsx" | "props" | "state" | "events" | "lists" | "effects" | "practice";
+
+function dayKindFor(topic: string, dayNum: number): DayKind {
+  if (!topic.toLowerCase().includes("react")) {
+    const kinds: DayKind[] = ["intro", "practice", "jsx", "props", "state", "events", "lists"];
+    return kinds[(dayNum - 1) % kinds.length];
+  }
+  const kinds: DayKind[] = ["intro", "jsx", "props", "state", "events", "lists", "effects"];
+  return kinds[(dayNum - 1) % kinds.length];
+}
+
+function dayLabelFor(topic: string, dayNum: number, fallbackTitle?: string, fallbackFocus?: string): {
+  title: string;
+  focus: string;
+  kind: DayKind;
+} {
+  const kind = dayKindFor(topic, dayNum);
+  if (topic.toLowerCase().includes("react")) {
+    const map: Record<DayKind, { title: string; focus: string }> = {
+      intro: { title: "Qué es React", focus: "Componentes y UI" },
+      jsx: { title: "JSX", focus: "Sintaxis de UI" },
+      props: { title: "Props", focus: "Datos al hijo" },
+      state: { title: "useState", focus: "Estado local" },
+      events: { title: "Eventos", focus: "onClick y forms" },
+      lists: { title: "Listas", focus: "map y key" },
+      effects: { title: "useEffect", focus: "Efectos" },
+      practice: { title: "Práctica", focus: "Repaso" },
+    };
+    return { ...map[kind], kind };
+  }
+  const bad =
+    !fallbackFocus ||
+    /unidad\s*\d+/i.test(fallbackFocus) ||
+    /unidad\s*\d+/i.test(fallbackTitle || "");
+  if (bad) {
+    return {
+      kind,
+      title: `${topic} · ${dayNum}`,
+      focus: "Concepto clave",
+    };
+  }
+  return {
+    kind,
+    title: (fallbackTitle || `Día ${dayNum}`).slice(0, 40),
+    focus: (fallbackFocus || topic).slice(0, 48),
+  };
+}
+
+/** Preguntas reales del test (nunca meta). */
+function qualityQuestionsForDay(topic: string, dayNum: number): PlanQuestion[] {
+  const tl = topic.toLowerCase();
+  const unit = ((dayNum - 1) % 7) + 1;
+  if (tl.includes("react")) {
+    const banks: PlanQuestion[][] = [
+      [
+        {
+          id: `rq${dayNum}-1`,
+          prompt: "React se usa sobre todo para…",
+          options: [
+            "Construir interfaces de usuario",
+            "Administrar bases de datos",
+            "Enviar correo SMTP",
+            "Compilar binarios C",
+          ],
+          correct_index: 0,
+          feedback_ok: "UI con componentes.",
+          feedback_bad: "React está en la capa de interfaz.",
+        },
+        {
+          id: `rq${dayNum}-2`,
+          prompt: "¿Qué es un componente?",
+          options: [
+            "Una pieza reutilizable de UI",
+            "Un archivo .sql",
+            "Un servidor HTTP",
+            "Una regla de CSS global",
+          ],
+          correct_index: 0,
+          feedback_ok: "Piezas de UI.",
+          feedback_bad: "Piensa en LEGO de interfaz.",
+        },
+      ],
+      [
+        {
+          id: `rq${dayNum}-1`,
+          prompt: "JSX sirve para…",
+          options: [
+            "Describir UI dentro de JavaScript",
+            "Reemplazar el bundler",
+            "Crear tablas SQL",
+            "Configurar el DNS",
+          ],
+          correct_index: 0,
+          feedback_ok: "UI en el código.",
+          feedback_bad: "JSX describe interfaz.",
+        },
+        {
+          id: `rq${dayNum}-2`,
+          prompt: "En JSX, una clase CSS se escribe…",
+          options: ["className", "class", "css", "styleName"],
+          correct_index: 0,
+          feedback_ok: "class es reservada en JS.",
+          feedback_bad: "Usa className.",
+        },
+      ],
+      [
+        {
+          id: `rq${dayNum}-1`,
+          prompt: "Las props permiten…",
+          options: [
+            "Pasar datos del padre al hijo",
+            "Guardar secretos del servidor",
+            "Crear el package.json",
+            "Sustituir TypeScript",
+          ],
+          correct_index: 0,
+          feedback_ok: "De padre a hijo.",
+          feedback_bad: "Props = argumentos del componente.",
+        },
+        {
+          id: `rq${dayNum}-2`,
+          prompt: "En <Hi name=\"Ana\" />, name es…",
+          options: ["Una prop", "Un hook", "Un reducer", "Un CSS module"],
+          correct_index: 0,
+          feedback_ok: "Es una prop.",
+          feedback_bad: "Se pasa como atributo JSX.",
+        },
+      ],
+      [
+        {
+          id: `rq${dayNum}-1`,
+          prompt: "useState sirve para…",
+          options: [
+            "Guardar estado que cambia y re-renderiza",
+            "Hacer consultas SQL",
+            "Definir rutas del servidor",
+            "Instalar dependencias",
+          ],
+          correct_index: 0,
+          feedback_ok: "Estado local reactivo.",
+          feedback_bad: "Es el hook de estado.",
+        },
+        {
+          id: `rq${dayNum}-2`,
+          prompt: "Para sumar 1 a un contador usas…",
+          options: ["setN(n + 1) o setN(p => p + 1)", "document.write", "innerHTML++", "useState otra vez sin setter"],
+          correct_index: 0,
+          feedback_ok: "Siempre el setter.",
+          feedback_bad: "No mutes n a mano.",
+        },
+      ],
+      [
+        {
+          id: `rq${dayNum}-1`,
+          prompt: "El click en React se declara…",
+          options: ["onClick", "onclick", "on-click", "click="],
+          correct_index: 0,
+          feedback_ok: "camelCase.",
+          feedback_bad: "Es onClick.",
+        },
+        {
+          id: `rq${dayNum}-2`,
+          prompt: "onClick={save} vs onClick={save()}…",
+          options: [
+            "Con () se ejecuta al render (casi siempre mal)",
+            "Con () es lo recomendado",
+            "Da igual",
+            "Solo funciona en CSS",
+          ],
+          correct_index: 0,
+          feedback_ok: "Pasa la función, no la llamada.",
+          feedback_bad: "Sin paréntesis al asignar.",
+        },
+      ],
+      [
+        {
+          id: `rq${dayNum}-1`,
+          prompt: "En una lista, key ayuda a…",
+          options: [
+            "Identificar qué ítem cambió",
+            "Sustituir CSS",
+            "Conectar MySQL",
+            "Compilar TypeScript",
+          ],
+          correct_index: 0,
+          feedback_ok: "Reconciliación.",
+          feedback_bad: "key = identidad.",
+        },
+        {
+          id: `rq${dayNum}-2`,
+          prompt: "Mejor key para usuarios…",
+          options: ["user.id", "El índice siempre", "Math.random()", "El color CSS"],
+          correct_index: 0,
+          feedback_ok: "Ids estables.",
+          feedback_bad: "Evita index si reordenas.",
+        },
+      ],
+      [
+        {
+          id: `rq${dayNum}-1`,
+          prompt: "useEffect se usa para…",
+          options: [
+            "Efectos tras el render (fetch, timers…)",
+            "Definir el color del botón",
+            "Crear el Vite config",
+            "Sustituir JSX",
+          ],
+          correct_index: 0,
+          feedback_ok: "Efectos secundarios.",
+          feedback_bad: "No es el return principal.",
+        },
+        {
+          id: `rq${dayNum}-2`,
+          prompt: "useEffect(..., [id]) corre cuando…",
+          options: ["Cambia id", "Cambia cualquier estado", "Nunca", "Solo al cerrar la pestaña"],
+          correct_index: 0,
+          feedback_ok: "Deps = disparadores.",
+          feedback_bad: "Mira el array [id].",
+        },
+      ],
+    ];
+    return banks[unit - 1] || banks[0];
+  }
+
+  return [
+    {
+      id: `gq${dayNum}-1`,
+      prompt: `Sobre ${topic}: ¿qué es más correcto?`,
+      options: [
+        `Una idea concreta de ${topic}`,
+        "Un detalle sin relación",
+        "El índice de un PDF",
+        "Nada útil",
+      ],
+      correct_index: 0,
+      feedback_ok: "Bien.",
+      feedback_bad: `Repasa ${topic}.`,
+    },
+    {
+      id: `gq${dayNum}-2`,
+      prompt: `Si practicas ${topic}, ¿qué haces?`,
+      options: [
+        "Aplicar un ejemplo mínimo",
+        "Solo leer sin practicar",
+        "Copiar sin entender",
+        "Ignorar el concepto",
+      ],
+      correct_index: 0,
+      feedback_ok: "Práctica > relleno.",
+      feedback_bad: "Aplica el concepto.",
+    },
+  ];
+}
+
+function PathKindIcon({ kind, done, locked }: { kind: DayKind; done: boolean; locked: boolean }) {
+  const stroke = done ? "#166534" : locked ? "#94a3b8" : "#0f172a";
+  const common = { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke, strokeWidth: 2.2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  if (done) {
+    return (
+      <svg {...common}>
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+    );
+  }
+  if (locked) {
+    return (
+      <svg {...common}>
+        <rect x="5" y="11" width="14" height="10" rx="2" />
+        <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+      </svg>
+    );
+  }
+  switch (kind) {
+    case "jsx":
+    case "practice":
+      return (
+        <svg {...common}>
+          <polyline points="16 18 22 12 16 6" />
+          <polyline points="8 6 2 12 8 18" />
+        </svg>
+      );
+    case "props":
+      return (
+        <svg {...common}>
+          <rect x="3" y="8" width="18" height="12" rx="2" />
+          <path d="M12 8V4M8 4h8" />
+        </svg>
+      );
+    case "state":
+      return (
+        <svg {...common}>
+          <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
+        </svg>
+      );
+    case "events":
+      return (
+        <svg {...common}>
+          <path d="M9 3h6l1 7H8L9 3z" />
+          <path d="M12 10v11" />
+          <path d="M8 21h8" />
+        </svg>
+      );
+    case "lists":
+      return (
+        <svg {...common}>
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <circle cx="4" cy="6" r="1.2" fill={stroke} />
+          <circle cx="4" cy="12" r="1.2" fill={stroke} />
+          <circle cx="4" cy="18" r="1.2" fill={stroke} />
+        </svg>
+      );
+    case "effects":
+      return (
+        <svg {...common}>
+          <polyline points="23 4 23 10 17 10" />
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+        </svg>
+      );
+    default:
+      return (
+        <svg {...common}>
+          <polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9" />
+        </svg>
+      );
+  }
 }
 
 /** Currículo real por tema (no meta sobre “cómo estudiar”). */
@@ -922,41 +1261,26 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
   const daysPrepared = useMemo(() => {
     const seen = new Set<string>();
     return days.map((d) => {
-      const slides = buildSlides(plan.topic, d);
-      let questions = dedupeQuestions(d.questions || [], seen);
-      if (questions.length < 2) {
-        const focus = d.focus || plan.topic;
-        const extras: PlanQuestion[] = [
-          {
-            id: `${d.day}-fq1`,
-            prompt: `¿Qué resume mejor ${focus}?`,
-            options: [
-              `La idea práctica de ${focus}`,
-              "Un detalle sin importancia",
-              "Memorizar el índice",
-              "Ignorar ejemplos",
-            ],
-            correct_index: 0,
-            feedback_ok: "Bien.",
-            feedback_bad: `Repasa ${focus}.`,
-          },
-          {
-            id: `${d.day}-fq2`,
-            prompt: `Si aplicas ${focus}, ¿qué haces?`,
-            options: [
-              "Practicar con un ejemplo mínimo",
-              "Leer sin tocar nada",
-              "Copiar sin entender",
-              "Saltar el test",
-            ],
-            correct_index: 0,
-            feedback_ok: "Eso es.",
-            feedback_bad: "Hay que practicar.",
-          },
-        ];
-        questions = dedupeQuestions([...questions, ...extras], seen);
+      const meta = dayLabelFor(plan.topic, d.day, d.title, d.focus);
+      const slides = buildSlides(plan.topic, { ...d, title: meta.title, focus: meta.focus });
+      let questions = dedupeQuestions(d.questions || [], new Set()).filter((q) => !isMetaQuestion(q));
+      // React (y cualquier plan con preguntas meta): usar banco real
+      if (
+        plan.topic.toLowerCase().includes("react") ||
+        questions.length < 2 ||
+        (d.questions || []).some(isMetaQuestion)
+      ) {
+        questions = qualityQuestionsForDay(plan.topic, d.day);
       }
-      return { ...d, slides, questions };
+      for (const q of questions) seen.add(normalizePrompt(q.prompt));
+      return {
+        ...d,
+        title: meta.title,
+        focus: meta.focus,
+        kind: meta.kind,
+        slides,
+        questions,
+      };
     });
   }, [days, plan.topic]);
 
@@ -1264,10 +1588,10 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
   const allDone = daysPrepared.length > 0 && progress.completedDays.length >= daysPrepared.length;
   const streakHint =
     progress.completedDays.length === 0
-      ? "Empieza hoy — 1 lección al día."
+      ? "Haz lecciones cuando quieras — el camino es tuyo."
       : progress.lastCompletedDate === today
-        ? "¡Lección de hoy hecha! Vuelve mañana."
-        : `Llevas ${progress.completedDays.length} día(s). Hoy toca seguir.`;
+        ? "¡Bien! Puedes seguir con la siguiente."
+        : `Llevas ${progress.completedDays.length} lección(es).`;
 
   return (
     <div className={`${outfit.className} sa-steps-card sa-duo-shell sa-pop`}>
@@ -1276,7 +1600,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <h3 className={spaceGrotesk.className}>{plan.topic} · Diario</h3>
           <p>
-            {plan.minutes_per_day || daysPrepared[0]?.minutes || 5} min/día · {streakHint}
+            {plan.minutes_per_day || daysPrepared[0]?.minutes || 5} min/lección · {streakHint}
           </p>
         </div>
         <span className="sa-duo-xp">{progress.xp} XP</span>
@@ -1284,14 +1608,16 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
 
       {!allDone && todayLesson && (
         <button type="button" className="sa-duo-today" onClick={() => startDay(todayLesson)}>
-          <StudyAgentsBotAvatar size={48} color={SA_PRIMARY} state="idle" />
+          <span className="sa-duo-today__orb">
+            <PathKindIcon kind={todayLesson.kind} done={false} locked={false} />
+          </span>
           <div style={{ flex: 1, textAlign: "left" }}>
-            <p className="sa-duo-today__label">HOY · RECORDATORIO</p>
+            <p className="sa-duo-today__label">SIGUIENTE LECCIÓN</p>
             <p className={spaceGrotesk.className} style={{ margin: "0.2rem 0 0", fontWeight: 800, fontSize: "1.05rem" }}>
-              Día {todayLesson.day}: {todayLesson.title}
+              {todayLesson.title}
             </p>
             <p style={{ margin: "0.2rem 0 0", fontSize: "0.8rem", color: "#64748b" }}>
-              Intro → Aprende → Test · ~{todayLesson.minutes} min
+              {todayLesson.focus} · ~{todayLesson.minutes} min
             </p>
           </div>
         </button>
@@ -1299,30 +1625,29 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
 
       {allDone && <p className="sa-duo-donebanner">Curso completado. ¡Buen trabajo!</p>}
 
-      <div className="sa-duo-path">
+      <div className="sa-duo-trail" aria-label="Camino de lecciones">
         {daysPrepared.map((d, i) => {
           const locked = d.day > progress.unlockedDay;
           const done = progress.completedDays.includes(d.day);
           const isToday = todayLesson?.day === d.day;
+          const side = i % 2 === 0 ? "left" : "right";
           return (
-            <div key={d.day} className="sa-duo-path__item">
-              {i > 0 && (
-                <div className={`sa-duo-path__line ${done || d.day <= progress.unlockedDay ? "on" : ""}`} />
-              )}
+            <div key={d.day} className={`sa-duo-trail__row sa-duo-trail__row--${side}`}>
+              {i > 0 && <div className={`sa-duo-trail__curve ${done || d.day <= progress.unlockedDay ? "on" : ""}`} />}
               <button
                 type="button"
                 disabled={locked}
                 onClick={() => startDay(d)}
-                className={`sa-duo-node ${locked ? "locked" : ""} ${done ? "done" : ""} ${isToday ? "today" : ""}`}
+                className={`sa-duo-orb ${locked ? "locked" : ""} ${done ? "done" : ""} ${isToday ? "today" : ""}`}
+                title={`${d.title} — ${d.focus}`}
               >
-                <span className="sa-duo-node__icon">{done ? "✓" : locked ? "·" : "▶"}</span>
-                <span className="sa-duo-node__text">
-                  <strong>
-                    Día {d.day}: {d.title}
-                  </strong>
+                <span className="sa-duo-orb__circle">
+                  <PathKindIcon kind={d.kind} done={done} locked={locked} />
+                </span>
+                <span className="sa-duo-orb__label">
+                  <strong>{d.title}</strong>
                   <small>{d.focus}</small>
                 </span>
-                <span className="sa-duo-node__min">{d.minutes}m</span>
               </button>
             </div>
           );
