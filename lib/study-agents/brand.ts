@@ -6,6 +6,8 @@ export const SA_PRIMARY_HOVER = "rgba(53, 140, 159, 0.16)";
 export const SA_PRIMARY_BRIGHT = "#4eb3c8";
 export const SA_PRIMARY_DEEP = "#2a6f7d";
 export const SA_CYAN = "#00d9ff";
+/** Cara del robotín: azul oscuro (no cyan neón). */
+export const SA_BOT_FACE = "#0a3350";
 export const SA_SUCCESS = "#10b981";
 export const SA_CHAT_BG = "#030d14";
 export const SA_GRADIENT = "linear-gradient(135deg, #4eb3c8, #358c9f, #2a6f7d)";

@@ -52,10 +52,10 @@
 @keyframes sa-bot-glow-pulse {
   0%,
   100% {
-    filter: drop-shadow(0 0 3px var(--sa-bot-color, #2596be));
+    filter: drop-shadow(0 0 3px var(--sa-bot-color, #0a3350));
   }
   50% {
-    filter: drop-shadow(0 0 12px var(--sa-bot-color, #2596be));
+    filter: drop-shadow(0 0 10px var(--sa-bot-color, #0a3350));
   }
 }
 
@@ -83,9 +83,9 @@
   animation: sa-bot-antenna-right 0.7s ease-in-out infinite;
 }
 
-/* Cuerpo blanco + cara azul */
+/* Cuerpo blanco + cara azul oscuro */
 .sa-bot-avatar {
-  --sa-bot-face: #358c9f;
+  --sa-bot-face: #0a3350;
   overflow: visible !important;
 }
 
@@ -94,7 +94,7 @@
   margin: -16px;
   box-sizing: content-box;
   overflow: visible !important;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 14px rgba(53, 140, 159, 0.4));
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.35)) drop-shadow(0 0 12px rgba(10, 51, 80, 0.55));
 }
 
 .sa-bot-avatar--bright svg {

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { outfit, spaceGrotesk } from "@/app/fonts";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
-import { SA_PRIMARY } from "@/lib/study-agents/brand";
+import { SA_PRIMARY, SA_BOT_FACE } from "@/lib/study-agents/brand";
 import "@/components/study-agents/study-agents-chat.css";
 import "@/components/study-agents/study-agents-bot.css";
 
@@ -53,7 +53,7 @@ export default function InteractiveSteps({
   return (
     <div className={`${outfit.className} sa-steps-card sa-pop`}>
       <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start" }}>
-        <StudyAgentsBotAvatar size={36} color={SA_PRIMARY} state={done ? "idle" : "thinking"} />
+        <StudyAgentsBotAvatar size={36} color={SA_BOT_FACE} state={done ? "idle" : "thinking"} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <h3
             className={spaceGrotesk.className}

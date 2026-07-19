@@ -74,7 +74,7 @@ import StudyPlanSession, {
 } from "@/components/study-agents/chat/StudyPlanSession";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
 import StudyPlanPanel from "@/components/study-agents/panels/StudyPlanPanel";
-import { SA_PRIMARY, SA_CHAT_BG } from "@/lib/study-agents/brand";
+import { SA_PRIMARY, SA_CHAT_BG, SA_BOT_FACE } from "@/lib/study-agents/brand";
 import ConceptMapPanel from "@/components/study-agents/panels/ConceptMapPanel";
 import ReviewPanel from "@/components/study-agents/panels/ReviewPanel";
 import { isStudyAgentsFlagEnabled } from "@/lib/study-agents/flags";
@@ -2776,9 +2776,31 @@ ${contentPreview}
 
       {
         const notesTopic = topicForNotes || "el tema de esta conversacion";
+        const isLang = /italian|italiano|ingl[eé]s|english|franc[eé]s|french|alem[aá]n|german|japon[eé]s|japanese|portugu[eé]s|chino|chinese/i.test(
+          notesTopic,
+        );
         conversationHistory.unshift({
           role: "user",
-          content: `Genera APUNTES ACADEMICOS en Markdown limpio sobre ${notesTopic}.
+          content: isLang
+            ? `Genera APUNTES ACADEMICOS de IDIOMA en Markdown limpio sobre ${notesTopic}.
+
+REGLAS OBLIGATORIAS:
+- SIN emojis ni simbolos raros (rompen el PDF).
+- SIN tablas markdown (usa listas con guiones).
+- Contenido REAL del idioma (vocabulario, frases, gramatica), NO meta sobre como estudiar.
+- Estructura:
+# ${notesTopic}
+## Objetivos de aprendizaje
+## 1. Saludos y frases basicas
+## 2. Vocabulario esencial
+## 3. Gramatica minima
+## 4. Ejemplos de dialogo
+## 5. Errores frecuentes
+## 6. Resumen para repasar
+- En vocabulario: **palabra**: traduccion — ejemplo corto.
+- En gramatica: reglas claras con 2-3 ejemplos.
+- Basate en el plan del curso y la conversacion.`
+            : `Genera APUNTES ACADEMICOS en Markdown limpio sobre ${notesTopic}.
 
 REGLAS OBLIGATORIAS:
 - SIN emojis ni simbolos raros (rompen el PDF).
@@ -5561,7 +5583,7 @@ REGLAS OBLIGATORIAS:
               {message.role === "assistant" && (
                 <StudyAgentsBotAvatar
                   size={isMobile ? 32 : 38}
-                  color={colorTheme === "dark" ? "#7dd3fc" : SA_PRIMARY}
+                  color={SA_BOT_FACE}
                   state="idle"
                 />
               )}
@@ -6486,7 +6508,7 @@ REGLAS OBLIGATORIAS:
             >
               <StudyAgentsBotAvatar
                 size={isMobile ? 32 : 38}
-                color={colorTheme === "dark" ? "#7dd3fc" : SA_PRIMARY}
+                color={SA_BOT_FACE}
                 state="thinking"
               />
               <div

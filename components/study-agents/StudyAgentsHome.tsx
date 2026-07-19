@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { leagueSpartan, outfit, spaceGrotesk } from "@/app/fonts";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
 import HomeHeroBackground from "@/components/home/HomeHeroBackground";
-import { SA_PRIMARY, SA_CYAN } from "@/lib/study-agents/brand";
+import { SA_BOT_FACE, SA_CYAN } from "@/lib/study-agents/brand";
 import { OPEN_API_KEY_MODAL_EVENT } from "@/lib/study-agents/api-keys";
 import { studyAgentsFetch } from "@/hooks/study-agents/useApiClient";
 import "@/components/study-agents/study-agents-bot.css";
@@ -127,7 +127,7 @@ export default function StudyAgentsHome({ userId, onStartCourse, onOpenCourse }:
 
         <div className="sa-hero__inner sa-hero__fade">
           <div className="sa-hero__bot">
-            <StudyAgentsBotAvatar size={112} color={SA_PRIMARY} state="idle" title="Study Agents" />
+            <StudyAgentsBotAvatar size={112} color={SA_BOT_FACE} state="idle" title="Study Agents" />
           </div>
 
           <p className={`${outfit.className} sa-hero__kicker`}>
@@ -152,7 +152,7 @@ export default function StudyAgentsHome({ userId, onStartCourse, onOpenCourse }:
                 className="sa-hero__cta sa-hero__cta--continue"
                 onClick={() => onOpenCourse(continueCourse)}
               >
-                <StudyAgentsBotAvatar size={28} color={SA_PRIMARY} state="static" />
+                <StudyAgentsBotAvatar size={28} color={SA_BOT_FACE} state="static" />
                 <span>
                   Continuar · {continueCourse.topic}
                   <small>{todayLessonHint(continueCourse.chatId, continueCourse.topic)}</small>
@@ -187,7 +187,7 @@ export default function StudyAgentsHome({ userId, onStartCourse, onOpenCourse }:
 
           {!loading && courses.length === 0 && (
             <div className="sa-courses__empty-card">
-              <StudyAgentsBotAvatar size={48} color={SA_PRIMARY} state="idle" />
+              <StudyAgentsBotAvatar size={48} color={SA_BOT_FACE} state="idle" />
               <p className={spaceGrotesk.className}>Aún no tienes cursos</p>
               <p>Crea uno (ej. React, 5 min/día) y aparecerán aquí.</p>
               <button type="button" className="sa-hero__cta" onClick={onStartCourse}>
@@ -207,7 +207,7 @@ export default function StudyAgentsHome({ userId, onStartCourse, onOpenCourse }:
                     className="sa-course-card"
                     onClick={() => onOpenCourse(c)}
                   >
-                    <StudyAgentsBotAvatar size={40} color={SA_PRIMARY} state="static" />
+                    <StudyAgentsBotAvatar size={40} color={SA_BOT_FACE} state="static" />
                     <div className="sa-course-card__body">
                       <strong className={spaceGrotesk.className}>{c.topic}</strong>
                       <span>

@@ -10,7 +10,7 @@ import {
   openAPIKeyModal,
 } from "@/lib/study-agents/api-keys";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
-import { SA_PRIMARY, SA_PRIMARY_BRIGHT } from "@/lib/study-agents/brand";
+import { SA_PRIMARY, SA_PRIMARY_BRIGHT, SA_BOT_FACE } from "@/lib/study-agents/brand";
 import "@/components/study-agents/study-agents-bot.css";
 import "@/components/study-agents/study-agents-chat.css";
 
@@ -57,7 +57,7 @@ export default function StudyAgentsNav() {
           border: "1px solid rgba(53, 140, 159, 0.4)",
         }}
       >
-        <StudyAgentsBotAvatar size={26} color={SA_PRIMARY_BRIGHT} state="idle" />
+        <StudyAgentsBotAvatar size={26} color={SA_BOT_FACE} state="idle" />
       </Link>
 
       <Link

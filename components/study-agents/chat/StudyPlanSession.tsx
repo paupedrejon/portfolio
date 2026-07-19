@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import DOMPurify from "dompurify";
 import { outfit, spaceGrotesk } from "@/app/fonts";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
-import { SA_CYAN } from "@/lib/study-agents/brand";
+import { SA_BOT_FACE } from "@/lib/study-agents/brand";
 import "@/components/study-agents/study-agents-chat.css";
 import "@/components/study-agents/study-agents-bot.css";
 
@@ -173,8 +173,576 @@ function isMetaFocus(focus?: string, title?: string): boolean {
   if (!blob) return true;
   return (
     /concepto clave|unidad\s*\d+|micro-pr[aá]ctica|p[aá]rrafos eternos|pasos cortos/.test(blob) ||
+    /idea central|piezas b[aá]sicas|c[oó]mo se escribe|acciones t[ií]picas|aplicar hoy/.test(blob) ||
     /base \d+|· base/.test(blob)
   );
+}
+
+type LangId = "it" | "en" | "fr" | "de" | "ja" | "pt" | "zh";
+
+type LangPack = {
+  id: LangId;
+  name: string;
+};
+
+function detectLanguage(topic: string): LangPack | null {
+  const tl = topic
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  if (/italian|italiano/.test(tl)) return { id: "it", name: "Italiano" };
+  if (/\benglish\b|\bingles\b|\bingl[eé]s\b/.test(tl) || tl === "en") return { id: "en", name: "Inglés" };
+  if (/franc[eé]s|frances|french|fran[cç]ais/.test(tl)) return { id: "fr", name: "Francés" };
+  if (/alem[aá]n|aleman|german|deutsch/.test(tl)) return { id: "de", name: "Alemán" };
+  if (/japon[eé]s|japones|japanese|nihongo/.test(tl)) return { id: "ja", name: "Japonés" };
+  if (/portugu[eé]s|portugues|portuguese/.test(tl)) return { id: "pt", name: "Portugués" };
+  if (/chino|chinese|mandarin|mandar[ií]n/.test(tl)) return { id: "zh", name: "Chino" };
+  return null;
+}
+
+/** Vocabulario y lecciones reales por idioma (7 días). */
+function languageDayMeta(lang: LangPack, dayNum: number): { title: string; focus: string } {
+  const banks: Record<LangId, Array<{ title: string; focus: string }>> = {
+    it: [
+      { title: "Saludos", focus: "Ciao y Buongiorno" },
+      { title: "Alfabeto", focus: "Sonidos italianos" },
+      { title: "Artículos", focus: "il, la, un, una" },
+      { title: "Presentarse", focus: "Mi chiamo / Sono" },
+      { title: "Números", focus: "Uno a dieci" },
+      { title: "Essere y avere", focus: "Verbos ser y tener" },
+      { title: "Frases útiles", focus: "Grazie y Per favore" },
+    ],
+    en: [
+      { title: "Greetings", focus: "Hello / Good morning" },
+      { title: "Alphabet", focus: "Sounds and spelling" },
+      { title: "Articles", focus: "a / an / the" },
+      { title: "Introduce yourself", focus: "My name is / I am" },
+      { title: "Numbers", focus: "One to ten" },
+      { title: "To be / to have", focus: "am, is, are / have" },
+      { title: "Useful phrases", focus: "Please and Thank you" },
+    ],
+    fr: [
+      { title: "Salutations", focus: "Bonjour / Salut" },
+      { title: "Alphabet", focus: "Sons français" },
+      { title: "Articles", focus: "le, la, un, une" },
+      { title: "Se présenter", focus: "Je m'appelle / Je suis" },
+      { title: "Nombres", focus: "Un à dix" },
+      { title: "Être et avoir", focus: "Verbos ser y tener" },
+      { title: "Phrases utiles", focus: "Merci et S'il vous plaît" },
+    ],
+    de: [
+      { title: "Begrüßung", focus: "Hallo / Guten Tag" },
+      { title: "Alphabet", focus: "Sonidos alemanes" },
+      { title: "Artikel", focus: "der, die, das" },
+      { title: "Vorstellen", focus: "Ich heiße / Ich bin" },
+      { title: "Zahlen", focus: "Eins bis zehn" },
+      { title: "Sein und haben", focus: "sein / haben" },
+      { title: "Nützliche Sätze", focus: "Danke und Bitte" },
+    ],
+    ja: [
+      { title: "Saludos", focus: "こんにちは / おはよう" },
+      { title: "Hiragana base", focus: "あいうえお" },
+      { title: "Partículas", focus: "は / を / の" },
+      { title: "Presentarse", focus: "〜です / 名前は" },
+      { title: "Números", focus: "一〜十" },
+      { title: "Desu / masu", focus: "Formas educadas" },
+      { title: "Frases útiles", focus: "ありがとう / お願いします" },
+    ],
+    pt: [
+      { title: "Saudações", focus: "Olá / Bom dia" },
+      { title: "Alfabeto", focus: "Sons portugueses" },
+      { title: "Artigos", focus: "o, a, um, uma" },
+      { title: "Apresentar-se", focus: "Chamo-me / Sou" },
+      { title: "Números", focus: "Um a dez" },
+      { title: "Ser e ter", focus: "sou, é / tenho" },
+      { title: "Frases úteis", focus: "Obrigado e Por favor" },
+    ],
+    zh: [
+      { title: "Saludos", focus: "你好 / 早上好" },
+      { title: "Tonos", focus: "4 tonos básicos" },
+      { title: "Pronombres", focus: "我 / 你 / 他" },
+      { title: "Presentarse", focus: "我叫… / 我是…" },
+      { title: "Números", focus: "一到十" },
+      { title: "Es / tener", focus: "是 / 有" },
+      { title: "Frases útiles", focus: "谢谢 / 请" },
+    ],
+  };
+  const list = banks[lang.id];
+  return list[(dayNum - 1) % list.length];
+}
+
+function languageSlides(lang: LangPack, dayNum: number): LessonSlide[] {
+  const name = lang.name;
+  const d = dayNum;
+  const unit = ((d - 1) % 7) + 1;
+  const meta = languageDayMeta(lang, d);
+
+  const packs: Record<LangId, LessonSlide[][]> = {
+    it: [
+      [
+        {
+          id: `it${d}-1`,
+          phase: "intro",
+          bot: "En italiano, Ciao sirve entre amigos; Buongiorno es el saludo formal de día.",
+          visual: { kind: "big_word", word: "Ciao!", sub: "saludo informal" },
+          html: `<div class="viz"><div class="row"><span class="pill">Ciao</span><span class="pill">Buongiorno</span><span class="pill">Buonasera</span></div><p>Arrivederci = hasta luego.</p></div>`,
+          check: {
+            prompt: "¿Qué usas con un amigo por la calle?",
+            options: ["Ciao", "Buongiorno dottore", "Arrivederci signore", "Per favore"],
+            correct_index: 0,
+            feedback_ok: "Ciao = informal.",
+            feedback_bad: "Con amigos: Ciao.",
+          },
+        },
+        {
+          id: `it${d}-2`,
+          phase: "learn",
+          bot: "Buongiorno (mañana/día) y Buonasera (tarde/noche) suenan más educados.",
+          visual: {
+            kind: "vs",
+            left: { title: "Informal", body: "Ciao" },
+            right: { title: "Formal", body: "Buongiorno / Buonasera" },
+          },
+          check: {
+            prompt: "En una tienda por la mañana, lo más natural es…",
+            options: ["Buongiorno", "Ciao a todos ya", "Solo silbar", "Good morning en inglés"],
+            correct_index: 0,
+            feedback_ok: "Buongiorno es el clásico.",
+            feedback_bad: "Formal de día = Buongiorno.",
+          },
+        },
+        {
+          id: `it${d}-3`,
+          phase: "learn",
+          bot: "Para despedirte: Ciao (informal) o Arrivederci (más formal).",
+          visual: {
+            kind: "steps",
+            items: [
+              { n: 1, label: "Entras: Buongiorno" },
+              { n: 2, label: "Hablas" },
+              { n: 3, label: "Sales: Arrivederci" },
+            ],
+          },
+          check: {
+            prompt: "Arrivederci significa…",
+            options: ["Hasta luego / adiós", "Por favor", "Gracias", "Me llamo"],
+            correct_index: 0,
+            feedback_ok: "Despedida.",
+            feedback_bad: "Es una despedida.",
+          },
+        },
+      ],
+      [
+        {
+          id: `it${d}-1`,
+          phase: "intro",
+          bot: "El italiano se lee casi como se escribe. Cuidado: c + e/i suena como «ch» española.",
+          visual: { kind: "big_word", word: "Ciao", sub: "se lee «chao»" },
+          check: {
+            prompt: "¿Cómo se lee Ciao?",
+            options: ["Chao", "Kiao", "Siao", "Cee-ao"],
+            correct_index: 0,
+            feedback_ok: "Ciao ≈ chao.",
+            feedback_bad: "C+i = sonido «ch».",
+          },
+        },
+        {
+          id: `it${d}-2`,
+          phase: "learn",
+          bot: "ch + e/i suena como «k»: che = ke. gli suena suave (familia: famiglia).",
+          visual: {
+            kind: "vs",
+            left: { title: "ce / ci", body: "como che / chi" },
+            right: { title: "che / chi", body: "como ke / ki" },
+          },
+          check: {
+            prompt: "En italiano, «che» suena aproximadamente…",
+            options: ["ke", "che (español)", "se", "ge"],
+            correct_index: 0,
+            feedback_ok: "che ≈ ke.",
+            feedback_bad: "ch = sonido k.",
+          },
+        },
+        {
+          id: `it${d}-3`,
+          phase: "learn",
+          bot: "La g doble (gg) y la doble consonante se alargan: pizza, nonno.",
+          visual: {
+            kind: "code",
+            label: "Ejemplos",
+            code: "pizza  → pit-tsa\nnonno  → non-no\nfoglio → fo-llio (gli)",
+          },
+          check: {
+            prompt: "En «pizza», la zz indica…",
+            options: ["Sonido fuerte/alargado", "Que es plural", "Que es inglés", "Silencio"],
+            correct_index: 0,
+            feedback_ok: "Consonante doble = más marcada.",
+            feedback_bad: "Las dobles se notan al hablar.",
+          },
+        },
+      ],
+      [
+        {
+          id: `it${d}-1`,
+          phase: "intro",
+          bot: "Artículos definidos: il (masculino), la (femenino). Plural: i / le (y gli en casos especiales).",
+          visual: { kind: "big_word", word: "il / la", sub: "el / la" },
+          check: {
+            prompt: "«La casa» usa la porque…",
+            options: ["casa es femenino", "casa es plural", "siempre se usa la", "es un verbo"],
+            correct_index: 0,
+            feedback_ok: "la + femenino singular.",
+            feedback_bad: "Género: il/la.",
+          },
+        },
+        {
+          id: `it${d}-2`,
+          phase: "learn",
+          bot: "Indefinidos: un (masc.), una (fem.). Ejemplo: un libro, una penna.",
+          visual: {
+            kind: "vs",
+            left: { title: "un", body: "un amico, un libro" },
+            right: { title: "una", body: "una amica, una casa" },
+          },
+          check: {
+            prompt: "«Una pizza» es correcto porque…",
+            options: ["pizza es femenino", "pizza es masculino", "una = plural", "una es verbo"],
+            correct_index: 0,
+            feedback_ok: "una + femenino.",
+            feedback_bad: "Mira el género de pizza.",
+          },
+        },
+        {
+          id: `it${d}-3`,
+          phase: "learn",
+          bot: "Delante de vocal a veces aparece l': l'amico, l'acqua.",
+          visual: {
+            kind: "steps",
+            items: [
+              { n: 1, label: "il + vocal → l'" },
+              { n: 2, label: "la + vocal → l'" },
+              { n: 3, label: "Ej: l'acqua" },
+            ],
+          },
+          check: {
+            prompt: "Antes de «acqua» escribes…",
+            options: ["l'acqua", "il acqua", "la acqua siempre", "un acqua"],
+            correct_index: 0,
+            feedback_ok: "Apóstrofe: l'acqua.",
+            feedback_bad: "Vocal → l'.",
+          },
+        },
+      ],
+      [
+        {
+          id: `it${d}-1`,
+          phase: "intro",
+          bot: "Para decir tu nombre: Mi chiamo Ana. También: Sono Ana.",
+          visual: { kind: "big_word", word: "Mi chiamo…", sub: "Me llamo…" },
+          check: {
+            prompt: "«Mi chiamo Luca» significa…",
+            options: ["Me llamo Luca", "Tengo hambre", "Soy de Roma", "Hasta luego"],
+            correct_index: 0,
+            feedback_ok: "Presentación del nombre.",
+            feedback_bad: "chiamarsi = llamarse.",
+          },
+        },
+        {
+          id: `it${d}-2`,
+          phase: "learn",
+          bot: "Pregunta: Come ti chiami? Respuesta: Mi chiamo…",
+          visual: {
+            kind: "vs",
+            left: { title: "Pregunta", body: "Come ti chiami?" },
+            right: { title: "Respuesta", body: "Mi chiamo…" },
+          },
+          check: {
+            prompt: "Para preguntar el nombre dices…",
+            options: ["Come ti chiami?", "Come stai libro?", "Quanto costa?", "Dov'è il bagno?"],
+            correct_index: 0,
+            feedback_ok: "Come ti chiami?",
+            feedback_bad: "Es la pregunta del nombre.",
+          },
+        },
+        {
+          id: `it${d}-3`,
+          phase: "learn",
+          bot: "Di dove sei? → Sono di Madrid. / Sono spagnolo/a.",
+          visual: {
+            kind: "code",
+            label: "Mini diálogo",
+            code: "A: Come ti chiami?\nB: Mi chiamo Sara.\nA: Di dove sei?\nB: Sono di Barcellona.",
+          },
+          check: {
+            prompt: "«Sono di Roma» indica…",
+            options: ["De dónde eres", "Qué edad tienes", "Qué comes", "La hora"],
+            correct_index: 0,
+            feedback_ok: "Origen / ciudad.",
+            feedback_bad: "di + ciudad = origen.",
+          },
+        },
+      ],
+      [
+        {
+          id: `it${d}-1`,
+          phase: "intro",
+          bot: "Números 1–10: uno, due, tre, quattro, cinque, sei, sette, otto, nove, dieci.",
+          visual: { kind: "big_word", word: "1 → 10", sub: "uno … dieci" },
+          check: {
+            prompt: "¿Cómo se dice 3 en italiano?",
+            options: ["tre", "trois", "three", "drei"],
+            correct_index: 0,
+            feedback_ok: "tre.",
+            feedback_bad: "3 = tre.",
+          },
+        },
+        {
+          id: `it${d}-2`,
+          phase: "learn",
+          bot: "Útiles: due caffè, tre amici, cinque euro.",
+          visual: {
+            kind: "steps",
+            items: [
+              { n: 1, label: "uno / una" },
+              { n: 2, label: "due, tre, quattro" },
+              { n: 3, label: "dieci = 10" },
+            ],
+          },
+          check: {
+            prompt: "«Due pizze» son…",
+            options: ["Dos pizzas", "Diez pizzas", "Ninguna pizza", "Una pizza"],
+            correct_index: 0,
+            feedback_ok: "due = 2.",
+            feedback_bad: "due = dos.",
+          },
+        },
+        {
+          id: `it${d}-3`,
+          phase: "learn",
+          bot: "Quattro y cinque se pronuncian con «cuá» y «chín-cue». Otto = 8.",
+          visual: {
+            kind: "code",
+            label: "Lista",
+            code: "4 quattro\n5 cinque\n6 sei\n7 sette\n8 otto\n9 nove\n10 dieci",
+          },
+          check: {
+            prompt: "Dieci es…",
+            options: ["10", "2", "12", "20"],
+            correct_index: 0,
+            feedback_ok: "dieci = 10.",
+            feedback_bad: "Cuenta: …nove, dieci.",
+          },
+        },
+      ],
+      [
+        {
+          id: `it${d}-1`,
+          phase: "intro",
+          bot: "Essere (ser/estar): sono, sei, è, siamo, siete, sono.",
+          visual: { kind: "big_word", word: "essere", sub: "sono / sei / è" },
+          check: {
+            prompt: "«Io sono stanco» usa…",
+            options: ["sono (essere)", "ho (avere)", "chiamo", "voglio"],
+            correct_index: 0,
+            feedback_ok: "Io sono…",
+            feedback_bad: "1ª persona de essere = sono.",
+          },
+        },
+        {
+          id: `it${d}-2`,
+          phase: "learn",
+          bot: "Avere (tener): ho, hai, ha, abbiamo, avete, hanno. Ho fame = tengo hambre.",
+          visual: {
+            kind: "vs",
+            left: { title: "essere", body: "Sono italiano" },
+            right: { title: "avere", body: "Ho una macchina" },
+          },
+          check: {
+            prompt: "«Ho fame» significa…",
+            options: ["Tengo hambre", "Soy hambre", "Estoy en Roma", "Me llamo Fame"],
+            correct_index: 0,
+            feedback_ok: "avere + fame.",
+            feedback_bad: "ho = tengo.",
+          },
+        },
+        {
+          id: `it${d}-3`,
+          phase: "learn",
+          bot: "Lui è di Milano. Lei ha due fratelli.",
+          visual: {
+            kind: "code",
+            label: "Frases",
+            code: "Io sono studente.\nTu sei molto gentile.\nLui ha un cane.",
+          },
+          check: {
+            prompt: "«Tu sei» corresponde a…",
+            options: ["Tú eres/estás", "Yo tengo", "Ellos son", "Nosotros tenemos"],
+            correct_index: 0,
+            feedback_ok: "2ª persona de essere.",
+            feedback_bad: "sei = tú eres.",
+          },
+        },
+      ],
+      [
+        {
+          id: `it${d}-1`,
+          phase: "intro",
+          bot: "Frases de supervivencia: Per favore, Grazie, Prego, Scusa / Mi scusi.",
+          visual: { kind: "big_word", word: "Grazie!", sub: "gracias" },
+          check: {
+            prompt: "Para decir gracias…",
+            options: ["Grazie", "Prego (como gracias)", "Ciao gracias", "Arrivederci gracias"],
+            correct_index: 0,
+            feedback_ok: "Grazie.",
+            feedback_bad: "Grazie = gracias.",
+          },
+        },
+        {
+          id: `it${d}-2`,
+          phase: "learn",
+          bot: "Prego responde a Grazie (de nada) o invita a pasar. Per favore = por favor.",
+          visual: {
+            kind: "vs",
+            left: { title: "Pides", body: "Un caffè, per favore" },
+            right: { title: "Agradeces", body: "Grazie! → Prego" },
+          },
+          check: {
+            prompt: "Tras «Grazie», la respuesta típica es…",
+            options: ["Prego", "Ciao", "Dieci", "Sono"],
+            correct_index: 0,
+            feedback_ok: "Prego ≈ de nada.",
+            feedback_bad: "Prego responde a Grazie.",
+          },
+        },
+        {
+          id: `it${d}-3`,
+          phase: "learn",
+          bot: "Scusa (informal) / Mi scusi (formal) = perdón. Dov'è…? = ¿dónde está…?",
+          visual: {
+            kind: "code",
+            label: "Útiles",
+            code: "Per favore…\nGrazie!\nScusa / Mi scusi\nDov'è il bagno?",
+          },
+          check: {
+            prompt: "«Dov'è il bagno?» pregunta por…",
+            options: ["Dónde está el baño", "Cuánto cuesta", "Tu nombre", "La hora"],
+            correct_index: 0,
+            feedback_ok: "Dov'è = dónde está.",
+            feedback_bad: "dovere de lugar: Dov'è.",
+          },
+        },
+      ],
+    ],
+    en: [],
+    fr: [],
+    de: [],
+    ja: [],
+    pt: [],
+    zh: [],
+  };
+
+  // Plantilla genérica de idioma si aún no hay pack detallado
+  const detailed = packs[lang.id];
+  if (detailed && detailed[unit - 1]?.length) {
+    return detailed[unit - 1];
+  }
+
+  // Fallback rico por meta del día (otros idiomas)
+  const samples: Record<LangId, { w: string; sub: string; q: string; ok: string; bad: string[] }> = {
+    it: { w: "Ciao", sub: "hola", q: "Ciao significa…", ok: "Hola (informal)", bad: ["Adiós formal", "Gracias", "Por favor"] },
+    en: { w: "Hello", sub: "hola", q: "Hello significa…", ok: "Hola", bad: ["Adiós", "Gracias", "Por favor"] },
+    fr: { w: "Bonjour", sub: "hola / buenos días", q: "Bonjour significa…", ok: "Hola / buenos días", bad: ["Adiós", "Gracias", "Por favor"] },
+    de: { w: "Hallo", sub: "hola", q: "Hallo significa…", ok: "Hola", bad: ["Adiós", "Gracias", "Por favor"] },
+    ja: { w: "こんにちは", sub: "hola", q: "こんにちは es…", ok: "Hola (formal-diario)", bad: ["Adiós", "Gracias", "Por favor"] },
+    pt: { w: "Olá", sub: "hola", q: "Olá significa…", ok: "Hola", bad: ["Adiós", "Gracias", "Por favor"] },
+    zh: { w: "你好", sub: "hola", q: "你好 significa…", ok: "Hola", bad: ["Adiós", "Gracias", "Por favor"] },
+  };
+  const s = samples[lang.id];
+  return [
+    {
+      id: `lg${d}-1`,
+      phase: "intro",
+      bot: `Hoy en ${name}: ${meta.title}. Foco: ${meta.focus}.`,
+      visual: { kind: "big_word", word: s.w, sub: s.sub },
+      html: `<div class="viz"><p>Aprende y usa <strong>${meta.focus}</strong> en un ejemplo mínimo.</p></div>`,
+      check: {
+        prompt: s.q,
+        options: [s.ok, ...s.bad],
+        correct_index: 0,
+        feedback_ok: s.ok,
+        feedback_bad: `Recuerda: ${s.ok}.`,
+      },
+    },
+    {
+      id: `lg${d}-2`,
+      phase: "learn",
+      bot: `${meta.focus} es esencial en ${name}. Practica en voz alta.`,
+      visual: {
+        kind: "vs",
+        left: { title: "Escuchar", body: "Repite el sonido" },
+        right: { title: "Usar", body: `Di: ${s.w}` },
+      },
+      check: {
+        prompt: `¿Qué practicas hoy en ${name}?`,
+        options: [meta.focus, "Configurar el Wi‑Fi", "La tipografía del PDF", "Otro idioma al azar"],
+        correct_index: 0,
+        feedback_ok: meta.focus,
+        feedback_bad: `El foco es ${meta.focus}.`,
+      },
+    },
+    {
+      id: `lg${d}-3`,
+      phase: "learn",
+      bot: `Mini práctica: usa «${s.w}» en una frase corta.`,
+      visual: {
+        kind: "code",
+        label: meta.title,
+        code: `${s.w}\n// ${meta.focus}`,
+      },
+      check: {
+        prompt: `Esta lección de ${name} trabaja…`,
+        options: [meta.title, "Red / DNS", "SQL joins", "CSS Grid"],
+        correct_index: 0,
+        feedback_ok: "Exacto.",
+        feedback_bad: `Es ${meta.title}.`,
+      },
+    },
+  ];
+}
+
+function languageQuestions(lang: LangPack, dayNum: number): PlanQuestion[] {
+  const slides = languageSlides(lang, dayNum);
+  const fromChecks = slides
+    .filter((s) => s.check)
+    .slice(0, 2)
+    .map((s, i) => ({
+      id: `lq${dayNum}-${i + 1}`,
+      prompt: s.check!.prompt,
+      options: s.check!.options,
+      correct_index: s.check!.correct_index,
+      feedback_ok: s.check!.feedback_ok,
+      feedback_bad: s.check!.feedback_bad,
+    }));
+  if (fromChecks.length >= 2) return fromChecks;
+  const meta = languageDayMeta(lang, dayNum);
+  return [
+    {
+      id: `lq${dayNum}-1`,
+      prompt: `En ${lang.name}, el foco «${meta.focus}» pertenece a…`,
+      options: [meta.title, "Otro idioma", "CSS", "SQL"],
+      correct_index: 0,
+      feedback_ok: meta.title,
+      feedback_bad: meta.title,
+    },
+    {
+      id: `lq${dayNum}-2`,
+      prompt: `Para practicar ${meta.title}…`,
+      options: [`Usar ${meta.focus} en una frase`, "Solo leer el índice", "Cambiar de curso", "Ignorar el audio"],
+      correct_index: 0,
+      feedback_ok: "Practicar en frase.",
+      feedback_bad: `Aplica ${meta.focus}.`,
+    },
+  ];
 }
 
 type DayKind = "intro" | "jsx" | "props" | "state" | "events" | "lists" | "effects" | "practice";
@@ -191,6 +759,11 @@ function dayLabelFor(topic: string, dayNum: number, fallbackTitle?: string, fall
 } {
   const kind = dayKindFor(topic, dayNum);
   const tl = topic.toLowerCase();
+  const lang = detectLanguage(topic);
+
+  if (lang) {
+    return { kind, ...languageDayMeta(lang, dayNum) };
+  }
 
   if (tl.includes("react")) {
     const map: Record<DayKind, { title: string; focus: string }> = {
@@ -274,6 +847,10 @@ function dayLabelFor(topic: string, dayNum: number, fallbackTitle?: string, fall
 function qualityQuestionsForDay(topic: string, dayNum: number): PlanQuestion[] {
   const tl = topic.toLowerCase();
   const unit = ((dayNum - 1) % 7) + 1;
+  const lang = detectLanguage(topic);
+  if (lang) {
+    return languageQuestions(lang, dayNum);
+  }
   if (tl.includes("react")) {
     const banks: PlanQuestion[][] = [
       [
@@ -725,6 +1302,10 @@ function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
   const tl = t.toLowerCase();
   const d = day.day;
   const unit = ((d - 1) % 7) + 1;
+  const lang = detectLanguage(t);
+  if (lang) {
+    return languageSlides(lang, d);
+  }
 
   if (tl.includes("react")) {
     const units: LessonSlide[][] = [
@@ -1496,6 +2077,7 @@ function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
   }
 
   // Genérico con títulos reales del día (nunca “Concepto clave” / PDF)
+  // Si es idioma, nunca caemos aquí (ya retornamos arriba).
   const label = dayLabelFor(t, d);
   const focus = label.focus;
   const title = label.title;
@@ -1503,15 +2085,15 @@ function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
     {
       id: `g${d}-1`,
       phase: "intro",
-      bot: `Hoy en ${t}: ${title}. Empezamos por ${focus.toLowerCase()}.`,
+      bot: `Hoy en ${t}: ${title}. Vamos a ${focus.toLowerCase()} con un ejemplo concreto.`,
       visual: { kind: "big_word", word: title.slice(0, 22), sub: t },
       html: `<div class="viz"><p>Objetivo: entender <strong>${focus}</strong> y usarlo en un ejemplo mínimo.</p></div>`,
       check: {
-        prompt: `¿Cuál es el foco de hoy en ${t}?`,
-        options: [focus, "Un tema de otro curso", "La tipografía del PDF", "Configurar el Wi‑Fi"],
+        prompt: `En ${t}, ¿qué trabajamos hoy?`,
+        options: [title, "Un tema de otro curso", "Configurar el router", "Instalar un antivirus"],
         correct_index: 0,
-        feedback_ok: `Sí: ${focus}.`,
-        feedback_bad: `El foco es ${focus}.`,
+        feedback_ok: `Sí: ${title}.`,
+        feedback_bad: `Hoy: ${title}.`,
       },
     },
     {
@@ -1561,6 +2143,11 @@ function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
  * Si el contenido es débil, usa plantillas de calidad.
  */
 function buildSlides(topic: string, day: PlanDay): LessonSlide[] {
+  // Idiomas: siempre currículo real (nunca plantilla «Idea central»)
+  if (detectLanguage(topic)) {
+    return qualitySlidesForDay(topic, day);
+  }
+
   // Si el backend mandó fallbacks meta ("unidad N", PDF vs práctica), usa currículo real
   const focusBad =
     isMetaFocus(day.focus, day.title) ||
@@ -1963,7 +2550,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
     return (
       <div className={`${outfit.className} sa-steps-card sa-duo-shell sa-pop`}>
         <div className="sa-duo-celebrate">
-          <StudyAgentsBotAvatar size={80} color={SA_CYAN} state="idle" className="sa-bot-avatar--bright" />
+          <StudyAgentsBotAvatar size={80} color={SA_BOT_FACE} state="idle" className="sa-bot-avatar--bright" />
           <h3 className={spaceGrotesk.className}>¡Día {activeDay.day} listo!</h3>
           <p className="sa-duo-celebrate__xp">+{dayXp} XP</p>
           <p className="sa-duo-celebrate__sub">
@@ -2015,7 +2602,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
 
         <div className="sa-duo-screen">
           <div className="sa-duo-botrow">
-            <StudyAgentsBotAvatar size={52} color={SA_CYAN} state="idle" className="sa-bot-avatar--bright" />
+            <StudyAgentsBotAvatar size={52} color={SA_BOT_FACE} state="idle" className="sa-bot-avatar--bright" />
             <div className="sa-duo-bubble">
               <p>{botText}</p>
             </div>
@@ -2118,7 +2705,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
 
         <div className="sa-duo-screen">
           <div className="sa-duo-botrow sa-duo-botrow--comic">
-            <StudyAgentsBotAvatar size={52} color={SA_CYAN} state="thinking" className="sa-bot-avatar--bright" />
+            <StudyAgentsBotAvatar size={52} color={SA_BOT_FACE} state="thinking" className="sa-bot-avatar--bright" />
             <div className="sa-duo-bubble sa-duo-bubble--test sa-comic-pop">
               <p className="sa-duo-test-label">PREGUNTA</p>
               <p>{currentQ.prompt}</p>
@@ -2243,7 +2830,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
 
                 {showChest && (
                   <div className="sa-pathmap__extra">
-                    <StudyAgentsBotAvatar size={48} color={SA_CYAN} state="idle" className="sa-bot-avatar--bright" />
+                    <StudyAgentsBotAvatar size={48} color={SA_BOT_FACE} state="idle" className="sa-bot-avatar--bright" />
                   </div>
                 )}
               </div>

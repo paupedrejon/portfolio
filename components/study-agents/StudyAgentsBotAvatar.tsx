@@ -1,6 +1,6 @@
 "use client";
 
-import { SA_PRIMARY } from "@/lib/study-agents/brand";
+import { SA_BOT_FACE } from "@/lib/study-agents/brand";
 
 export const STUDY_AGENTS_BOT_SRC = "/StudyAgentsBot.png";
 
@@ -8,7 +8,7 @@ type BotState = "idle" | "thinking" | "static";
 
 type Props = {
   size?: number;
-  /** Solo para glow / acentos; cuerpo blanco, cara oscura, ojos blancos. */
+  /** Azul de la cara (pantalla). Por defecto azul oscuro. */
   color?: string;
   state?: BotState;
   className?: string;
@@ -78,17 +78,17 @@ function BotEye({
 }
 
 /**
- * Bot Study Agents: cuerpo/antenas/ojos blancos, pantalla interior azul.
+ * Bot Study Agents: cuerpo/antenas/ojos blancos, pantalla interior azul oscuro.
  */
 export default function StudyAgentsBotAvatar({
   size = 36,
-  color = SA_PRIMARY,
+  color = SA_BOT_FACE,
   state = "idle",
   className,
   title = "Study Agents",
 }: Props) {
   const body = "#ffffff";
-  const face = color; // azul (pantalla)
+  const face = color;
   const eyes = "#ffffff";
 
   const animClass =
@@ -162,7 +162,7 @@ export default function StudyAgentsBotAvatar({
           fill={body}
         />
 
-        {/* Pantalla interior oscura */}
+        {/* Pantalla interior azul */}
         <path
           d="M19 23.5
              H45

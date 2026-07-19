@@ -108,7 +108,7 @@ function parseMarkdownBlocks(md: string): Block[] {
   if (inCode && codeBuf.length) {
     blocks.push({ type: "code", text: codeBuf.join("\n") });
   }
-  return blocks.filter((b) => b.type === "hr" || (b.type !== "hr" && b.text.trim()));
+  return blocks.filter((b) => b.type === "hr" || Boolean(b.text?.trim()));
 }
 
 /**

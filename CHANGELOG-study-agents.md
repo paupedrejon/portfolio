@@ -1,5 +1,12 @@
 # Changelog — Study Agents
 
+## 0.5.11 — Bot azul oscuro + currículo idiomas
+
+### Visible
+- Cara/glow del robotín en **azul oscuro** (ya no cyan neón)
+- Cursos de idioma (p. ej. Italiano): lecciones reales (saludos, artículos, presentarse…) en vez de «Idea central» / tipografía del PDF
+- Apuntes de idioma con estructura de vocabulario y gramática
+
 ## 0.5.10 — Apuntes PDF con portada e índice
 
 ### Visible
