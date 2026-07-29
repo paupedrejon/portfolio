@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { redirect } from "@/i18n/navigation";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -7,5 +7,5 @@ type Props = {
 /** Ruta antigua: la presentación vive en `/[locale]/ego`. */
 export default async function LegacyEgoLabRedirect({ params }: Props) {
   const { locale } = await params;
-  redirect(`/${locale}/ego`);
+  redirect({ href: "/ego", locale });
 }

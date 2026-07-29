@@ -65,7 +65,7 @@ export default function ProjectsList({ projects }: ProjectsListProps) {
         <li key={project.slug} className="projects-grid__item">
           <article className="projects-card">
             <Link
-              href={`/proyectos/${project.slug}`}
+              href={project.slug === "ego" ? "/ego" : `/proyectos/${project.slug}`}
               className="projects-card__image-link"
               aria-label={project.title}
             >
@@ -105,7 +105,9 @@ export default function ProjectsList({ projects }: ProjectsListProps) {
                 ) : null}
               </div>
               <h3 className="projects-card__title">
-                <Link href={`/proyectos/${project.slug}`}>{project.title}</Link>
+                <Link href={project.slug === "ego" ? "/ego" : `/proyectos/${project.slug}`}>
+                  {project.title}
+                </Link>
               </h3>
               {project.title2 ? (
                 <p className="projects-card__title2">{project.title2}</p>
@@ -128,7 +130,7 @@ export default function ProjectsList({ projects }: ProjectsListProps) {
 
               <div className="projects-card__actions">
                 <Link
-                  href={`/proyectos/${project.slug}`}
+                  href={project.slug === "ego" ? "/ego" : `/proyectos/${project.slug}`}
                   className="projects-card__btn home-btn--cv"
                 >
                   {t("moreInfo")}

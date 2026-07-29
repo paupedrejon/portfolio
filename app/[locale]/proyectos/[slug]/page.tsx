@@ -15,13 +15,20 @@ type PageProps = {
 };
 
 export function generateStaticParams() {
-  return getVisibleProjects().map((project) => ({ slug: project.slug }));
+  return getVisibleProjects()
+    .filter((project) => project.slug !== "ego")
+    .map((project) => ({ slug: project.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug, locale } = await params;
   if (!isProjectSlug(slug)) {
     return {};
+  }
+  // E-Go se indexa solo en /ego
+  if (slug === "ego") {
+    const { egoPageMetadata } = await import("@/lib/seo/sections");
+    return egoPageMetadata(locale);
   }
   return projectDetailMetadata(locale, slug);
 }
@@ -32,6 +39,12 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
   if (!isProjectSlug(slug)) {
     notFound();
+  }
+
+  // Defensa por si el redirect de next.config no aplica en algún entorno
+  if (slug === "ego") {
+    const { redirect } = await import("@/i18n/navigation");
+    redirect({ href: "/ego", locale });
   }
 
   const tData = await getTranslations({ locale, namespace: "projectsData" });

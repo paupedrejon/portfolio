@@ -1,8 +1,28 @@
 import TealCodeDownloadClient from "@/components/tealcode/TealCodeDownloadClient";
-import { getTranslations } from "next-intl/server";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import "./tealcode-download.css";
 
-export default async function TealCodeDownloadPage() {
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: Props) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "tealcodePage" });
+  return buildPageMetadata({
+    locale,
+    pathname: "/tealcode",
+    title: `${t("title")} | Pau Pedrejon`,
+    description: t("subtitle"),
+    ogTitle: t("title"),
+    ogSubtitle: t("subtitle"),
+  });
+}
+
+export default async function TealCodeDownloadPage({ params }: Props) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations("tealcodePage");
 
   return (

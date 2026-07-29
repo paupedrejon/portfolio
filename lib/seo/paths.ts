@@ -24,6 +24,7 @@ export const LOCALIZED_STATIC_PATHS = [
   "/labs",
   "/labs/minecraft",
   "/blog",
+  "/tealcode",
 ] as const;
 
 export function localizedUrl(locale: string, pathname: string): string {
@@ -39,6 +40,8 @@ export function buildSitemapEntries(): { url: string; lastModified?: Date }[] {
       entries.push({ url: localizedUrl(locale, path), lastModified });
     }
     for (const { slug } of getVisibleProjects()) {
+      // E-Go tiene URL canónica propia /ego (no /proyectos/ego)
+      if (slug === "ego") continue;
       entries.push({
         url: localizedUrl(locale, `/proyectos/${slug}`),
         lastModified,

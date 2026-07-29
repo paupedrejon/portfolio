@@ -12,6 +12,16 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // E-Go: una sola URL canónica (/ego). Debe ir antes de las reglas :slug.
+      { source: "/es/proyectos/ego", destination: "/es/ego", permanent: true },
+      { source: "/es/projects/ego", destination: "/es/ego", permanent: true },
+      { source: "/en/projects/ego", destination: "/en/ego", permanent: true },
+      { source: "/en/proyectos/ego", destination: "/en/ego", permanent: true },
+      { source: "/it/progetti/ego", destination: "/it/ego", permanent: true },
+      { source: "/it/projects/ego", destination: "/it/ego", permanent: true },
+      { source: "/it/proyectos/ego", destination: "/it/ego", permanent: true },
+      { source: "/:locale/labs/e-go", destination: "/:locale/ego", permanent: true },
+
       // URLs de proyectos no canónicas → redirect 301 a la canónica por locale
       { source: "/es/projects", destination: "/es/proyectos", permanent: true },
       { source: "/es/projects/:slug", destination: "/es/proyectos/:slug", permanent: true },
