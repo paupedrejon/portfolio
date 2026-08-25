@@ -36,7 +36,6 @@ export default async function LocaleHomePage({ params }: Props) {
     <>
       <JsonLd data={[profilePage, person, website]} />
       <div className="sr-only">
-        <h1>{t("seoTitle")}</h1>
         <p>{t("seoDescription")}</p>
         <nav aria-label="Secciones principales">
           <a href={`/${locale}/proyectos`}>Proyectos</a>

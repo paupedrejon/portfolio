@@ -72,7 +72,11 @@ export default function ProjectsList({ projects }: ProjectsListProps) {
               <div className="projects-card__image-wrap">
                 <Image
                   src={project.imageCard}
-                  alt=""
+                  alt={
+                    project.title2
+                      ? `${project.title} — ${project.title2}`
+                      : project.title
+                  }
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 33vw"
                   className="projects-card__image"

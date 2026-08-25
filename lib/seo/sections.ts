@@ -122,16 +122,18 @@ export async function projectDetailMetadata(locale: string, slug: ProjectSlug) {
     locale,
     namespace: `projectPages.${slug}` as "projectPages.study-agents",
   });
-  const config = getProjectBySlug(slug)!;
   const title = tData(`${slug}.title`);
   const title2 = tData(`${slug}.title2`);
   const name = title2?.trim() ? `${title} — ${title2}` : title;
+  const description = tPage.has("seoDescription")
+    ? tPage("seoDescription")
+    : tPage("heroSummary");
   return buildPageMetadata({
     locale,
     pathname: `/proyectos/${slug}`,
-    title: `${name}${SITE_SUFFIX}`,
-    description: tPage("heroSummary"),
+    title: tPage.has("seoTitle") ? tPage("seoTitle") : `${name}${SITE_SUFFIX}`,
+    description,
     ogTitle: name,
-    ogSubtitle: tPage("heroSummary").slice(0, 120),
+    ogSubtitle: description.slice(0, 120),
   });
 }

@@ -28,8 +28,8 @@
     "reactCardTitle": "Corso di React",
     "reactCardDescription": "30 livelli. Costruisci il tuo portfolio con controlli Playwright locali.",
     "reactCta": "Inizia il corso",
-    "reactMetaTitle": "Corso di React | Pau Pedrejon",
-    "reactMetaDescription": "Corso gratuito e interattivo di React. 30 livelli, diploma finale.",
+    "reactMetaTitle": "Corso di React per livelli (gratis) — 30 lezioni | Pau Pedrejon",
+    "reactMetaDescription": "Impara React per livelli gratis: corso per principianti con 30 lezioni, portfolio reale, controlli automatici e diploma finale.",
     "heroTitle": "Impara REACT",
     "heroTitleAccent": "corso gratuito",
     "startCourse": "Inizia",
@@ -104,15 +104,19 @@
   "home": {
     "title": "PAU PEDREJON",
     "tagline": "Sviluppatore Full-Stack specializzato in Ingegneria del Software e Intelligenza Artificiale",
-    "seoTitle": "Pau Pedrejon — Sviluppatore Full-Stack e IA | Portfolio professionale",
-    "seoDescription": "Ingegnere del software Full-Stack (React, Node.js, IA) con progetti in produzione ed esperienza in azienda. Disponibile per opportunità a Barcellona e remoto.",
+    "seoTitle": "Pau Pedrejón — Sviluppatore Full-Stack e IA | Portfolio",
+    "seoDescription": "Pau Pedrejón (Pedrejon): sviluppatore Full-Stack e IA a Barcellona. Progetti in produzione (TuRelojYa, Evenely, Study Agents), tirocinio in Owius e Ingegneria Informatica UPC.",
     "seoJobTitle": "Sviluppatore Full-Stack e Ingegnere del Software",
     "seoKeywords": [
+      "Pau Pedrejón",
+      "Pau Pedrejon",
+      "pedrejon",
       "sviluppatore full-stack Barcellona",
       "ingegnere del software",
       "portfolio sviluppatore",
       "React Node.js TypeScript",
-      "assumere sviluppatore"
+      "assumere sviluppatore",
+      "UPC informatica"
     ],
     "seoKnowsAbout": [
       "React",
@@ -354,8 +358,8 @@
     "drovo": {
       "title": "DROVO",
       "kicker": "2023 - Progetto Personale",
-      "title2": "Prototipo Multigiocatore Online",
-      "subtitle": "Ho realizzato un divertente prototipo multigiocatore per giocare con gli amici.",
+      "title2": "Gioco multiplayer Unreal",
+      "subtitle": "Prototipo multiplayer in Unreal Engine per giocare con gli amici: sessioni brevi, arte 3D e build pubblica su Game Jolt.",
       "ctaText": "Vedi prototipo"
     },
     "salmon1": {
@@ -493,7 +497,9 @@
       ]
     },
     "turelojya": {
-      "heroSummary": "E-commerce full-stack di orologi di lusso in produzione: catalogo, motore di valutazione su oltre 100.000 record di mercato, checkout Redsys, backoffice su misura e SEO tecnico multilingue — sviluppato end-to-end in Owius.",
+      "seoTitle": "TuRelojYa — E-commerce di orologi di lusso | Caso Owius",
+      "seoDescription": "TuRelojYa (turelojya.com): e-commerce full-stack di orologi di lusso in produzione. Catalogo, valutazione su 100.000+ record, Redsys, backoffice e SEO multilingue — sviluppato in Owius da Pau Pedrejon.",
+      "heroSummary": "TuRelojYa è un e-commerce full-stack di orologi di lusso in produzione: catalogo, motore di valutazione su oltre 100.000 record di mercato, checkout Redsys, backoffice su misura e SEO tecnico multilingue — sviluppato end-to-end in Owius.",
       "contextTitle": "Owius · Consulenza software",
       "context": "Progetto reale per cliente in Owius, consulenza di sviluppo su misura a Barcellona (owius.com). In un team full-stack compatto ho gestito la piattaforma end-to-end: architettura MVC in Node.js, storefront React, migrazione da WordPress, integrazioni di pagamento e deploy Docker con MongoDB.",
       "overviewTitle": "Il prodotto",
@@ -553,11 +559,13 @@
       ]
     },
     "evenely": {
-      "heroSummary": "Piattaforma SaaS per progettare escape room virtuali senza codice: editor visuale a diapositive, collaborazione in tempo reale, abbonamenti Free/Basic/Premium con Redsys ricorrente e web di gioco separata con classifiche e analitiche — il capstone del tirocinio in Owius.",
+      "seoTitle": "Evenely — Creatore di escape room virtuali | SaaS Owius",
+      "seoDescription": "Evenely (a volte scritto evenly): SaaS per progettare escape room virtuali senza codice. Editor visuale, collaborazione live, Redsys e app di gioco con classifiche — tirocinio Owius di Pau Pedrejon.",
+      "heroSummary": "Evenely è una piattaforma SaaS per progettare escape room virtuali senza codice: editor visuale a diapositive, collaborazione in tempo reale, abbonamenti Free/Basic/Premium con Redsys ricorrente e web di gioco separata con classifiche e analitiche — il capstone del tirocinio in Owius.",
       "contextTitle": "Owius · Consulenza software",
       "context": "Capstone del tirocinio in Owius (owius.com): la sfida tecnica più impegnativa del periodo. Ho costruito da zero un prodotto che permette a aziende e formatori di creare esperienze gamificate senza programmare, con un editor visuale ispirato a Canva e PowerPoint e un'architettura multi-app (portal, admin e gioco).",
       "overviewTitle": "Il prodotto",
-      "overview": "Evenely (evenely.com) è un creatore di escape room virtuali per eventi aziendali, formazione, recruitment e comunicazione interna. Il cliente progetta esperienze posizionando elementi (testi, immagini, video, pulsanti e quiz) sulle diapositive; i giocatori accedono con un codice sala su una web indipendente che replica fedelmente il design, con classifiche live e dati di partecipazione per l'organizzatore.",
+      "overview": "Evenely (evenely.com; a volte cercato come evenly) è un creatore di escape room virtuali per eventi aziendali, formazione, recruitment e comunicazione interna. Il cliente progetta esperienze posizionando elementi (testi, immagini, video, pulsanti e quiz) sulle diapositive; i giocatori accedono con un codice sala su una web indipendente che replica fedelmente il design, con classifiche live e dati di partecipazione per l'organizzatore.",
       "highlightsTitle": "Cosa ho sviluppato",
       "highlights": [
         {
@@ -599,7 +607,7 @@
       "role": "Sviluppatore full-stack junior (tirocinio in azienda): design dell'editor visuale, logica di interattività, editing collaborativo, integrazione abbonamenti Redsys, separazione portal/gioco, classifiche e analitiche, e misure di sicurezza nel flusso di pagamento."
     },
     "react-course": {
-      "heroSummary": "Corso interattivo di React per principianti: 30 livelli per costruire un portfolio reale, con controlli automatici locali e progresso nel cloud.",
+      "heroSummary": "Corso di React per livelli per principianti: 30 lezioni per costruire un portfolio reale, con controlli automatici locali e progresso nel cloud.",
       "contextTitle": "Perché questo corso",
       "context": "Volevo un modo pratico e passo passo per imparare React con feedback immediato. Ho progettato un percorso gamificato nel portfolio: ogni livello spiega concetti (JSX, componenti, props, stato, hook, routing…) mentre costruisci il sito con Vite e Tailwind.",
       "overviewTitle": "Come funziona",
@@ -778,11 +786,13 @@
       "role": "Ricerca, design esperienza, implementazione Unreal e presentazione."
     },
     "drovo": {
-      "heroSummary": "DROVO: prototipo multiplayer Unreal per giocare con amici — iterazione rapida.",
+      "seoTitle": "DROVO — Gioco multiplayer Unreal | Pau Pedrejon",
+      "seoDescription": "DROVO è un prototipo multiplayer in Unreal Engine: sessioni brevi con amici, arte 3D in Blender e build pubblica su Game Jolt. Progetto personale di Pau Pedrejon.",
+      "heroSummary": "DROVO è un prototipo multiplayer in Unreal Engine per giocare con amici — iterazione rapida, arte 3D e pubblicazione online su Game Jolt.",
       "contextTitle": "Progetto personale",
       "context": "Gioco sociale leggero, non AAA: costruire in settimane, testare con amici e pubblicare.",
       "overviewTitle": "Il progetto",
-      "overview": "Prototipo online con personaggi cartoon, mappa compatta e sessioni brevi. Pipeline Blender → Mixamo → Unreal, divertimento prima del iperrealismo.",
+      "overview": "DROVO è un prototipo online con personaggi cartoon, mappa compatta e sessioni brevi. Pipeline Blender → Mixamo → Unreal, divertimento prima del iperrealismo.",
       "highlightsTitle": "Cosa ho sviluppato",
       "highlights": [
         { "icon": "gamepad", "title": "Multiplayer", "text": "Partite online con amici." },
@@ -1095,11 +1105,14 @@
     "badge": "Percorso professionale",
     "title": "ESPERIENZA",
     "tagline": "Il mio percorso professionale nello sviluppo software e tecnologia.",
-    "seoDescription": "Esperienza professionale di Pau Pedrejon: full-stack in azienda, progetti UPC e prodotti reali. Pensato per recruiter e team tecnici.",
+    "seoTitle": "Esperienza professionale — Full-Stack in Owius | Pau Pedrejon",
+    "seoDescription": "Esperienza professionale di Pau Pedrejón: full-stack in Owius (TuRelojYa, Evenely), progetti UPC e prodotti in produzione. Pensato per recruiter e team tecnici.",
     "seoKeywords": [
       "esperienza sviluppatore",
       "full-stack Barcellona",
-      "portfolio ingegnere software"
+      "Owius",
+      "portfolio ingegnere software",
+      "Pau Pedrejon"
     ],
     "sectionTitle": "Esperienza lavorativa",
     "timeline": {
@@ -1163,13 +1176,15 @@
     "badge": "Formazione",
     "title": "ISTRUZIONE",
     "tagline": "Il mio background accademico e risultati.",
-    "seoTitle": "Formazione — Ingegneria Informatica UPC | Pau Pedrejon",
-    "seoDescription": "Percorso accademico di Pau Pedrejon: laurea in Ingegneria Informatica (UPC/FIB), certificazione 10X Developer con IA (IIA) e diploma tecnologico ITB.",
+    "seoTitle": "Ingegneria Informatica UPC — Formazione | Pau Pedrejon",
+    "seoDescription": "Studente di Ingegneria Informatica alla UPC (FIB, Barcellona): laurea, menzione software, certificazione 10X Developer con IA (IIA) e diploma tecnologico ITB. Portfolio di Pau Pedrejón.",
     "seoKeywords": [
+      "UPC informatica",
+      "ingegneria informatica UPC",
       "ingegnere informatico UPC",
       "formazione sviluppatore Barcellona",
       "laurea ingegneria software",
-      "portfolio studente UPC"
+      "portfolio studente UPC FIB"
     ],
     "academicBackground": "Background accademico",
     "educationTimeline": "Timeline formazione",
@@ -1208,9 +1223,11 @@
     "badge": "Chi sono",
     "title": "CHI SONO",
     "tagline": "Scopri di più su di me.",
-    "seoTitle": "Chi sono — Sviluppatore Full-Stack a Barcellona | Pau Pedrejon",
-    "seoDescription": "Profilo di Pau Pedrejon: studente di Ingegneria Informatica alla UPC, sviluppatore full-stack specializzato in React, Node.js e IA.",
+    "seoTitle": "Chi sono — Pau Pedrejón | Full-Stack a Barcellona",
+    "seoDescription": "Pau Pedrejón (Pedrejon): studente di Ingegneria Informatica alla UPC e sviluppatore full-stack (React, Node.js, IA) a Castelldefels, Barcellona.",
     "seoKeywords": [
+      "Pau Pedrejón",
+      "Pau Pedrejon",
       "sviluppatore full-stack Barcellona",
       "ingegnere software Castelldefels",
       "profilo sviluppatore UPC",
@@ -1231,11 +1248,13 @@
     "badge": "Contatto",
     "title": "CONTATTO",
     "tagline": "Connettiamoci e lavoriamo insieme.",
-    "seoDescription": "Contatta Pau Pedrejon per opportunità lavorative, freelance o collaborazioni in sviluppo software e IA.",
+    "seoTitle": "Contatto — Pau Pedrejon | Sviluppatore Full-Stack Barcellona",
+    "seoDescription": "Contatta Pau Pedrejón per opportunità lavorative, freelance o collaborazioni in sviluppo software e IA a Barcellona o da remoto.",
     "seoKeywords": [
-      "contattare sviluppatore",
+      "contattare Pau Pedrejon",
       "assumere ingegnere software",
-      "freelance full-stack Barcellona"
+      "contatto sviluppatore Barcellona",
+      "freelance full-stack"
     ],
     "faqTitle": "Domande frequenti",
     "faq": [
