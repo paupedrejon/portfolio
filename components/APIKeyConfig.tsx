@@ -117,9 +117,10 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
     }
 
     if (!hasConfiguredProviderKeys(normalized)) {
-      newErrors._form =
-        "Configura al menos una key: OpenAI, DeepSeek, Groq u OpenRouter.";
-      setErrors(newErrors);
+      // Permitir guardar vacío (Plan Free usa Groq del servidor).
+      saveAPIKeys({});
+      onKeysConfigured({});
+      onClose();
       return;
     }
 
@@ -276,8 +277,11 @@ export default function APIKeyConfig({ onKeysConfigured, onClose }: APIKeyConfig
           }}
         >
           <p className={outfit.className} style={{ margin: 0, fontSize: "0.875rem", color: "#c7d2fe", lineHeight: 1.6 }}>
-            Las keys se guardan solo en tu navegador. Basta con <strong>una</strong> (Groq, DeepSeek,
-            OpenRouter u OpenAI). OpenAI mejora la indexación de PDFs; sin ella se usan embeddings locales.
+            <strong>Plan Free:</strong> puedes chatear sin keys (Groq del servidor, con límite diario).
+            <br />
+            <strong>Premium / BYOK:</strong> las keys se guardan solo en tu navegador. Basta con{" "}
+            <strong>una</strong> (Groq, DeepSeek, OpenRouter u OpenAI). OpenAI mejora la indexación de
+            PDFs; sin ella se usan embeddings locales.
           </p>
         </div>
 

@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/admin";
+import { ensureStudyAgentsUser } from "@/lib/study-agents/entitlements";
 
 const clientId = process.env.GOOGLE_CLIENT_ID?.trim() || "";
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim() || "";
@@ -37,10 +38,20 @@ export const authOptions = {
               avatar_url: user.image ?? null,
               updated_at: new Date().toISOString(),
             },
-            { onConflict: "user_id" }
+            { onConflict: "user_id" },
           );
         } catch (e) {
           console.error("Error upserting profile:", e);
+        }
+
+        try {
+          await ensureStudyAgentsUser({
+            userId: user.id,
+            email: user.email ?? null,
+            displayName: user.name ?? null,
+          });
+        } catch (e) {
+          console.error("Error upserting Study Agents user:", e);
         }
       }
       return true;

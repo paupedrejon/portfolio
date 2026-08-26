@@ -56,11 +56,14 @@ import {
   getStoredAPIKeys,
   getEmbeddingApiKey,
   getSystemApiKeyForRequest,
-  hasConfiguredProviderKeys,
   OPEN_API_KEY_MODAL_EVENT,
 } from "@/lib/study-agents/api-keys";
 import { saFetch, studyAgentsFetch } from "@/hooks/study-agents/useApiClient";
 import { useChatDocuments } from "@/hooks/study-agents/useChatDocuments";
+import {
+  canUseStudyAgentsLlm,
+  useStudyAgentsEntitlements,
+} from "@/hooks/study-agents/useStudyAgentsEntitlements";
 import ChatToolbar from "@/components/study-agents/chat/ChatToolbar";
 import ChatDocumentsPanel from "@/components/study-agents/chat/ChatDocumentsPanel";
 import QuickActionsBar from "@/components/study-agents/chat/QuickActionsBar";
@@ -445,6 +448,8 @@ export default function StudyChat({
   const [newChatColor, setNewChatColor] = useState<string>("#358c9f");
   const [newChatIcon, setNewChatIcon] = useState<string>("chat");
   const userId = session?.user?.id || "";
+  const { entitlements } = useStudyAgentsEntitlements(userId || null);
+  const canUseLlm = canUseStudyAgentsLlm(entitlements, apiKeys);
   const {
     documents: chatDocuments,
     loading: chatDocumentsLoading,
@@ -1599,7 +1604,7 @@ export default function StudyChat({
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    if (!hasConfiguredProviderKeys(apiKeys)) {
+    if (!canUseLlm) {
       setShowAPIKeyConfig(true);
       addMessage({
         role: "system",
@@ -2269,7 +2274,7 @@ export default function StudyChat({
     if (!input.trim() || isLoading || isGeneratingTest) return;
 
     // Verificar API keys antes de continuar
-    if (!hasConfiguredProviderKeys(apiKeys)) {
+    if (!canUseLlm) {
       setShowAPIKeyConfig(true);
       addMessage({
         role: "system",
@@ -2741,7 +2746,7 @@ ${contentPreview}
   };
 
   const generateNotes = async () => {
-    if (!hasConfiguredProviderKeys(apiKeys)) {
+    if (!canUseLlm) {
       setShowAPIKeyConfig(true);
       return;
     }
@@ -2886,7 +2891,7 @@ REGLAS OBLIGATORIAS:
   };
 
   const generateTest = async (difficulty: string = "medium", numQuestions?: number | null, topic?: string | null, constraints?: string | null) => {
-    if (!hasConfiguredProviderKeys(apiKeys)) {
+    if (!canUseLlm) {
       setShowAPIKeyConfig(true);
       return;
     }
@@ -3054,7 +3059,7 @@ REGLAS OBLIGATORIAS:
   };
 
   const generateExercise = async (difficulty: string = "medium", topic?: string | null, constraints?: string | null) => {
-    if (!hasConfiguredProviderKeys(apiKeys)) {
+    if (!canUseLlm) {
       setShowAPIKeyConfig(true);
       return;
     }
@@ -3202,7 +3207,7 @@ REGLAS OBLIGATORIAS:
 
   const correctExercise = async () => {
     if (!currentExercise || (!exerciseAnswer.trim() && !exerciseAnswerImage)) return;
-    if (!hasConfiguredProviderKeys(apiKeys)) {
+    if (!canUseLlm) {
       setShowAPIKeyConfig(true);
       return;
     }
@@ -3267,7 +3272,7 @@ REGLAS OBLIGATORIAS:
   };
 
   const askQuestion = async (question: string) => {
-    if (!hasConfiguredProviderKeys(apiKeys)) {
+    if (!canUseLlm) {
       setShowAPIKeyConfig(true);
       return;
     }
@@ -3414,7 +3419,7 @@ REGLAS OBLIGATORIAS:
   };
 
   const handleTestSubmit = async () => {
-    if (!currentTest || !hasConfiguredProviderKeys(apiKeys)) return;
+    if (!currentTest || !canUseLlm) return;
 
     addMessage({
       role: "user",
@@ -4363,7 +4368,21 @@ REGLAS OBLIGATORIAS:
       <ChatToolbar
         colorTheme={colorTheme}
         isMounted={isMounted}
-        hasApiKey={hasConfiguredProviderKeys(apiKeys)}
+        hasApiKey={canUseLlm}
+        planLabel={
+          entitlements
+            ? entitlements.plan === "premium"
+              ? "Premium"
+              : "Free"
+            : null
+        }
+        planHint={
+          entitlements?.plan === "free"
+            ? `Plan Free · ${entitlements.remainingToday}/${entitlements.dailyLimit} peticiones hoy (Groq servidor)`
+            : entitlements?.plan === "premium"
+              ? "Plan Premium · usa tus API keys (BYOK)"
+              : null
+        }
         onOpenApiKeyConfig={() => setShowAPIKeyConfig(true)}
         selectedModel={selectedModel}
         onSelectModel={(model) => {
@@ -7439,14 +7458,14 @@ REGLAS OBLIGATORIAS:
             disabled={isLoading}
             courseMode={courseMode}
             onStudyPlan={() => {
-              if (!hasConfiguredProviderKeys(apiKeys)) {
+              if (!canUseLlm) {
                 setShowAPIKeyConfig(true);
                 return;
               }
               setShowStudyPlanPanel(true);
             }}
             onConcepts={() => {
-              if (!hasConfiguredProviderKeys(apiKeys)) {
+              if (!canUseLlm) {
                 setShowAPIKeyConfig(true);
                 return;
               }

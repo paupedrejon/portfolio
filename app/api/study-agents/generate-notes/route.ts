@@ -1,82 +1,92 @@
-import { NextRequest, NextResponse } from 'next/server';
-
-const FASTAPI_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
+import { NextRequest, NextResponse } from "next/server";
+import { getFastAPIUrl } from "../utils";
+import { recordLlmUsage, resolveLlmAccess } from "@/lib/study-agents/llm-gateway";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { apiKey, topics, model, userId, conversationHistory, topic, providerKeys, provider_keys, chatId } = body;
+    const {
+      apiKey,
+      topics,
+      model,
+      userId,
+      conversationHistory,
+      topic,
+      providerKeys,
+      provider_keys,
+      chatId,
+    } = body;
 
-    if (!apiKey) {
+    const access = await resolveLlmAccess({
+      userId,
+      apiKey,
+      providerKeys: providerKeys || provider_keys,
+    });
+
+    if (!access.ok) {
       return NextResponse.json(
-        { error: 'API key requerida' },
-        { status: 400 }
+        {
+          error: access.error,
+          code: access.code,
+          entitlements: access.entitlements,
+        },
+        { status: access.status },
       );
     }
 
-    // Verificar que FastAPI esté disponible primero
     try {
-      const healthCheck = await fetch(`${FASTAPI_URL}/health`, {
-        method: 'GET',
+      const healthCheck = await fetch(getFastAPIUrl("/health"), {
+        method: "GET",
       }).catch(() => null);
-      
+
       if (!healthCheck || !healthCheck.ok) {
         return NextResponse.json(
-          { 
+          {
             error: `El backend FastAPI no está disponible. Por favor, inicia el servidor primero.`,
             hint: `Ejecuta en otra terminal: cd study_agents && python api/main.py`,
-            url: FASTAPI_URL
+            url: process.env.FASTAPI_URL || "http://localhost:8000",
           },
-          { status: 503 }
+          { status: 503 },
         );
       }
     } catch (healthError: unknown) {
-      const details = healthError instanceof Error ? healthError.message : 'Error desconocido';
+      const details =
+        healthError instanceof Error ? healthError.message : "Error desconocido";
       return NextResponse.json(
-        { 
-          error: `No se pudo conectar al backend FastAPI en ${FASTAPI_URL}`,
-          hint: 'Asegúrate de que FastAPI esté corriendo: cd study_agents && python api/main.py',
-          details: details
+        {
+          error: `No se pudo conectar al backend FastAPI`,
+          hint: "Asegúrate de que FastAPI esté corriendo: cd study_agents && python api/main.py",
+          details,
         },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
-    // No forzar topics=[nombre.pdf]: eso hacía que el backend inventara apuntes sin leer el PDF.
     const topicLooksLikeFile =
-      typeof topic === "string" &&
-      /\.(pdf|png|jpe?g|webp)$/i.test(topic.trim());
+      typeof topic === "string" && /\.(pdf|png|jpe?g|webp)$/i.test(topic.trim());
 
-    const response = await fetch(`${FASTAPI_URL}/api/generate-notes`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const response = await fetch(getFastAPIUrl("/api/generate-notes"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        apiKey,
-        topics: topicLooksLikeFile
-          ? null
-          : topic
-            ? [topic]
-            : topics || null,
-        model: model || null, // null = modo automático
+        apiKey: access.apiKey || "default",
+        topics: topicLooksLikeFile ? null : topic ? [topic] : topics || null,
+        model: model || access.preferredModel || null,
         user_id: userId || null,
         conversation_history: conversationHistory || null,
         topic: topicLooksLikeFile ? null : topic || null,
         chat_id: chatId || null,
-        provider_keys: providerKeys || provider_keys || null,
+        provider_keys: access.providerKeys,
       }),
     });
 
-    // Manejar errores 404 específicamente
     if (response.status === 404) {
       return NextResponse.json(
-        { 
+        {
           error: `El endpoint /api/generate-notes no se encontró en FastAPI.`,
-          hint: 'Asegúrate de que el servidor FastAPI esté actualizado y corriendo.',
-          url: `${FASTAPI_URL}/api/generate-notes`
+          hint: "Asegúrate de que el servidor FastAPI esté actualizado y corriendo.",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -84,28 +94,22 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: data.detail || 'Error al generar apuntes' },
-        { status: response.status }
+        { error: data.detail || "Error al generar apuntes" },
+        { status: response.status },
       );
     }
+
+    await recordLlmUsage({ userId, entitlements: access.entitlements });
 
     return NextResponse.json({
       success: true,
       notes: data.notes,
+      plan: access.entitlements.plan,
     });
   } catch (error: unknown) {
-    console.error('Error generating notes:', error);
-    const message = error instanceof Error ? error.message : 'Error al generar apuntes';
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    console.error("Error generating notes:", error);
+    const message =
+      error instanceof Error ? error.message : "Error al generar apuntes";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
-
-
-
-
-
-

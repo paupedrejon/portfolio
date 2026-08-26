@@ -374,6 +374,7 @@ def resolve_openai_and_llm_access(
     """
     Devuelve (openai_key_or_None, has_any_llm_key).
     openai_key solo para embeddings; LLM puede ser Groq/DeepSeek/OpenRouter.
+    Incluye GROQ_API_KEY de servidor (plan Free inyectado por el BFF).
     """
     apply_provider_keys_from_request(api_key, provider_keys)
     pk = {k: v for k, v in (provider_keys or {}).items() if v and v != "default"}
@@ -384,6 +385,7 @@ def resolve_openai_and_llm_access(
         or pk.get("groq")
         or pk.get("deepseek")
         or pk.get("openrouter")
+        or os.getenv("GROQ_API_KEY")
     )
     return openai_key, has_llm
 

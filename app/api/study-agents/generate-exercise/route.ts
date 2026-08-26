@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getFastAPIUrl } from '../utils';
+import { NextRequest, NextResponse } from "next/server";
+import { getFastAPIUrl } from "../utils";
+import { recordLlmUsage, resolveLlmAccess } from "@/lib/study-agents/llm-gateway";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
       apiKey,
-      difficulty = 'medium',
+      difficulty = "medium",
       topics,
       exerciseType,
       constraints,
@@ -20,40 +21,38 @@ export async function POST(request: NextRequest) {
       provider_keys,
     } = body;
 
-    const keys = (providerKeys || provider_keys || {}) as Record<string, string>;
-    const hasAnyKey = Boolean(
-      (apiKey && apiKey !== 'default') ||
-        keys.openai ||
-        keys.groq ||
-        keys.deepseek ||
-        keys.openrouter,
-    );
-    if (!hasAnyKey) {
+    const uid = userId || user_id || null;
+    const access = await resolveLlmAccess({
+      userId: uid,
+      apiKey,
+      providerKeys: providerKeys || provider_keys,
+    });
+
+    if (!access.ok) {
       return NextResponse.json(
-        { error: 'Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).' },
-        { status: 400 },
+        {
+          error: access.error,
+          code: access.code,
+          entitlements: access.entitlements,
+        },
+        { status: access.status },
       );
     }
 
-    const openaiForSystem =
-      (typeof apiKey === 'string' && apiKey !== 'default' ? apiKey : null) ||
-      keys.openai ||
-      'default';
-
-    const response = await fetch(getFastAPIUrl('/api/generate-exercise'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch(getFastAPIUrl("/api/generate-exercise"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        apiKey: openaiForSystem,
+        apiKey: access.apiKey || "default",
         difficulty,
         topics: topics || null,
         exercise_type: exerciseType || null,
         constraints: constraints || null,
-        model: model || null,
+        model: model || access.preferredModel || null,
         conversation_history: conversationHistory || null,
-        user_id: userId || user_id || null,
+        user_id: uid,
         chat_id: chatId || chat_id || null,
-        provider_keys: keys,
+        provider_keys: access.providerKeys,
       }),
     });
 
@@ -61,10 +60,17 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: data.detail || data.error || 'Error al generar ejercicio' },
+        { error: data.detail || data.error || "Error al generar ejercicio" },
         { status: response.status },
       );
     }
+
+    await recordLlmUsage({
+      userId: uid,
+      entitlements: access.entitlements,
+      tokensIn: data.inputTokens || 0,
+      tokensOut: data.outputTokens || 0,
+    });
 
     return NextResponse.json({
       success: true,
@@ -73,10 +79,12 @@ export async function POST(request: NextRequest) {
       inputTokens: data.inputTokens || 0,
       outputTokens: data.outputTokens || 0,
       adaptive: data.adaptive || null,
+      plan: access.entitlements.plan,
     });
   } catch (error: unknown) {
-    console.error('Error generating exercise:', error);
-    const message = error instanceof Error ? error.message : 'Error al generar ejercicio';
+    console.error("Error generating exercise:", error);
+    const message =
+      error instanceof Error ? error.message : "Error al generar ejercicio";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

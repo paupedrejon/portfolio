@@ -21,6 +21,8 @@ type Props = {
   colorTheme: "dark" | "light";
   isMounted: boolean;
   hasApiKey: boolean;
+  planLabel?: string | null;
+  planHint?: string | null;
   onOpenApiKeyConfig: () => void;
   selectedModel: string;
   onSelectModel: (model: string) => void;
@@ -46,6 +48,8 @@ export default function ChatToolbar({
   colorTheme,
   isMounted,
   hasApiKey,
+  planLabel = null,
+  planHint = null,
   onOpenApiKeyConfig,
   selectedModel,
   onSelectModel,
@@ -110,6 +114,23 @@ export default function ChatToolbar({
         zIndex: 10,
       }}
     >
+      {planLabel ? (
+        <span
+          title={planHint || undefined}
+          style={{
+            fontSize: "0.75rem",
+            color: "#e2e8f0",
+            padding: "0.35rem 0.65rem",
+            borderRadius: 999,
+            background: "rgba(53, 140, 159, 0.22)",
+            border: "1px solid rgba(78, 179, 200, 0.4)",
+            fontWeight: 700,
+            letterSpacing: "0.02em",
+          }}
+        >
+          {planLabel}
+        </span>
+      ) : null}
       {sessionCostUsd > 0 && (
         <span
           style={{

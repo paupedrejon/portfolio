@@ -10,7 +10,11 @@ export const studyAgentsFlags = {
   socraticMode: false,
   learnerProfile: false,
   hybridRag: false,
+  /** Chats/cursos siguen en JSON; plan/uso ya van a Supabase. */
   supabaseStorage: false,
+  /** Free (Groq servidor) vs Premium (BYOK). */
+  planGating: true,
+  serverGroqFree: true,
 } as const;
 
 export type StudyAgentsFlag = keyof typeof studyAgentsFlags;
