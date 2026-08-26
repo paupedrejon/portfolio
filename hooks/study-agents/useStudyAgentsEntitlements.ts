@@ -10,14 +10,11 @@ export function canUseStudyAgentsLlm(
   opts?: { loading?: boolean },
 ): boolean {
   if (hasConfiguredProviderKeys(apiKeys)) return true;
-  // Mientras carga el plan, no bloqueamos (Free no exige keys).
-  if (opts?.loading && !entitlements) return true;
-  // Free con Groq de servidor, o Free en fallback sin saber aún si hay Groq
-  // (el BFF devolverá error claro si falta GROQ_API_KEY).
-  if (entitlements?.plan === "free") {
-    return entitlements.freeServerReady || entitlements.source === "fallback";
-  }
-  return false;
+  // Premium exige BYOK
+  if (entitlements?.plan === "premium") return false;
+  // Free / cargando / sin entitlements → el BFF usa GROQ_API_KEY del servidor
+  void opts;
+  return true;
 }
 
 export function useStudyAgentsEntitlements(userId: string | undefined | null) {

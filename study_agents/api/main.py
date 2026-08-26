@@ -364,6 +364,11 @@ def apply_provider_keys_from_request(
     keys = {k: v for k, v in (provider_keys or {}).items() if v and v != "default"}
     if api_key and api_key != "default":
         keys["openai"] = api_key
+    # Plan Free: Groq del servidor (Railway/local) si el BFF no inyectó key
+    if not keys.get("groq"):
+        env_groq = (os.getenv("GROQ_API_KEY") or "").strip()
+        if env_groq:
+            keys["groq"] = env_groq
     set_request_provider_keys(keys)
 
 

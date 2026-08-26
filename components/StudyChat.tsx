@@ -1607,7 +1607,10 @@ export default function StudyChat({
       setShowAPIKeyConfig(true);
       addMessage({
         role: "system",
-        content: "Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI) para subir documentos.",
+        content:
+          entitlements?.plan === "premium"
+            ? "Plan Premium: configura tu API key (Groq, DeepSeek, OpenRouter u OpenAI)."
+            : "No se pudo usar el plan Free. Si acabas de añadir GROQ_API_KEY en Vercel, redespliega Production. O configura una API key propia.",
         type: "message",
       });
       return;
@@ -2277,7 +2280,10 @@ export default function StudyChat({
       setShowAPIKeyConfig(true);
       addMessage({
         role: "system",
-        content: "Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI) para usar el sistema.",
+        content:
+          entitlements?.plan === "premium"
+            ? "Plan Premium: configura tu API key (Groq, DeepSeek, OpenRouter u OpenAI)."
+            : "No se pudo usar el plan Free. Si acabas de añadir GROQ_API_KEY en Vercel, redespliega Production. O configura una API key propia.",
         type: "message",
       });
       return;

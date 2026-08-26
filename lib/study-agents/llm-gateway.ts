@@ -118,8 +118,9 @@ export async function resolveLlmAccess(
   }
 
   // Free
-  if (!entitlements.freeServerReady) {
-    // Sin Groq de servidor: permitir BYOK como escape (dev / misconfig)
+  // Releer env en cada request (tras redeploy con GROQ_API_KEY)
+  const serverGroq = process.env.GROQ_API_KEY?.trim() || "";
+  if (!serverGroq) {
     if (clientHasAnyKey(clientApiKey, clientKeys)) {
       return {
         ok: true,
@@ -133,9 +134,9 @@ export async function resolveLlmAccess(
       ok: false,
       status: 503,
       error:
-        "Plan Free no disponible todavía (falta GROQ_API_KEY en el servidor). Configura una API key propia o inténtalo más tarde.",
+        "Plan Free no disponible: falta GROQ_API_KEY en el servidor (Vercel). Añádela y vuelve a desplegar, o configura una API key propia.",
       code: "FREE_NOT_READY",
-      entitlements,
+      entitlements: { ...entitlements, freeServerReady: false },
     };
   }
 
@@ -149,10 +150,9 @@ export async function resolveLlmAccess(
     };
   }
 
-  const serverGroq = process.env.GROQ_API_KEY!.trim();
   return {
     ok: true,
-    entitlements,
+    entitlements: { ...entitlements, freeServerReady: true },
     apiKey: null,
     providerKeys: { groq: serverGroq },
     preferredModel: FREE_DEFAULT_MODEL,

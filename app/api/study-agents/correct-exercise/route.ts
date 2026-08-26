@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getFastAPIUrl } from '../utils';
+import { NextRequest, NextResponse } from "next/server";
+import { getFastAPIUrl } from "../utils";
+import { recordLlmUsage, resolveLlmAccess } from "@/lib/study-agents/llm-gateway";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,46 +18,47 @@ export async function POST(request: NextRequest) {
       provider_keys,
     } = body;
 
-    const keys = (providerKeys || provider_keys || {}) as Record<string, string>;
-    const hasAnyKey = Boolean(
-      (apiKey && apiKey !== 'default') ||
-        keys.openai ||
-        keys.groq ||
-        keys.deepseek ||
-        keys.openrouter,
-    );
-    if (!hasAnyKey) {
+    const uid = userId || user_id || null;
+    const access = await resolveLlmAccess({
+      userId: uid,
+      apiKey,
+      providerKeys: providerKeys || provider_keys,
+    });
+
+    if (!access.ok) {
       return NextResponse.json(
-        { error: 'Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).' },
-        { status: 400 },
+        {
+          error: access.error,
+          code: access.code,
+          entitlements: access.entitlements,
+        },
+        { status: access.status },
       );
     }
 
     if (!exercise) {
-      return NextResponse.json({ error: 'Ejercicio requerido' }, { status: 400 });
+      return NextResponse.json({ error: "Ejercicio requerido" }, { status: 400 });
     }
 
     if (!studentAnswer && !studentAnswerImage) {
-      return NextResponse.json({ error: 'Respuesta del estudiante requerida' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Respuesta del estudiante requerida" },
+        { status: 400 },
+      );
     }
 
-    const openaiForSystem =
-      (typeof apiKey === 'string' && apiKey !== 'default' ? apiKey : null) ||
-      keys.openai ||
-      'default';
-
-    const response = await fetch(getFastAPIUrl('/api/correct-exercise'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch(getFastAPIUrl("/api/correct-exercise"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        apiKey: openaiForSystem,
+        apiKey: access.apiKey || "default",
         exercise,
-        student_answer: studentAnswer || '',
+        student_answer: studentAnswer || "",
         student_answer_image: studentAnswerImage || null,
-        user_id: userId || user_id || null,
+        user_id: uid,
         chat_id: chatId || null,
-        model: model || null,
-        provider_keys: keys,
+        model: model || access.preferredModel || null,
+        provider_keys: access.providerKeys,
       }),
     });
 
@@ -64,10 +66,17 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: data.detail || data.error || 'Error al corregir ejercicio' },
+        { error: data.detail || data.error || "Error al corregir ejercicio" },
         { status: response.status },
       );
     }
+
+    await recordLlmUsage({
+      userId: uid,
+      entitlements: access.entitlements,
+      tokensIn: data.inputTokens || 0,
+      tokensOut: data.outputTokens || 0,
+    });
 
     return NextResponse.json({
       success: true,
@@ -78,13 +87,12 @@ export async function POST(request: NextRequest) {
       inputTokens: data.inputTokens || 0,
       outputTokens: data.outputTokens || 0,
       mastery_updates: data.mastery_updates || [],
-      srs_cards_created: data.srs_cards_created || 0,
-      srs_due_hint: data.srs_due_hint || false,
-      weak_prerequisite: data.weak_prerequisite || null,
+      plan: access.entitlements.plan,
     });
   } catch (error: unknown) {
-    console.error('Error correcting exercise:', error);
-    const message = error instanceof Error ? error.message : 'Error al corregir ejercicio';
+    console.error("Error correcting exercise:", error);
+    const message =
+      error instanceof Error ? error.message : "Error al corregir ejercicio";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
