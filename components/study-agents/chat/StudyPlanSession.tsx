@@ -31,6 +31,12 @@ export type PlanBlock = {
   label?: string;
   code?: string;
   html?: string;
+  /** Demo en vivo (iframe sandboxed): antes / después */
+  before_label?: string;
+  after_label?: string;
+  before_html?: string;
+  after_html?: string;
+  srcdoc?: string;
   prompt?: string;
   options?: string[];
   correct_index?: number;
@@ -821,15 +827,43 @@ function dayLabelFor(topic: string, dayNum: number, fallbackTitle?: string, fall
     return { ...map[kind], kind };
   }
 
-  // Genérico con foco real (nunca "Concepto clave")
+  if (/\bcss\b|cascading style|hojas? de estilo|estilo(s)? web/.test(tl) || tl === "css") {
+    const map: Record<DayKind, { title: string; focus: string }> = {
+      intro: { title: "Qué es CSS", focus: "Separar estilo del HTML" },
+      jsx: { title: "Selectores", focus: "A quién aplica la regla" },
+      props: { title: "Colores y texto", focus: "color, font-size" },
+      state: { title: "Caja", focus: "margin, padding, border" },
+      events: { title: "Flexbox", focus: "Layout en fila" },
+      lists: { title: "Responsive", focus: "media queries" },
+      effects: { title: "Clases", focus: "Reutilizar estilos" },
+      practice: { title: "Práctica", focus: "Mini página" },
+    };
+    return { ...map[kind], kind };
+  }
+
+  if (/\bhtml\b/.test(tl)) {
+    const map: Record<DayKind, { title: string; focus: string }> = {
+      intro: { title: "Qué es HTML", focus: "Estructura de la página" },
+      jsx: { title: "Etiquetas", focus: "h1, p, a, img" },
+      props: { title: "Listas", focus: "ul / ol / li" },
+      state: { title: "Enlaces", focus: "href y navegación" },
+      events: { title: "Imágenes", focus: "img y alt" },
+      lists: { title: "Formularios", focus: "input y button" },
+      effects: { title: "Semántica", focus: "header, main, footer" },
+      practice: { title: "Práctica", focus: "Página mínima" },
+    };
+    return { ...map[kind], kind };
+  }
+
+  // Genérico con foco real (nunca "Idea central" — eso dispara plantillas vacías)
   const genericTitles = [
-    { title: `Qué es ${topic}`, focus: "Idea central" },
-    { title: "Fundamentos", focus: "Piezas básicas" },
-    { title: "Sintaxis", focus: "Cómo se escribe" },
-    { title: "Operaciones", focus: "Acciones típicas" },
-    { title: "Estructura", focus: "Cómo se organiza" },
-    { title: "Errores", focus: "Fallos frecuentes" },
-    { title: "Práctica", focus: "Aplicar hoy" },
+    { title: `Qué es ${topic}`, focus: `Concepto base de ${topic}` },
+    { title: "Fundamentos", focus: `Piezas básicas de ${topic}` },
+    { title: "Sintaxis", focus: `Cómo se escribe en ${topic}` },
+    { title: "Operaciones", focus: `Acciones típicas en ${topic}` },
+    { title: "Estructura", focus: `Cómo se organiza ${topic}` },
+    { title: "Errores", focus: `Fallos frecuentes en ${topic}` },
+    { title: "Práctica", focus: `Aplicar ${topic} hoy` },
   ];
   const g = genericTitles[(dayNum - 1) % genericTitles.length];
 
@@ -1164,6 +1198,193 @@ function qualityQuestionsForDay(topic: string, dayNum: number): PlanQuestion[] {
           correct_index: 0,
           feedback_ok: "Clave única por fila.",
           feedback_bad: "Una fila = una PK.",
+        },
+      ],
+    ];
+    return banks[unit - 1] || banks[0];
+  }
+
+  if (/\bcss\b|cascading style|hojas? de estilo|estilo(s)? web/.test(tl) || tl === "css") {
+    const banks: PlanQuestion[][] = [
+      [
+        {
+          id: `cq${dayNum}-1`,
+          prompt: "CSS sirve principalmente para…",
+          options: [
+            "Definir el aspecto visual del HTML",
+            "Guardar datos en tablas",
+            "Compilar TypeScript",
+            "Enviar peticiones HTTP",
+          ],
+          correct_index: 0,
+          feedback_ok: "HTML estructura; CSS viste.",
+          feedback_bad: "Piensa en colores, tipografía y layout.",
+        },
+        {
+          id: `cq${dayNum}-2`,
+          prompt: "Si el HTML es el mismo y solo cambia CSS, ¿qué ocurre?",
+          options: [
+            "Puede cambiar mucho el aspecto de la página",
+            "El contenido del texto se reescribe solo",
+            "Se crea una base de datos",
+            "Nada visible cambia nunca",
+          ],
+          correct_index: 0,
+          feedback_ok: "Mismo contenido, otro look.",
+          feedback_bad: "CSS no reescribe el texto; cambia cómo se ve.",
+        },
+      ],
+      [
+        {
+          id: `cq${dayNum}-1`,
+          prompt: "Un selector .titulo apunta a…",
+          options: [
+            "Elementos con class=\"titulo\"",
+            "El id titulo",
+            "Todas las etiquetas <titulo>",
+            "Solo el body",
+          ],
+          correct_index: 0,
+          feedback_ok: "El punto = clase.",
+          feedback_bad: "class en HTML → .clase en CSS.",
+        },
+        {
+          id: `cq${dayNum}-2`,
+          prompt: "Entre id, clase y etiqueta, ¿cuál suele ser más específica?",
+          options: ["Id", "Etiqueta", "Ninguna importa", "Solo el orden del HTML"],
+          correct_index: 0,
+          feedback_ok: "Id > clase > etiqueta.",
+          feedback_bad: "#id gana a .clase y a h1.",
+        },
+      ],
+      [
+        {
+          id: `cq${dayNum}-1`,
+          prompt: "La propiedad color controla…",
+          options: ["El color del texto", "El ancho de la caja", "La URL de una imagen", "El orden flex"],
+          correct_index: 0,
+          feedback_ok: "color = tinta del texto.",
+          feedback_bad: "No confundas con background-color.",
+        },
+        {
+          id: `cq${dayNum}-2`,
+          prompt: "¿Qué unidad escala con la fuente raíz?",
+          options: ["rem", "px fijo absoluto", "cm de impresora", "kb de archivo"],
+          correct_index: 0,
+          feedback_ok: "rem ayuda a la accesibilidad.",
+          feedback_bad: "rem = relative to root.",
+        },
+      ],
+      [
+        {
+          id: `cq${dayNum}-1`,
+          prompt: "padding afecta…",
+          options: [
+            "El espacio interno entre borde y contenido",
+            "Solo la fuente del documento",
+            "La URL del CSS",
+            "El nombre del selector",
+          ],
+          correct_index: 0,
+          feedback_ok: "Padding = dentro de la caja.",
+          feedback_bad: "Margin es fuera; padding es dentro.",
+        },
+        {
+          id: `cq${dayNum}-2`,
+          prompt: "box-sizing: border-box hace que width…",
+          options: [
+            "Incluya padding y border",
+            "Ignore el HTML",
+            "Fije siempre 100vw",
+            "Desactive el margin",
+          ],
+          correct_index: 0,
+          feedback_ok: "Más predecible al maquetar.",
+          feedback_bad: "El ancho cuenta padding+border.",
+        },
+      ],
+      [
+        {
+          id: `cq${dayNum}-1`,
+          prompt: "display: flex en el contenedor…",
+          options: [
+            "Alinea hijos en fila o columna",
+            "Borra el HTML",
+            "Crea una tabla SQL",
+            "Solo cambia el color",
+          ],
+          correct_index: 0,
+          feedback_ok: "Flex = layout de hijos.",
+          feedback_bad: "Flexbox organiza el eje principal.",
+        },
+        {
+          id: `cq${dayNum}-2`,
+          prompt: "gap en flex sirve para…",
+          options: [
+            "Separar hijos sin pelear con margins",
+            "Elegir el color del texto",
+            "Definir el doctype",
+            "Compilar Sass",
+          ],
+          correct_index: 0,
+          feedback_ok: "Espacio limpio entre ítems.",
+          feedback_bad: "gap = separación entre flex items.",
+        },
+      ],
+      [
+        {
+          id: `cq${dayNum}-1`,
+          prompt: "Una media query típica reacciona a…",
+          options: [
+            "El ancho del viewport",
+            "El número de commits de git",
+            "La IP del servidor",
+            "El nombre del archivo HTML",
+          ],
+          correct_index: 0,
+          feedback_ok: "Responsive según pantalla.",
+          feedback_bad: "@media (min-width: …).",
+        },
+        {
+          id: `cq${dayNum}-2`,
+          prompt: "Enfoque mobile-first significa…",
+          options: [
+            "Estilos base para móvil y luego min-width",
+            "Solo diseñar para 4K",
+            "Ignorar el CSS en móvil",
+            "Usar solo px fijos de 1200",
+          ],
+          correct_index: 0,
+          feedback_ok: "Base estrecha → ampliar.",
+          feedback_bad: "Empieza pequeño y escala.",
+        },
+      ],
+      [
+        {
+          id: `cq${dayNum}-1`,
+          prompt: "Para reutilizar estilo en varios elementos conviene…",
+          options: [
+            "Clases CSS compartidas",
+            "Copiar el mismo style inline mil veces",
+            "Poner todo en un único id",
+            "Evitar el CSS por completo",
+          ],
+          correct_index: 0,
+          feedback_ok: "Clases = reutilización.",
+          feedback_bad: "class + .selector.",
+        },
+        {
+          id: `cq${dayNum}-2`,
+          prompt: "HTML limpio + CSS por clases es mejor que…",
+          options: [
+            "Estilos inline por todas partes",
+            "Usar selectores",
+            "Tener un archivo .css",
+            "Nombrar las clases",
+          ],
+          correct_index: 0,
+          feedback_ok: "Separa estructura y look.",
+          feedback_bad: "Inline no escala.",
         },
       ],
     ];
@@ -1743,6 +1964,247 @@ function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
     return units[unit - 1] || units[0];
   }
 
+  // —— CSS: enseñar con demo HTML vs HTML+CSS; test solo al final del día ——
+  if (/\bcss\b|cascading style|hojas? de estilo|estilo(s)? web/.test(tl) || tl === "css") {
+    const bare = `<!DOCTYPE html><html><body style="margin:0;padding:14px;font-family:Georgia,serif;background:#fff;color:#111">
+<h1 style="margin:0 0 8px;font-size:1.35rem;font-weight:700">Mi página</h1>
+<p style="margin:0 0 12px">Texto y un botón, sin hoja de estilos propia.</p>
+<button>Continuar</button>
+</body></html>`;
+    const styled = `<!DOCTYPE html><html><head><style>
+body{margin:0;padding:14px;font-family:system-ui,sans-serif;background:#0b1220;color:#e2e8f0}
+h1{margin:0 0 8px;font-size:1.35rem;color:#38bdf8}
+p{margin:0 0 12px;color:#94a3b8;line-height:1.45}
+button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10px;font-weight:600}
+</style></head><body>
+<h1>Mi página</h1>
+<p>Mismo HTML: CSS cambia colores, tipografía y el botón.</p>
+<button>Continuar</button>
+</body></html>`;
+
+    const units: LessonSlide[][] = [
+      [
+        {
+          id: `css${d}-1`,
+          phase: "intro",
+          bot: "CSS (Cascading Style Sheets) describe cómo se ve el HTML: colores, tipografía, espaciado y layout. El contenido sigue en HTML; el aspecto va aparte.",
+          visual: {
+            kind: "vs",
+            left: { title: "HTML", body: "Estructura y texto" },
+            right: { title: "CSS", body: "Aspecto y diseño" },
+          },
+        },
+        {
+          id: `css${d}-2`,
+          phase: "learn",
+          bot: "Mira el mismo HTML dos veces: a la izquierda sin estilos propios; a la derecha con una hoja CSS. Ahí se ve el alcance de CSS.",
+          visual: {
+            kind: "live_demo",
+            before_label: "HTML a secas",
+            after_label: "HTML + CSS",
+            before_html: bare,
+            after_html: styled,
+          },
+        },
+        {
+          id: `css${d}-3`,
+          phase: "learn",
+          bot: "Una regla CSS elige elementos (selector) y declara propiedades. Ejemplo: el botón pasa a ser teal y redondeado.",
+          visual: {
+            kind: "code",
+            label: "Regla",
+            code: "button {\n  background: #358c9f;\n  color: white;\n  border-radius: 10px;\n}",
+          },
+        },
+      ],
+      [
+        {
+          id: `css${d}-1`,
+          phase: "intro",
+          bot: "Un selector decide a qué elementos aplica la regla: por etiqueta, por clase (.btn) o por id (#hero).",
+          visual: {
+            kind: "chips",
+            items: ["h1", ".titulo", "#main", "button:hover"],
+          },
+        },
+        {
+          id: `css${d}-2`,
+          phase: "learn",
+          bot: "La clase es la forma habitual de reutilizar estilo: marcas el HTML con class y lo apuntas en CSS con un punto.",
+          visual: {
+            kind: "code",
+            label: "HTML + CSS",
+            code: '<p class="aviso">Ojo</p>\n\n.aviso {\n  color: #f59e0b;\n  font-weight: 700;\n}',
+          },
+        },
+        {
+          id: `css${d}-3`,
+          phase: "learn",
+          bot: "Si varias reglas chocan, gana la más específica (id > clase > etiqueta). Por eso las clases escalan mejor que estilar todo con ids.",
+          visual: {
+            kind: "steps",
+            items: [
+              { n: 1, label: "Etiqueta (débil)" },
+              { n: 2, label: "Clase (habitual)" },
+              { n: 3, label: "Id (muy específica)" },
+            ],
+          },
+        },
+      ],
+      [
+        {
+          id: `css${d}-1`,
+          phase: "intro",
+          bot: "color y font-size son las propiedades más visibles: definen el tono del texto y su tamaño.",
+          visual: { kind: "big_word", word: "color", sub: "font-size" },
+        },
+        {
+          id: `css${d}-2`,
+          phase: "learn",
+          bot: "Puedes usar nombres (tomato), hex (#38bdf8) o rgb(). El hex es el estándar en interfaces.",
+          visual: {
+            kind: "code",
+            label: "Texto",
+            code: "h1 {\n  color: #38bdf8;\n  font-size: 1.5rem;\n}",
+          },
+        },
+        {
+          id: `css${d}-3`,
+          phase: "learn",
+          bot: "rem escala con la fuente raíz; px es fijo. En UIs modernas suele preferirse rem para accesibilidad.",
+          visual: {
+            kind: "vs",
+            left: { title: "px", body: "Tamaño fijo" },
+            right: { title: "rem", body: "Relativo al root" },
+          },
+        },
+      ],
+      [
+        {
+          id: `css${d}-1`,
+          phase: "intro",
+          bot: "Cada elemento es una caja: content, padding, border y margin. Entender la caja evita layouts rotos.",
+          visual: {
+            kind: "steps",
+            items: [
+              { n: 1, label: "content" },
+              { n: 2, label: "padding" },
+              { n: 3, label: "border" },
+              { n: 4, label: "margin" },
+            ],
+          },
+        },
+        {
+          id: `css${d}-2`,
+          phase: "learn",
+          bot: "padding empuja el contenido hacia dentro; margin separa cajas entre sí.",
+          visual: {
+            kind: "code",
+            label: "Caja",
+            code: ".card {\n  padding: 16px;\n  margin: 12px 0;\n  border: 1px solid #334155;\n}",
+          },
+        },
+        {
+          id: `css${d}-3`,
+          phase: "learn",
+          bot: "box-sizing: border-box hace que width incluya padding y border: más predecible al maquetar.",
+          visual: {
+            kind: "code",
+            label: "Truco",
+            code: "*, *::before, *::after {\n  box-sizing: border-box;\n}",
+          },
+        },
+      ],
+      [
+        {
+          id: `css${d}-1`,
+          phase: "intro",
+          bot: "Flexbox alinea elementos en una fila o columna sin floats raros. Ideal para headers y toolbars.",
+          visual: { kind: "big_word", word: "flex", sub: "display: flex" },
+        },
+        {
+          id: `css${d}-2`,
+          phase: "learn",
+          bot: "En el contenedor: display:flex. Luego justify-content (eje principal) y align-items (eje cruzado).",
+          visual: {
+            kind: "code",
+            label: "Fila",
+            code: ".row {\n  display: flex;\n  gap: 12px;\n  justify-content: space-between;\n  align-items: center;\n}",
+          },
+        },
+        {
+          id: `css${d}-3`,
+          phase: "learn",
+          bot: "gap separa hijos sin pelearte con margins. flex-wrap permite que bajen de línea en pantallas pequeñas.",
+          visual: {
+            kind: "chips",
+            items: ["gap", "justify-content", "align-items", "flex-wrap"],
+          },
+        },
+      ],
+      [
+        {
+          id: `css${d}-1`,
+          phase: "intro",
+          bot: "Responsive significa que el diseño se adapta al ancho. Las media queries cambian reglas según el viewport.",
+          visual: { kind: "big_word", word: "@media", sub: "breakpoints" },
+        },
+        {
+          id: `css${d}-2`,
+          phase: "learn",
+          bot: "Empieza mobile-first: estilos base para móvil y luego min-width para pantallas mayores.",
+          visual: {
+            kind: "code",
+            label: "Media query",
+            code: ".nav { flex-direction: column; }\n\n@media (min-width: 768px) {\n  .nav { flex-direction: row; }\n}",
+          },
+        },
+        {
+          id: `css${d}-3`,
+          phase: "learn",
+          bot: "Unidades relativas (%, rem, vw) ayudan más que px fijos cuando el layout debe respirar.",
+          visual: {
+            kind: "vs",
+            left: { title: "Rígido", body: "width: 900px" },
+            right: { title: "Flexible", body: "max-width: 40rem" },
+          },
+        },
+      ],
+      [
+        {
+          id: `css${d}-1`,
+          phase: "intro",
+          bot: "Práctica: arma una tarjeta con título, texto y botón usando clases reutilizables.",
+          visual: { kind: "big_word", word: ".card", sub: "componente visual" },
+        },
+        {
+          id: `css${d}-2`,
+          phase: "learn",
+          bot: "Define la estructura en HTML y el look en CSS. No metas estilos inline salvo demos rápidas.",
+          visual: {
+            kind: "code",
+            label: "Tarjeta",
+            code: '<article class="card">\n  <h2 class="card__title">Hola</h2>\n  <p class="card__body">Texto</p>\n</article>',
+          },
+        },
+        {
+          id: `css${d}-3`,
+          phase: "learn",
+          bot: "Cuando termines el camino del día, el test comprueba si reteniste selectores, caja y flex.",
+          visual: {
+            kind: "steps",
+            items: [
+              { n: 1, label: "HTML limpio" },
+              { n: 2, label: "CSS por clases" },
+              { n: 3, label: "Probar el test" },
+            ],
+          },
+        },
+      ],
+    ];
+    return units[unit - 1] || units[0];
+  }
+
   if (tl.includes("sql") || tl.includes("mysql") || tl.includes("postgres") || tl.includes("base de datos")) {
     const units: LessonSlide[][] = [
       [
@@ -2076,8 +2538,7 @@ function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
     return units[unit - 1] || units[0];
   }
 
-  // Genérico con títulos reales del día (nunca “Concepto clave” / PDF)
-  // Si es idioma, nunca caemos aquí (ya retornamos arriba).
+  // Genérico: enseñar primero (sin quiz en slides); el test va al final del día
   const label = dayLabelFor(t, d);
   const focus = label.focus;
   const title = label.title;
@@ -2088,13 +2549,6 @@ function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
       bot: `Hoy en ${t}: ${title}. Vamos a ${focus.toLowerCase()} con un ejemplo concreto.`,
       visual: { kind: "big_word", word: title.slice(0, 22), sub: t },
       html: `<div class="viz"><p>Objetivo: entender <strong>${focus}</strong> y usarlo en un ejemplo mínimo.</p></div>`,
-      check: {
-        prompt: `En ${t}, ¿qué trabajamos hoy?`,
-        options: [title, "Un tema de otro curso", "Configurar el router", "Instalar un antivirus"],
-        correct_index: 0,
-        feedback_ok: `Sí: ${title}.`,
-        feedback_bad: `Hoy: ${title}.`,
-      },
     },
     {
       id: `g${d}-2`,
@@ -2105,47 +2559,39 @@ function qualitySlidesForDay(topic: string, day: PlanDay): LessonSlide[] {
         left: { title: "Sin esto", body: "Solo memorizar nombres" },
         right: { title: "Con esto", body: `Usar ${focus}` },
       },
-      check: {
-        prompt: `¿Qué demuestra que entiendes ${focus}?`,
-        options: [
-          "Explicarlo y aplicar un ejemplo",
-          "Repetir el índice del temario",
-          "Cambiar de tema al azar",
-          "Ignorar la práctica",
-        ],
-        correct_index: 0,
-        feedback_ok: "Entender + aplicar.",
-        feedback_bad: `Vuelve a ${focus}.`,
-      },
     },
     {
       id: `g${d}-3`,
       phase: "learn",
-      bot: `Ejemplo mínimo de ${focus} en ${t}. Luego el test del día.`,
+      bot: `Ejemplo mínimo de ${focus} en ${t}. Cuando acabes estas pantallas, harás el test del día.`,
       visual: {
         kind: "code",
         label: title,
         code: `// ${t} · ${focus}\n// escribe aquí un ejemplo mínimo`,
       },
-      check: {
-        prompt: `Este bloque practica…`,
-        options: [focus, "Otro curso", "Red / DNS", "Nada relacionado"],
-        correct_index: 0,
-        feedback_ok: "Exacto.",
-        feedback_bad: `Es sobre ${focus}.`,
-      },
     },
   ];
 }
 
+/** El test del día es `questions`; las slides solo enseñan (sin COMPRUEBA a mitad). */
+function teachOnlySlides(slides: LessonSlide[]): LessonSlide[] {
+  return slides.map((s) => ({ ...s, check: null }));
+}
+
+function isCssTopic(topic: string): boolean {
+  const tl = topic.toLowerCase().trim();
+  return tl === "css" || /\bcss\b|cascading style|hojas? de estilo|estilo(s)? web/.test(tl);
+}
+
 /**
- * Empaqueta bloques sueltos en pantallas densas (bot + visual + check).
+ * Empaqueta bloques sueltos en pantallas densas (bot + visual).
  * Si el contenido es débil, usa plantillas de calidad.
+ * El quiz queda para el test final del día.
  */
 function buildSlides(topic: string, day: PlanDay): LessonSlide[] {
-  // Idiomas: siempre currículo real (nunca plantilla «Idea central»)
-  if (detectLanguage(topic)) {
-    return qualitySlidesForDay(topic, day);
+  // Idiomas y CSS: currículo real con demos (nunca plantilla «Idea central» + quiz vacío)
+  if (detectLanguage(topic) || isCssTopic(topic)) {
+    return teachOnlySlides(qualitySlidesForDay(topic, day));
   }
 
   // Si el backend mandó fallbacks meta ("unidad N", PDF vs práctica), usa currículo real
@@ -2156,7 +2602,7 @@ function buildSlides(topic: string, day: PlanDay): LessonSlide[] {
     );
 
   if (focusBad) {
-    return qualitySlidesForDay(topic, day);
+    return teachOnlySlides(qualitySlidesForDay(topic, day));
   }
 
   if (day.slides && day.slides.length >= 2) {
@@ -2166,13 +2612,11 @@ function buildSlides(topic: string, day: PlanDay): LessonSlide[] {
         id: s.id || `s-${day.day}-${i}`,
         bot: (s.bot || "").trim(),
         phase: s.phase === "learn" ? ("learn" as const) : ("intro" as const),
+        check: null as LessonSlide["check"],
       }))
-      .filter((s) => s.bot || s.visual || s.html || s.check);
-    const metaish = cleaned.some(
-      (s) =>
-        /pdf largo|p[aá]rrafos eternos|pasos cortos e interactivos|leyendo un muro/i.test(
-          `${s.bot} ${s.check?.prompt || ""} ${(s.check?.options || []).join(" ")}`,
-        ),
+      .filter((s) => s.bot || s.visual || s.html);
+    const metaish = cleaned.some((s) =>
+      /pdf largo|p[aá]rrafos eternos|pasos cortos e interactivos|leyendo un muro/i.test(s.bot),
     );
     const weak = cleaned.filter((s) => isWeakBot(s.bot)).length >= Math.ceil(cleaned.length / 2);
     if (!weak && !metaish && cleaned.length >= 2) return cleaned;
@@ -2192,7 +2636,6 @@ function buildSlides(topic: string, day: PlanDay): LessonSlide[] {
     let bot = "";
     let visual: PlanBlock | null = null;
     let html: string | undefined;
-    let check: LessonSlide["check"] = null;
 
     if (kind === "bot_say" || kind === "card") {
       bot = (block.text || block.body || "").trim();
@@ -2203,7 +2646,10 @@ function buildSlides(topic: string, day: PlanDay): LessonSlide[] {
     if (i < rawBlocks.length) {
       const n = rawBlocks[i];
       const nk = (n.kind || "").toLowerCase();
-      if (["big_word", "chips", "vs", "steps", "code", "html", "card"].includes(nk) && nk !== "tap") {
+      if (
+        ["big_word", "chips", "vs", "steps", "code", "html", "card", "live_demo"].includes(nk) &&
+        nk !== "tap"
+      ) {
         if (nk === "html") html = n.html;
         else if (nk === "card" && !bot) {
           bot = (n.body || n.text || "").trim();
@@ -2215,36 +2661,23 @@ function buildSlides(topic: string, day: PlanDay): LessonSlide[] {
       }
     }
 
-    // absorber check
+    // saltar taps (mini-quiz): el test es al final del día
     if (i < rawBlocks.length && (rawBlocks[i].kind || "").toLowerCase() === "tap") {
-      const t = rawBlocks[i];
-      check = {
-        prompt: t.prompt || "¿Qué es correcto?",
-        options: t.options || [],
-        correct_index: t.correct_index ?? 0,
-        feedback_ok: t.feedback_ok,
-        feedback_bad: t.feedback_bad,
-      };
       i += 1;
     }
 
-    // si empezamos con visual sin bot
     if (!bot && (visual || html)) {
       bot = `Mira esto sobre ${day.focus}.`;
     }
-    if (!bot && check) {
-      bot = check.prompt;
-      check = { ...check };
-    }
 
-    if (bot || visual || html || check) {
+    if (bot || visual || html) {
       slides.push({
         id: `pack-${day.day}-${slides.length}`,
         phase,
         bot: bot || `Sobre ${day.focus}`,
         visual,
         html,
-        check,
+        check: null,
       });
     } else {
       i += 1;
@@ -2252,13 +2685,13 @@ function buildSlides(topic: string, day: PlanDay): LessonSlide[] {
   }
 
   const weakBots = slides.filter((s) => isWeakBot(s.bot)).length;
-  const orphanVisuals = slides.filter((s) => !s.check && s.visual && isWeakBot(s.bot)).length;
+  const orphanVisuals = slides.filter((s) => s.visual && isWeakBot(s.bot)).length;
   const weak =
     slides.length < 2 ||
     weakBots >= Math.max(1, Math.ceil(slides.length / 2)) ||
-    orphanVisuals >= slides.length; // solo palabras sueltas sin explicación
+    orphanVisuals >= slides.length;
 
-  if (weak) return qualitySlidesForDay(topic, day);
+  if (weak) return teachOnlySlides(qualitySlidesForDay(topic, day));
   return slides;
 }
 
@@ -2328,6 +2761,39 @@ function VisualOnly({ block }: { block: PlanBlock }) {
         <pre>
           <code>{block.code}</code>
         </pre>
+      </div>
+    );
+  }
+  if (kind === "live_demo") {
+    const before = block.before_html || block.srcdoc || "";
+    const after = block.after_html || "";
+    const single = before && !after;
+    return (
+      <div className={`sa-duo-demo ${single ? "sa-duo-demo--single" : ""}`}>
+        {before ? (
+          <figure className="sa-duo-demo__pane">
+            <figcaption>{block.before_label || (single ? "Demo" : "Antes")}</figcaption>
+            <iframe
+              className="sa-duo-demo__frame"
+              title={block.before_label || "Demo antes"}
+              sandbox=""
+              srcDoc={before}
+              loading="lazy"
+            />
+          </figure>
+        ) : null}
+        {after ? (
+          <figure className="sa-duo-demo__pane">
+            <figcaption>{block.after_label || "Después"}</figcaption>
+            <iframe
+              className="sa-duo-demo__frame"
+              title={block.after_label || "Demo después"}
+              sandbox=""
+              srcDoc={after}
+              loading="lazy"
+            />
+          </figure>
+        ) : null}
       </div>
     );
   }
@@ -2412,7 +2878,10 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
         topicL.includes("postgres") ||
         topicL.includes("python") ||
         topicL.includes("javascript") ||
-        topicL.includes("typescript");
+        topicL.includes("typescript") ||
+        /\bcss\b/.test(topicL) ||
+        topicL === "css" ||
+        /\bhtml\b/.test(topicL);
       if (
         knownBank ||
         questions.length < 2 ||

@@ -532,6 +532,51 @@
   color: rgba(255, 255, 255, 0.45);
 }
 
+.sa-duo-demo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.sa-duo-demo--single {
+  grid-template-columns: 1fr;
+}
+
+.sa-duo-demo__pane {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.sa-duo-demo__pane figcaption {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.95);
+}
+
+.sa-duo-demo__frame {
+  width: 100%;
+  height: 148px;
+  border: 2px solid rgba(53, 140, 159, 0.35);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+@media (max-width: 560px) {
+  .sa-duo-demo {
+    grid-template-columns: 1fr;
+  }
+  .sa-duo-demo__frame {
+    height: 132px;
+  }
+}
+
 .sa-duo-steps {
   display: flex;
   flex-direction: column;

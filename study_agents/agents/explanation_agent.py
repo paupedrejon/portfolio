@@ -601,7 +601,7 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
 
         goal_line = goal.strip() if goal else "Mejorar comprensión y retención del tema."
 
-        # Curso diario Duolingo v4: SLIDES densas (bot + visual + check) → TEST
+        # Curso diario Duolingo v4: SLIDES que ENSEÑAN → TEST al final del día
         max_days = max(1, min(int(days or 7), 30))
         if minutes_per_day <= 10:
             slides_n, q_per_day = 4, 2
@@ -626,12 +626,20 @@ Devuelve SOLO un JSON válido (sin markdown, sin ```).
 ## Material
 {rag_text[:2800]}
 
+## Pedagogía (OBLIGATORIO)
+1) Primero ENSEÑA con slides densas (explicación + visual / demo).
+2) El TEST (questions) va SOLO al final del día, después de las slides.
+3) NUNCA pongas mini-quiz (check) dentro de las slides. check debe ser siempre null.
+4) Si el tema es CSS/HTML/UI: usa visual kind "live_demo" con before_html / after_html
+   (HTML mínimo renderizable) para mostrar alcance (p.ej. HTML a secas vs HTML+CSS).
+5) Prohibido empezar el día con "¿qué trabajamos hoy?" o preguntas meta vacías.
+
 ## Formato: pantallas (slides), NO bloques sueltos
 Cada slide = UNA pantalla completa con:
-1) bot: frase COMPLETA del tutor (mín 45 chars, máx 140). NUNCA cortes ("React es" PROHIBIDO).
-2) visual: un bloque gráfico (big_word | vs | chips | steps | code)
+1) bot: frase COMPLETA del tutor (mín 45 chars, máx 160). NUNCA cortes ("React es" PROHIBIDO).
+2) visual: un bloque gráfico (big_word | vs | chips | steps | code | live_demo)
 3) html opcional: markup visual corto (tags: div,span,strong,em,code,p,br; class viz/row/pill)
-4) check opcional: mini-test en la misma pantalla (2 de cada 3 slides DEBEN tener check)
+4) check: SIEMPRE null (el examen es questions al final)
 
 ## JSON
 {{
@@ -643,48 +651,41 @@ Cada slide = UNA pantalla completa con:
     {{
       "day": 1,
       "title": "máx 4 palabras",
-      "focus": "1 micro-concepto",
+      "focus": "1 micro-concepto real (nunca 'Idea central')",
       "minutes": {minutes_per_day},
       "slides": [
         {{
           "id": "d1s1",
           "phase": "intro",
-          "bot": "React es una biblioteca de JavaScript para construir interfaces de usuario.",
-          "visual": {{"kind":"big_word","word":"UI","sub":"con componentes"}},
-          "html": "<div class='viz'><div class='row'><span class='pill'>componentes</span><span class='pill'>reutilizables</span></div></div>",
+          "bot": "CSS describe cómo se ve el HTML: colores, tipografía y layout, sin cambiar el contenido.",
+          "visual": {{"kind":"vs","left":{{"title":"HTML","body":"Estructura"}},"right":{{"title":"CSS","body":"Aspecto"}}}},
           "check": null
         }},
         {{
           "id": "d1s2",
-          "phase": "intro",
-          "bot": "Piensa en LEGO: cada pieza es un componente que puedes reutilizar.",
-          "visual": {{"kind":"vs","left":{{"title":"Página entera","body":"Todo mezclado"}},"right":{{"title":"Componentes","body":"Piezas claras"}}}},
-          "check": {{
-            "prompt": "React organiza la UI principalmente con…",
-            "options": ["Componentes","Tablas SQL","Archivos .exe","Hojas Excel"],
-            "correct_index": 0,
-            "feedback_ok": "Sí: componentes.",
-            "feedback_bad": "La unidad básica es el componente."
-          }}
+          "phase": "learn",
+          "bot": "Mira el mismo HTML sin estilos y luego con CSS: ahí se ve el alcance del lenguaje.",
+          "visual": {{
+            "kind":"live_demo",
+            "before_label":"HTML a secas",
+            "after_label":"HTML + CSS",
+            "before_html":"<!DOCTYPE html><html><body style='font-family:serif;padding:12px'><h1>Hola</h1><button>Ok</button></body></html>",
+            "after_html":"<!DOCTYPE html><html><head><style>body{{font-family:system-ui;padding:12px;background:#0b1220;color:#e2e8f0}}h1{{color:#38bdf8}}button{{background:#358c9f;color:#fff;border:0;padding:8px 12px;border-radius:8px}}</style></head><body><h1>Hola</h1><button>Ok</button></body></html>"
+          }},
+          "check": null
         }},
         {{
           "id": "d1s3",
           "phase": "learn",
-          "bot": "Un componente es una función que devuelve UI (JSX).",
-          "visual": {{"kind":"code","label":"Ejemplo","code":"function App() {{\\n  return <h1>Hola</h1>;\\n}}"}},
-          "check": {{
-            "prompt": "¿Qué devuelve App?",
-            "options": ["Un título Hola","Una base de datos","Un servidor","CSS puro"],
-            "correct_index": 0,
-            "feedback_ok": "Devuelve UI.",
-            "feedback_bad": "Mira el return."
-          }}
+          "bot": "Una regla CSS elige elementos con un selector y declara propiedades como color o padding.",
+          "visual": {{"kind":"code","label":"Regla","code":"button {{\\n  background: #358c9f;\\n  color: white;\\n}}"}},
+          "check": null
         }}
       ],
       "questions": [
         {{
           "id": "d1q1",
-          "prompt": "pregunta ÚNICA del test final",
+          "prompt": "pregunta ÚNICA del test final (concepto real del día)",
           "options": ["A","B","C","D"],
           "correct_index": 0,
           "feedback_ok": "ok",
@@ -696,13 +697,14 @@ Cada slide = UNA pantalla completa con:
 }}
 
 ## Reglas CRÍTICAS
-- Exactamente {max_days} días. Cada día focus distinto y progresivo.
-- Día 1 intro = qué es {topic} de verdad (frase completa).
-- Cada día: exactamente {slides_n} slides + {q_per_day} questions de test.
+- Exactamente {max_days} días. Cada día focus distinto y progresivo (concepto real del tema).
+- Día 1 intro = qué es {topic} de verdad, con ejemplo visual si aplica.
+- Cada día: exactamente {slides_n} slides + {q_per_day} questions de test FINAL.
 - Al menos la mitad de slides con phase=intro; el resto phase=learn.
 - bot SIEMPRE frase completa ≥45 caracteres. Prohibido: "Vamos", "React es", "Hola", cortes.
 - visual obligatorio en cada slide (no dejes solo el bot).
-- Preguntas del test ÚNICAS en todo el curso (nada de genéricas tipo "qué es más preciso").
+- check SIEMPRE null en slides.
+- Preguntas del test ÚNICAS en todo el curso (nada de genéricas tipo "qué trabajamos hoy").
 - Español. Sin emojis. Sin texto fuera del JSON.
 """
         try:
@@ -854,6 +856,29 @@ Cada slide = UNA pantalla completa con:
                     "label": str(v.get("label") or "Ejemplo")[:24],
                     "code": str(v.get("code") or f"// {focus}")[:260],
                 }
+            if kind == "live_demo":
+                def _demo_html(raw: object) -> str:
+                    import re
+
+                    s = str(raw or "")[:8000]
+                    return re.sub(r"(?is)<script[^>]*>.*?</script>", "", s)
+
+                before = _demo_html(v.get("before_html") or v.get("srcdoc") or "")
+                after = _demo_html(v.get("after_html") or "")
+                if not before and not after:
+                    return {
+                        "kind": "big_word",
+                        "word": focus[:16],
+                        "sub": "demo no disponible",
+                    }
+                out = {
+                    "kind": "live_demo",
+                    "before_label": str(v.get("before_label") or "Antes")[:40],
+                    "after_label": str(v.get("after_label") or "Después")[:40],
+                    "before_html": before,
+                    "after_html": after,
+                }
+                return out
             if kind == "html":
                 return {"kind": "html", "html": _sanitize_html(str(v.get("html") or ""))}
             return {
@@ -877,56 +902,132 @@ Cada slide = UNA pantalla completa con:
             }
 
         def _quality_slides(day_i: int, focus: str) -> list:
-            is_react = "react" in topic.lower()
+            topic_l = topic.lower()
+            is_react = "react" in topic_l
+            is_css = bool(
+                topic_l == "css"
+                or "cascading style" in topic_l
+                or "hoja de estilo" in topic_l
+                or "hojas de estilo" in topic_l
+                or " estilo" in f" {topic_l}"
+                or topic_l.startswith("css")
+                or " css" in f" {topic_l}"
+            )
+            if is_css and day_i == 1:
+                bare = (
+                    "<!DOCTYPE html><html><body style='margin:0;padding:14px;font-family:Georgia,serif'>"
+                    "<h1>Mi página</h1><p>Sin hoja de estilos propia.</p><button>Continuar</button>"
+                    "</body></html>"
+                )
+                styled = (
+                    "<!DOCTYPE html><html><head><style>"
+                    "body{margin:0;padding:14px;font-family:system-ui;background:#0b1220;color:#e2e8f0}"
+                    "h1{color:#38bdf8}p{color:#94a3b8}"
+                    "button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10px}"
+                    "</style></head><body>"
+                    "<h1>Mi página</h1><p>Mismo HTML, ahora con CSS.</p><button>Continuar</button>"
+                    "</body></html>"
+                )
+                return [
+                    {
+                        "id": f"d{day_i}s1",
+                        "phase": "intro",
+                        "bot": (
+                            "CSS describe cómo se ve el HTML: colores, tipografía y layout. "
+                            "El contenido sigue en HTML; el aspecto va aparte."
+                        ),
+                        "visual": {
+                            "kind": "vs",
+                            "left": {"title": "HTML", "body": "Estructura y texto"},
+                            "right": {"title": "CSS", "body": "Aspecto y diseño"},
+                        },
+                        "check": None,
+                    },
+                    {
+                        "id": f"d{day_i}s2",
+                        "phase": "learn",
+                        "bot": (
+                            "Mira el mismo HTML dos veces: a la izquierda sin estilos propios; "
+                            "a la derecha con CSS. Ahí se ve el alcance."
+                        ),
+                        "visual": {
+                            "kind": "live_demo",
+                            "before_label": "HTML a secas",
+                            "after_label": "HTML + CSS",
+                            "before_html": bare,
+                            "after_html": styled,
+                        },
+                        "check": None,
+                    },
+                    {
+                        "id": f"d{day_i}s3",
+                        "phase": "learn",
+                        "bot": (
+                            "Una regla CSS elige elementos (selector) y declara propiedades. "
+                            "Ejemplo: el botón pasa a ser teal y redondeado."
+                        ),
+                        "visual": {
+                            "kind": "code",
+                            "label": "Regla",
+                            "code": "button {\n  background: #358c9f;\n  color: white;\n  border-radius: 10px;\n}",
+                        },
+                        "check": None,
+                    },
+                    {
+                        "id": f"d{day_i}s4",
+                        "phase": "learn",
+                        "bot": (
+                            f"Hoy el foco es {focus}. Cuando termines estas pantallas, "
+                            "el test del día comprueba lo que reteniste."
+                        ),
+                        "visual": {
+                            "kind": "steps",
+                            "items": [
+                                {"n": 1, "label": "Ver el concepto"},
+                                {"n": 2, "label": "Ver la demo"},
+                                {"n": 3, "label": "Test al final"},
+                            ],
+                        },
+                        "check": None,
+                    },
+                ]
             return [
                 {
                     "id": f"d{day_i}s1",
                     "phase": "intro",
-                    "bot": f"{topic} se aprende mejor con pasos cortos: hoy toca {focus}.",
+                    "bot": f"Hoy en {topic} trabajamos {focus}: una idea clara y un ejemplo mínimo.",
                     "visual": {
                         "kind": "big_word",
                         "word": (focus if day_i > 1 else topic)[:16],
-                        "sub": "idea clara, sin muro de texto",
+                        "sub": "explicación primero, test al final",
                     },
                     "html": (
-                        f"<div class='viz'><div class='row'>"
-                        f"<span class='pill'>ver</span><span class='pill'>tocar</span>"
-                        f"<span class='pill'>test</span></div><p><strong>{focus}</strong></p></div>"
+                        f"<div class='viz'><p>Objetivo: entender <strong>{focus}</strong> "
+                        f"con un ejemplo concreto.</p></div>"
                     ),
                     "check": None,
                 },
                 {
                     "id": f"d{day_i}s2",
                     "phase": "intro",
-                    "bot": f"Compara leer un PDF largo frente a practicar {focus} en pantallas cortas.",
+                    "bot": f"Compara memorizar nombres frente a practicar {focus} con un ejemplo real.",
                     "visual": {
                         "kind": "vs",
-                        "left": {"title": "Aburrido", "body": "Párrafos eternos"},
-                        "right": {"title": "Hoy", "body": f"Micro-práctica de {focus}"},
+                        "left": {"title": "Solo nombres", "body": "Se olvida rápido"},
+                        "right": {"title": "Ejemplo", "body": f"Usar {focus}"},
                     },
-                    "check": {
-                        "prompt": f"¿Cómo practicarás {focus} hoy?",
-                        "options": [
-                            "Con pasos cortos e interactivos",
-                            "Leyendo un muro",
-                            "Saltando sin mirar",
-                            "Copiando sin entender",
-                        ],
-                        "correct_index": 0,
-                        "feedback_ok": "Así se queda mejor.",
-                        "feedback_bad": "Hoy tocamos y practicamos.",
-                    },
+                    "check": None,
                 },
                 {
                     "id": f"d{day_i}s3",
                     "phase": "learn",
-                    "bot": f"Lo esencial de {focus}: una idea, un ejemplo mínimo, un check.",
+                    "bot": f"Lo esencial de {focus}: una definición corta y un ejemplo mínimo que puedas repetir.",
                     "visual": {
                         "kind": "steps",
                         "items": [
                             {"n": 1, "label": f"Qué es {focus}"},
                             {"n": 2, "label": "Ejemplo mínimo"},
-                            {"n": 3, "label": "Check + test"},
+                            {"n": 3, "label": "Test al final del día"},
                         ],
                     },
                     "check": None,
@@ -934,7 +1035,7 @@ Cada slide = UNA pantalla completa con:
                 {
                     "id": f"d{day_i}s4",
                     "phase": "learn",
-                    "bot": f"Mira el ejemplo y responde: esto fija {focus} en la memoria.",
+                    "bot": f"Mira el ejemplo: esto fija {focus} antes del test del día.",
                     "visual": {
                         "kind": "code",
                         "label": "Ejemplo",
@@ -944,26 +1045,7 @@ Cada slide = UNA pantalla completa con:
                             else f"// {focus}\n// idea clave en 2 líneas"
                         ),
                     },
-                    "check": {
-                        "prompt": (
-                            "¿Qué devuelve este componente?"
-                            if is_react
-                            else f"¿Qué representa el ejemplo de {focus}?"
-                        ),
-                        "options": (
-                            ["UI con un título Hola", "Una base de datos", "Un servidor HTTP", "Solo CSS"]
-                            if is_react
-                            else [
-                                f"La idea práctica de {focus}",
-                                "Un tema distinto",
-                                "Decoración",
-                                "Nada útil",
-                            ]
-                        ),
-                        "correct_index": 0,
-                        "feedback_ok": "Exacto.",
-                        "feedback_bad": f"Vuelve al ejemplo de {focus}.",
-                    },
+                    "check": None,
                 },
             ]
 
@@ -998,7 +1080,7 @@ Cada slide = UNA pantalla completa con:
                 return None
             bot = str(s.get("bot") or s.get("text") or "").strip()[:160]
             if _weak_bot(bot):
-                bot = f"Hoy practicamos {focus}: mira el visual y responde si hay check."
+                bot = f"Hoy practicamos {focus}: mira el visual; el test llega al final del día."
             phase = "learn" if str(s.get("phase") or "").lower() == "learn" else "intro"
             visual_raw = s.get("visual") if isinstance(s.get("visual"), dict) else {
                 "kind": "big_word",
@@ -1007,14 +1089,14 @@ Cada slide = UNA pantalla completa con:
             }
             visual = _parse_visual(visual_raw, focus)
             html = _sanitize_html(str(s.get("html") or "")) if s.get("html") else None
-            check = _parse_check(s.get("check"), f"d{day_i}c{idx}") if s.get("check") else None
+            # Test solo al final del día (questions); nunca mini-quiz en slides
             return {
                 "id": str(s.get("id") or f"d{day_i}s{idx}"),
                 "phase": phase,
                 "bot": bot,
                 "visual": visual,
                 "html": html,
-                "check": check,
+                "check": None,
             }
 
         days_in = data.get("days") if isinstance(data, dict) else None
