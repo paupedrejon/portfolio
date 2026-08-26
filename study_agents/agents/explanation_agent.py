@@ -630,13 +630,16 @@ Devuelve SOLO un JSON válido (sin markdown, sin ```).
 1) Primero ENSEÑA con slides densas (explicación + visual / demo).
 2) El TEST (questions) va SOLO al final del día, después de las slides.
 3) NUNCA pongas mini-quiz (check) dentro de las slides. check debe ser siempre null.
-4) Si el tema es CSS/HTML/UI: usa visual kind "live_demo" con before_html / after_html
-   (HTML mínimo renderizable) para mostrar alcance (p.ej. HTML a secas vs HTML+CSS).
+4) Adapta ejemplos al TEMA real (puede ser cocina, historia, finanzas, CSS, derecho…).
+   Si el tema es visual (CSS/HTML/UI), usa visual kind "live_demo" con before_html / after_html.
+   Si no es visual, usa vs / steps / chips / code / big_word con ejemplos del dominio.
 5) Prohibido empezar el día con "¿qué trabajamos hoy?" o preguntas meta vacías.
+6) Texto del tutor LIGERO: 1 gancho corto + 1 detalle. Marca conceptos clave con **así** y código con `así`.
+   Preferible un salto de línea entre gancho y detalle. Evita párrafos densos de >2 frases.
 
 ## Formato: pantallas (slides), NO bloques sueltos
 Cada slide = UNA pantalla completa con:
-1) bot: frase COMPLETA del tutor (mín 45 chars, máx 160). NUNCA cortes ("React es" PROHIBIDO).
+1) bot: 1-2 frases (máx 140 chars). Gancho + detalle. Usa **concepto** y `código` cuando ayude.
 2) visual: un bloque gráfico (big_word | vs | chips | steps | code | live_demo)
 3) html opcional: markup visual corto (tags: div,span,strong,em,code,p,br; class viz/row/pill)
 4) check: SIEMPRE null (el examen es questions al final)
@@ -701,8 +704,8 @@ Cada slide = UNA pantalla completa con:
 - Día 1 intro = qué es {topic} de verdad, con ejemplo visual si aplica.
 - Cada día: exactamente {slides_n} slides + {q_per_day} questions de test FINAL.
 - Al menos la mitad de slides con phase=intro; el resto phase=learn.
-- bot SIEMPRE frase completa ≥45 caracteres. Prohibido: "Vamos", "React es", "Hola", cortes.
-- visual obligatorio en cada slide (no dejes solo el bot).
+- bot: 1-2 frases claras (mín 40 chars). Usa **clave** y `código`. Prohibido: "Vamos", cortes tipo "React es".
+- visual obligatorio en cada slide (no dejes solo el bot). Adapta el visual al dominio del tema.
 - check SIEMPRE null en slides.
 - Preguntas del test ÚNICAS en todo el curso (nada de genéricas tipo "qué trabajamos hoy").
 - Español. Sin emojis. Sin texto fuera del JSON.

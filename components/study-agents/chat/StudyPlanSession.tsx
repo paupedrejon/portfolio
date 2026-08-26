@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import DOMPurify from "dompurify";
 import { outfit, spaceGrotesk } from "@/app/fonts";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
@@ -158,6 +158,80 @@ function isWeakBot(text: string): boolean {
   if (/^(vamos|hola|ok|sí|si|ahora|hoy)[.!]?$/i.test(t)) return true;
   if (/\bes\s*$/i.test(t) || /\bes\s+[a-záéíóú]{1,3}$/i.test(t)) return true;
   return false;
+}
+
+/** Parte el texto del tutor en gancho + detalle (más fácil de leer). */
+function splitTutorCopy(raw: string): { lead: string; more: string } {
+  const t = (raw || "").trim().replace(/\s+/g, " ");
+  if (!t) return { lead: "", more: "" };
+
+  const nl = raw.indexOf("\n");
+  if (nl > 12 && nl < 140) {
+    return { lead: raw.slice(0, nl).trim(), more: raw.slice(nl + 1).trim() };
+  }
+
+  const m = t.match(/^(.{18,110}?[.!?…])\s+(.{20,})$/);
+  if (m) return { lead: m[1].trim(), more: m[2].trim() };
+
+  const colon = t.indexOf(": ");
+  if (colon > 10 && colon < 72 && t.length - colon > 28) {
+    return { lead: t.slice(0, colon + 1).trim(), more: t.slice(colon + 2).trim() };
+  }
+
+  return { lead: t, more: "" };
+}
+
+/** Resalta **negrita**, `código` y acrónimos entre paréntesis. */
+function renderInlineTutor(text: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const re = /(\*\*[^*]+\*\*|`[^`]+`|\([A-ZÁÉÍÓÚ][A-Za-zÁÉÍÓÚáéíóú0-9 ./-]{2,40}\))/g;
+  let last = 0;
+  let i = 0;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > last) {
+      nodes.push(text.slice(last, match.index));
+    }
+    const token = match[0];
+    if (token.startsWith("**") && token.endsWith("**")) {
+      nodes.push(
+        <strong key={`b${i++}`} className="sa-duo-bubble__em">
+          {token.slice(2, -2)}
+        </strong>,
+      );
+    } else if (token.startsWith("`") && token.endsWith("`")) {
+      nodes.push(
+        <code key={`c${i++}`} className="sa-duo-bubble__code">
+          {token.slice(1, -1)}
+        </code>,
+      );
+    } else {
+      nodes.push(
+        <span key={`p${i++}`} className="sa-duo-bubble__aside">
+          {token}
+        </span>,
+      );
+    }
+    last = match.index + token.length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
+
+function TutorBubble({ text, emphasize }: { text: string; emphasize?: string }) {
+  let prepared = text;
+  const needle = (emphasize || "").trim();
+  if (needle.length >= 3 && needle.length <= 36 && !/\*\*|`/.test(text)) {
+    const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    prepared = text.replace(new RegExp(`(${escaped})`, "i"), "**$1**");
+  }
+  const { lead, more } = splitTutorCopy(prepared);
+  return (
+    <div className="sa-duo-bubble">
+      <p className="sa-duo-bubble__lead">{renderInlineTutor(lead)}</p>
+      {more ? <p className="sa-duo-bubble__more">{renderInlineTutor(more)}</p> : null}
+    </div>
+  );
 }
 
 function isMetaQuestion(q: PlanQuestion): boolean {
@@ -1987,7 +2061,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-1`,
           phase: "intro",
-          bot: "CSS (Cascading Style Sheets) describe cómo se ve el HTML: colores, tipografía, espaciado y layout. El contenido sigue en HTML; el aspecto va aparte.",
+          bot: "**CSS** define el aspecto del HTML: colores, tipografía y layout.\nEl contenido sigue en HTML; el look va aparte.",
           visual: {
             kind: "vs",
             left: { title: "HTML", body: "Estructura y texto" },
@@ -1997,7 +2071,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-2`,
           phase: "learn",
-          bot: "Mira el mismo HTML dos veces: a la izquierda sin estilos propios; a la derecha con una hoja CSS. Ahí se ve el alcance de CSS.",
+          bot: "Mismo HTML, dos looks.\nIzquierda sin hoja propia; derecha con **CSS** — ahí se ve el alcance.",
           visual: {
             kind: "live_demo",
             before_label: "HTML a secas",
@@ -2009,7 +2083,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-3`,
           phase: "learn",
-          bot: "Una regla CSS elige elementos (selector) y declara propiedades. Ejemplo: el botón pasa a ser teal y redondeado.",
+          bot: "Una **regla** elige elementos (`selector`) y declara propiedades.\nEjemplo: el botón pasa a teal y redondeado.",
           visual: {
             kind: "code",
             label: "Regla",
@@ -2021,7 +2095,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-1`,
           phase: "intro",
-          bot: "Un selector decide a qué elementos aplica la regla: por etiqueta, por clase (.btn) o por id (#hero).",
+          bot: "El **selector** decide a qué aplica la regla.\nPuede ser etiqueta, clase (`.btn`) o id (`#hero`).",
           visual: {
             kind: "chips",
             items: ["h1", ".titulo", "#main", "button:hover"],
@@ -2030,7 +2104,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-2`,
           phase: "learn",
-          bot: "La clase es la forma habitual de reutilizar estilo: marcas el HTML con class y lo apuntas en CSS con un punto.",
+          bot: "La **clase** es lo habitual para reutilizar estilo.\nMarcas el HTML con `class` y lo apuntas en CSS con un punto.",
           visual: {
             kind: "code",
             label: "HTML + CSS",
@@ -2040,7 +2114,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-3`,
           phase: "learn",
-          bot: "Si varias reglas chocan, gana la más específica (id > clase > etiqueta). Por eso las clases escalan mejor que estilar todo con ids.",
+          bot: "Si varias reglas chocan, gana la más **específica**.\nOrden: id > clase > etiqueta — por eso las clases escalan mejor.",
           visual: {
             kind: "steps",
             items: [
@@ -2055,13 +2129,13 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-1`,
           phase: "intro",
-          bot: "color y font-size son las propiedades más visibles: definen el tono del texto y su tamaño.",
+          bot: "**color** y **font-size** son las propiedades más visibles.\nTono del texto y tamaño, en pocas líneas.",
           visual: { kind: "big_word", word: "color", sub: "font-size" },
         },
         {
           id: `css${d}-2`,
           phase: "learn",
-          bot: "Puedes usar nombres (tomato), hex (#38bdf8) o rgb(). El hex es el estándar en interfaces.",
+          bot: "Puedes usar nombre, `hex` o `rgb()`.\nEn interfaces, el hex (`#38bdf8`) es el estándar.",
           visual: {
             kind: "code",
             label: "Texto",
@@ -2071,7 +2145,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-3`,
           phase: "learn",
-          bot: "rem escala con la fuente raíz; px es fijo. En UIs modernas suele preferirse rem para accesibilidad.",
+          bot: "**rem** escala con la fuente raíz; **px** es fijo.\nEn UIs modernas suele preferirse rem.",
           visual: {
             kind: "vs",
             left: { title: "px", body: "Tamaño fijo" },
@@ -2083,7 +2157,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-1`,
           phase: "intro",
-          bot: "Cada elemento es una caja: content, padding, border y margin. Entender la caja evita layouts rotos.",
+          bot: "Cada elemento es una **caja**.\ncontent → padding → border → margin.",
           visual: {
             kind: "steps",
             items: [
@@ -2097,7 +2171,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-2`,
           phase: "learn",
-          bot: "padding empuja el contenido hacia dentro; margin separa cajas entre sí.",
+          bot: "**padding** empuja hacia dentro; **margin** separa cajas.\nDos palancas distintas para el layout.",
           visual: {
             kind: "code",
             label: "Caja",
@@ -2107,7 +2181,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-3`,
           phase: "learn",
-          bot: "box-sizing: border-box hace que width incluya padding y border: más predecible al maquetar.",
+          bot: "`box-sizing: border-box` hace que `width` incluya padding y border.\nMás predecible al maquetar.",
           visual: {
             kind: "code",
             label: "Truco",
@@ -2119,13 +2193,13 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-1`,
           phase: "intro",
-          bot: "Flexbox alinea elementos en una fila o columna sin floats raros. Ideal para headers y toolbars.",
+          bot: "**Flexbox** alinea en fila o columna sin floats raros.\nIdeal para headers y toolbars.",
           visual: { kind: "big_word", word: "flex", sub: "display: flex" },
         },
         {
           id: `css${d}-2`,
           phase: "learn",
-          bot: "En el contenedor: display:flex. Luego justify-content (eje principal) y align-items (eje cruzado).",
+          bot: "En el contenedor: `display: flex`.\nLuego `justify-content` (eje principal) y `align-items` (eje cruzado).",
           visual: {
             kind: "code",
             label: "Fila",
@@ -2135,7 +2209,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-3`,
           phase: "learn",
-          bot: "gap separa hijos sin pelearte con margins. flex-wrap permite que bajen de línea en pantallas pequeñas.",
+          bot: "**gap** separa hijos sin pelearte con margins.\n`flex-wrap` deja que bajen de línea en móvil.",
           visual: {
             kind: "chips",
             items: ["gap", "justify-content", "align-items", "flex-wrap"],
@@ -2146,13 +2220,13 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-1`,
           phase: "intro",
-          bot: "Responsive significa que el diseño se adapta al ancho. Las media queries cambian reglas según el viewport.",
+          bot: "**Responsive** = el diseño se adapta al ancho.\nLas media queries cambian reglas según el viewport.",
           visual: { kind: "big_word", word: "@media", sub: "breakpoints" },
         },
         {
           id: `css${d}-2`,
           phase: "learn",
-          bot: "Empieza mobile-first: estilos base para móvil y luego min-width para pantallas mayores.",
+          bot: "Empieza **mobile-first**.\nEstilos base para móvil; luego `min-width` para pantallas mayores.",
           visual: {
             kind: "code",
             label: "Media query",
@@ -2162,7 +2236,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-3`,
           phase: "learn",
-          bot: "Unidades relativas (%, rem, vw) ayudan más que px fijos cuando el layout debe respirar.",
+          bot: "Unidades relativas (`%`, `rem`, `vw`) respiran mejor que px fijos.\nEl layout se adapta sin romper.",
           visual: {
             kind: "vs",
             left: { title: "Rígido", body: "width: 900px" },
@@ -2174,13 +2248,13 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-1`,
           phase: "intro",
-          bot: "Práctica: arma una tarjeta con título, texto y botón usando clases reutilizables.",
+          bot: "Práctica: una **tarjeta** con título, texto y botón.\nClases reutilizables, no estilos sueltos.",
           visual: { kind: "big_word", word: ".card", sub: "componente visual" },
         },
         {
           id: `css${d}-2`,
           phase: "learn",
-          bot: "Define la estructura en HTML y el look en CSS. No metas estilos inline salvo demos rápidas.",
+          bot: "Estructura en HTML; look en CSS.\nEvita estilos inline salvo demos rápidas.",
           visual: {
             kind: "code",
             label: "Tarjeta",
@@ -2190,7 +2264,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-3`,
           phase: "learn",
-          bot: "Cuando termines el camino del día, el test comprueba si reteniste selectores, caja y flex.",
+          bot: "Cuando termines el camino del día, llega el **test**.\nComprueba selectores, caja y flex.",
           visual: {
             kind: "steps",
             items: [
@@ -2546,14 +2620,14 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
     {
       id: `g${d}-1`,
       phase: "intro",
-      bot: `Hoy en ${t}: ${title}. Vamos a ${focus.toLowerCase()} con un ejemplo concreto.`,
+      bot: `Hoy: **${title}**.\nVamos a ${focus.toLowerCase()} con un ejemplo concreto.`,
       visual: { kind: "big_word", word: title.slice(0, 22), sub: t },
       html: `<div class="viz"><p>Objetivo: entender <strong>${focus}</strong> y usarlo en un ejemplo mínimo.</p></div>`,
     },
     {
       id: `g${d}-2`,
       phase: "learn",
-      bot: `${focus} es una pieza central de ${t}. Si lo entiendes, el resto encaja.`,
+      bot: `**${focus}** es una pieza central de ${t}.\nSi lo entiendes, el resto encaja.`,
       visual: {
         kind: "vs",
         left: { title: "Sin esto", body: "Solo memorizar nombres" },
@@ -2563,7 +2637,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
     {
       id: `g${d}-3`,
       phase: "learn",
-      bot: `Ejemplo mínimo de ${focus} en ${t}. Cuando acabes estas pantallas, harás el test del día.`,
+      bot: `Ejemplo mínimo de **${focus}**.\nCuando acabes estas pantallas, harás el test del día.`,
       visual: {
         kind: "code",
         label: title,
@@ -3072,9 +3146,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
         <div className="sa-duo-screen">
           <div className="sa-duo-botrow">
             <StudyAgentsBotAvatar size={52} color={SA_BOT_FACE} state="idle" className="sa-bot-avatar--bright" />
-            <div className="sa-duo-bubble">
-              <p>{botText}</p>
-            </div>
+            <TutorBubble text={botText} emphasize={plan.topic.split(/\s+/)[0]} />
           </div>
 
           {slide.visual ? (
