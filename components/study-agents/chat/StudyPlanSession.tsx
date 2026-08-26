@@ -3411,3 +3411,54 @@ export function parseInteractivePlan(raw: string): InteractivePlan | null {
   }
   return null;
 }
+
+/** Temas con currículo local (sin esperar al LLM). */
+export function hasLocalCourseBank(topic: string): boolean {
+  const tl = (topic || "").toLowerCase().trim();
+  if (!tl) return false;
+  if (detectLanguage(tl)) return true;
+  if (isCssTopic(tl)) return true;
+  return (
+    tl.includes("react") ||
+    tl.includes("sql") ||
+    tl.includes("mysql") ||
+    tl.includes("postgres") ||
+    tl.includes("base de datos") ||
+    tl.includes("python") ||
+    tl.includes("javascript") ||
+    tl.includes("typescript") ||
+    /\bhtml\b/.test(tl) ||
+    tl === "js" ||
+    tl === "ts"
+  );
+}
+
+/** Plan interactivo listo al instante (slides las arma StudyPlanSession). */
+export function buildInstantInteractivePlan(
+  topic: string,
+  days: number,
+  minutes: number,
+): InteractivePlan {
+  const topicVal = topic.trim() || "Curso";
+  const n = Math.max(1, Math.min(Math.floor(days) || 7, 30));
+  const mins = Math.max(5, Math.min(Math.floor(minutes) || 5, 60));
+  return {
+    format: "interactive_v4",
+    topic: topicVal,
+    minutes_per_day: mins,
+    xp_per_correct: 10,
+    started_at: new Date().toISOString().slice(0, 10),
+    days: Array.from({ length: n }, (_, i) => {
+      const day = i + 1;
+      const meta = dayLabelFor(topicVal, day);
+      return {
+        day,
+        title: meta.title,
+        focus: meta.focus,
+        minutes: mins,
+        slides: [],
+        questions: qualityQuestionsForDay(topicVal, day),
+      };
+    }),
+  };
+}

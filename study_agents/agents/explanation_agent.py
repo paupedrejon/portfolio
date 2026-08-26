@@ -497,10 +497,11 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
         model: Optional[str] = None,
         chat_id: Optional[str] = None,
         user_id: Optional[str] = None,
+        outline_only: bool = True,
     ) -> tuple[str, dict]:
         """
-        Genera un plan de estudio personalizado en Markdown (calendario, objetivos, técnicas).
-        Opcionalmente usa fragmentos RAG del chat si hay documentos indexados.
+        Genera un plan de estudio personalizado.
+        outline_only=True: solo titulos/foco/preguntas (rapido); las slides las arma el frontend.
         """
         topic = (topic or "").strip() or "Estudio general"
         days = max(1, min(int(days or 7), 90))
@@ -509,7 +510,7 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
         level_display = max(0, min(level_display, 10))
 
         rag_text = ""
-        if chat_id and user_id:
+        if chat_id and user_id and not outline_only:
             try:
                 chunks = self.memory.retrieve_relevant_content(
                     topic, n_results=4, chat_id=chat_id, user_id=user_id
@@ -520,58 +521,46 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
                         rag_text = rag_text[:6000] + "\n\n[... documentos truncados ...]"
             except Exception as e:
                 print(f"⚠️ generate_study_plan RAG: {e}")
-        if not rag_text.strip():
-            rag_text = "(No hay extractos de documentos en este chat; basa el plan en buenas prácticas de estudio y el tema.)"
 
-        # Knowledge tracing: gaps + mastery para secuenciación adaptativa (F1.4)
-        mastery_block = "(Sin grafo de conceptos aún; prioriza fundamentos del tema y retrieval practice.)"
-        if chat_id:
+        mastery_block = ""
+        if chat_id and not outline_only:
             try:
                 from core import concept_store
 
                 gaps = concept_store.detect_gaps(chat_id, threshold=0.5)
                 concepts = concept_store.concepts_with_mastery(chat_id)
                 if concepts:
-                    strong = [
-                        c for c in concepts
-                        if float(c.get("mastery") or 0) >= 0.7
-                    ][:8]
+                    strong = [c for c in concepts if float(c.get("mastery") or 0) >= 0.7][:8]
                     lines = []
                     if gaps:
-                        lines.append("### Gaps prioritarios (mastery < 0.5, por importancia)")
+                        lines.append("### Gaps prioritarios")
                         for g in gaps[:12]:
                             name = g.get("name") or g.get("concept_id")
                             m = float(g.get("mastery") or 0)
-                            imp = g.get("importance", 0)
-                            prereqs = g.get("broken_prerequisites") or []
-                            extra = f" | prerreqs rotos: {', '.join(prereqs)}" if prereqs else ""
-                            lines.append(f"- {name} (m={m:.2f}, deps={imp}){extra}")
+                            lines.append(f"- {name} (m={m:.2f})")
                     if strong:
-                        lines.append("### Ya razonablemente dominados (no sobrecargar)")
+                        lines.append("### Ya dominados")
                         for c in strong:
                             name = c.get("name") or c.get("concept_id")
                             m = float(c.get("mastery") or 0)
                             lines.append(f"- {name} (m={m:.2f})")
-                    avg = sum(float(c.get("mastery") or 0) for c in concepts) / len(concepts)
-                    lines.append(f"### Mastery medio del chat: {avg:.2f}")
                     mastery_block = "\n".join(lines)
             except Exception as e:
                 print(f"⚠️ generate_study_plan mastery: {e}")
 
-        # Inicializar LLM (mismo criterio que apuntes: generación media)
         if self.model_manager:
             try:
                 self.current_model_config, base_llm = self.model_manager.select_model(
                     task_type="generation",
-                    min_quality="medium",
+                    min_quality="low" if outline_only else "medium",
                     preferred_model=model if model else None,
-                    context_length=6000,
+                    context_length=2500 if outline_only else 6000,
                 )
                 if hasattr(base_llm, "temperature"):
-                    base_llm.temperature = 0.75
+                    base_llm.temperature = 0.55 if outline_only else 0.75
                 self.llm = base_llm
                 print(
-                    f"✅ Plan de estudio — modelo: {self.current_model_config.name}"
+                    f"✅ Plan de estudio — modelo: {self.current_model_config.name} (outline={outline_only})"
                 )
             except Exception as e:
                 print(f"⚠️ ModelManager plan estudio: {e}")
@@ -582,8 +571,9 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
                     )
                 self.llm = ChatOpenAI(
                     model=model or "gpt-3.5-turbo",
-                    temperature=0.75,
+                    temperature=0.55 if outline_only else 0.75,
                     api_key=self.api_key,
+                    max_tokens=1600 if outline_only else 4096,
                 )
                 self.current_model_config = None
         else:
@@ -594,57 +584,33 @@ Formato el resultado en Markdown con encabezados, listas y secciones bien organi
                 )
             self.llm = ChatOpenAI(
                 model=model or "gpt-3.5-turbo",
-                temperature=0.75,
+                temperature=0.55 if outline_only else 0.75,
                 api_key=self.api_key,
+                max_tokens=1600 if outline_only else 4096,
             )
             self.current_model_config = None
 
         goal_line = goal.strip() if goal else "Mejorar comprensión y retención del tema."
-
-        # Curso diario Duolingo v4: SLIDES que ENSEÑAN → TEST al final del día
         max_days = max(1, min(int(days or 7), 30))
-        if minutes_per_day <= 10:
-            slides_n, q_per_day = 4, 2
-        elif minutes_per_day <= 25:
-            slides_n, q_per_day = 5, 3
-        else:
-            slides_n, q_per_day = 6, 3
+        q_per_day = 2 if minutes_per_day <= 15 else 3
+        slides_n = 3 if outline_only else (4 if minutes_per_day <= 10 else (5 if minutes_per_day <= 25 else 6))
 
-        prompt = f"""Eres diseñador de un curso DIARIO estilo Duolingo (super gráfico).
-Devuelve SOLO un JSON válido (sin markdown, sin ```).
+        if outline_only:
+            prompt = f"""Diseña un ESQUELETO de curso diario. SOLO JSON válido (sin markdown).
 
-## Contexto
-- Tema: {topic}
-- Días: {max_days}
-- Minutos/lección: {minutes_per_day}
-- Nivel 0-10: {level_display}
-- Objetivo: {goal_line}
+Tema: {topic}
+Días: {max_days}
+Minutos/día: {minutes_per_day}
+Nivel 0-10: {level_display}
+Objetivo: {goal_line}
 
-## Dominio
-{mastery_block}
+Devuelve exactamente {max_days} días. Cada día:
+- title (máx 4 palabras, concepto REAL; NUNCA Idea central ni Unidad N)
+- focus (micro-concepto concreto del dominio)
+- questions: exactamente {q_per_day} MCQ únicas (4 opciones, correct_index 0-3)
+- slides: [] (vacío; el frontend monta las pantallas)
 
-## Material
-{rag_text[:2800]}
-
-## Pedagogía (OBLIGATORIO)
-1) Primero ENSEÑA con slides densas (explicación + visual / demo).
-2) El TEST (questions) va SOLO al final del día, después de las slides.
-3) NUNCA pongas mini-quiz (check) dentro de las slides. check debe ser siempre null.
-4) Adapta ejemplos al TEMA real (puede ser cocina, historia, finanzas, CSS, derecho…).
-   Si el tema es visual (CSS/HTML/UI), usa visual kind "live_demo" con before_html / after_html.
-   Si no es visual, usa vs / steps / chips / code / big_word con ejemplos del dominio.
-5) Prohibido empezar el día con "¿qué trabajamos hoy?" o preguntas meta vacías.
-6) Texto del tutor LIGERO: 1 gancho corto + 1 detalle. Marca conceptos clave con **así** y código con `así`.
-   Preferible un salto de línea entre gancho y detalle. Evita párrafos densos de >2 frases.
-
-## Formato: pantallas (slides), NO bloques sueltos
-Cada slide = UNA pantalla completa con:
-1) bot: 1-2 frases (máx 140 chars). Gancho + detalle. Usa **concepto** y `código` cuando ayude.
-2) visual: un bloque gráfico (big_word | vs | chips | steps | code | live_demo)
-3) html opcional: markup visual corto (tags: div,span,strong,em,code,p,br; class viz/row/pill)
-4) check: SIEMPRE null (el examen es questions al final)
-
-## JSON
+JSON:
 {{
   "format": "interactive_v4",
   "topic": "{topic}",
@@ -653,42 +619,14 @@ Cada slide = UNA pantalla completa con:
   "days": [
     {{
       "day": 1,
-      "title": "máx 4 palabras",
-      "focus": "1 micro-concepto real (nunca 'Idea central')",
+      "title": "Concepto real",
+      "focus": "Micro-habilidad concreta",
       "minutes": {minutes_per_day},
-      "slides": [
-        {{
-          "id": "d1s1",
-          "phase": "intro",
-          "bot": "CSS describe cómo se ve el HTML: colores, tipografía y layout, sin cambiar el contenido.",
-          "visual": {{"kind":"vs","left":{{"title":"HTML","body":"Estructura"}},"right":{{"title":"CSS","body":"Aspecto"}}}},
-          "check": null
-        }},
-        {{
-          "id": "d1s2",
-          "phase": "learn",
-          "bot": "Mira el mismo HTML sin estilos y luego con CSS: ahí se ve el alcance del lenguaje.",
-          "visual": {{
-            "kind":"live_demo",
-            "before_label":"HTML a secas",
-            "after_label":"HTML + CSS",
-            "before_html":"<!DOCTYPE html><html><body style='font-family:serif;padding:12px'><h1>Hola</h1><button>Ok</button></body></html>",
-            "after_html":"<!DOCTYPE html><html><head><style>body{{font-family:system-ui;padding:12px;background:#0b1220;color:#e2e8f0}}h1{{color:#38bdf8}}button{{background:#358c9f;color:#fff;border:0;padding:8px 12px;border-radius:8px}}</style></head><body><h1>Hola</h1><button>Ok</button></body></html>"
-          }},
-          "check": null
-        }},
-        {{
-          "id": "d1s3",
-          "phase": "learn",
-          "bot": "Una regla CSS elige elementos con un selector y declara propiedades como color o padding.",
-          "visual": {{"kind":"code","label":"Regla","code":"button {{\\n  background: #358c9f;\\n  color: white;\\n}}"}},
-          "check": null
-        }}
-      ],
+      "slides": [],
       "questions": [
         {{
           "id": "d1q1",
-          "prompt": "pregunta ÚNICA del test final (concepto real del día)",
+          "prompt": "pregunta concreta del tema",
           "options": ["A","B","C","D"],
           "correct_index": 0,
           "feedback_ok": "ok",
@@ -699,17 +637,22 @@ Cada slide = UNA pantalla completa con:
   ]
 }}
 
-## Reglas CRÍTICAS
-- Exactamente {max_days} días. Cada día focus distinto y progresivo (concepto real del tema).
-- Día 1 intro = qué es {topic} de verdad, con ejemplo visual si aplica.
-- Cada día: exactamente {slides_n} slides + {q_per_day} questions de test FINAL.
-- Al menos la mitad de slides con phase=intro; el resto phase=learn.
-- bot: 1-2 frases claras (mín 40 chars). Usa **clave** y `código`. Prohibido: "Vamos", cortes tipo "React es".
-- visual obligatorio en cada slide (no dejes solo el bot). Adapta el visual al dominio del tema.
-- check SIEMPRE null en slides.
-- Preguntas del test ÚNICAS en todo el curso (nada de genéricas tipo "qué trabajamos hoy").
-- Español. Sin emojis. Sin texto fuera del JSON.
+Reglas: progresión día a día; preguntas ÚNICAS; español; sin emojis; sin texto fuera del JSON.
 """
+        else:
+            mastery_section = f"\n## Dominio\n{mastery_block}\n" if mastery_block else ""
+            rag_section = f"\n## Material\n{rag_text[:1800]}\n" if rag_text.strip() else ""
+            prompt = f"""Eres diseñador de un curso DIARIO estilo Duolingo.
+Devuelve SOLO un JSON válido (sin markdown).
+
+Tema: {topic} | Días: {max_days} | Minutos: {minutes_per_day} | Nivel: {level_display}
+Objetivo: {goal_line}
+{mastery_section}{rag_section}
+Pedagogía: enseñar en slides; test solo al final; check=null; texto ligero con **concepto**.
+Cada día: {slides_n} slides + {q_per_day} questions.
+Español. Sin emojis. Sin texto fuera del JSON.
+"""
+
         try:
             import json
 

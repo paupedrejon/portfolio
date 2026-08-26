@@ -606,6 +606,8 @@ class StudyPlanRequest(BaseModel):
     user_id: Optional[str] = None
     chat_id: Optional[str] = None
     provider_keys: Optional[Dict[str, str]] = None
+    # Esqueleto rápido: títulos/foco/preguntas; las slides las arma el frontend
+    outline_only: bool = True
 
 
 class GenerateExerciseRequest(BaseModel):
@@ -1377,6 +1379,7 @@ async def generate_study_plan(request: StudyPlanRequest):
             model=request.model if request.model else None,
             user_id=request.user_id,
             chat_id=request.chat_id,
+            outline_only=bool(getattr(request, "outline_only", True)),
         )
 
         plan_interactive = None

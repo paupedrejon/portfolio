@@ -334,6 +334,7 @@ class StudyAgentsSystem:
         model: Optional[str] = None,
         user_id: Optional[str] = None,
         chat_id: Optional[str] = None,
+        outline_only: bool = True,
     ) -> tuple[str, dict]:
         """
         Genera un plan de estudio en Markdown (calendario, técnicas, checklist).
@@ -367,6 +368,7 @@ class StudyAgentsSystem:
             model=model,
             chat_id=chat_id,
             user_id=user_id,
+            outline_only=outline_only,
         )
         return plan, usage
     

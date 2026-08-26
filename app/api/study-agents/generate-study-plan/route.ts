@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
       chatId,
       providerKeys,
       provider_keys,
+      outline_only = true,
     } = body;
 
     if (!topic?.trim()) {
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
         user_id: userId || "default",
         chat_id: chatId || null,
         provider_keys: access.providerKeys,
+        outline_only: outline_only !== false,
       }),
     });
 

@@ -22,6 +22,8 @@ type Props = {
   maxWidth?: number;
   /** Modal ligero (menos “formulario pesado”). */
   light?: boolean;
+  botState?: "idle" | "thinking" | "static";
+  hideClose?: boolean;
   children: ReactNode;
 };
 
@@ -35,6 +37,8 @@ export default function SaModal({
   subtitle,
   maxWidth = 440,
   light = false,
+  botState = "idle",
+  hideClose = false,
   children,
 }: Props) {
   if (!open || typeof document === "undefined") return null;
@@ -92,7 +96,7 @@ export default function SaModal({
           }}
         >
           <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", minWidth: 0 }}>
-            <StudyAgentsBotAvatar size={56} color={SA_BOT_FACE} state="idle" className="sa-bot-avatar--bright" />
+            <StudyAgentsBotAvatar size={56} color={SA_BOT_FACE} state={botState} className="sa-bot-avatar--bright" />
             <div style={{ minWidth: 0 }}>
               <h2
                 id={titleId}
@@ -108,15 +112,19 @@ export default function SaModal({
               )}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="sa-chip"
-            style={{ width: 36, height: 36, padding: 0, justifyContent: "center", borderRadius: 12 }}
-          >
-            ×
-          </button>
+          {hideClose ? (
+            <span style={{ width: 36, height: 36 }} aria-hidden />
+          ) : (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="sa-chip"
+              style={{ width: 36, height: 36, padding: 0, justifyContent: "center", borderRadius: 12 }}
+            >
+              ×
+            </button>
+          )}
         </div>
         {children}
       </div>
