@@ -5685,9 +5685,23 @@ REGLAS OBLIGATORIAS:
                   (() => {
                     const plan = parseInteractivePlan(message.content);
                     if (!plan) {
+                      // Plan antiguo / markdown / error del modelo: mostrar texto en vez de bloquear
+                      const looksMarkdown =
+                        message.content.trim().startsWith("#") ||
+                        message.content.includes("\n");
+                      if (looksMarkdown) {
+                        return (
+                          <NotesViewer
+                            content={message.content}
+                            colorTheme={colorTheme}
+                            language={currentChatLevel?.topic || null}
+                          />
+                        );
+                      }
                       return (
-                        <p style={{ color: "#64748b", fontSize: "0.9rem" }}>
-                          No se pudo cargar el camino interactivo. Vuelve a generar el plan.
+                        <p style={{ color: "#94a3b8", fontSize: "0.9rem", lineHeight: 1.5 }}>
+                          Este plan no se puede mostrar como camino interactivo. Crea un curso nuevo
+                          desde Inicio (Empezar gratis / Nuevo curso).
                         </p>
                       );
                     }

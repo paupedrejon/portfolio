@@ -2844,16 +2844,26 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
 
 export function parseInteractivePlan(raw: string): InteractivePlan | null {
   try {
-    const data = JSON.parse(raw);
-    if (!data || !Array.isArray(data.days)) return null;
+    let text = raw.trim();
+    // A veces el modelo envuelve el JSON en ```json ... ```
+    const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (fence?.[1]) text = fence[1].trim();
+    const data = JSON.parse(text);
+    if (!data || !Array.isArray(data.days) || data.days.length === 0) return null;
     if (
       data.format === "interactive_v1" ||
       data.format === "interactive_v2" ||
       data.format === "interactive_v3" ||
       data.format === "interactive_v4" ||
-      data.topic
+      data.topic ||
+      data.days[0]?.slides ||
+      data.days[0]?.title
     ) {
-      return data as InteractivePlan;
+      return {
+        ...data,
+        format: data.format || "interactive_v4",
+        topic: data.topic || "Curso",
+      } as InteractivePlan;
     }
   } catch {
     /* ignore */

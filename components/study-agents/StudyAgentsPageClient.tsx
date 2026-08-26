@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import StudyChat from "@/components/StudyChat";
-import Onboarding from "@/components/study-agents/Onboarding";
 import StudyAgentsHome, {
   type SaCourseSummary,
 } from "@/components/study-agents/StudyAgentsHome";
@@ -122,21 +121,6 @@ export default function StudyAgentsPageClient() {
           }}
         />
       </div>
-
-      {view === "course" && (
-        <Onboarding
-          onAskTestClick={() => {
-            const input = document.querySelector<HTMLTextAreaElement>(
-              "[data-study-chat-input]",
-            );
-            if (input) {
-              input.focus();
-              input.value = "Tengo una duda sobre la lección de hoy.";
-              input.dispatchEvent(new Event("input", { bubbles: true }));
-            }
-          }}
-        />
-      )}
     </>
   );
 }

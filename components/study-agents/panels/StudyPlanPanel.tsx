@@ -66,10 +66,6 @@ export default function StudyPlanPanel({
   const t = saModalTokens("dark");
 
   const generate = async () => {
-    if (!apiKey) {
-      setError("Configura tu API Key primero.");
-      return;
-    }
     const topicVal = topic.trim() || defaultTopic.trim();
     if (!topicVal) {
       setError("Elige o escribe un tema.");
@@ -86,7 +82,7 @@ export default function StudyPlanPanel({
         error?: string;
         detail?: string;
       }>("generate-study-plan", {
-        apiKey,
+        apiKey: apiKey || "default",
         topic: topicVal,
         days,
         minutes_per_day: minutes,
@@ -106,6 +102,21 @@ export default function StudyPlanPanel({
         data.plan_interactive != null
           ? JSON.stringify(data.plan_interactive)
           : data.plan || "";
+
+      // Validar JSON interactivo antes de crear el chat
+      let valid = false;
+      try {
+        const parsed = JSON.parse(payload);
+        valid = Boolean(parsed && Array.isArray(parsed.days) && parsed.days.length > 0);
+      } catch {
+        valid = false;
+      }
+      if (!valid) {
+        throw new Error(
+          "El modelo no devolvió un camino interactivo válido. Prueba otra vez (plan Free con Groq o regenera).",
+        );
+      }
+
       await onPlanGenerated(payload, { topic: topicVal, days, minutes });
       onClose();
     } catch (e) {
