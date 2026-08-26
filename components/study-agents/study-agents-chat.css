@@ -407,6 +407,17 @@
   white-space: nowrap;
 }
 
+.sa-duo-top__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.sa-pathmap__reload {
+  align-self: flex-end;
+  margin-bottom: 0.15rem;
+}
+
 .sa-duo-bubble--test {
   border-color: #00d9ff;
   box-shadow: 0 0 24px rgba(0, 217, 255, 0.2);

@@ -50,7 +50,7 @@ const LOAD_STAGES = [
 ] as const;
 
 function stageLabel(pct: number): string {
-  let label = LOAD_STAGES[0].label;
+  let label: string = LOAD_STAGES[0].label;
   for (const s of LOAD_STAGES) {
     if (pct >= s.at) label = s.label;
   }

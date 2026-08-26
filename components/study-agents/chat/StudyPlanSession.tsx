@@ -2887,6 +2887,26 @@ function VisualOnly({ block }: { block: PlanBlock }) {
   );
 }
 
+function ReloadIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M20 12a8 8 0 1 1-2.2-5.5"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M20 4v5h-5"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function ChoiceList({
   options,
   correctIndex,
@@ -3136,6 +3156,17 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
     setReviewIndex(0);
   };
 
+  /** Reinicia la lección activa, o recarga la página si estás en el mapa. */
+  const reloadLesson = () => {
+    if (activeDay) {
+      startDay(activeDay);
+      return;
+    }
+    if (typeof window !== "undefined") {
+      window.location.reload();
+    }
+  };
+
   if (activeDay && dayDone) {
     return (
       <div className={`${outfit.className} sa-steps-card sa-duo-shell sa-pop`}>
@@ -3150,6 +3181,16 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
         </div>
         <button type="button" className="sa-btn sa-btn--ghost" style={{ width: "100%" }} onClick={backToMap}>
           Volver al camino →
+        </button>
+        <button
+          type="button"
+          className="sa-chip sa-chip--icon"
+          style={{ margin: "0.75rem auto 0", display: "flex" }}
+          onClick={reloadLesson}
+          title="Recargar lección"
+          aria-label="Recargar lección"
+        >
+          <ReloadIcon />
         </button>
       </div>
     );
@@ -3181,7 +3222,18 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
             <span className={phase === "learn" ? "on" : ""}>2</span>
             <span className={phase === "test" ? "on" : ""}>3</span>
           </div>
-          <span className="sa-duo-xp">+{dayXp} XP</span>
+          <div className="sa-duo-top__actions">
+            <button
+              type="button"
+              className="sa-chip sa-chip--icon"
+              onClick={reloadLesson}
+              title="Recargar lección"
+              aria-label="Recargar lección"
+            >
+              <ReloadIcon />
+            </button>
+            <span className="sa-duo-xp">+{dayXp} XP</span>
+          </div>
         </div>
         <div className="sa-steps-progress">
           <span style={{ width: `${Math.max(8, dayProgress)}%` }} />
@@ -3285,7 +3337,18 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
             <span>2</span>
             <span className="on">3</span>
           </div>
-          <span className="sa-duo-xp">+{dayXp} XP</span>
+          <div className="sa-duo-top__actions">
+            <button
+              type="button"
+              className="sa-chip sa-chip--icon"
+              onClick={reloadLesson}
+              title="Recargar lección"
+              aria-label="Recargar lección"
+            >
+              <ReloadIcon />
+            </button>
+            <span className="sa-duo-xp">+{dayXp} XP</span>
+          </div>
         </div>
         <div className="sa-steps-progress">
           <span style={{ width: `${Math.max(8, (reviewIndex + (isCorrect ? 0.35 : 0)) / Math.max(1, wrongQuestions.length)) * 100}%` }} />
@@ -3362,7 +3425,18 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
             <span>2</span>
             <span className="on">3</span>
           </div>
-          <span className="sa-duo-xp">+{dayXp} XP</span>
+          <div className="sa-duo-top__actions">
+            <button
+              type="button"
+              className="sa-chip sa-chip--icon"
+              onClick={reloadLesson}
+              title="Recargar lección"
+              aria-label="Recargar lección"
+            >
+              <ReloadIcon />
+            </button>
+            <span className="sa-duo-xp">+{dayXp} XP</span>
+          </div>
         </div>
         <div className="sa-steps-progress">
           <span style={{ width: `${Math.max(8, dayProgress)}%` }} />
@@ -3439,6 +3513,15 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
           <em>{unitFocus}</em>
         </div>
         <div className="sa-pathmap__unit-stats">
+          <button
+            type="button"
+            className="sa-chip sa-chip--icon sa-pathmap__reload"
+            onClick={reloadLesson}
+            title="Recargar lección"
+            aria-label="Recargar lección"
+          >
+            <ReloadIcon />
+          </button>
           <span title="XP">{progress.xp} XP</span>
           <span title="Hechas">{progress.completedDays.length}/{daysPrepared.length}</span>
         </div>
