@@ -7,11 +7,17 @@ import { hasConfiguredProviderKeys, type StudyAgentsAPIKeys } from "@/lib/study-
 export function canUseStudyAgentsLlm(
   entitlements: StudyAgentsEntitlements | null | undefined,
   apiKeys: StudyAgentsAPIKeys | null | undefined,
+  opts?: { loading?: boolean },
 ): boolean {
   if (hasConfiguredProviderKeys(apiKeys)) return true;
-  return Boolean(
-    entitlements?.plan === "free" && entitlements.freeServerReady,
-  );
+  // Mientras carga el plan, no bloqueamos (Free no exige keys).
+  if (opts?.loading && !entitlements) return true;
+  // Free con Groq de servidor, o Free en fallback sin saber aún si hay Groq
+  // (el BFF devolverá error claro si falta GROQ_API_KEY).
+  if (entitlements?.plan === "free") {
+    return entitlements.freeServerReady || entitlements.source === "fallback";
+  }
+  return false;
 }
 
 export function useStudyAgentsEntitlements(userId: string | undefined | null) {

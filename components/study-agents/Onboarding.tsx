@@ -19,9 +19,9 @@ export default function Onboarding({ onUploadClick, onAskTestClick }: Props) {
     if (typeof window === "undefined") return;
     const done = localStorage.getItem(STORAGE_KEY) === "1";
     setVisible(!done);
-    setHasKey(!!getStoredAPIKeys()?.openai);
+    setHasKey(!!getStoredAPIKeys());
 
-    const onKeys = () => setHasKey(!!getStoredAPIKeys()?.openai);
+    const onKeys = () => setHasKey(!!getStoredAPIKeys());
     window.addEventListener("apiKeysUpdated", onKeys);
     return () => window.removeEventListener("apiKeysUpdated", onKeys);
   }, []);
@@ -36,11 +36,12 @@ export default function Onboarding({ onUploadClick, onAskTestClick }: Props) {
   const steps = [
     {
       id: "api",
-      title: "Configura tu API Key",
-      desc: "Study Agents usa tu cuenta de OpenAI (BYOK). Los costes van a tu factura.",
-      done: hasKey,
+      title: "Plan Free listo (opcional: tus keys)",
+      desc: "Puedes chatear gratis con Groq del servidor. Si quieres Premium/BYOK, añade tu propia API key.",
+      done: true,
       action: () => openAPIKeyModal(),
-      label: hasKey ? "Cambiar API Key" : "Configurar API",
+      label: hasKey ? "Cambiar API keys" : "Configurar keys (opcional)",
+      showActionAlways: true,
     },
     {
       id: "upload",
@@ -52,6 +53,7 @@ export default function Onboarding({ onUploadClick, onAskTestClick }: Props) {
         document.getElementById("study-chat-file-input")?.click();
       },
       label: "Subir documento",
+      showActionAlways: false,
     },
     {
       id: "test",
@@ -60,6 +62,7 @@ export default function Onboarding({ onUploadClick, onAskTestClick }: Props) {
       done: false,
       action: () => onAskTestClick?.(),
       label: "Probar en el chat",
+      showActionAlways: false,
     },
   ];
 
@@ -98,7 +101,7 @@ export default function Onboarding({ onUploadClick, onAskTestClick }: Props) {
         </button>
       </div>
       <p className={outfit.className} style={{ margin: "0 0 1rem", fontSize: "0.8rem", color: "#94a3b8" }}>
-        Completa estos 3 pasos para sacar el máximo partido al tutor.
+        Completa estos pasos para sacar el máximo partido al tutor.
       </p>
       <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         {steps.map((step, i) => (
@@ -137,7 +140,7 @@ export default function Onboarding({ onUploadClick, onAskTestClick }: Props) {
               <div className={outfit.className} style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: 2 }}>
                 {step.desc}
               </div>
-              {!step.done && (
+              {(!step.done || step.showActionAlways) && (
                 <button
                   type="button"
                   onClick={step.action}

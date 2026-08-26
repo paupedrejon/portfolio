@@ -5,7 +5,6 @@ import { leagueSpartan, outfit, spaceGrotesk } from "@/app/fonts";
 import StudyAgentsBotAvatar from "@/components/study-agents/StudyAgentsBotAvatar";
 import HomeHeroBackground from "@/components/home/HomeHeroBackground";
 import { SA_BOT_FACE, SA_CYAN } from "@/lib/study-agents/brand";
-import { OPEN_API_KEY_MODAL_EVENT } from "@/lib/study-agents/api-keys";
 import { studyAgentsFetch } from "@/hooks/study-agents/useApiClient";
 import "@/components/study-agents/study-agents-bot.css";
 import "@/components/study-agents/study-agents-hero.css";
@@ -166,9 +165,9 @@ export default function StudyAgentsHome({ userId, onStartCourse, onOpenCourse }:
             <button
               type="button"
               className="sa-hero__cta-ghost"
-              onClick={continueCourse ? onStartCourse : () => window.dispatchEvent(new Event(OPEN_API_KEY_MODAL_EVENT))}
+              onClick={continueCourse ? onStartCourse : onStartCourse}
             >
-              {continueCourse ? "Nuevo curso" : "Configurar API Key"}
+              {continueCourse ? "Nuevo curso" : "Empezar gratis"}
             </button>
           </div>
         </div>

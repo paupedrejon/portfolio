@@ -448,8 +448,11 @@ export default function StudyChat({
   const [newChatColor, setNewChatColor] = useState<string>("#358c9f");
   const [newChatIcon, setNewChatIcon] = useState<string>("chat");
   const userId = session?.user?.id || "";
-  const { entitlements } = useStudyAgentsEntitlements(userId || null);
-  const canUseLlm = canUseStudyAgentsLlm(entitlements, apiKeys);
+  const { entitlements, loading: entitlementsLoading } =
+    useStudyAgentsEntitlements(userId || null);
+  const canUseLlm = canUseStudyAgentsLlm(entitlements, apiKeys, {
+    loading: entitlementsLoading,
+  });
   const {
     documents: chatDocuments,
     loading: chatDocumentsLoading,
@@ -1535,14 +1538,10 @@ export default function StudyChat({
     };
   }, [messages]);
 
-  // Verificar si hay API keys configuradas al cargar
+  // Cargar API keys del navegador (opcionales en plan Free)
   useEffect(() => {
     const stored = getStoredAPIKeys();
-    if (stored) {
-      setApiKeys(stored);
-    } else {
-      setShowAPIKeyConfig(true);
-    }
+    if (stored) setApiKeys(stored);
   }, []);
 
   // Abrir modal desde StudyAgentsNav u otros componentes
