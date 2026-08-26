@@ -3301,6 +3301,7 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
   const allDone = daysPrepared.length > 0 && progress.completedDays.length >= daysPrepared.length;
   const unitTitle = todayLesson?.title || daysPrepared[0]?.title || plan.topic;
   const unitFocus = todayLesson?.focus || daysPrepared[0]?.focus || "Camino diario";
+  const quickStartLesson = todayLesson || daysPrepared.find((d) => d.day <= progress.unlockedDay) || null;
 
   return (
     <div className={`${outfit.className} sa-pathmap sa-pop`}>
@@ -3383,6 +3384,18 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
           );
         })}
       </div>
+      {!allDone && quickStartLesson ? (
+        <div className="sa-pathmap__cta">
+          <button
+            type="button"
+            className="sa-btn sa-btn--primary"
+            style={{ width: "100%" }}
+            onClick={() => startDay(quickStartLesson)}
+          >
+            {progress.completedDays.includes(quickStartLesson.day) ? "Seguir por el camino →" : "Continuar hoy →"}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
