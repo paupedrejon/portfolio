@@ -71,19 +71,19 @@ export const STUDY_MODEL_OPTIONS: StudyModelOption[] = [
     group: "chinese",
     pricing: { input: 0, output: 0 },
   },
-  // —— Otras alternativas gratis ——
+  // —— Groq (IDs actuales post-deprecación ago-2026) ——
   {
-    value: "groq/llama-3.3-70b",
-    label: "Llama 3.3 70B",
-    subtitle: "Groq · tier gratis",
+    value: "groq/gpt-oss-20b",
+    label: "GPT-OSS 20B",
+    subtitle: "Groq · rápido",
     provider: "groq",
     group: "free",
     pricing: { input: 0, output: 0 },
   },
   {
-    value: "groq/gemma2-9b",
-    label: "Gemma 2 9B",
-    subtitle: "Groq · tier gratis",
+    value: "groq/gpt-oss-120b",
+    label: "GPT-OSS 120B",
+    subtitle: "Groq · más capaz",
     provider: "groq",
     group: "free",
     pricing: { input: 0, output: 0 },

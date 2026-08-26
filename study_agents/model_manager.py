@@ -106,7 +106,30 @@ class ModelManager:
             quality_level="premium",
             base_url="https://api.deepseek.com",
         ),
-        # Groq (tier gratis)
+        # Groq (catálogo actual — gemma2 / llama-3.3 free decommissioned ago-2026)
+        ModelConfig(
+            "groq/gpt-oss-20b",
+            ModelProvider.GROQ,
+            0,
+            0,
+            8192,
+            requires_api_key=True,
+            quality_level="medium",
+            api_model_id="openai/gpt-oss-20b",
+            base_url="https://api.groq.com/openai/v1",
+        ),
+        ModelConfig(
+            "groq/gpt-oss-120b",
+            ModelProvider.GROQ,
+            0,
+            0,
+            8192,
+            requires_api_key=True,
+            quality_level="high",
+            api_model_id="openai/gpt-oss-120b",
+            base_url="https://api.groq.com/openai/v1",
+        ),
+        # Alias legacy (UI / preferred_model antiguos) → mismos IDs vivos
         ModelConfig(
             "groq/llama-3.3-70b",
             ModelProvider.GROQ,
@@ -115,7 +138,7 @@ class ModelManager:
             8192,
             requires_api_key=True,
             quality_level="high",
-            api_model_id="llama-3.3-70b-versatile",
+            api_model_id="openai/gpt-oss-120b",
             base_url="https://api.groq.com/openai/v1",
         ),
         ModelConfig(
@@ -126,7 +149,7 @@ class ModelManager:
             8192,
             requires_api_key=True,
             quality_level="medium",
-            api_model_id="gemma2-9b-it",
+            api_model_id="openai/gpt-oss-20b",
             base_url="https://api.groq.com/openai/v1",
         ),
         # OpenRouter free (chinos + otros)

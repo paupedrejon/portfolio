@@ -27,7 +27,7 @@ export const FREE_DAILY_REQUEST_LIMIT = Number(
   process.env.STUDY_AGENTS_FREE_DAILY_REQUESTS || 40,
 );
 
-export const FREE_DEFAULT_MODEL = "groq/llama-3.3-70b";
+export const FREE_DEFAULT_MODEL = "groq/gpt-oss-20b";
 
 export function isPremiumPlan(plan: StudyAgentsPlan): boolean {
   return plan === "premium";
