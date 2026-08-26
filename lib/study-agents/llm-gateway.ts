@@ -53,10 +53,14 @@ function clientHasAnyKey(
   );
 }
 
+function serverGroqKey(): string {
+  return (process.env.GROQ_API_KEY || "").trim();
+}
+
 /**
  * Resuelve acceso LLM según plan:
- * - Free → GROQ_API_KEY del servidor (no se expone al cliente) + cuota diaria
- * - Premium → BYOK del cliente (como hasta ahora)
+ * - Free → GROQ_API_KEY del servidor (Vercel BFF y/o Railway FastAPI) + cuota diaria
+ * - Premium → BYOK del cliente
  */
 export async function resolveLlmAccess(
   input: LlmGatewayInput,
@@ -69,11 +73,32 @@ export async function resolveLlmAccess(
       : null;
 
   if (!studyAgentsFlags.planGating) {
+    // Legacy: si hay Groq de servidor, Free implícito
+    const groq = serverGroqKey();
+    if (!clientHasAnyKey(clientApiKey, clientKeys) && groq) {
+      return {
+        ok: true,
+        entitlements: {
+          plan: "free",
+          status: "active",
+          requestsToday: 0,
+          dailyLimit: Number.POSITIVE_INFINITY,
+          remainingToday: Number.POSITIVE_INFINITY,
+          freeServerReady: true,
+          stripeReady: Boolean(process.env.STRIPE_SECRET_KEY?.trim()),
+          source: "fallback",
+        },
+        apiKey: null,
+        providerKeys: { groq },
+        preferredModel: FREE_DEFAULT_MODEL,
+      };
+    }
     if (!clientHasAnyKey(clientApiKey, clientKeys)) {
       return {
         ok: false,
         status: 400,
-        error: "Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+        error:
+          "Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI), o define GROQ_API_KEY en Vercel/Railway.",
         code: "NO_KEYS",
       };
     }
@@ -85,7 +110,7 @@ export async function resolveLlmAccess(
         requestsToday: 0,
         dailyLimit: Number.POSITIVE_INFINITY,
         remainingToday: Number.POSITIVE_INFINITY,
-        freeServerReady: Boolean(process.env.GROQ_API_KEY?.trim()),
+        freeServerReady: Boolean(groq),
         stripeReady: Boolean(process.env.STRIPE_SECRET_KEY?.trim()),
         source: "fallback",
       },
@@ -118,28 +143,6 @@ export async function resolveLlmAccess(
   }
 
   // Free
-  // Releer env en cada request (tras redeploy con GROQ_API_KEY)
-  const serverGroq = process.env.GROQ_API_KEY?.trim() || "";
-  if (!serverGroq) {
-    if (clientHasAnyKey(clientApiKey, clientKeys)) {
-      return {
-        ok: true,
-        entitlements,
-        apiKey: clientApiKey || clientKeys.openai || null,
-        providerKeys: clientKeys,
-        preferredModel: null,
-      };
-    }
-    return {
-      ok: false,
-      status: 503,
-      error:
-        "Plan Free no disponible: falta GROQ_API_KEY en el servidor (Vercel). Añádela y vuelve a desplegar, o configura una API key propia.",
-      code: "FREE_NOT_READY",
-      entitlements: { ...entitlements, freeServerReady: false },
-    };
-  }
-
   if (entitlements.remainingToday <= 0) {
     return {
       ok: false,
@@ -150,11 +153,34 @@ export async function resolveLlmAccess(
     };
   }
 
+  const groq = serverGroqKey();
+  if (groq) {
+    return {
+      ok: true,
+      entitlements: { ...entitlements, freeServerReady: true },
+      apiKey: null,
+      providerKeys: { groq },
+      preferredModel: FREE_DEFAULT_MODEL,
+    };
+  }
+
+  // Sin Groq en Vercel: si el usuario trae BYOK, ok; si no, reenviamos vacío
+  // para que FastAPI (Railway) use su propia GROQ_API_KEY.
+  if (clientHasAnyKey(clientApiKey, clientKeys)) {
+    return {
+      ok: true,
+      entitlements,
+      apiKey: clientApiKey || clientKeys.openai || null,
+      providerKeys: clientKeys,
+      preferredModel: null,
+    };
+  }
+
   return {
     ok: true,
-    entitlements: { ...entitlements, freeServerReady: true },
+    entitlements: { ...entitlements, freeServerReady: false },
     apiKey: null,
-    providerKeys: { groq: serverGroq },
+    providerKeys: {},
     preferredModel: FREE_DEFAULT_MODEL,
   };
 }

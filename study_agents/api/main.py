@@ -379,10 +379,17 @@ def resolve_openai_and_llm_access(
     """
     Devuelve (openai_key_or_None, has_any_llm_key).
     openai_key solo para embeddings; LLM puede ser Groq/DeepSeek/OpenRouter.
-    Incluye GROQ_API_KEY de servidor (plan Free inyectado por el BFF).
+    Incluye GROQ_API_KEY de servidor (plan Free / Railway).
     """
     apply_provider_keys_from_request(api_key, provider_keys)
     pk = {k: v for k, v in (provider_keys or {}).items() if v and v != "default"}
+    # Keys ya aplicadas (incluye env GROQ tras apply_provider_keys_from_request)
+    try:
+        from model_manager import get_request_provider_keys
+
+        pk = {**pk, **get_request_provider_keys()}
+    except Exception:
+        pass
     openai_key = api_key if (api_key and api_key != "default") else None
     openai_key = openai_key or pk.get("openai") or os.getenv("OPENAI_API_KEY")
     has_llm = bool(
@@ -390,7 +397,9 @@ def resolve_openai_and_llm_access(
         or pk.get("groq")
         or pk.get("deepseek")
         or pk.get("openrouter")
-        or os.getenv("GROQ_API_KEY")
+        or (os.getenv("GROQ_API_KEY") or "").strip()
+        or (os.getenv("DEEPSEEK_API_KEY") or "").strip()
+        or (os.getenv("OPENROUTER_API_KEY") or "").strip()
     )
     return openai_key, has_llm
 
@@ -944,7 +953,10 @@ async def extract_concepts(body: ExtractConceptsRequest):
         if not has_llm:
             raise HTTPException(
                 status_code=400,
-                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+                detail=(
+                    "No hay LLM disponible. Añade GROQ_API_KEY en Railway (FastAPI) "
+                    "y/o en Vercel, o configura una API key en el cliente (Groq/DeepSeek/OpenRouter/OpenAI)."
+                ),
             )
         if not body.chatId:
             raise HTTPException(status_code=400, detail="chatId requerido")
@@ -1258,7 +1270,10 @@ async def generate_notes(request: Request, body: GenerateNotesRequest):
         if not has_llm:
             raise HTTPException(
                 status_code=400,
-                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+                detail=(
+                    "No hay LLM disponible. Añade GROQ_API_KEY en Railway (FastAPI) "
+                    "y/o en Vercel, o configura una API key en el cliente (Groq/DeepSeek/OpenRouter/OpenAI)."
+                ),
             )
         
         print("[FastAPI] Obteniendo sistema...")
@@ -1344,7 +1359,10 @@ async def generate_study_plan(request: StudyPlanRequest):
         if not has_llm:
             raise HTTPException(
                 status_code=400,
-                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+                detail=(
+                    "No hay LLM disponible. Añade GROQ_API_KEY en Railway (FastAPI) "
+                    "y/o en Vercel, o configura una API key en el cliente (Groq/DeepSeek/OpenRouter/OpenAI)."
+                ),
             )
         topic = (request.topic or "").strip()
         if not topic:
@@ -1412,7 +1430,10 @@ async def ask_question(request: Request, body: QuestionRequest):
         if not has_llm:
             raise HTTPException(
                 status_code=400,
-                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+                detail=(
+                    "No hay LLM disponible. Añade GROQ_API_KEY en Railway (FastAPI) "
+                    "y/o en Vercel, o configura una API key en el cliente (Groq/DeepSeek/OpenRouter/OpenAI)."
+                ),
             )
         
         if not body.question:
@@ -1535,7 +1556,10 @@ async def generate_test(request: Request, body: TestRequest):
         if not has_llm:
             raise HTTPException(
                 status_code=400,
-                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+                detail=(
+                    "No hay LLM disponible. Añade GROQ_API_KEY en Railway (FastAPI) "
+                    "y/o en Vercel, o configura una API key en el cliente (Groq/DeepSeek/OpenRouter/OpenAI)."
+                ),
             )
         
         system = get_or_create_system(openai_key, mode="auto")
@@ -1650,7 +1674,10 @@ async def grade_test(request: GradeTestRequest):
         if not has_llm:
             raise HTTPException(
                 status_code=400,
-                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+                detail=(
+                    "No hay LLM disponible. Añade GROQ_API_KEY en Railway (FastAPI) "
+                    "y/o en Vercel, o configura una API key en el cliente (Groq/DeepSeek/OpenRouter/OpenAI)."
+                ),
             )
         
         system = get_or_create_system(openai_key, mode="auto")
@@ -1778,7 +1805,10 @@ async def generate_exercise(request: GenerateExerciseRequest):
         if not has_llm:
             raise HTTPException(
                 status_code=400,
-                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+                detail=(
+                    "No hay LLM disponible. Añade GROQ_API_KEY en Railway (FastAPI) "
+                    "y/o en Vercel, o configura una API key en el cliente (Groq/DeepSeek/OpenRouter/OpenAI)."
+                ),
             )
         
         system = get_or_create_system(openai_key, mode="auto")
@@ -1891,7 +1921,10 @@ async def correct_exercise(request: CorrectExerciseRequest):
         if not has_llm:
             raise HTTPException(
                 status_code=400,
-                detail="Configura al menos una API key (Groq, DeepSeek, OpenRouter u OpenAI).",
+                detail=(
+                    "No hay LLM disponible. Añade GROQ_API_KEY en Railway (FastAPI) "
+                    "y/o en Vercel, o configura una API key en el cliente (Groq/DeepSeek/OpenRouter/OpenAI)."
+                ),
             )
         
         system = get_or_create_system(openai_key, mode="auto")

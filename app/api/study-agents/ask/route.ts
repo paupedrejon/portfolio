@@ -71,15 +71,24 @@ export async function POST(request: NextRequest) {
       } catch {
         if (raw?.trim()) detail = raw.trim().slice(0, 500);
       }
+      const injectedGroq = Boolean(access.providerKeys?.groq);
       console.error("Error from FastAPI:", {
         status: response.status,
         detail,
+        injectedGroq,
+        plan: access.entitlements.plan,
+        vercelHasGroq: Boolean(process.env.GROQ_API_KEY?.trim()),
         raw: raw?.slice(0, 500),
       });
       return NextResponse.json(
         {
           success: false,
           error: detail || "Error al procesar pregunta",
+          debug: {
+            plan: access.entitlements.plan,
+            vercelInjectedGroq: injectedGroq,
+            vercelHasGroqKey: Boolean(process.env.GROQ_API_KEY?.trim()),
+          },
         },
         { status: response.status },
       );
