@@ -221,7 +221,7 @@
 .sa-duo-shell {
   overflow: visible;
   margin-bottom: 1rem;
-  max-height: calc(100dvh - 10.5rem);
+  max-height: calc(100dvh - 9.5rem);
   display: flex;
   flex-direction: column;
 }
@@ -429,7 +429,17 @@
   flex-direction: column;
   gap: 0.55rem;
   min-height: 0;
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.1rem;
+}
+
+.sa-duo-actionbar {
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(to top, rgba(3, 13, 20, 0.95), rgba(3, 13, 20, 0.5));
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
 }
 
 .sa-duo-visual {

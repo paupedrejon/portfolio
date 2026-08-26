@@ -2095,7 +2095,7 @@ button{background:#358c9f;color:#fff;border:0;padding:8px 14px;border-radius:10p
         {
           id: `css${d}-1`,
           phase: "intro",
-          bot: "El **selector** decide a qué aplica la regla.\nPuede ser etiqueta, clase (`.btn`) o id (`#hero`).",
+          bot: "El **selector** es la \"dirección\" de la regla CSS.\nEjemplo: `h1` afecta al título, `.titulo` a class=\"titulo\" y `#main` al id=\"main\".",
           visual: {
             kind: "chips",
             items: ["h1", ".titulo", "#main", "button:hover"],
@@ -3269,17 +3269,21 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
                 {picked === currentQ.correct_index ? "¡Correcto!" : "Casi — sigue"}
               </p>
               <p>{picked === currentQ.correct_index ? currentQ.feedback_ok : currentQ.feedback_bad}</p>
-              <button
-                type="button"
-                className="sa-btn sa-btn--ghost"
-                style={{ width: "100%", marginTop: "0.75rem" }}
-                onClick={nextAfterTest}
-              >
-                {qIndex >= activeDay.questions.length - 1 ? "Terminar día →" : "Siguiente →"}
-              </button>
             </div>
           )}
         </div>
+        {revealed && (
+          <div className="sa-duo-actionbar">
+            <button
+              type="button"
+              className="sa-btn sa-btn--ghost"
+              style={{ width: "100%" }}
+              onClick={nextAfterTest}
+            >
+              {qIndex >= activeDay.questions.length - 1 ? "Terminar día →" : "Siguiente →"}
+            </button>
+          </div>
+        )}
       </div>
     );
   }
