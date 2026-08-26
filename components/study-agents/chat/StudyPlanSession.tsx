@@ -2894,6 +2894,7 @@ function ChoiceList({
   revealed,
   onPick,
   comic,
+  disableWhenRevealed = true,
 }: {
   options: string[];
   correctIndex: number;
@@ -2901,6 +2902,7 @@ function ChoiceList({
   revealed: boolean;
   onPick: (idx: number) => void;
   comic?: boolean;
+  disableWhenRevealed?: boolean;
 }) {
   return (
     <div className={`sa-duo-choices ${comic ? "sa-duo-choices--comic" : ""}`}>
@@ -2917,7 +2919,7 @@ function ChoiceList({
           <button
             key={`${opt}-${idx}`}
             type="button"
-            disabled={revealed}
+            disabled={revealed && disableWhenRevealed}
             className={cls}
             style={comic ? ({ ["--sa-i" as string]: idx } as CSSProperties) : undefined}
             onClick={() => onPick(idx)}
@@ -2982,12 +2984,15 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
   const [activeDay, setActiveDay] = useState<(typeof daysPrepared)[0] | null>(null);
   const [slideIndex, setSlideIndex] = useState(0);
   const [inTest, setInTest] = useState(false);
+  const [inReview, setInReview] = useState(false);
   const [qIndex, setQIndex] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [dayXp, setDayXp] = useState(0);
   const [dayDone, setDayDone] = useState(false);
   const [celebrateXp, setCelebrateXp] = useState(0);
+  const [wrongQuestions, setWrongQuestions] = useState<PlanQuestion[]>([]);
+  const [reviewIndex, setReviewIndex] = useState(0);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -3023,21 +3028,33 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
     setActiveDay(d);
     setSlideIndex(0);
     setInTest(false);
+    setInReview(false);
     setQIndex(0);
     setPicked(null);
     setRevealed(false);
     setDayXp(0);
     setDayDone(false);
+    setWrongQuestions([]);
+    setReviewIndex(0);
   };
 
   const choose = (idx: number, correctIndex: number) => {
-    if (revealed) return;
+    // En test normal elige una vez; en revisión permitimos corregir hasta acertar.
+    if (revealed && !inReview) return;
     setPicked(idx);
     setRevealed(true);
-    if (idx === correctIndex) setDayXp((x) => x + xpEach);
+    if (idx === correctIndex) {
+      if (inTest) setDayXp((x) => x + xpEach);
+      return;
+    }
+    // Solo registramos fallos durante el test inicial.
+    if (inTest && activeDay && activeDay.questions[qIndex]) {
+      const q = activeDay.questions[qIndex];
+      setWrongQuestions((prev) => (prev.some((w) => w.id === q.id) ? prev : [...prev, q]));
+    }
   };
 
-  const finishDay = () => {
+  const commitFinishDay = () => {
     if (!activeDay) return;
     const already = progress.completedDays.includes(activeDay.day);
     const completed = already
@@ -3055,10 +3072,25 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
     setDayDone(true);
   };
 
+  const finishDay = () => {
+    // Si fallaste algo, primero toca corregir (modo Duolingo).
+    if (wrongQuestions.length > 0) {
+      setInReview(true);
+      setInTest(false);
+      setReviewIndex(0);
+      setPicked(null);
+      setRevealed(false);
+      return;
+    }
+    commitFinishDay();
+  };
+
   const nextAfterSlide = () => {
     if (slideIndex >= slides.length - 1) {
       setInTest(true);
       setQIndex(0);
+      setWrongQuestions([]);
+      setInReview(false);
       setPicked(null);
       setRevealed(false);
       return;
@@ -3079,14 +3111,29 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
     setRevealed(false);
   };
 
+  const nextAfterReview = () => {
+    if (!activeDay) return;
+    if (reviewIndex >= wrongQuestions.length - 1) {
+      setInReview(false);
+      commitFinishDay();
+      return;
+    }
+    setReviewIndex((i) => i + 1);
+    setPicked(null);
+    setRevealed(false);
+  };
+
   const backToMap = () => {
     setActiveDay(null);
     setDayDone(false);
     setInTest(false);
+    setInReview(false);
     setPicked(null);
     setRevealed(false);
     setSlideIndex(0);
     setQIndex(0);
+    setWrongQuestions([]);
+    setReviewIndex(0);
   };
 
   if (activeDay && dayDone) {
@@ -3212,6 +3259,86 @@ export default function StudyPlanSession({ plan, storageKey }: Props) {
           >
             {slideIndex >= slides.length - 1 ? "Ir al test →" : "Siguiente →"}
           </button>
+        )}
+      </div>
+    );
+  }
+
+  if (activeDay && inReview && wrongQuestions[reviewIndex]) {
+    const reviewQ = wrongQuestions[reviewIndex];
+    const isCorrect = revealed && picked === reviewQ.correct_index;
+
+    return (
+      <div className={`${outfit.className} sa-steps-card sa-duo-shell sa-duo-shell--test sa-pop`}>
+        <div className="sa-duo-top">
+          <button
+            type="button"
+            className="sa-chip sa-chip--icon"
+            onClick={backToMap}
+            title="Volver al camino"
+            aria-label="Volver al camino"
+          >
+            ←
+          </button>
+          <div className="sa-duo-phase">
+            <span>1</span>
+            <span>2</span>
+            <span className="on">3</span>
+          </div>
+          <span className="sa-duo-xp">+{dayXp} XP</span>
+        </div>
+        <div className="sa-steps-progress">
+          <span style={{ width: `${Math.max(8, (reviewIndex + (isCorrect ? 0.35 : 0)) / Math.max(1, wrongQuestions.length)) * 100}%` }} />
+        </div>
+        <p className="sa-duo-focus">Corrección · {reviewIndex + 1}/{wrongQuestions.length}</p>
+
+        <div className="sa-duo-screen">
+          <div className="sa-duo-botrow sa-duo-botrow--comic">
+            <StudyAgentsBotAvatar size={52} color={SA_BOT_FACE} state="thinking" className="sa-bot-avatar--bright" />
+            <div className="sa-duo-bubble sa-duo-bubble--test">
+              <p className="sa-duo-test-label">REVISA TU FALLO</p>
+              <p>{reviewQ.prompt}</p>
+            </div>
+          </div>
+
+          <div className="sa-duo-checkblock">
+            <p className="sa-duo-checkblock__label">ELIGE UNA OPCIÓN</p>
+            <ChoiceList
+              options={reviewQ.options}
+              correctIndex={reviewQ.correct_index}
+              picked={picked}
+              revealed={revealed}
+              comic
+              disableWhenRevealed={false}
+              onPick={(idx) => choose(idx, reviewQ.correct_index)}
+            />
+          </div>
+
+          {revealed && (
+            <div className={`sa-duo-feedback ${picked === reviewQ.correct_index ? "ok" : "bad"}`}>
+              <p className="sa-duo-feedback__title">
+                {picked === reviewQ.correct_index ? "¡Bien!" : "Casi — inténtalo otra vez"}
+              </p>
+              <p>
+                {picked === reviewQ.correct_index
+                  ? reviewQ.feedback_ok
+                  : reviewQ.feedback_bad}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {isCorrect && (
+          <div className="sa-duo-actionbar">
+            <button
+              type="button"
+              className="sa-btn sa-btn--ghost"
+              style={{ width: "100%" }}
+              onClick={nextAfterReview}
+            >
+              {reviewIndex >= wrongQuestions.length - 1 ? "Terminar corrección →" : "Siguiente fallo →"}
+            </button>
+          </div>
         )}
       </div>
     );

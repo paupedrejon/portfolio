@@ -958,9 +958,13 @@
 }
 
 .sa-pathmap__cta {
-  position: sticky;
-  bottom: 0;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 16px;
   z-index: 6;
+  width: calc(100% - 2.2rem);
+  max-width: 520px;
   padding: 0.7rem 1rem 1rem;
   background: linear-gradient(to top, rgba(2, 8, 16, 0.98), rgba(2, 8, 16, 0.55));
   border-top: 1px solid rgba(255, 255, 255, 0.08);
