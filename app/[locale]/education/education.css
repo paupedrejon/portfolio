@@ -1,0 +1,463 @@
+/* /education — Dark Cherry, alineado con experience */
+
+.education-hero.home-hero {
+  background: var(--home-bg, #110508);
+}
+
+.education-hero .home-hero__bg {
+  display: block;
+  z-index: 0;
+}
+
+.education-hero .portfolio-hero__fx {
+  z-index: 1;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.education-hero .portfolio-hero__fx .light-pillar-container {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.education-hero .portfolio-hero__fx > .home-hero__motion {
+  opacity: 0.35;
+}
+
+.education-section {
+  scroll-margin-top: clamp(5rem, 10vh, 6.5rem);
+  background: var(--home-bg, #110508);
+  padding: 0 0 clamp(5rem, 12vw, 7rem);
+}
+
+.education-section__inner {
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  min-width: 0;
+  padding: clamp(1.5rem, 5vw, 2.5rem) clamp(1.25rem, 4vw, 3rem) 0;
+}
+
+.education-header {
+  text-align: center;
+  margin-bottom: clamp(2.5rem, 6vw, 3.5rem);
+}
+
+.education-header__kicker {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text, #e04667);
+}
+
+.education-header__title {
+  margin: 0;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  color: var(--text, #f5eeed);
+}
+
+.education-timeline {
+  position: relative;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.education-timeline__line {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .education-timeline__line {
+    display: block;
+    position: absolute;
+    left: 2rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(
+      180deg,
+      var(--accent, #bf3957),
+      var(--accent-text, #e04667)
+    );
+    opacity: 0.4;
+  }
+}
+
+.education-entry {
+  position: relative;
+  margin-bottom: clamp(1.25rem, 3vw, 2rem);
+  padding-left: 0;
+}
+
+@media (min-width: 640px) {
+  .education-entry {
+    padding-left: 5rem;
+  }
+}
+
+.education-entry__dot {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .education-entry__dot {
+    display: block;
+    position: absolute;
+    left: 1.5rem;
+    top: 1.5rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: var(--accent-text, #e04667);
+    border: 3px solid #110508;
+    z-index: 2;
+    transition:
+      transform 220ms ease,
+      box-shadow 220ms ease;
+  }
+
+  .education-entry:hover .education-entry__dot {
+    transform: scale(1.25);
+    box-shadow: 0 0 18px rgb(224 70 103 / 0.45);
+  }
+}
+
+.education-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: clamp(1.15rem, 4vw, 1.75rem) clamp(1rem, 4vw, 2rem);
+  border: 1px solid var(--line, rgb(245 238 237 / 0.08));
+  border-radius: var(--r-md, 14px);
+  background: var(--surface, #1b0b0e);
+  box-shadow: var(--edge, inset 0 1px 0 rgb(255 255 255 / 0.06));
+  color: var(--text, #f5eeed);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color 220ms ease,
+    transform 220ms ease,
+    background 220ms ease;
+}
+
+.education-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgb(191 57 87 / 0.16),
+    rgb(224 70 103 / 0.06)
+  );
+  opacity: 0;
+  transition: opacity 220ms ease;
+  pointer-events: none;
+}
+
+.education-entry:hover .education-card {
+  border-color: var(--cherry-400, #e04667);
+  background: var(--surface-2, #261115);
+  transform: translateX(6px);
+}
+
+.education-entry:hover .education-card::before {
+  opacity: 1;
+}
+
+@media (max-width: 639px) {
+  .education-entry:hover .education-card {
+    transform: none;
+  }
+}
+
+.education-card__row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.15rem;
+}
+
+.education-card__icon {
+  flex-shrink: 0;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: var(--r-sm, 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(191 57 87 / 0.16);
+  border: 1px solid rgb(224 70 103 / 0.28);
+  color: var(--accent-text, #e04667);
+  transition:
+    background 220ms ease,
+    color 220ms ease,
+    transform 220ms ease;
+}
+
+.education-entry:hover .education-card__icon {
+  background: linear-gradient(135deg, #bf3957, #e04667);
+  color: #fff;
+  transform: rotate(-3deg) scale(1.04);
+}
+
+.education-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.education-card__title {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: clamp(1.05rem, 2.4vw, 1.25rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  color: var(--text, #f5eeed);
+}
+
+.education-card__school {
+  margin: 0 0 0.7rem;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--text-2, #cab9b9);
+}
+
+.education-card__years {
+  display: inline-flex;
+  padding: 0.28rem 0.7rem;
+  border-radius: var(--r-sm, 8px);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--accent-text, #e04667);
+  background: rgb(191 57 87 / 0.14);
+  border: 1px solid rgb(224 70 103 / 0.28);
+}
+
+.education-card__arrow {
+  flex-shrink: 0;
+  margin-top: 0.35rem;
+  color: var(--muted, #9b8688);
+  opacity: 0.7;
+  transition:
+    color 220ms ease,
+    transform 220ms ease,
+    opacity 220ms ease;
+}
+
+.education-entry:hover .education-card__arrow {
+  color: var(--accent-text, #e04667);
+  opacity: 1;
+  transform: translateX(3px);
+}
+
+/* Modal */
+
+.education-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(8 2 4 / 0.86);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.education-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 34rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border-radius: var(--r-lg, 24px);
+  background: var(--surface, #1b0b0e);
+  border: 1px solid rgb(224 70 103 / 0.28);
+  box-shadow: var(--edge, inset 0 1px 0 rgb(255 255 255 / 0.06));
+  overflow: hidden;
+}
+
+.education-modal__glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(48px);
+}
+
+.education-modal__glow--a {
+  top: -5rem;
+  right: -5rem;
+  width: 12rem;
+  height: 12rem;
+  background: radial-gradient(circle, rgb(224 70 103 / 0.28) 0%, transparent 65%);
+}
+
+.education-modal__glow--b {
+  bottom: -4rem;
+  left: -4rem;
+  width: 10rem;
+  height: 10rem;
+  background: radial-gradient(circle, rgb(142 46 69 / 0.22) 0%, transparent 65%);
+}
+
+.education-modal__top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.15rem;
+}
+
+.education-modal__icon {
+  width: 3.75rem;
+  height: 3.75rem;
+  border-radius: var(--r-md, 14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: linear-gradient(135deg, #bf3957, #e04667);
+  flex-shrink: 0;
+}
+
+.education-modal__close {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--line, rgb(245 238 237 / 0.08));
+  background: var(--surface-2, #261115);
+  color: var(--text-2, #cab9b9);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    color 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.education-modal__close:hover {
+  color: var(--text, #f5eeed);
+  border-color: rgb(224 70 103 / 0.4);
+  background: var(--cherry-800, #361b20);
+}
+
+.education-modal__type {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  margin: 0 0 0.55rem;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text, #e04667);
+}
+
+.education-modal__title {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 0.4rem;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: clamp(1.2rem, 3vw, 1.4rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  color: var(--text, #f5eeed);
+}
+
+.education-modal__school {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 0.85rem;
+  font-size: 0.95rem;
+  color: var(--text-2, #cab9b9);
+}
+
+.education-modal__desc {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 1.25rem;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--text-2, #cab9b9);
+}
+
+.education-modal__footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.education-modal__years {
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--r-sm, 8px);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--accent-text, #e04667);
+  background: rgb(191 57 87 / 0.14);
+  border: 1px solid rgb(224 70 103 / 0.28);
+}
+
+.education-modal__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--r-md, 14px);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text, #f5eeed);
+  background: var(--accent, #bf3957);
+  border: 1.5px solid var(--cherry-400, #e04667);
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.education-modal__link:hover {
+  background: var(--cherry-600, #8e2e45);
+  border-color: var(--cherry-300, #f58393);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .education-card,
+  .education-entry__dot,
+  .education-card__icon,
+  .education-card__arrow,
+  .education-modal__link {
+    transition: none;
+  }
+
+  .education-entry:hover .education-card,
+  .education-entry:hover .education-entry__dot,
+  .education-entry:hover .education-card__icon,
+  .education-modal__link:hover {
+    transform: none;
+  }
+}
