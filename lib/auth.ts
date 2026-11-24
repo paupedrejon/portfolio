@@ -5,26 +5,34 @@ import { ensureStudyAgentsUser } from "@/lib/study-agents/entitlements";
 
 const clientId = process.env.GOOGLE_CLIENT_ID?.trim() || "";
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim() || "";
-const secret = process.env.NEXTAUTH_SECRET?.trim() || "";
+/** Auth.js v5 lee AUTH_SECRET; mantenemos NEXTAUTH_SECRET por compatibilidad */
+const secret =
+  process.env.AUTH_SECRET?.trim() ||
+  process.env.NEXTAUTH_SECRET?.trim() ||
+  "";
 
 export const authOptions = {
-  providers: [
-    GoogleProvider({
-      clientId,
-      clientSecret,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code",
-        },
-      },
-    }),
-  ],
+  providers:
+    clientId && clientSecret
+      ? [
+          GoogleProvider({
+            clientId,
+            clientSecret,
+            authorization: {
+              params: {
+                prompt: "consent",
+                access_type: "offline",
+                response_type: "code",
+              },
+            },
+          }),
+        ]
+      : [],
   pages: {
     signIn: "/auth/signin",
     error: "/auth/error",
   },
+  trustHost: true,
   callbacks: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async signIn({ user }: { user?: any }) {
