@@ -185,7 +185,7 @@ export default function ContactFormModal({ isOpen, onClose }: ContactFormModalPr
                     </div>
                   </fieldset>
 
-                  <div className="contact-form-modal__fields contact-form-modal__fields--row">
+                  <div className="contact-form-modal__fields">
                     <label className="contact-form-modal__field">
                       <User
                         size={18}

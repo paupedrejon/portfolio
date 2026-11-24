@@ -243,18 +243,6 @@
   gap: 0.55rem;
 }
 
-.contact-form-modal__fields--row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.55rem;
-}
-
-@media (min-width: 480px) {
-  .contact-form-modal__fields--row {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 .contact-form-modal__field {
   display: flex;
   align-items: center;
