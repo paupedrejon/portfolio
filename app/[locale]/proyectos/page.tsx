@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -19,12 +18,6 @@ import HomeHeroBackground from "@/components/home/HomeHeroBackground";
 import Hyperspeed from "@/components/Hyperspeed";
 import { hyperspeedPresets } from "@/components/hyperspeed-presets";
 import { usePathname, useRouter } from "@/i18n/navigation";
-
-const ElectricLogo = dynamic(() => import("@/components/home/ElectricLogo"), {
-  ssr: false,
-});
-
-const PROJECTS_LOGO_SRC = "/LOGO_portfolio.png";
 import { isExpertiseAreaId, type ExpertiseAreaId } from "@/components/expertise/types";
 import ProjectsList from "@/components/projects/ProjectsList";
 import ProjectsGroupedView from "@/components/projects/ProjectsGroupedView";
@@ -228,41 +221,6 @@ export default function ProjectsPage() {
             <Hyperspeed effectOptions={cherrySpeed} />
           ) : (
             <HomeHeroBackground />
-          )
-        }
-        brand={
-          showHeroFx ? (
-            <div className="proyectos-hero__electric">
-              <ElectricLogo
-                src={PROJECTS_LOGO_SRC}
-                color="#f58393"
-                glowColor="#e04667"
-                scale={0.82}
-                strands={2}
-                bend={0.35}
-                crackle={0.55}
-                arcs={0.4}
-                speed={1.35}
-                interactive
-                intensity={0.38}
-                glow={0.1}
-                thickness={1.25}
-                flicker={0.18}
-                fill={0}
-                cursorIntensity={0.35}
-                cursorRadius={90}
-                theme="dark"
-              />
-            </div>
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={PROJECTS_LOGO_SRC}
-              alt=""
-              className="proyectos-hero__logo-fallback"
-              width={220}
-              height={220}
-            />
           )
         }
       />

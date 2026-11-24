@@ -75,6 +75,41 @@
   opacity: 1;
 }
 
+.portfolio-hero__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0.15rem 0 0.35rem;
+}
+
+.portfolio-hero__electric {
+  position: relative;
+  width: min(52vw, 28vh, 15.5rem);
+  height: min(52vw, 28vh, 15.5rem);
+  margin-inline: auto;
+  z-index: 2;
+  background: transparent;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 40%, transparent 72%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 40%, transparent 72%);
+  pointer-events: auto;
+}
+
+.portfolio-hero__electric .electric-logo,
+.portfolio-hero__electric .electric-logo canvas {
+  background: transparent !important;
+  mix-blend-mode: screen;
+}
+
+.portfolio-hero__logo-fallback {
+  width: min(42vw, 22vh, 12rem);
+  height: auto;
+  display: block;
+  margin-inline: auto;
+  mix-blend-mode: screen;
+  opacity: 0.75;
+}
+
 .portfolio-page .home-hero__kicker {
   margin: 0 0 1.5rem;
   font-family: var(--font-geist-mono), ui-monospace, monospace;
