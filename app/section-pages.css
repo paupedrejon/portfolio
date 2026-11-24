@@ -76,14 +76,19 @@
   height: 100%;
 }
 
-/* Hyperspeed / canvas / Orb: atenuar para no tapar el look home */
+/* Hyperspeed / canvas / Orb: atenuar para no tapar el copy */
 .portfolio-hero__fx > canvas,
-.portfolio-hero__fx > div:not(.home-hero__motion),
+.portfolio-hero__fx > div:not(.home-hero__motion):not(.hyperspeed-container),
 .proyectos-hero__fx > canvas,
-.proyectos-hero__fx > div:not(.home-hero__motion),
+.proyectos-hero__fx > div:not(.home-hero__motion):not(.hyperspeed-container),
 .skills-hero__fx > canvas,
 .skills-hero__fx > div:not(.home-hero__motion) {
   opacity: 0.55;
+}
+
+.portfolio-page--cherry .portfolio-hero__fx > .hyperspeed-container,
+.portfolio-page--cherry .portfolio-hero__fx > #lights {
+  opacity: 1;
 }
 
 .portfolio-page .home-hero__kicker {

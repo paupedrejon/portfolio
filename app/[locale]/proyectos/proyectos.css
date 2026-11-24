@@ -4,21 +4,46 @@
   background: var(--home-bg, #110508);
 }
 
-.proyectos-hero__fx {
+.proyectos-hero .portfolio-hero__fx {
   position: absolute;
   inset: 0;
   z-index: 1;
-  opacity: 0.5;
   pointer-events: none;
+  opacity: 0.72;
+  /* Deja el centro legible: más efecto en bordes/abajo */
+  -webkit-mask-image: radial-gradient(
+    ellipse 85% 70% at 50% 62%,
+    transparent 12%,
+    #000 48%,
+    #000 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 85% 70% at 50% 62%,
+    transparent 12%,
+    #000 48%,
+    #000 100%
+  );
 }
 
-.proyectos-hero__fx .floating-lines-container {
-  width: 100%;
-  height: 100%;
+.proyectos-hero .portfolio-hero__fx .hyperspeed-container,
+.proyectos-hero .portfolio-hero__fx #lights {
+  opacity: 1;
+  mix-blend-mode: screen;
+}
+
+.proyectos-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 42%, rgb(17 5 8 / 0.55) 0%, transparent 70%),
+    linear-gradient(180deg, rgb(17 5 8 / 0.35) 0%, transparent 35%, rgb(17 5 8 / 0.7) 100%);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .proyectos-hero__fx {
+  .proyectos-hero .portfolio-hero__fx {
     opacity: 0.35;
   }
 }
