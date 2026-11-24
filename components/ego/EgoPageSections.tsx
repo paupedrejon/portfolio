@@ -12,7 +12,7 @@ import {
   type TechIconKey,
 } from "./EgoIcons";
 
-const ACCENT = "#4eb3c8";
+const ACCENT = "#e04667";
 const SECTION = {
   padding: "clamp(2.75rem, 8vw, 7rem) clamp(1rem, 4vw, 4rem)",
   maxWidth: 1200,

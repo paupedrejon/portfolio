@@ -6,9 +6,8 @@ alwaysApply: true
 # Dark Cherry — design system
 
 ## Scope (current)
-- Active on **home** (`app/[locale]/page.tsx` / `.home-page`) only.
+- Active on **home** and portfolio locale pages: proyectos, skills, experience, education, about-me, contact, privacy, blog, ego (`.home-page` / `.portfolio-page` / `data-theme="dark-cherry"`).
 - Do **not** restyle Study Agents, cursos, admin, or labs unless explicitly asked.
-- Expand to other portfolio locale pages only after home is approved.
 
 ## Non‑negotiables
 - No invented content (metrics, clients, testimonials, skill levels).

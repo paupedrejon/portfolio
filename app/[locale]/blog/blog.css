@@ -5,8 +5,9 @@
   width: 100%;
   min-height: 60vh;
   padding: clamp(5.5rem, 12vh, 7rem) clamp(1.15rem, 4vw, 2rem) clamp(4rem, 10vh, 6rem);
-  background: #110508;
-  color: var(--text-primary, #f8fafc);
+  background: var(--cherry-950, #110508);
+  color: var(--text, #f5eeed);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
 .blog-page__inner {
@@ -30,7 +31,7 @@
 
 .blog-back:hover {
   opacity: 1;
-  color: #7ec8d8;
+  color: var(--accent-hover, #f58393);
   text-decoration: underline;
 }
 
@@ -186,7 +187,7 @@
   margin: 1.75rem 0 0.65rem;
   font-size: 1.12rem;
   font-weight: 700;
-  color: #7ec8d8;
+  color: var(--accent-hover, #f58393);
 }
 
 .blog-prose p {
@@ -214,7 +215,7 @@
 }
 
 .blog-prose a:hover {
-  color: #7ec8d8;
+  color: var(--accent-hover, #f58393);
 }
 
 .blog-prose strong {

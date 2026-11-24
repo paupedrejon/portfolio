@@ -140,3 +140,9 @@ html[data-theme="dark-cherry"] body {
   color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
+
+html[data-theme="dark-cherry"] .hero-grid {
+  background-image:
+    linear-gradient(rgb(191 57 87 / 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(191 57 87 / 0.07) 1px, transparent 1px);
+}
