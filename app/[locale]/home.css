@@ -808,10 +808,11 @@
 }
 
 .home-explore__title em {
-  font-family: var(--font-instrument-serif), Georgia, serif;
-  font-style: italic;
-  font-weight: 400;
-  color: var(--accent-hover);
+  font-family: inherit;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--accent-text);
+  letter-spacing: inherit;
 }
 
 .home-explore__sub {
