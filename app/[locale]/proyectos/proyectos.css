@@ -510,6 +510,7 @@
 }
 
 .projects-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -710,10 +711,6 @@
   gap: 0.65rem;
   margin-top: auto;
   padding-top: 1.15rem;
-}
-
-.projects-card {
-  position: relative;
 }
 
 .projects-card__fav {
