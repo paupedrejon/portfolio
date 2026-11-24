@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import LanguageSwitcher from "./LanguageSwitcher";
-import StaggeredMenu from "./StaggeredMenu";
+import BranchedMenuNav from "./BranchedMenuNav";
 import { HiHome } from "react-icons/hi2";
 import { BsSun, BsMoon } from "react-icons/bs";
 import { HiUserCircle } from "react-icons/hi2";
@@ -28,10 +28,10 @@ export default function ConditionalHeader() {
     pathname?.includes("/about-me") ||
     pathname?.includes("/contact");
   const forceLightCursosTheme = pathname?.includes("/cursos");
-  const menuColors = isHomePage
-    ? (["#e04667", "#bf3957"] as const)
-    : (["#4eb3c8", "#358c9f"] as const);
-  const menuAccent = isHomePage ? "#e04667" : "#358c9f";
+  const menuAccent = isHomePage ? "#e04667" : "#4EB3C8";
+  const menuLine = isHomePage ? "#48292f" : "#1a3a44";
+  const menuInk = isHomePage ? "#f5eeed" : "#e8f4f7";
+  const menuTheme = isHomePage ? "cherry" : "teal";
   const [colorTheme, setColorTheme] = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -391,29 +391,27 @@ export default function ConditionalHeader() {
   ];
 
   return (
-    <>
-      <StaggeredMenu
-      position="right"
+    <BranchedMenuNav
       closeOnPathnameChange={pathname ?? ""}
       items={menuItems}
       socialItems={socialItems}
       displaySocials
-      displayItemNumbering
       menuButtonColor="#ffffff"
-      openMenuButtonColor="#000"
-      changeMenuColorOnOpen
-      colors={[...menuColors]}
       logoUrl="/LOGO_portfolio.png"
       accentColor={menuAccent}
+      lineColor={menuLine}
+      inkColor={menuInk}
+      theme={menuTheme}
       isFixed
       closeOnClickAway
+      exploreLabel={t("explore")}
+      connectLabel={t("connect")}
       headerExtra={
         <div style={{ color: "#ffffff" }}>
           <LanguageSwitcher />
         </div>
       }
     />
-    </>
   );
 }
 
