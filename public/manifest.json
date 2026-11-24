@@ -4,10 +4,16 @@
   "description": "Full-Stack Software Engineer portfolio — React, Node.js, AI. Barcelona & remote.",
   "start_url": "/es",
   "display": "standalone",
-  "background_color": "#0a0f14",
-  "theme_color": "#358c9f",
+  "background_color": "#110508",
+  "theme_color": "#e04667",
   "lang": "es",
   "icons": [
+    {
+      "src": "/LOGO_portfolio.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/Favicon.png",
       "sizes": "192x192",
