@@ -11,6 +11,18 @@ export type DestinationTheme = {
 /** Sensible destination defaults so fallback guides don't look generic/beige. */
 export function themeForDestination(destination: string): DestinationTheme {
   const d = destination.toLowerCase();
+  if (/corea|korea|seul|seoul|busan|incheon/.test(d)) {
+    return {
+      bg: "#0b0c10",
+      ink: "#f4f1ea",
+      accent: "#e04667",
+      paper: "#151821",
+      heroOverlay:
+        "linear-gradient(125deg, rgba(11,12,16,.92) 0%, rgba(11,12,16,.45) 55%, rgba(11,12,16,.2) 100%)",
+      displayFont: "Playfair Display",
+      mood: "Seoul neon night, hanok charcoal, cherry accent",
+    };
+  }
   if (/par[ií]s|paris|france|francia/.test(d)) {
     return {
       bg: "#0f1419",

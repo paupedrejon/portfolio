@@ -14,5 +14,18 @@ export function sanitizeGuideHtml(html: string): string {
     /<meta[^>]+http-equiv\s*=\s*['"]?refresh['"]?[^>]*>/gi,
     "",
   );
+  // Drop broken / non-photo commons assets (PDFs as "images", page previews…)
+  out = out.replace(
+    /url\((['"]?)https?:\/\/[^)"']+\.pdf[^)"']*\1\)/gi,
+    "none",
+  );
+  out = out.replace(
+    /<img\b[^>]+src=["'][^"']+\.pdf[^"']*["'][^>]*>/gi,
+    "",
+  );
+  out = out.replace(
+    /url\((['"]?)https?:\/\/upload\.wikimedia\.org\/[^)"']*\/page\d+-[^)"']*\1\)/gi,
+    "none",
+  );
   return out.trim();
 }

@@ -33,28 +33,27 @@ function whenLabel(input: TripPlanInput): string {
 }
 
 export function buildSearchQueries(input: TripPlanInput): string[] {
-  const { origin, destination, transport } = input;
+  const { origin, destination, transport, travelers } = input;
   const lux = luxuryLabel(input.luxury);
   const when = whenLabel(input);
+  const pax = travelers || 2;
 
   const interests =
     input.interests.length > 0
       ? input.interests.join(" ")
       : "sightseeing food";
 
-  const transportQ =
-    transport === "bus"
-      ? `Flixbus bus ${origin} to ${destination} cheapest ticket price ${when}`
-      : transport === "flight"
-        ? `cheapest flights ${origin} to ${destination} round trip prices ${when}`
-        : `cheapest transport flight or bus ${origin} to ${destination} prices ${when}`;
+  const flightQ = `Google Flights OR Skyscanner cheapest round trip ${origin} to ${destination} ${when} ${pax} adults price EUR`;
+  const busQ = `Flixbus ${origin} ${destination} ticket price ${when}`;
 
   return [
-    transportQ,
-    `${destination} ${lux} booking prices per night ${when}`,
-    `best things to do in ${destination} ${interests} ticket prices`,
-    `${destination} restaurants average meal price`,
-  ];
+    transport === "bus" ? busQ : flightQ,
+    transport === "flexible" ? busQ : `return flight ${destination} to ${origin} price ${when}`,
+    `Booking.com ${destination} ${lux} price per night ${when} for ${pax} adults`,
+    `GetYourGuide OR Viator ${destination} top attractions ticket price ${interests}`,
+    `${destination} museum OR tower ticket official price EUR`,
+    `${destination} average restaurant meal price ${input.luxury >= 4 ? "fine dining" : "local"}`,
+  ].slice(0, 6);
 }
 
 async function searchOne(
@@ -68,7 +67,7 @@ async function searchOne(
       api_key: apiKey,
       query,
       search_depth: "basic",
-      max_results: 3,
+      max_results: 4,
       include_answer: false,
     }),
   });

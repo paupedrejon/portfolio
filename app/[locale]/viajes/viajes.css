@@ -39,7 +39,187 @@
   line-height: 1.45;
 }
 
-/* —— Skyscanner bar inside hero —— */
+/* —— Skyscanner-like search —— */
+.viajes-sky {
+  width: 100%;
+  text-align: left;
+}
+
+.viajes-sky__top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-bottom: 0.65rem;
+}
+
+.viajes-sky__select select {
+  appearance: none;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, #fff 55%, transparent);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.45rem 2rem 0.45rem 0.9rem;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, #fff 50%),
+    linear-gradient(135deg, #fff 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) calc(50% - 2px),
+    calc(100% - 9px) calc(50% - 2px);
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+}
+
+.viajes-sky__select select option {
+  color: #111;
+}
+
+.viajes-sky__bar {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.15fr) 36px minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(0, 0.95fr)
+    minmax(0, 0.95fr) auto;
+  align-items: stretch;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.viajes-sky__field {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.55rem 0.75rem 0.65rem;
+  border-right: 1px solid #e6e6e6;
+  min-width: 0;
+  background: #fff;
+}
+
+.viajes-sky__field span {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #5b6270;
+}
+
+.viajes-sky__field input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #12151c;
+  font: inherit;
+  font-size: 0.98rem;
+  padding: 0.15rem 0;
+  min-width: 0;
+}
+
+.viajes-sky__field input::placeholder {
+  color: #9aa3b2;
+}
+
+.viajes-sky__split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.viajes-sky__swap {
+  align-self: center;
+  justify-self: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid #d7dbe3;
+  background: #fff;
+  color: #1a2230;
+  cursor: pointer;
+  z-index: 2;
+  margin-left: -18px;
+  margin-right: -18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.viajes-sky__search {
+  border: 0;
+  background: var(--accent, #e04667);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0 1.35rem;
+  cursor: pointer;
+  min-width: 7.5rem;
+}
+
+.viajes-sky__search:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.viajes-sky__step2 {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+}
+
+.viajes-sky__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.9rem;
+  align-items: center;
+  color: var(--text-2);
+  font-size: 0.92rem;
+}
+
+.viajes-sky__summary strong {
+  color: var(--text);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 980px) {
+  .viajes-sky__bar {
+    grid-template-columns: 1fr 36px 1fr;
+  }
+  .viajes-sky__field:nth-child(n + 4) {
+    border-top: 1px solid #e6e6e6;
+  }
+  .viajes-sky__search {
+    grid-column: 1 / -1;
+    min-height: 52px;
+  }
+}
+
+@media (max-width: 640px) {
+  .viajes-sky__bar {
+    grid-template-columns: 1fr;
+  }
+  .viajes-sky__swap {
+    margin: 0.25rem auto;
+  }
+  .viajes-sky__field {
+    border-right: 0;
+    border-bottom: 1px solid #e6e6e6;
+  }
+}
+
+/* legacy helpers still used in step 2 */
 .viajes-search {
   border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
   border-radius: 22px;
@@ -49,10 +229,6 @@
   box-shadow: var(--edge), 0 18px 50px rgba(0, 0, 0, 0.28);
   padding: 1rem 1rem 1.15rem;
   text-align: left;
-}
-
-.viajes-search--hero {
-  margin-top: 0.25rem;
 }
 
 .viajes-search__title {

@@ -1649,6 +1649,7 @@
       "daysUnit": "days",
       "days": "Number of days",
       "travelers": "Travelers",
+      "travelersClass": "Travelers",
       "travelerOne": "traveler",
       "travelerMany": "travelers",
       "luxury": "Luxury level",
@@ -1659,11 +1660,14 @@
     "placeholders": {
       "origin": "Barcelona",
       "destination": "Paris",
+      "originCity": "City or airport",
+      "destinationCity": "City or airport",
       "interestsNote": "Museums, croissants, Le Marais…",
       "chat": "Swap day-2 hotel for something more central"
     },
     "dateModes": {
       "exact": "Exact dates",
+      "roundtrip": "Round trip",
       "flexible": "Flexible dates",
       "range": "Range",
       "days": "# days"
@@ -1693,6 +1697,7 @@
     "actions": {
       "generate": "Generate guide",
       "generating": "Generating…",
+      "search": "Search",
       "print": "Print / PDF",
       "downloadHtml": "Download HTML",
       "send": "Send",

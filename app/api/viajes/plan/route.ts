@@ -16,7 +16,8 @@ import { clientIp, consumeRateLimit } from "@/lib/viajes/rate-limit";
 import { sanitizeGuideHtml } from "@/lib/viajes/sanitize";
 import { searchTravelContext } from "@/lib/viajes/tavily";
 import { parseTripPlanInput } from "@/lib/viajes/validate";
-import { fetchDestinationImages } from "@/lib/viajes/wikimedia";
+import { fetchDestinationImages, filterGuideImages } from "@/lib/viajes/wikimedia";
+import { buildBookingLinks } from "@/lib/viajes/booking-links";
 import type { SearchSnippet } from "@/lib/viajes/types";
 
 export const runtime = "nodejs";
@@ -79,13 +80,16 @@ export async function POST(request: Request) {
 
     let images: Awaited<ReturnType<typeof fetchDestinationImages>> = [];
     try {
-      images = await fetchDestinationImages(input.destination, [
-        ...input.interests.slice(0, 2),
-      ]);
+      images = filterGuideImages(
+        await fetchDestinationImages(input.destination, [
+          ...input.interests.slice(0, 2),
+        ]),
+      );
     } catch (imgErr) {
       console.warn("[viajes/plan] wikimedia", imgErr);
     }
 
+    const booking = buildBookingLinks(input);
     let html = "";
     let usedFallback = false;
 
@@ -93,9 +97,15 @@ export async function POST(request: Request) {
     try {
       const rawHtml = await generateGeminiText(
         GUIDE_SYSTEM_PROMPT,
-        buildPlanUserPrompt({ input, snippets, images, consultedAt }),
+        buildPlanUserPrompt({
+          input,
+          snippets,
+          images,
+          consultedAt,
+          booking,
+        }),
         {
-          temperature: 0.85,
+          temperature: 0.7,
           maxOutputTokens: 8192,
           attemptsPerModel: 1,
           maxModels: 2,
@@ -113,7 +123,7 @@ export async function POST(request: Request) {
         JSON_SYSTEM_PROMPT,
         buildJsonUserPrompt({ input, snippets, consultedAt }),
         {
-          temperature: 0.55,
+          temperature: 0.45,
           maxOutputTokens: 4096,
           attemptsPerModel: 3,
           maxModels: 3,
@@ -139,6 +149,7 @@ export async function POST(request: Request) {
           origin: input.origin,
           locale: input.locale,
           travelers: input.travelers,
+          booking,
         }),
       );
     }

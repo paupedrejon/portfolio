@@ -1,6 +1,8 @@
 import type { GuideImage } from "./types";
 import type { ItineraryPlan } from "./itinerary-schema";
+import type { BookingLinks } from "./booking-links";
 import { pickHeroImage, themeForDestination } from "./destination-theme";
+import { filterGuideImages } from "./wikimedia";
 
 function esc(s: string): string {
   return s
@@ -23,16 +25,18 @@ export function renderGuideHtml(params: {
   origin: string;
   locale: string;
   travelers: number;
+  booking: BookingLinks;
 }): string {
   const {
     plan,
-    images,
     consultedAt,
     destination,
     origin,
     locale,
     travelers,
+    booking,
   } = params;
+  const images = filterGuideImages(params.images);
   const theme = themeForDestination(destination);
   const p = {
     bg: plan.palette?.bg || theme.bg,
@@ -175,10 +179,16 @@ export function renderGuideHtml(params: {
   img{width:100%;height:100%;min-height:220px;max-height:320px;object-fit:cover;display:block}
   figcaption{font-size:10px;opacity:.6;padding:7px 4px}
   footer{opacity:.7;font-size:.82rem;margin-top:36px;max-width:70ch}
+  .cta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;padding:.7rem 1rem;border-radius:999px;text-decoration:none;font-size:.85rem;font-weight:600;letter-spacing:.02em}
+  .btn--primary{background:var(--accent);color:#fff}
+  .btn--ghost{border:1px solid var(--line);color:var(--ink)}
+  .cta-band{margin:28px 0;padding:18px;border-radius:18px;background:var(--paper);border:1px solid var(--line);display:grid;gap:12px}
   @media print{
     body{background:#fff;color:#111}
     .hero{min-height:320px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .ticket,.stay,.day,.receipt{break-inside:avoid}
+    .btn{display:none}
   }
 </style>
 </head>
@@ -195,21 +205,35 @@ export function renderGuideHtml(params: {
       </div>
     </section>
 
+    <div class="cta-band">
+      <div class="meta">Reservar ahora</div>
+      <div class="cta-row">
+        <a class="btn btn--primary" href="${esc(booking.flightsSkyscanner)}" target="_blank" rel="noopener">Buscar vuelos (Skyscanner)</a>
+        <a class="btn btn--ghost" href="${esc(booking.flightsGoogle)}" target="_blank" rel="noopener">Google Flights</a>
+        <a class="btn btn--ghost" href="${esc(booking.hotelsBooking)}" target="_blank" rel="noopener">Hoteles (Booking)</a>
+        <a class="btn btn--ghost" href="${esc(booking.activitiesGetYourGuide)}" target="_blank" rel="noopener">Entradas / tours</a>
+        ${booking.busFlixbus ? `<a class="btn btn--ghost" href="${esc(booking.busFlixbus)}" target="_blank" rel="noopener">Bus (Flixbus)</a>` : ""}
+      </div>
+    </div>
+
     <div class="section-title"><h2>Pases de viaje</h2><span class="meta">Transport</span></div>
     <div class="tickets">
       <div class="ticket">
         <div class="meta">Ida</div>
         <strong>${esc(plan.transport?.outbound || "No verificado")}</strong>
+        <div class="cta-row"><a class="btn btn--primary" href="${esc(booking.flightsSkyscanner)}" target="_blank" rel="noopener">Reservar ida</a></div>
       </div>
       <div class="ticket">
         <div class="meta">Vuelta</div>
         <strong>${esc(plan.transport?.inbound || "No verificado")}</strong>
         <p>${esc(plan.transport?.note || "")}</p>
+        <div class="cta-row"><a class="btn btn--ghost" href="${esc(booking.flightsGoogle)}" target="_blank" rel="noopener">Ver alternativas</a></div>
       </div>
     </div>
 
     <div class="section-title"><h2>Dónde dormir</h2><span class="meta">Stays</span></div>
     <div class="stays">${stays || "<p>No verificado</p>"}</div>
+    <div class="cta-row" style="margin-top:12px"><a class="btn btn--primary" href="${esc(booking.hotelsBooking)}" target="_blank" rel="noopener">Ver hoteles en Booking</a></div>
 
     <div class="section-title"><h2>Recibo estimado</h2><span class="meta">${pax} pax</span></div>
     <div class="receipt">

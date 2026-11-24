@@ -1,4 +1,5 @@
 import type { GuideImage, SearchSnippet, TripPlanInput } from "./types";
+import type { BookingLinks } from "./booking-links";
 import { themeForDestination } from "./destination-theme";
 
 function luxuryCopy(n: number): string {
@@ -25,16 +26,17 @@ function dateCopy(input: TripPlanInput): string {
   return "Flexible dates — suggest a realistic window";
 }
 
-export const GUIDE_SYSTEM_PROMPT = `You are an elite travel art-director (agency proposal quality, like a bespoke Claude travel zine).
-Output ONLY one complete HTML5 document. No markdown.
+export const GUIDE_SYSTEM_PROMPT = `Elite travel art-director. Output ONLY one complete HTML5 document. No markdown.
 
 HARD RULES:
 - Inline CSS + optional Google Fonts. No JS/iframes.
-- Aesthetic MUST feel specific to the destination (Paris = night Haussmann + champagne gold + serif display; Japan = washi/neon/hinomaru; etc.). Never generic beige brochure.
-- Hero: full-bleed photo, DARK overlay, title/meta ALWAYS light (#f7f3ec or similar). Never dark text on photo.
-- Prefer landmark photos for hero (not antique maps).
-- Sections: hero with traveler chips, boarding-pass tickets, stays, RECEIPT with per-person + group total, day-by-day with photo + activities.
-- Prices from snippets only; else "No verificado". Show budget PER PERSON and TOTAL for N travelers.
+- Destination-specific art (Korea = Seoul neon/hanok charcoal+cherry; Paris = Haussmann night+gold; Japan = washi/neon). Never generic.
+- Hero: full-bleed photo, DARK overlay, ALWAYS light title text (#f7f3ec).
+- IMAGES: use ONLY URLs listed in IMAGES. Never invent Wikimedia/upload URLs. Never use PDFs, maps, books, or photos of other cities.
+- Every photo must match THIS destination. If unsure, use CSS geometric hero / skip the image.
+- Sections: hero chips, boarding passes WITH "Reservar vuelo" buttons using BOOKING LINKS, stays WITH Booking button, day cards, receipt (per person + group total), CTA strip.
+- Prices ONLY from SEARCH SNIPPETS (cite source domain). Else "No verificado". Prefer EUR.
+- Buttons: real <a href="..." target="_blank" rel="noopener"> styled as CTAs. Use the provided booking URLs.
 - Print CSS. Visible language = user locale.`;
 
 export function buildPlanUserPrompt(params: {
@@ -42,8 +44,9 @@ export function buildPlanUserPrompt(params: {
   snippets: SearchSnippet[];
   images: GuideImage[];
   consultedAt: string;
+  booking: BookingLinks;
 }): string {
-  const { input, snippets, images, consultedAt } = params;
+  const { input, snippets, images, consultedAt, booking } = params;
   const theme = themeForDestination(input.destination);
   const interests = [
     ...input.interests,
@@ -52,10 +55,10 @@ export function buildPlanUserPrompt(params: {
     .filter(Boolean)
     .join(", ");
 
-  return `Create the destination-themed travel guide HTML for:
+  return `Travel guide HTML for:
 
 ORIGIN: ${input.origin}
-DESTINATION: ${input.destination}
+DESTINATION: ${input.destination}  ← ALL imagery & copy must be about THIS place only
 DATES: ${dateCopy(input)}
 TRAVELERS: ${input.travelers}
 LUXURY: ${luxuryCopy(input.luxury)}
@@ -63,28 +66,32 @@ TRANSPORT: ${input.transport}
 INTERESTS: ${interests || "general sightseeing"}
 LOCALE: ${input.locale}
 CONSULTED_AT: ${consultedAt}
-ART DIRECTION HINT: ${theme.mood}
-SUGGESTED PALETTE: bg ${theme.bg}, ink ${theme.ink}, accent ${theme.accent}, paper ${theme.paper}
+ART MOOD: ${theme.mood}
 
-Include explicit "por persona" and "total grupo (${input.travelers})" in the receipt.
+BOOKING LINKS (use these exact hrefs for CTAs):
+- Flights Google: ${booking.flightsGoogle}
+- Flights Skyscanner: ${booking.flightsSkyscanner}
+- Hotels Booking.com: ${booking.hotelsBooking}
+- Activities GetYourGuide: ${booking.activitiesGetYourGuide}
+${booking.busFlixbus ? `- Bus Flixbus: ${booking.busFlixbus}` : ""}
 
-SEARCH SNIPPETS:
+SEARCH SNIPPETS (anchor prices here; include source in receipt footnotes):
 ${snippets
-  .slice(0, 10)
+  .slice(0, 12)
   .map(
     (s, i) =>
-      `[${i + 1}] ${s.title}\n${s.url}\n${s.content.slice(0, 420)}`,
+      `[${i + 1}] ${s.title}\n${s.url}\n${s.content.slice(0, 380)}`,
   )
-  .join("\n\n") || "(none — mark all prices as Unverified)"}
+  .join("\n\n") || "(none — mark prices No verificado)"}
 
-IMAGES (prefer landmarks for hero; keep attribution):
+ALLOWED IMAGES (use only these URLs; skip if not fitting destination):
 ${images
-  .slice(0, 6)
+  .slice(0, 8)
   .map(
     (img, i) =>
       `[img${i + 1}] ${img.title}\nURL: ${img.url}\nCredit: ${img.attribution}`,
   )
-  .join("\n\n") || "(none — elegant CSS geometric hero)"}`;
+  .join("\n\n") || "(none — CSS-only hero)"}`;
 }
 
 export const JSON_SYSTEM_PROMPT = `Travel planner. Return ONLY valid JSON (no markdown):
@@ -102,8 +109,8 @@ export const JSON_SYSTEM_PROMPT = `Travel planner. Return ONLY valid JSON (no ma
   "days": [{"title": string, "summary"?: string, "activities": [{"name": string, "price"?: string, "tip"?: string}]}],
   "disclaimer"?: string
 }
-Palette must be DARK bg + LIGHT ink (readable on photos). Prices from snippets else "No verificado".
-budgetPerPerson and budgetTotal required for the traveler count. Locale = user locale.`;
+Dark bg + light ink. Prices from snippets else "No verificado" (prefer EUR).
+budgetPerPerson + budgetTotal for traveler count. Content must match destination city/country only. Locale = user locale.`;
 
 export function buildJsonUserPrompt(params: {
   input: TripPlanInput;
@@ -112,7 +119,7 @@ export function buildJsonUserPrompt(params: {
 }): string {
   const { input, snippets, consultedAt } = params;
   const theme = themeForDestination(input.destination);
-  return `Trip JSON for ${input.origin} → ${input.destination}.
+  return `Trip JSON for ${input.origin} → ${input.destination} (content ONLY about ${input.destination}).
 Dates: ${dateCopy(input)}
 Travelers: ${input.travelers}
 Luxury ${input.luxury}/5 · transport ${input.transport}
@@ -121,19 +128,19 @@ Locale: ${input.locale}
 Consulted: ${consultedAt}
 Art mood: ${theme.mood}
 Suggested palette: ${JSON.stringify({ bg: theme.bg, ink: theme.ink, accent: theme.accent, paper: theme.paper })}
-Compute budgetPerPerson and budgetTotal for ${input.travelers} travelers.
+Compute budgetPerPerson and budgetTotal for ${input.travelers} travelers from snippets.
 Snippets:
 ${snippets
-  .slice(0, 8)
-  .map((s, i) => `[${i + 1}] ${s.title} | ${s.url} | ${s.content.slice(0, 280)}`)
+  .slice(0, 10)
+  .map((s, i) => `[${i + 1}] ${s.title} | ${s.url} | ${s.content.slice(0, 300)}`)
   .join("\n")}`;
 }
 
 export const EDIT_SYSTEM_PROMPT = `You edit an existing self-contained travel-guide HTML document.
 Return the FULL updated HTML document only.
-Preserve destination-specific art direction unless the user asks to restyle.
-Keep print CSS and light text on photo heroes. Do not invent precise prices without sources; if the user asks for new price research and none is provided, keep "No verificado".
-No scripts. Language of edits must match the guide language.`;
+Preserve destination art direction. Keep light text on photo heroes.
+Never invent image URLs or precise prices without sources.
+Keep booking CTA links if present. No scripts. Match guide language.`;
 
 export function buildEditUserPrompt(params: {
   html: string;
