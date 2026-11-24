@@ -256,20 +256,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.85rem;
   width: 100%;
-  max-width: 36rem;
+  max-width: 44rem;
 }
 
 .home-hero__electric {
   position: relative;
-  width: min(72vw, 17.5rem);
-  height: min(72vw, 17.5rem);
+  width: min(88vw, 28rem);
+  height: min(88vw, 28rem);
   z-index: 2;
   background: transparent;
   /* Recorta la placa grisácea del canvas WebGL */
-  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 38%, transparent 68%);
-  mask-image: radial-gradient(circle at 50% 50%, #000 38%, transparent 68%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 40%, transparent 70%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 40%, transparent 70%);
 }
 
 .home-hero__electric .electric-logo,
@@ -279,30 +279,16 @@
 }
 
 .home-hero__logo-fallback {
-  width: min(56vw, 14rem);
+  width: min(72vw, 22rem);
   height: auto;
   display: block;
   /* PNG blanco sobre negro: screen elimina el fondo negro */
   mix-blend-mode: screen;
 }
 
-.home-hero__title-lead {
-  display: block;
-}
-
-@media (min-width: 720px) {
-  .home-hero__title-lead {
-    display: inline;
-  }
-}
-
-.home-hero__title--with-mark {
-  margin-top: 0.15rem;
-  font-size: clamp(1.65rem, 4.2vw, 2.75rem);
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  color: var(--text);
+.home-hero__title-lead,
+.home-hero__title-accent {
+  display: inline;
 }
 
 /* Rayos volumétricos globales bajo el título (ref. 1) */
@@ -364,19 +350,19 @@
   position: relative;
   z-index: 3;
   margin: 0;
-  font-family: var(--font-geist-sans), var(--font-body), system-ui, sans-serif;
-  font-size: clamp(1.65rem, 4.2vw, 2.75rem);
-  font-weight: 600;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-  color: var(--home-text);
+  font-family: var(--font-mono);
+  font-size: clamp(0.78rem, 1.7vw, 0.92rem);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-2);
   max-width: none;
   text-align: center;
 }
 
 .home-hero__title-accent {
-  display: inline;
-  color: var(--accent-hover);
+  color: var(--text-2);
 }
 
 .home-hero__tagline {
@@ -831,42 +817,30 @@
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--line);
-  box-shadow: var(--edge);
+  box-shadow: none;
   overflow: hidden;
   transition:
     border-color var(--dur-2) var(--ease-out),
     transform var(--dur-2) var(--ease-out),
-    box-shadow var(--dur-2) var(--ease-out),
     background var(--dur-2) var(--ease-out),
     color var(--dur-2) var(--ease-out);
 }
 
 .home-explore__card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  background: var(--grad-specular);
-  transition: opacity var(--dur-2) var(--ease-out);
+  content: none;
 }
 
 .home-explore__card:hover,
 .home-explore__card:focus-visible {
   color: var(--text);
-  background: var(--brand);
-  border-color: rgb(224 70 103 / 0.45);
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-glow);
-}
-
-.home-explore__card:hover::before,
-.home-explore__card:focus-visible::before {
-  opacity: 1;
+  background: var(--surface-2);
+  border-color: var(--cherry-400);
+  transform: translateY(-2px);
+  box-shadow: none;
 }
 
 .home-explore__card:focus-visible {
-  outline: 2px solid var(--glow);
+  outline: 2px solid var(--accent-text);
   outline-offset: 3px;
 }
 
@@ -885,7 +859,7 @@
 
 .home-explore__card:hover .home-explore__card-index,
 .home-explore__card:focus-visible .home-explore__card-index {
-  color: var(--accent-hover);
+  color: var(--accent-text);
 }
 
 .home-explore__card-icon {
@@ -897,9 +871,9 @@
   margin-bottom: 1.35rem;
   border-radius: var(--r-sm);
   color: var(--accent-text);
-  background: rgb(255 255 255 / 0.04);
+  background: transparent;
   border: 1px solid var(--line);
-  box-shadow: var(--edge);
+  box-shadow: none;
   transition:
     background var(--dur-2) var(--ease-out),
     color var(--dur-2) var(--ease-out),
@@ -909,8 +883,8 @@
 .home-explore__card:hover .home-explore__card-icon,
 .home-explore__card:focus-visible .home-explore__card-icon {
   color: var(--accent-hover);
-  background: rgb(245 131 147 / 0.12);
-  border-color: rgb(224 70 103 / 0.35);
+  background: transparent;
+  border-color: var(--cherry-400);
 }
 
 .home-explore__card:hover .home-explore__card-icon svg,

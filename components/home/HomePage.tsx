@@ -7,7 +7,7 @@ import ScrollButton from "@/components/ScrollButton";
 import CurriculumButton from "@/components/CurriculumButton";
 import ExploreWorkSection from "@/components/expertise/ExploreWorkSection";
 import { Link } from "@/i18n/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 const ElectricLogo = dynamic(() => import("@/components/home/ElectricLogo"), {
@@ -27,9 +27,7 @@ export default function HomePage() {
   const t = useTranslations("home");
   const tCommon = useTranslations("common");
   const [mounted, setMounted] = useState(false);
-  const [electricReady, setElectricReady] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const electricReadyRef = useRef(false);
   const title = t("title");
   const { lead, accent } = useMemo(() => splitDisplayTitle(title), [title]);
 
@@ -70,7 +68,7 @@ export default function HomePage() {
                   src={HERO_LOGO_SRC}
                   color="#f58393"
                   glowColor="#e04667"
-                  scale={0.7}
+                  scale={0.82}
                   strands={3}
                   bend={0.4}
                   crackle={1.15}
@@ -83,13 +81,8 @@ export default function HomePage() {
                   flicker={0.3}
                   fill={0}
                   cursorIntensity={0.65}
-                  cursorRadius={80}
+                  cursorRadius={100}
                   theme="dark"
-                  onRender={() => {
-                    if (electricReadyRef.current) return;
-                    electricReadyRef.current = true;
-                    setElectricReady(true);
-                  }}
                 />
               </div>
             ) : (
@@ -103,18 +96,11 @@ export default function HomePage() {
             )}
 
             <h1
-              className={`home-hero__title ${mounted ? "animate-fade-in-up" : ""}${
-                showElectric && electricReady ? " home-hero__title--with-mark" : ""
-              }`}
+              className={`home-hero__title ${mounted ? "animate-fade-in-up" : ""}`}
               style={{ animationDelay: "0.08s", animationFillMode: "both" }}
             >
-              <span className="home-hero__title-lead">{lead}</span>
-              {accent ? (
-                <>
-                  {" "}
-                  <span className="home-hero__title-accent">{accent}</span>
-                </>
-              ) : null}
+              {lead}
+              {accent ? ` ${accent}` : ""}
             </h1>
           </div>
 
