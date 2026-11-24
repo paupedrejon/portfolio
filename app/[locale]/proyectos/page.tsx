@@ -15,8 +15,6 @@ import "./proyectos.css";
 
 import PortfolioPageHero from "@/components/portfolio/PortfolioPageHero";
 import HomeHeroBackground from "@/components/home/HomeHeroBackground";
-import Hyperspeed from "@/components/Hyperspeed";
-import { hyperspeedPresets } from "@/components/hyperspeed-presets";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { isExpertiseAreaId, type ExpertiseAreaId } from "@/components/expertise/types";
 import ProjectsList from "@/components/projects/ProjectsList";
@@ -62,8 +60,6 @@ export default function ProjectsPage() {
   const pathname = usePathname();
 
   const [mounted, setMounted] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [weakDevice, setWeakDevice] = useState(false);
   const skipFilterScrollRef = useRef(true);
 
   const activeSection = useMemo((): ExpertiseAreaId | null => {
@@ -92,27 +88,6 @@ export default function ProjectsPage() {
       section: activeSection ?? "all",
     });
   }, [mounted, activeSection]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => {
-      setReducedMotion(media.matches);
-      const lowCpu = (navigator.hardwareConcurrency || 8) < 6;
-      const lowMem =
-        "deviceMemory" in navigator &&
-        (navigator as Navigator & { deviceMemory?: number }).deviceMemory! <= 4;
-      setWeakDevice(lowCpu || !!lowMem);
-    };
-
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
-
-  const effectOptions = useMemo(() => hyperspeedPresets.one, []);
-  const showHeroFx = mounted && !reducedMotion && !weakDevice;
 
   const listOrder = useMemo(
     () => buildListOrderMap(getVisibleProjects().map((project) => project.slug)),
@@ -208,7 +183,7 @@ export default function ProjectsPage() {
     : (groupedView?.groups.length ?? 0) > 0;
 
   return (
-    <div className="portfolio-page">
+    <div className="portfolio-page portfolio-page--cherry">
       <PortfolioPageHero
         className="proyectos-hero"
         kicker={t("badge")}
@@ -216,9 +191,7 @@ export default function ProjectsPage() {
         tagline={t("tagline")}
         scrollTargetId="projects"
         mounted={mounted}
-        background={
-          showHeroFx ? <Hyperspeed effectOptions={effectOptions} /> : <HomeHeroBackground />
-        }
+        background={<HomeHeroBackground />}
       />
 
       <div id="projects" className="projects-dark-section projects-list-section">

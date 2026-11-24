@@ -35,7 +35,9 @@ export default function ProjectDetailView({ slug, caseStudy }: ProjectDetailView
   }, [slug]);
 
   return (
-    <main className={`project-detail-page${isEgo ? " project-detail-page--ego" : ""}`}>
+    <main
+      className={`project-detail-page portfolio-page--cherry${isEgo ? " project-detail-page--ego" : ""}`}
+    >
       <ProjectDetailHero
         kicker={kicker}
         title={title}

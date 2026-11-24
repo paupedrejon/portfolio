@@ -1,4 +1,4 @@
-/* Páginas principales — misma marca visual que la home (teal #358c9f) */
+/* Páginas principales — teal por defecto; Dark Cherry vía .portfolio-page--cherry */
 
 .portfolio-page {
   --portfolio-bg: #030d14;
@@ -18,6 +18,31 @@
   --home-accent-soft: rgba(53, 140, 159, 0.28);
   background: var(--portfolio-bg);
   color: var(--portfolio-text);
+}
+
+.portfolio-page--cherry {
+  --portfolio-bg: var(--cherry-950, #110508);
+  --portfolio-bg-elevated: var(--cherry-900, #1b0b0e);
+  --portfolio-card: var(--cherry-850, #261115);
+  --portfolio-accent: var(--cherry-500, #bf3957);
+  --portfolio-accent-bright: var(--cherry-400, #e04667);
+  --portfolio-accent-soft: rgb(191 57 87 / 0.28);
+  --portfolio-text: var(--text, #f5eeed);
+  --portfolio-text-muted: var(--text-2, #cab9b9);
+  --home-bg: var(--cherry-950, #110508);
+  --home-bg-elevated: var(--cherry-900, #1b0b0e);
+  --home-card: var(--cherry-850, #261115);
+  --home-text: var(--text, #f5eeed);
+  --home-text-muted: var(--text-2, #cab9b9);
+  --home-accent: var(--cherry-500, #bf3957);
+  --home-accent-bright: var(--cherry-400, #e04667);
+  --home-accent-soft: rgb(191 57 87 / 0.28);
+  --home-border: rgb(224 70 103 / 0.35);
+  --font-body: var(--font-geist-sans), system-ui, sans-serif;
+  --font-display: var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--portfolio-bg);
+  color: var(--portfolio-text);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
 /* —— Héroe portfolio (misma capa que home) —— */
@@ -195,8 +220,8 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* Botón CV / CTA (mismo que home) */
-.home-btn--cv,
+/* Botón CV / CTA — teal (páginas legacy). Dark Cherry lo redefine en home.css */
+.portfolio-page:not(.portfolio-page--cherry) .home-btn--cv,
 .hero-section .cv-download-btn.portfolio-btn--cv,
 .hero-section button.portfolio-btn--cv {
   display: inline-flex;
@@ -230,7 +255,7 @@
     color 0.22s ease;
 }
 
-.home-btn--cv:hover,
+.portfolio-page:not(.portfolio-page--cherry) .home-btn--cv:hover,
 .hero-section .cv-download-btn.portfolio-btn--cv:hover,
 .hero-section button.portfolio-btn--cv:hover {
   color: #061018;
@@ -242,15 +267,43 @@
     0 0 56px rgba(0, 213, 255, 0.7);
 }
 
-.home-btn--cv:hover .cv-btn-text svg,
+.portfolio-page:not(.portfolio-page--cherry) .home-btn--cv:hover .cv-btn-text svg,
 .hero-section .cv-download-btn.portfolio-btn--cv:hover .cv-btn-text svg {
   stroke: #061018;
 }
 
-.home-btn--cv:focus-visible,
+.portfolio-page:not(.portfolio-page--cherry) .home-btn--cv:focus-visible,
 .hero-section .cv-download-btn.portfolio-btn--cv:focus-visible,
 .hero-section button.portfolio-btn--cv:focus-visible {
   outline: 2px solid var(--portfolio-accent-bright, #4eb3c8);
+  outline-offset: 3px;
+}
+
+/* CV button on cherry pages — refuerzo por si home.css no cargó aún */
+.portfolio-page--cherry .home-btn--cv {
+  color: var(--text, #f5eeed);
+  background: var(--accent, #bf3957);
+  border: 2px solid var(--cherry-400, #e04667);
+  box-shadow: none;
+  border-radius: var(--r-md, 14px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.portfolio-page--cherry .home-btn--cv:hover {
+  color: var(--text, #f5eeed);
+  background: var(--cherry-600, #8e2e45);
+  border-color: var(--cherry-300, #f58393);
+  transform: translateY(-2px);
+  box-shadow: none;
+}
+
+.portfolio-page--cherry .home-btn--cv:hover .cv-btn-text svg {
+  stroke: var(--text, #f5eeed);
+}
+
+.portfolio-page--cherry .home-btn--cv:focus-visible {
+  outline: 2px solid var(--glow, #ff4d6d);
   outline-offset: 3px;
 }
 

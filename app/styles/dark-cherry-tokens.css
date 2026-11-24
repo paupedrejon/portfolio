@@ -1,9 +1,11 @@
 /**
- * Dark Cherry — tokens del rediseño (scoped a .home-page / data-theme).
- * No sustituye aún el :root global teal (subpáginas / Study Agents intactos).
+ * Dark Cherry — tokens del rediseño (scoped a .home-page / portfolio cherry / data-theme).
+ * No sustituye aún el :root global teal (skills, cursos, Study Agents intactos).
  */
 
 .home-page,
+.portfolio-page--cherry,
+.project-detail-page,
 [data-theme="dark-cherry"] {
   /* Rampa cereza (OKLCH hue ≈ 7–14) */
   --cherry-950: #110508;
@@ -80,22 +82,56 @@
 }
 
 .home-page ::selection,
+.portfolio-page--cherry ::selection,
+.project-detail-page ::selection,
 [data-theme="dark-cherry"] ::selection {
   background: var(--accent);
   color: var(--text);
 }
 
-.home-page {
+.home-page,
+.portfolio-page--cherry,
+.project-detail-page {
   position: relative;
   isolation: isolate;
 }
 
-/* Grano global (home) */
-.home-page::before {
+/* Grano global (home / cherry) */
+.home-page::before,
+.portfolio-page--cherry::before,
+.project-detail-page::before {
   content: none; /* sin grano — evita niebla visual */
 }
 
-.home-page :focus-visible {
+.home-page :focus-visible,
+.portfolio-page--cherry :focus-visible,
+.project-detail-page :focus-visible {
   outline: 2px solid var(--glow);
   outline-offset: 3px;
+}
+
+/* Bridge → globals (footer, body) cuando el documento está en Dark Cherry */
+html[data-theme="dark-cherry"] {
+  --bg-primary: var(--cherry-950);
+  --bg-secondary: var(--cherry-900);
+  --bg-tertiary: var(--cherry-850);
+  --bg-card: rgb(38 17 21 / 0.85);
+  --accent-primary: var(--cherry-400);
+  --accent-secondary: var(--cherry-500);
+  --accent-tertiary: var(--cherry-600);
+  --accent-gradient: linear-gradient(135deg, var(--cherry-500), var(--cherry-400), var(--cherry-300));
+  --text-primary: var(--text);
+  --text-secondary: var(--text-2);
+  --text-muted: var(--muted);
+  --border-subtle: var(--line);
+  --border-accent: rgb(224 70 103 / 0.35);
+  --glow-accent: 0 0 40px rgb(224 70 103 / 0.22);
+  --font-body: var(--font-geist-sans), system-ui, sans-serif;
+  --font-display: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+html[data-theme="dark-cherry"] body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }

@@ -92,7 +92,11 @@ export default function PortfolioPageHero({
         className={`home-hero__scroll ${mounted ? "animate-fade-in" : ""}`}
         style={{ animationDelay: "0.38s", animationFillMode: "both" }}
       >
-        <ScrollButton targetId={scrollTargetId} color="transparent" iconColor="#358c9f" />
+        <ScrollButton
+          targetId={scrollTargetId}
+          color="transparent"
+          iconColor="var(--portfolio-accent-bright, #358c9f)"
+        />
       </div>
     </section>
   );

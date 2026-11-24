@@ -19,19 +19,24 @@ export default function ConditionalHeader() {
     !pathname ||
     pathname === "/" ||
     /^\/(es|en|it)\/?$/.test(pathname);
+  const isDarkCherryPage =
+    isHomePage ||
+    Boolean(
+      pathname &&
+        (/\/(proyectos|projects|progetti)(\/|$)/.test(pathname) ||
+          pathname.includes("/ego"))
+    );
   const forceDarkProjectsTheme =
-    pathname?.includes("/proyectos") ||
-    pathname?.includes("/projects") ||
     pathname?.includes("/skills") ||
     pathname?.includes("/experience") ||
     pathname?.includes("/education") ||
     pathname?.includes("/about-me") ||
     pathname?.includes("/contact");
   const forceLightCursosTheme = pathname?.includes("/cursos");
-  const menuAccent = isHomePage ? "#e04667" : "#4EB3C8";
-  const menuLine = isHomePage ? "#48292f" : "#1a3a44";
-  const menuInk = isHomePage ? "#f5eeed" : "#e8f4f7";
-  const menuTheme = isHomePage ? "cherry" : "teal";
+  const menuAccent = isDarkCherryPage ? "#e04667" : "#4EB3C8";
+  const menuLine = isDarkCherryPage ? "#48292f" : "#1a3a44";
+  const menuInk = isDarkCherryPage ? "#f5eeed" : "#e8f4f7";
+  const menuTheme = isDarkCherryPage ? "cherry" : "teal";
   const [colorTheme, setColorTheme] = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -57,6 +62,10 @@ export default function ConditionalHeader() {
         document.documentElement.setAttribute("data-theme", "light");
         return;
       }
+      if (isDarkCherryPage) {
+        document.documentElement.setAttribute("data-theme", "dark-cherry");
+        return;
+      }
       if (forceDarkProjectsTheme) {
         document.documentElement.setAttribute("data-theme", "dark");
         return;
@@ -65,7 +74,13 @@ export default function ConditionalHeader() {
       // Aplicar el tema al documento
       document.documentElement.setAttribute("data-theme", colorTheme);
     }
-  }, [colorTheme, mounted, forceDarkProjectsTheme, forceLightCursosTheme]);
+  }, [
+    colorTheme,
+    mounted,
+    isDarkCherryPage,
+    forceDarkProjectsTheme,
+    forceLightCursosTheme,
+  ]);
 
   // Cerrar el menú cuando se hace click fuera
   useEffect(() => {
