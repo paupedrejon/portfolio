@@ -15,10 +15,6 @@ const ElectricLogo = dynamic(() => import("@/components/home/ElectricLogo"), {
   ssr: false,
 });
 
-const GlowCursor = dynamic(() => import("@/components/home/GlowCursor"), {
-  ssr: false,
-});
-
 /** Marca tipográfica compacta (blanco sobre negro) — silueta limpia para ElectricLogo */
 const HERO_LOGO_SRC = "/LOGO_portfolio.png";
 
@@ -127,22 +123,6 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      {showElectric ? (
-        <div className="home-glow-cursor" aria-hidden>
-          <GlowCursor
-            color="#e04667"
-            secondaryColor="#87002e"
-            intensity={1.3}
-            trailWidth={3}
-            linger={0.8}
-            glow={1.2}
-            clickBurst
-            quality="medium"
-            theme="dark"
-          />
-        </div>
-      ) : null}
-
       <section id="hero-section" className="home-hero" aria-label="Intro">
         <div className="home-hero__bg" aria-hidden />
         <HomeHeroBackground />
