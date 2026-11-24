@@ -129,6 +129,33 @@
   transform: translateY(0);
 }
 
+.consent-banner.consent-banner--attention {
+  box-shadow:
+    0 0 0 1px rgb(224 70 103 / 0.45),
+    0 12px 40px rgb(0 0 0 / 0.45),
+    0 0 28px rgb(255 77 109 / 0.25);
+}
+
+.consent-banner .consent-banner__accept.is-pulse {
+  animation: consent-accept-pulse 1.1s ease-in-out 3;
+  box-shadow: 0 0 0 0 rgb(224 70 103 / 0.55);
+}
+
+@keyframes consent-accept-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(224 70 103 / 0.55);
+    transform: scale(1);
+  }
+  45% {
+    box-shadow: 0 0 0 10px rgb(224 70 103 / 0);
+    transform: scale(1.04);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(224 70 103 / 0);
+    transform: scale(1);
+  }
+}
+
 @media (min-width: 768px) {
   .consent-banner__inner {
     gap: 0.75rem 1rem;
@@ -155,6 +182,12 @@
 
   .consent-banner .consent-banner__accept:hover {
     transform: none;
+  }
+
+  .consent-banner .consent-banner__accept.is-pulse {
+    animation: none;
+    outline: 2px solid var(--glow, #ff4d6d);
+    outline-offset: 3px;
   }
 }
 

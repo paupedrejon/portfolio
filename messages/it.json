@@ -252,8 +252,9 @@
     "viewCategory": "Categoria",
     "filterFavorites": "Preferiti",
     "favoritesEmpty": "Non hai ancora preferiti in questa sessione.",
-    "favoriteProject": "Aggiungi ai preferiti",
-    "unfavoriteProject": "Rimuovi dai preferiti",
+    "favoriteProject": "Mi piace",
+    "unfavoriteProject": "Rimuovi mi piace",
+    "likeCount": "{count, plural, one {# mi piace} other {# mi piace}}",
     "timelineCount": "{count, plural, one {# progetto} other {# progetti}}",
     "entity": {
       "personal": "Progetto personale",
@@ -1350,7 +1351,8 @@
   },
   "consent": {
     "title": "Cookie e analitica",
-    "description": "Usiamo analitica propria per misurare le visite. Si attiva solo se accetti l'",
+    "description": "Usiamo analitica propria per misurare visite e mi piace. Si attiva solo se accetti l'",
+    "likeHint": "Per far contare il tuo mi piace in modo anonimo, accetta i cookie di analitica. Maggiori info nell'",
     "accept": "Accetta",
     "reject": "Rifiuta",
     "learnMore": "Informativa sulla Privacy"
@@ -1367,7 +1369,7 @@
       },
       "data": {
         "title": "Dati raccolti",
-        "body": "Se accetti i cookie di analitica, possiamo registrare: pagine visitate, lingua, referrer, identificativo di sessione anonimo (UUID nel browser), tipo di evento (es. download CV o vista progetto) e dati tecnici di base della visita.\n\nNon raccolgo intenzionalmente nome, email o IP nell'analitica proprietaria, salvo quanto possa derivare indirettamente dal traffico di rete."
+        "body": "Se accetti i cookie di analitica, possiamo registrare: pagine visitate, lingua, referrer, identificativo di sessione anonimo (UUID nel browser), tipo di evento (es. download CV, vista progetto o mi piace) e dati tecnici di base della visita.\n\nI contatori pubblici dei mi piace si possono mostrare senza consenso; registrare il tuo richiede di accettare l'analitica (legato solo all'identificativo di sessione anonimo).\n\nNon raccolgo intenzionalmente nome, email o IP nell'analitica proprietaria, salvo quanto possa derivare indirettamente dal traffico di rete."
       },
       "purpose": {
         "title": "Finalità e base giuridica",

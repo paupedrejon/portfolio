@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -34,7 +34,12 @@ import {
   type ProjectViewMode,
 } from "@/lib/projects/views";
 import { trackPortfolioEvent } from "@/lib/analytics/track-client";
+import {
+  ANALYTICS_CONSENT_EVENT,
+  hasAnalyticsConsent,
+} from "@/lib/analytics/consent";
 import { useProjectFavorites } from "@/hooks/useProjectFavorites";
+import { useProjectLikes } from "@/hooks/useProjectLikes";
 
 const PROJECT_FILTER_AREAS: { id: ExpertiseAreaId; titleKey: string }[] = [
   { id: "web-development", titleKey: "areas.web.title" },
@@ -69,7 +74,46 @@ export default function ProjectsPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const skipFilterScrollRef = useRef(true);
-  const { isFavorite, toggleFavorite, count: favoritesCount } = useProjectFavorites();
+  const {
+    favorites,
+    isFavorite,
+    toggleFavorite,
+    count: favoritesCount,
+  } = useProjectFavorites();
+
+  const allSlugs = useMemo(
+    () => getVisibleProjects().map((p) => p.slug),
+    [],
+  );
+  const {
+    getCount: getLikeCount,
+    isLiked,
+    toggleLike,
+    syncFavoritesAsLikes,
+  } = useProjectLikes(allSlugs);
+
+  const isHeartActive = useCallback(
+    (slug: string) => isFavorite(slug) || isLiked(slug),
+    [isFavorite, isLiked],
+  );
+
+  const handleToggleHeart = useCallback(
+    (slug: string) => {
+      const next = !isHeartActive(slug);
+      if (isFavorite(slug) !== next) toggleFavorite(slug);
+      void toggleLike(slug, next);
+    },
+    [isFavorite, isHeartActive, toggleFavorite, toggleLike],
+  );
+
+  useEffect(() => {
+    const onConsent = () => {
+      if (!hasAnalyticsConsent()) return;
+      void syncFavoritesAsLikes(favorites);
+    };
+    window.addEventListener(ANALYTICS_CONSENT_EVENT, onConsent);
+    return () => window.removeEventListener(ANALYTICS_CONSENT_EVENT, onConsent);
+  }, [favorites, syncFavoritesAsLikes]);
 
   const activeSection = useMemo((): ExpertiseAreaId | null => {
     const raw = searchParams.get("section");
@@ -328,15 +372,17 @@ export default function ProjectsPage() {
           ) : activeView === "list" ? (
             <ProjectsList
               projects={listProjects}
-              isFavorite={isFavorite}
-              onToggleFavorite={toggleFavorite}
+              isFavorite={isHeartActive}
+              onToggleFavorite={handleToggleHeart}
+              getLikeCount={getLikeCount}
             />
           ) : groupedView ? (
             <ProjectsGroupedView
               groups={groupedView.groups}
               variant={groupedView.variant}
-              isFavorite={isFavorite}
-              onToggleFavorite={toggleFavorite}
+              isFavorite={isHeartActive}
+              onToggleFavorite={handleToggleHeart}
+              getLikeCount={getLikeCount}
             />
           ) : null}
         </div>

@@ -252,8 +252,9 @@
     "viewCategory": "Category",
     "filterFavorites": "Favorites",
     "favoritesEmpty": "No favorites in this session yet.",
-    "favoriteProject": "Add to favorites",
-    "unfavoriteProject": "Remove from favorites",
+    "favoriteProject": "Like",
+    "unfavoriteProject": "Remove like",
+    "likeCount": "{count, plural, one {# like} other {# likes}}",
     "timelineCount": "{count, plural, one {# project} other {# projects}}",
     "entity": {
       "personal": "Personal project",
@@ -1351,7 +1352,8 @@
   },
   "consent": {
     "title": "Cookies & analytics",
-    "description": "We use first-party analytics to measure visits. They are only enabled if you accept the ",
+    "description": "We use first-party analytics to measure visits and likes. They are only enabled if you accept the ",
+    "likeHint": "To count your like anonymously, accept analytics cookies. More in the ",
     "accept": "Accept",
     "reject": "Reject",
     "learnMore": "Privacy Policy"
@@ -1368,7 +1370,7 @@
       },
       "data": {
         "title": "Data we collect",
-        "body": "If you accept analytics cookies, we may record: pages visited, language, referrer, anonymous session ID (UUID in your browser), event type (e.g. CV download or project view), and basic technical visit data.\n\nI do not intentionally collect name, email, or IP in first-party analytics, except what may indirectly arise from network traffic."
+        "body": "If you accept analytics cookies, we may record: pages visited, language, referrer, anonymous session ID (UUID in your browser), event type (e.g. CV download, project view, or project like), and basic technical visit data.\n\nPublic like counts can be shown without consent; registering yours requires accepting analytics (tied only to the anonymous session ID).\n\nI do not intentionally collect name, email, or IP in first-party analytics, except what may indirectly arise from network traffic."
       },
       "purpose": {
         "title": "Purpose and legal basis",

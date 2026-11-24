@@ -253,8 +253,9 @@
     "viewCategory": "Categoría",
     "filterFavorites": "Favoritos",
     "favoritesEmpty": "Aún no has marcado favoritos en esta sesión.",
-    "favoriteProject": "Añadir a favoritos",
-    "unfavoriteProject": "Quitar de favoritos",
+    "favoriteProject": "Me gusta",
+    "unfavoriteProject": "Quitar me gusta",
+    "likeCount": "{count, plural, one {# me gusta} other {# me gusta}}",
     "timelineCount": "{count, plural, one {# proyecto} other {# proyectos}}",
     "entity": {
       "personal": "Proyecto personal",
@@ -1412,7 +1413,8 @@
   },
   "consent": {
     "title": "Cookies y analítica",
-    "description": "Usamos analítica propia para medir visitas. Solo se activa si aceptas la ",
+    "description": "Usamos analítica propia para medir visitas y me gusta. Solo se activa si aceptas la ",
+    "likeHint": "Para que tu me gusta cuente de forma anónima, acepta cookies de analítica. Más en la ",
     "accept": "Aceptar",
     "reject": "Rechazar",
     "learnMore": "Política de Privacidad"
@@ -1429,7 +1431,7 @@
       },
       "data": {
         "title": "Datos que se recogen",
-        "body": "Si aceptas las cookies de analítica, podemos registrar: páginas visitadas, idioma, referrer, identificador de sesión anónimo (UUID en tu navegador), tipo de evento (por ejemplo, descarga de CV o vista de proyecto) y datos técnicos básicos asociados a la visita.\n\nNo recojo nombre, email ni IP de forma intencionada en la analítica propia, salvo la que pueda derivarse indirectamente del tráfico de red."
+        "body": "Si aceptas las cookies de analítica, podemos registrar: páginas visitadas, idioma, referrer, identificador de sesión anónimo (UUID en tu navegador), tipo de evento (por ejemplo, descarga de CV, vista de proyecto o me gusta en un proyecto) y datos técnicos básicos asociados a la visita.\n\nLos contadores públicos de me gusta se pueden mostrar sin consentimiento; registrar el tuyo requiere aceptar analítica (vinculado solo al identificador de sesión anónimo).\n\nNo recojo nombre, email ni IP de forma intencionada en la analítica propia, salvo la que pueda derivarse indirectamente del tráfico de red."
       },
       "purpose": {
         "title": "Finalidad y base legal",

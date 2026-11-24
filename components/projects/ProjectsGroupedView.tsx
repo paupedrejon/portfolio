@@ -30,6 +30,7 @@ type ProjectsGroupedViewProps = {
   variant: "timeline" | "entity" | "category";
   isFavorite?: (slug: string) => boolean;
   onToggleFavorite?: (slug: string) => void;
+  getLikeCount?: (slug: string) => number;
 };
 
 function orgClassName(style?: "round" | "blend" | "warm"): string {
@@ -43,10 +44,12 @@ function ProjectsTimeline({
   groups,
   isFavorite,
   onToggleFavorite,
+  getLikeCount,
 }: {
   groups: ProjectGroup[];
   isFavorite?: (slug: string) => boolean;
   onToggleFavorite?: (slug: string) => void;
+  getLikeCount?: (slug: string) => number;
 }) {
   const t = useTranslations("projects");
   const locale = useLocale();
@@ -90,6 +93,7 @@ function ProjectsTimeline({
                 projects={group.projects}
                 isFavorite={isFavorite}
                 onToggleFavorite={onToggleFavorite}
+                getLikeCount={getLikeCount}
               />
             </div>
           </article>
@@ -104,6 +108,7 @@ export default function ProjectsGroupedView({
   variant,
   isFavorite,
   onToggleFavorite,
+  getLikeCount,
 }: ProjectsGroupedViewProps) {
   const t = useTranslations("projects");
   const tExpertise = useTranslations("expertise");
@@ -116,6 +121,7 @@ export default function ProjectsGroupedView({
         groups={groups}
         isFavorite={isFavorite}
         onToggleFavorite={onToggleFavorite}
+        getLikeCount={getLikeCount}
       />
     );
   }
@@ -161,6 +167,7 @@ export default function ProjectsGroupedView({
               projects={group.projects}
               isFavorite={isFavorite}
               onToggleFavorite={onToggleFavorite}
+              getLikeCount={getLikeCount}
             />
           </section>
         );

@@ -40,6 +40,7 @@ type ProjectsListProps = {
   projects: ProjectListItem[];
   isFavorite?: (slug: string) => boolean;
   onToggleFavorite?: (slug: string) => void;
+  getLikeCount?: (slug: string) => number;
 };
 
 function orgClassName(style?: "round" | "blend" | "warm"): string {
@@ -61,6 +62,7 @@ export default function ProjectsList({
   projects,
   isFavorite,
   onToggleFavorite,
+  getLikeCount,
 }: ProjectsListProps) {
   const t = useTranslations("projects");
   const tExpertise = useTranslations("expertise");
@@ -69,6 +71,7 @@ export default function ProjectsList({
     <ul className="projects-grid">
       {projects.map((project) => {
         const favorited = isFavorite?.(project.slug) ?? false;
+        const likeCount = getLikeCount?.(project.slug) ?? 0;
         return (
           <li key={project.slug} className="projects-grid__item">
             <article className={`projects-card${favorited ? " is-favorite" : ""}`}>
@@ -154,10 +157,16 @@ export default function ProjectsList({
                   {onToggleFavorite ? (
                     <button
                       type="button"
-                      className={`projects-card__fav${favorited ? " is-active" : ""}`}
+                      className={`projects-card__fav${favorited ? " is-active" : ""}${
+                        likeCount > 0 ? " has-count" : ""
+                      }`}
                       aria-pressed={favorited}
                       aria-label={
-                        favorited ? t("unfavoriteProject") : t("favoriteProject")
+                        favorited
+                          ? t("unfavoriteProject")
+                          : likeCount > 0
+                            ? `${t("favoriteProject")} · ${t("likeCount", { count: likeCount })}`
+                            : t("favoriteProject")
                       }
                       onClick={(e) => {
                         e.preventDefault();
@@ -171,6 +180,11 @@ export default function ProjectsList({
                         fill={favorited ? "currentColor" : "none"}
                         aria-hidden
                       />
+                      {likeCount > 0 ? (
+                        <span className="projects-card__fav-count" aria-hidden>
+                          {likeCount > 99 ? "99+" : likeCount}
+                        </span>
+                      ) : null}
                     </button>
                   ) : null}
                 </div>
