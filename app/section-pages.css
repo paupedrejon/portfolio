@@ -59,7 +59,8 @@
 
 /* Hyperspeed / canvas / Orb: atenuar para no tapar el copy */
 .portfolio-hero__fx > canvas,
-.portfolio-hero__fx > div:not(.home-hero__motion):not(.hyperspeed-container),
+.portfolio-hero__fx
+  > div:not(.home-hero__motion):not(.hyperspeed-container):not(.topography-container):not(.light-pillar-container),
 .proyectos-hero__fx > canvas,
 .proyectos-hero__fx > div:not(.home-hero__motion):not(.hyperspeed-container),
 .skills-hero__fx > canvas,
@@ -68,7 +69,9 @@
 }
 
 .portfolio-page .portfolio-hero__fx > .hyperspeed-container,
-.portfolio-page .portfolio-hero__fx > #lights {
+.portfolio-page .portfolio-hero__fx > #lights,
+.portfolio-page .portfolio-hero__fx > .topography-container,
+.portfolio-page .portfolio-hero__fx > .light-pillar-container {
   opacity: 1;
 }
 

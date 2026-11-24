@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { Briefcase } from "lucide-react";
 import "../home.css";
 import "../proyectos/proyectos.css";
 import "./experience.css";
 import PortfolioPageHero from "@/components/portfolio/PortfolioPageHero";
+import HomeHeroBackground from "@/components/home/HomeHeroBackground";
 
-const Prism = dynamic(() => import("@/components/Prism"), { ssr: false });
+const Topography = dynamic(() => import("@/components/Topography"), {
+  ssr: false,
+});
 
 type WorkBlock = {
   title: string;
@@ -25,30 +27,57 @@ type OwiusItem = {
   workBlocks: WorkBlock[];
 };
 
+/** Tokens already named in the Owius summary copy — never invent new ones. */
+const STACK_FROM_SUMMARY = [
+  "React Native",
+  "React",
+  "Node",
+  "Redsys",
+  "SEO",
+  "i18n",
+] as const;
+
+function stackFromSummary(summary: string): string[] {
+  return STACK_FROM_SUMMARY.filter((token) => summary.includes(token));
+}
+
 export default function ExperiencePage() {
   const t = useTranslations("experience");
   const [mounted, setMounted] = useState(false);
-  const [hoveredExp, setHoveredExp] = useState<number | null>(null);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [weakDevice, setWeakDevice] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const owius = t.raw("items.owius") as OwiusItem;
-
-  const experienceItems = useMemo(
-    () => [
-      {
-        title: owius.title,
-        company: owius.company,
-        description: owius.summary,
-        workBlocksTitle: owius.workBlocksTitle,
-        workBlocks: owius.workBlocks,
-        years: owius.years,
-      },
-    ],
-    [owius],
-  );
+  const stack = useMemo(() => stackFromSummary(owius.summary), [owius.summary]);
+  const blockCount = owius.workBlocks.length;
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      setReducedMotion(media.matches);
+      setIsMobile(window.innerWidth < 768);
+      const lowCpu = (navigator.hardwareConcurrency || 8) < 6;
+      const lowMem =
+        "deviceMemory" in navigator &&
+        (navigator as Navigator & { deviceMemory?: number }).deviceMemory! <= 4;
+      setWeakDevice(lowCpu || !!lowMem);
+    };
+    update();
+    media.addEventListener("change", update);
+    window.addEventListener("resize", update);
+    return () => {
+      media.removeEventListener("change", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  const showTopo = mounted && !reducedMotion && !weakDevice;
 
   return (
     <div className="portfolio-page portfolio-page--cherry">
@@ -60,79 +89,98 @@ export default function ExperiencePage() {
         scrollTargetId="experience"
         mounted={mounted}
         background={
-          mounted ? (
-            <Prism
-              animationType="rotate"
-              timeScale={0.5}
-              height={3.5}
-              baseWidth={5.5}
-              scale={3.6}
-              hueShift={-0.42}
-              colorFrequency={1}
-              noise={0}
-              glow={1}
+          showTopo ? (
+            <Topography
+              color="#87002e"
+              lineCount={isMobile ? 16 : 22}
+              lineWidth={1.2}
+              elevation={1}
+              foreground={0.2}
+              tilt={32}
+              speed={reducedMotion ? 0 : 0.25}
+              direction="forward"
+              glow={0.6}
+              depthOfField={0.4}
+              fog={0.35}
+              hoverEffect="lift"
+              clickEffect="pulse"
+              majorLines
+              scale={1}
+              detail={isMobile ? 0.25 : 0.35}
+              morph={0.2}
+              brightness={1}
+              markers="none"
+              glitch={0}
+              opacity={1}
+              mouseInteraction={!isMobile}
+              mouseRadius={1}
+              mouseStrength={0.6}
+              trail={0.3}
+              parallax={0.5}
+              intro
+              lightMode={false}
             />
-          ) : null
+          ) : (
+            <HomeHeroBackground />
+          )
         }
       />
 
       <section id="experience" className="experience-section">
-        <div className="portfolio-filters experience-filters">
-          <div className="portfolio-filters__bar">
-            <h2 className="portfolio-filters__title">{t("sectionTitle")}</h2>
-          </div>
-        </div>
-
         <div className="experience-section__inner">
-          <div className="experience-timeline">
-            <div className="experience-timeline__line" aria-hidden />
+          <article className="experience-featured">
+            <div className="experience-featured__meta">
+              <span className="experience-featured__status">
+                {t("sectionTitle")}
+              </span>
+              <span className="experience-featured__years">{owius.years}</span>
+            </div>
 
-            {experienceItems.map((item, index) => (
-              <article
-                key={index}
-                className={`experience-entry${hoveredExp === index ? " is-hovered" : ""}`}
-                onMouseEnter={() => setHoveredExp(index)}
-                onMouseLeave={() => setHoveredExp(null)}
-              >
-                <span className="experience-entry__dot" aria-hidden />
+            <h2 className="experience-featured__role">{owius.title}</h2>
+            <p className="experience-featured__company">{owius.company}</p>
 
-                <div className="experience-card">
-                  <div className="experience-card__body">
-                    <div className="experience-card__icon" aria-hidden>
-                      <Briefcase size={24} strokeWidth={1.75} />
-                    </div>
+            <div className="experience-featured__summary">
+              {owius.summary.split("\n\n").map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </div>
 
-                    <div className="experience-card__content">
-                      <h3 className="experience-card__role">{item.title}</h3>
-                      <p className="experience-card__company">{item.company}</p>
+            {stack.length > 0 ? (
+              <ul className="experience-featured__stack" aria-label="Stack">
+                {stack.map((chip) => (
+                  <li key={chip} className="experience-featured__chip">
+                    {chip}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </article>
 
-                      <div className="experience-card__summary">
-                        {item.description.split("\n\n").map((para, i) => (
-                          <p key={i}>{para}</p>
-                        ))}
-                      </div>
+          <div className="experience-deliveries">
+            <div className="experience-deliveries__head">
+              <h3 className="experience-deliveries__title">
+                {owius.workBlocksTitle}
+              </h3>
+              <span className="experience-deliveries__count">
+                {String(blockCount).padStart(2, "0")}
+              </span>
+            </div>
 
-                      <p className="experience-card__blocks-title">{item.workBlocksTitle}</p>
-
-                      <div className="experience-card__blocks">
-                        {item.workBlocks.map((block, bi) => (
-                          <div key={bi} className="experience-block">
-                            <h4 className="experience-block__title">{block.title}</h4>
-                            <ul className="experience-block__list">
-                              {block.points.map((pt, pi) => (
-                                <li key={pi}>{pt}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-
-                      <span className="experience-card__years">{item.years}</span>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            ))}
+            <ul className="experience-deliveries__grid">
+              {owius.workBlocks.map((block, bi) => (
+                <li key={bi} className="experience-delivery">
+                  <span className="experience-delivery__index" aria-hidden>
+                    {String(bi + 1).padStart(2, "0")}
+                  </span>
+                  <h4 className="experience-delivery__title">{block.title}</h4>
+                  <ul className="experience-delivery__list">
+                    {block.points.map((pt, pi) => (
+                      <li key={pi}>{pt}</li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <p className="experience-section__footnote">{t("yearsFootnote")}</p>
