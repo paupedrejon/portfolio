@@ -18,6 +18,10 @@ const ElectricLogo = dynamic(() => import("@/components/home/ElectricLogo"), {
 /** Marca tipográfica compacta (blanco sobre negro) — silueta limpia para ElectricLogo */
 const HERO_LOGO_SRC = "/LOGO_portfolio.png";
 
+type ElectricBurstApi = {
+  triggerBurst: (nx?: number, ny?: number) => void;
+};
+
 function splitDisplayTitle(title: string) {
   const space = title.lastIndexOf(" ");
   if (space <= 0) return { lead: title, accent: "" };
@@ -31,6 +35,7 @@ export default function HomePage() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const plateRef = useRef<HTMLDivElement>(null);
   const restRef = useRef<HTMLDivElement>(null);
+  const electricApiRef = useRef<ElectricBurstApi | null>(null);
   const title = t("title");
   const { lead, accent } = useMemo(() => splitDisplayTitle(title), [title]);
 
@@ -55,6 +60,21 @@ export default function HomePage() {
       return;
     }
 
+    const fireImpact = () => {
+      const tryFire = (attempts = 0) => {
+        const api = electricApiRef.current;
+        if (!api) {
+          if (attempts < 24) window.setTimeout(() => tryFire(attempts + 1), 40);
+          return;
+        }
+        // Centro + satélites = el mismo “click eléctrico” al asentar la placa
+        api.triggerBurst(0.48, 0.46);
+        window.setTimeout(() => api.triggerBurst(0.62, 0.58), 90);
+        window.setTimeout(() => api.triggerBurst(0.38, 0.62), 180);
+      };
+      tryFire();
+    };
+
     const ctx = gsap.context(() => {
       gsap.set(plate, {
         opacity: 0,
@@ -73,6 +93,7 @@ export default function HomePage() {
         scale: 1.04,
         rotateX: -4,
         duration: 0.95,
+        onComplete: fireImpact,
       }).to(plate, {
         y: 0,
         scale: 1,
@@ -132,6 +153,7 @@ export default function HomePage() {
                     cursorIntensity={0.65}
                     cursorRadius={120}
                     theme="dark"
+                    apiRef={electricApiRef}
                   />
                 </div>
               ) : (
@@ -139,8 +161,8 @@ export default function HomePage() {
                   src={HERO_LOGO_SRC}
                   alt=""
                   className="home-hero__logo-fallback"
-                  width={420}
-                  height={420}
+                  width={360}
+                  height={360}
                 />
               )}
             </div>

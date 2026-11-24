@@ -598,6 +598,8 @@ const ElectricLogo = ({
   cursorRadius = 100,
   theme = 'dark',
   onRender,
+  /** Ref imperativo: `{ triggerBurst(nx?, ny?) }` — coords 0–1 relativas al logo */
+  apiRef = null,
   className = '',
   style
 }) => {
@@ -975,12 +977,17 @@ const ElectricLogo = ({
       pointer.y = e.clientY - rect.top;
       pointer.over = true;
     };
+    const fireBurst = (x, y) => {
+      if (reducedMotion) return;
+      pulses.push({ x, y, born: performance.now() });
+      if (pulses.length > PULSES) pulses.shift();
+      burst = { x, y };
+    };
+
     const onDown = e => {
       onMove(e);
       if (!settingsRef.current?.interactive || reducedMotion) return;
-      pulses.push({ x: pointer.x, y: pointer.y, born: performance.now() });
-      if (pulses.length > PULSES) pulses.shift();
-      burst = { x: pointer.x, y: pointer.y };
+      fireBurst(pointer.x, pointer.y);
     };
     const onLeave = () => {
       pointer.over = false;
@@ -989,6 +996,17 @@ const ElectricLogo = ({
     container.addEventListener('pointerdown', onDown);
     container.addEventListener('pointerleave', onLeave);
     container.addEventListener('pointercancel', onLeave);
+
+    if (apiRef) {
+      apiRef.current = {
+        triggerBurst: (nx = 0.5, ny = 0.52) => {
+          const rect = container.getBoundingClientRect();
+          const w = rect.width || 1;
+          const h = rect.height || 1;
+          fireBurst(Math.min(1, Math.max(0, nx)) * w, Math.min(1, Math.max(0, ny)) * h);
+        }
+      };
+    }
 
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(container);
@@ -1010,10 +1028,11 @@ const ElectricLogo = ({
       container.removeEventListener('pointerdown', onDown);
       container.removeEventListener('pointerleave', onLeave);
       container.removeEventListener('pointercancel', onLeave);
+      if (apiRef) apiRef.current = null;
       gl.getExtension('WEBGL_lose_context')?.loseContext();
       if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
     };
-  }, []);
+  }, [apiRef]);
 
   return <div ref={containerRef} className={`electric-logo ${className}`.trim()} style={style} />;
 };

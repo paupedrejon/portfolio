@@ -279,9 +279,9 @@
 
 .home-hero__electric {
   position: relative;
-  /* Dominante en el hero, pero cabe en viewport con kicker + copy */
-  width: min(94vw, 60vh, 38rem);
-  height: min(94vw, 60vh, 38rem);
+  /* Dominante, dejando CTAs visibles en el primer viewport */
+  width: min(86vw, 46vh, 30rem);
+  height: min(86vw, 46vh, 30rem);
   margin-inline: auto;
   z-index: 2;
   background: transparent;
@@ -297,7 +297,7 @@
 }
 
 .home-hero__logo-fallback {
-  width: min(78vw, 52vh, 28rem);
+  width: min(72vw, 40vh, 24rem);
   height: auto;
   display: block;
   margin-inline: auto;
