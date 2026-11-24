@@ -196,6 +196,9 @@ Si quieres ejecutar Study Agents en tu máquina local:
     GOOGLE_CLIENT_ID=tu_google_client_id
     GOOGLE_CLIENT_SECRET=tu_google_client_secret
     FASTAPI_URL=http://localhost:8000
+    # AI Travel Planner (/viajes) — free tiers, server-only
+    GEMINI_API_KEY=
+    TAVILY_API_KEY=
     ```
 
 #### Ejecución
