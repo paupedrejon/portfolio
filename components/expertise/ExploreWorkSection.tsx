@@ -57,7 +57,9 @@ export default function ExploreWorkSection() {
     <section id="sections" className="home-explore" aria-labelledby="home-explore-title">
       <header className="home-explore__header">
         <h2 id="home-explore-title" className="home-explore__title">
-          {t("exploreWork")}
+          {t.rich("exploreWork", {
+            em: (chunks) => <em>{chunks}</em>,
+          })}
         </h2>
         <p className="home-explore__sub">{t("exploreSubtext")}</p>
       </header>

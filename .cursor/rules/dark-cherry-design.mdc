@@ -1,0 +1,48 @@
+---
+description: Dark Cherry design system for paupedrejon.com portfolio redesign
+alwaysApply: true
+---
+
+# Dark Cherry — design system
+
+## Scope (current)
+- Active on **home** (`app/[locale]/page.tsx` / `.home-page`) only.
+- Do **not** restyle Study Agents, cursos, admin, or labs unless explicitly asked.
+- Expand to other portfolio locale pages only after home is approved.
+
+## Non‑negotiables
+- No invented content (metrics, clients, testimonials, skill levels).
+- Hero CTAs keep text, href, and order: «Descargar CV» → `/PauPedrejonCV.pdf`, «Ver todos los proyectos» → `/proyectos`.
+- No teal/cyan leftovers on surfaces we redesign (`#4EB3C8`, `#22C8F0`, `#00d9ff`, `#358c9f`).
+- No third‑party brand references; inspiration is anodized metal, not a product logo.
+- SSR text must remain visible if JS fails. Hide-for-motion only under `html.js-motion`.
+- Respect `prefers-reduced-motion` everywhere.
+- Primary motion library: **GSAP** (+ `@gsap/react`). Do not add new Framer/Motion usage on redesign surfaces.
+
+## Tokens (use semantic names)
+See `app/styles/dark-cherry-tokens.css`.
+- Neutrals: `--bg`, `--surface`, `--surface-2`, `--line`, `--text`, `--text-2`, `--muted`
+- Accent: `--brand` (700), `--accent` (500), `--accent-text` (400), `--accent-hover` (300), `--glow`
+- Bone section: `--bone`, `--ink`, `--ink-muted`, `--ink-accent`
+- Materials: `--grad-anodized`, `--grad-specular`, `--edge`, `--shadow-glow`
+
+## Contrast
+- Body on `--bg`: `--text` / `--text-2`. Never put `--muted` on `--brand`.
+- Links on dark: `--accent-text`. On `--surface-2`/`--brand`: `--accent-hover`.
+- Button fill `--accent` → text `--text`. Bone section uses `--ink*`.
+
+## Typography
+- **Geist Sans** (display + body): display 600–700, tracking ≈ −0.045em, LH ≈ 0.9
+- **Instrument Serif Italic**: max 1–2 accent words per headline via `<em>`
+- **Geist Mono**: labels, 01–06, years, metadata (12–13px, uppercase, tracking 0.14em)
+- Fluid type with `clamp()`; reading measure ≤ 65ch
+
+## Motion principles
+- Purpose only (orient / hierarchy / feedback). One wow moment per viewport.
+- Prefer `transform`, `opacity`, `clip-path`.
+- Ease: `--ease-out`. Durations: micro 180 / UI 450 / reveal 800 / hero 1200.
+- Reusable reveals via `data-reveal` when infrastructure lands.
+
+## Surfaces
+- Cards: `--surface` + `--edge` + `--line`. Hover: soft specular / spotlight, not heavy black shadows.
+- Accent budget: ~85% neutrals, ~10% cherry, ≤1% glow.

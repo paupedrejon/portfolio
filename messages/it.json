@@ -145,7 +145,7 @@
         { "value": "Android", "label": "Nativa" }
       ]
     },
-    "exploreWork": "Esplora il mio lavoro",
+    "exploreWork": "Esplora <em>il mio lavoro</em>",
     "exploreSubtext": "Scopri cosa faccio e come posso aiutarti a dare vita alle tue idee",
     "navCards": {
       "projects": {

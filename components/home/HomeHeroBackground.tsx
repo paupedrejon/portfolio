@@ -3,9 +3,9 @@
 import FloatingLines from "@/components/FloatingLines";
 
 const HERO_WAVES = ["top", "middle", "bottom"] as ("top" | "middle" | "bottom")[];
-const HERO_GRADIENT = ["#358c9f", "#4eb3c8", "#2a6f7d"];
+const HERO_GRADIENT = ["#bf3957", "#e04667", "#8e2e45"];
 
-/** Fondo animado del hero (líneas teal, sin interacción ratón). */
+/** Fondo animado del hero (líneas cherry, sin interacción ratón). */
 export default function HomeHeroBackground() {
   return (
     <div className="home-hero__motion" aria-hidden>

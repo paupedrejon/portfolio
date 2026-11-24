@@ -1,0 +1,108 @@
+/**
+ * Dark Cherry — tokens del rediseño (scoped a .home-page / data-theme).
+ * No sustituye aún el :root global teal (subpáginas / Study Agents intactos).
+ */
+
+.home-page,
+[data-theme="dark-cherry"] {
+  /* Rampa cereza (OKLCH hue ≈ 7–14) */
+  --cherry-950: #110508;
+  --cherry-900: #1b0b0e;
+  --cherry-850: #261115;
+  --cherry-800: #361b20;
+  --cherry-700: #48292f;
+  --cherry-600: #8e2e45;
+  --cherry-500: #bf3957;
+  --cherry-400: #e04667;
+  --cherry-300: #f58393;
+  --cherry-200: #f6c2c5;
+  --cherry-100: #f8e4e4;
+  --cherry-50: #fbf4f2;
+
+  --bg: var(--cherry-950);
+  --surface: var(--cherry-900);
+  --surface-2: var(--cherry-850);
+  --line: rgb(245 238 237 / 0.08);
+  --line-strong: var(--cherry-800);
+  --brand: var(--cherry-700);
+  --accent: var(--cherry-500);
+  --accent-text: var(--cherry-400);
+  --accent-hover: var(--cherry-300);
+  --glow: #ff4d6d;
+  --text: #f5eeed;
+  --text-2: #cab9b9;
+  --muted: #9b8688;
+
+  --bone: var(--cherry-50);
+  --ink: #2e1c1f;
+  --ink-muted: #6e5a5d;
+  --ink-accent: var(--cherry-600);
+
+  --grad-anodized: linear-gradient(160deg, #5e3540 0%, #48292f 38%, #1f0c10 100%);
+  --grad-specular: radial-gradient(
+    600px circle at var(--mx, 50%) var(--my, 50%),
+    rgb(245 131 147 / 0.16),
+    transparent 45%
+  );
+  --grad-sheen: linear-gradient(100deg, var(--text) 40%, var(--cherry-200) 50%, var(--text) 60%);
+  --edge: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --shadow-glow: 0 0 0 1px rgb(224 70 103 / 0.35), 0 12px 40px -12px rgb(224 70 103 / 0.45);
+
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 24px;
+  --r-full: 999px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-1: 180ms;
+  --dur-2: 450ms;
+  --dur-3: 800ms;
+  --dur-4: 1200ms;
+
+  /* Bridge → legacy home vars */
+  --home-bg: var(--cherry-950);
+  --home-bg-elevated: var(--cherry-900);
+  --home-card: var(--cherry-850);
+  --home-card-hover: var(--cherry-800);
+  --home-accent: var(--cherry-500);
+  --home-accent-bright: var(--cherry-400);
+  --home-accent-soft: rgb(191 57 87 / 0.28);
+  --home-accent-glow: rgb(224 70 103 / 0.55);
+  --home-accent-glow-strong: rgb(245 131 147 / 0.7);
+  --home-text: var(--text);
+  --home-text-muted: var(--text-2);
+  --home-border: rgb(224 70 103 / 0.35);
+
+  font-family: var(--font-geist-sans), var(--font-body), system-ui, sans-serif;
+  background: var(--home-bg);
+  color: var(--home-text);
+}
+
+.home-page ::selection,
+[data-theme="dark-cherry"] ::selection {
+  background: var(--accent);
+  color: var(--text);
+}
+
+.home-page {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Grano global (home) */
+.home-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.home-page :focus-visible {
+  outline: 2px solid var(--glow);
+  outline-offset: 3px;
+}

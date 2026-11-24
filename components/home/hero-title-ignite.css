@@ -46,7 +46,7 @@
 }
 
 .hero-ignite--accent .hero-word--static {
-  color: #eafcff;
+  color: #f8e4e4;
 }
 
 .hero-word__neon {
@@ -66,17 +66,17 @@
 }
 
 .hero-ignite--accent .neon-halo {
-  color: #22c8f0;
+  color: #e04667;
   filter: url(#hero-neon-soft);
 }
 
 .hero-ignite--default .neon-halo {
-  color: #6db6e8;
+  color: #f58393;
   filter: url(#hero-neon-soft);
 }
 
 .hero-ignite--accent .neon-core {
-  color: #eafcff;
+  color: #f8e4e4;
 }
 
 .hero-ignite--default .neon-core {

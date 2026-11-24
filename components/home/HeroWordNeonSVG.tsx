@@ -8,8 +8,8 @@ import {
 } from "@/components/home/hero-word-measure";
 
 const FINAL_COLORS = {
-  default: { halo: "#6db6e8", core: "#ffffff" },
-  accent: { halo: "#22c8f0", core: "#eafcff" },
+  default: { halo: "#f58393", core: "#ffffff" },
+  accent: { halo: "#e04667", core: "#f8e4e4" },
 } as const;
 
 type HeroWordNeonSVGProps = {

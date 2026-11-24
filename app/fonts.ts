@@ -7,9 +7,26 @@ import {
   Quicksand,
   Bebas_Neue,
   Playfair_Display,
+  Instrument_Serif,
 } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 
-// Display font - Bold, modern, geometric
+/** Dark Cherry — display + body */
+export const geistSans = GeistSans;
+/** Dark Cherry — mono labels / metadata */
+export const geistMono = GeistMono;
+
+/** Accent words in headlines (italic only) */
+export const instrumentSerif = Instrument_Serif({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400"],
+  style: ["italic"],
+  display: "swap",
+  variable: "--font-instrument-serif",
+});
+
+// Display font - Bold, modern, geometric (legacy)
 export const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -17,7 +34,7 @@ export const spaceGrotesk = Space_Grotesk({
   variable: "--font-display",
 });
 
-// Body font - Clean, readable
+// Body font - Clean, readable (legacy)
 export const outfit = Outfit({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
@@ -25,7 +42,7 @@ export const outfit = Outfit({
   variable: "--font-body",
 });
 
-// Mono font - Technical, code-like
+// Mono font - Technical, code-like (legacy)
 export const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],

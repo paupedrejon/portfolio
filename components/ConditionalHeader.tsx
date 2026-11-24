@@ -15,6 +15,10 @@ import { CONTACT_EMAIL, GITHUB_URL, LINKEDIN_URL } from "@/lib/seo/config";
 export default function ConditionalHeader() {
   const pathname = usePathname();
   const isStudyAgentsPage = pathname?.startsWith("/study-agents");
+  const isHomePage =
+    !pathname ||
+    pathname === "/" ||
+    /^\/(es|en|it)\/?$/.test(pathname);
   const forceDarkProjectsTheme =
     pathname?.includes("/proyectos") ||
     pathname?.includes("/projects") ||
@@ -24,6 +28,10 @@ export default function ConditionalHeader() {
     pathname?.includes("/about-me") ||
     pathname?.includes("/contact");
   const forceLightCursosTheme = pathname?.includes("/cursos");
+  const menuColors = isHomePage
+    ? (["#e04667", "#bf3957"] as const)
+    : (["#4eb3c8", "#358c9f"] as const);
+  const menuAccent = isHomePage ? "#e04667" : "#358c9f";
   const [colorTheme, setColorTheme] = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -394,9 +402,9 @@ export default function ConditionalHeader() {
       menuButtonColor="#ffffff"
       openMenuButtonColor="#000"
       changeMenuColorOnOpen
-      colors={["#4eb3c8", "#358c9f"]}
+      colors={[...menuColors]}
       logoUrl="/logo.svg"
-      accentColor="#358c9f"
+      accentColor={menuAccent}
       isFixed
       closeOnClickAway
       headerExtra={

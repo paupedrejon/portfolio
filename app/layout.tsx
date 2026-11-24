@@ -4,7 +4,19 @@ import "./globals.css";
 import "./section-pages.css";
 import VercelAnalyticsGate from "@/components/analytics/VercelAnalyticsGate";
 import { Providers } from "./providers";
-import { spaceGrotesk, outfit, jetbrainsMono, leagueSpartan, quicksand, bebasNeue, playfairDisplay } from "./fonts";
+import {
+  spaceGrotesk,
+  outfit,
+  jetbrainsMono,
+  leagueSpartan,
+  quicksand,
+  bebasNeue,
+  playfairDisplay,
+  geistSans,
+  geistMono,
+  instrumentSerif,
+} from "./fonts";
+import "./styles/dark-cherry-tokens.css";
 import ConditionalFooter from "@/components/ConditionalFooter";
 import { getLocale } from "next-intl/server";
 import HapticsRoot from "@/components/HapticsRoot";
@@ -51,6 +63,7 @@ export const metadata: Metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#110508",
 };
 
 export default async function RootLayout({
@@ -63,7 +76,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${spaceGrotesk.variable} ${outfit.variable} ${jetbrainsMono.variable} ${leagueSpartan.variable} ${quicksand.variable} ${bebasNeue.variable} ${playfairDisplay.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} ${spaceGrotesk.variable} ${outfit.variable} ${jetbrainsMono.variable} ${leagueSpartan.variable} ${quicksand.variable} ${bebasNeue.variable} ${playfairDisplay.variable}`}
       suppressHydrationWarning
     >
       <body className="overflow-x-hidden w-full" suppressHydrationWarning>

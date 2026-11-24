@@ -76,8 +76,8 @@ void main(){
   float side = uStacked > 0.5
     ? smoothstep(uSplitY - 0.08, uSplitY + 0.08, vUv.y)
     : smoothstep(uSplitX - 0.06, uSplitX + 0.06, vUv.x);
-  vec3 tube = mix(vec3(0.72, 0.86, 1.00), vec3(0.16, 0.78, 1.00), side);
-  vec3 base = mix(vec3(0.012, 0.050, 0.070), vec3(0.020, 0.090, 0.130), side);
+  vec3 tube = mix(vec3(0.96, 0.76, 0.78), vec3(0.88, 0.27, 0.40), side);
+  vec3 base = mix(vec3(0.067, 0.020, 0.031), vec3(0.106, 0.043, 0.055), side);
 
   vec3 col = mix(base, tube, clamp(nearF * density * BRIGHT, 0.0, 1.0));
   float alpha = clamp(density * (0.55 + 0.45 * nearF), 0.0, ALPHA_CAP) * uFade;

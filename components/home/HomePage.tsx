@@ -146,7 +146,7 @@ export default function HomePage() {
         </div>
 
         <div className={`home-hero__scroll ${mounted ? "animate-fade-in" : ""}`} style={{ animationDelay: "0.4s", animationFillMode: "both" }}>
-          <ScrollButton targetId="explore-section" color="transparent" iconColor="#358c9f" />
+          <ScrollButton targetId="explore-section" color="transparent" iconColor="#e04667" />
         </div>
       </section>
 
