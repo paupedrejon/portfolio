@@ -45,18 +45,18 @@ export default function PortfolioPageHero({
       </div>
 
       <div
-        className={`home-hero__inner ${mounted ? "opacity-100" : "opacity-0"}`}
+        className={`home-hero__inner${mounted ? " home-hero__inner--ready" : ""}`}
         style={{ transition: "opacity 0.6s ease-out" }}
       >
         <p
-          className={`home-hero__kicker ${mounted ? "animate-fade-in-up" : ""}`}
+          className={`home-hero__kicker${mounted ? " animate-fade-in-up" : ""}`}
           style={{ animationFillMode: "both" }}
         >
           {kicker}
         </p>
 
         <h1
-          className={`home-hero__title ${mounted ? "animate-fade-in-up" : ""}`}
+          className={`home-hero__title${mounted ? " animate-fade-in-up" : ""}`}
           style={{ animationDelay: "0.08s", animationFillMode: "both" }}
         >
           {accent ? (
@@ -71,7 +71,7 @@ export default function PortfolioPageHero({
         </h1>
 
         <p
-          className={`home-hero__tagline ${mounted ? "animate-fade-in-up" : ""}`}
+          className={`home-hero__tagline${mounted ? " animate-fade-in-up" : ""}`}
           style={{ animationDelay: "0.16s", animationFillMode: "both" }}
         >
           {tagline}
@@ -79,7 +79,7 @@ export default function PortfolioPageHero({
 
         {(showCv || children) && (
           <div
-            className={`home-hero__actions ${mounted ? "animate-fade-in-up" : ""}`}
+            className={`home-hero__actions${mounted ? " animate-fade-in-up" : ""}`}
             style={{ animationDelay: "0.24s", animationFillMode: "both" }}
           >
             {showCv ? <CurriculumButton href="/PauPedrejonCV.pdf" className="home-btn--cv" /> : null}
@@ -89,7 +89,7 @@ export default function PortfolioPageHero({
       </div>
 
       <div
-        className={`home-hero__scroll ${mounted ? "animate-fade-in" : ""}`}
+        className={`home-hero__scroll${mounted ? " animate-fade-in" : ""}`}
         style={{ animationDelay: "0.38s", animationFillMode: "both" }}
       >
         <ScrollButton
