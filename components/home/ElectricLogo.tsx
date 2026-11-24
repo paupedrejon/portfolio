@@ -657,7 +657,8 @@ const ElectricLogo = ({
     const renderer = new Renderer({
       dpr: Math.min(window.devicePixelRatio || 1, 2),
       alpha: true,
-      premultipliedAlpha: true,
+      // false evita la placa grisácea al componer sobre fondos oscuros
+      premultipliedAlpha: false,
       antialias: false
     });
     const gl = renderer.gl;
@@ -666,6 +667,7 @@ const ElectricLogo = ({
       return undefined;
     }
     gl.clearColor(0, 0, 0, 0);
+    gl.canvas.style.background = 'transparent';
     const canvas = gl.canvas;
     canvas.style.display = 'block';
     canvas.style.width = '100%';

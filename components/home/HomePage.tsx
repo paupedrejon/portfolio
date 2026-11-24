@@ -9,11 +9,13 @@ import ExploreWorkSection from "@/components/expertise/ExploreWorkSection";
 import { Link } from "@/i18n/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { buildHeroWordmarkDataUrl } from "@/components/home/buildHeroWordmark";
 
 const ElectricLogo = dynamic(() => import("@/components/home/ElectricLogo"), {
   ssr: false,
 });
+
+/** Marca tipográfica compacta (blanco sobre negro) — silueta limpia para ElectricLogo */
+const HERO_LOGO_SRC = "/LOGO_portfolio.png";
 
 function splitDisplayTitle(title: string) {
   const space = title.lastIndexOf(" ");
@@ -25,7 +27,6 @@ export default function HomePage() {
   const t = useTranslations("home");
   const tCommon = useTranslations("common");
   const [mounted, setMounted] = useState(false);
-  const [wordmarkSrc, setWordmarkSrc] = useState<string | null>(null);
   const [electricReady, setElectricReady] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const electricReadyRef = useRef(false);
@@ -41,30 +42,11 @@ export default function HomePage() {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  useEffect(() => {
-    if (!mounted || reducedMotion) return;
-    let cancelled = false;
-    const run = async () => {
-      try {
-        await document.fonts?.ready;
-      } catch {
-        /* ignore */
-      }
-      if (cancelled) return;
-      const src = buildHeroWordmarkDataUrl(title);
-      if (src) setWordmarkSrc(src);
-    };
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [mounted, reducedMotion, title]);
-
-  const showElectric = Boolean(wordmarkSrc) && !reducedMotion;
+  const showElectric = mounted && !reducedMotion;
 
   return (
     <div className="home-page">
-      <section id="hero-section" className="home-hero home-hero--neon" aria-label="Intro">
+      <section id="hero-section" className="home-hero" aria-label="Intro">
         <div className="home-hero__bg" aria-hidden />
         <HomeHeroBackground />
 
@@ -80,11 +62,49 @@ export default function HomePage() {
           </p>
 
           <div
-            className={`home-hero__title-wrap${showElectric ? " home-hero__title-wrap--electric" : ""}`}
+            className={`home-hero__brand${showElectric ? " home-hero__brand--electric" : ""}`}
           >
+            {showElectric ? (
+              <div className="home-hero__electric" aria-hidden>
+                <ElectricLogo
+                  src={HERO_LOGO_SRC}
+                  color="#f58393"
+                  glowColor="#e04667"
+                  scale={0.7}
+                  strands={3}
+                  bend={0.4}
+                  crackle={1.15}
+                  arcs={0.85}
+                  speed={2}
+                  interactive
+                  intensity={0.7}
+                  glow={0.18}
+                  thickness={1.5}
+                  flicker={0.3}
+                  fill={0}
+                  cursorIntensity={0.65}
+                  cursorRadius={80}
+                  theme="dark"
+                  onRender={() => {
+                    if (electricReadyRef.current) return;
+                    electricReadyRef.current = true;
+                    setElectricReady(true);
+                  }}
+                />
+              </div>
+            ) : (
+              <img
+                src={HERO_LOGO_SRC}
+                alt=""
+                className="home-hero__logo-fallback"
+                width={280}
+                height={280}
+              />
+            )}
+
             <h1
               className={`home-hero__title ${mounted ? "animate-fade-in-up" : ""}${
-                showElectric && electricReady ? " home-hero__title--under-electric" : ""
+                showElectric && electricReady ? " home-hero__title--with-mark" : ""
               }`}
               style={{ animationDelay: "0.08s", animationFillMode: "both" }}
             >
@@ -96,36 +116,6 @@ export default function HomePage() {
                 </>
               ) : null}
             </h1>
-
-            {showElectric && wordmarkSrc ? (
-              <div className="home-hero__electric" aria-hidden>
-                <ElectricLogo
-                  src={wordmarkSrc}
-                  color="#f6c2c5"
-                  glowColor="#e04667"
-                  scale={0.9}
-                  strands={5}
-                  bend={0.65}
-                  crackle={1.55}
-                  arcs={1.35}
-                  speed={2.4}
-                  interactive
-                  intensity={0.78}
-                  glow={0.85}
-                  thickness={1.45}
-                  flicker={0.5}
-                  fill={0.04}
-                  cursorIntensity={0.75}
-                  cursorRadius={130}
-                  theme="dark"
-                  onRender={() => {
-                    if (electricReadyRef.current) return;
-                    electricReadyRef.current = true;
-                    setElectricReady(true);
-                  }}
-                />
-              </div>
-            ) : null}
           </div>
 
           <p

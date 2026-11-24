@@ -22,14 +22,9 @@
 .home-hero__bg {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 35%, rgb(191 57 87 / 0.14) 0%, transparent 62%),
-    radial-gradient(ellipse 60% 50% at 15% 75%, rgb(142 46 69 / 0.1) 0%, transparent 52%),
-    radial-gradient(ellipse 50% 40% at 85% 60%, rgb(72 41 47 / 0.28) 0%, transparent 48%),
-    var(--grad-anodized),
-    linear-gradient(180deg, #14080a 0%, var(--home-bg) 52%, #070204 100%);
+  /* Fondo limpio — sin velo central ni niebla */
+  background: linear-gradient(165deg, #1a0c10 0%, var(--home-bg) 42%, #080305 100%);
   pointer-events: none;
-  transition: background 2s ease;
 }
 
 .home-hero--ignite .home-hero__bg {
@@ -44,13 +39,7 @@
 }
 
 .home-hero--neon .home-hero__bg {
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 35%, rgb(191 57 87 / 0.16) 0%, transparent 62%),
-    radial-gradient(ellipse 60% 50% at 15% 75%, rgb(142 46 69 / 0.1) 0%, transparent 52%),
-    radial-gradient(ellipse 50% 40% at 85% 60%, rgb(72 41 47 / 0.28) 0%, transparent 48%),
-    var(--grad-anodized),
-    linear-gradient(180deg, #14080a 0%, var(--home-bg) 52%, #070204 100%);
-  transition: background 2.2s ease;
+  background: linear-gradient(165deg, #1a0c10 0%, var(--home-bg) 42%, #080305 100%);
 }
 
 /* Apagado suave del ambiente rojo al entrar el neón */
@@ -167,9 +156,7 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  opacity: 0.26;
   pointer-events: none;
-  transition: opacity 2s ease;
 }
 
 .home-hero__motion .floating-lines-container {
@@ -237,19 +224,9 @@
   }
 }
 
-/* Velo suave sobre el movimiento */
+/* Sin velo — fondo nítido */
 .home-hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(
-    180deg,
-    rgba(2, 6, 10, 0.18) 0%,
-    rgba(2, 8, 12, 0.28) 50%,
-    rgba(1, 4, 8, 0.38) 100%
-  );
-  pointer-events: none;
+  content: none;
 }
 
 .home-hero__inner {
@@ -274,32 +251,39 @@
   color: var(--accent-text);
 }
 
-.home-hero__title-wrap {
+.home-hero__brand {
   position: relative;
-  display: inline-block;
-  max-width: 100%;
-  overflow: visible;
-}
-
-.home-hero__title-wrap--electric {
-  width: min(100%, 52rem);
-  min-height: clamp(7.5rem, 22vw, 14rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 36rem;
 }
 
 .home-hero__electric {
-  position: absolute;
-  inset: -22% -10%;
-  z-index: 4;
-  pointer-events: auto;
+  position: relative;
+  width: min(72vw, 17.5rem);
+  height: min(72vw, 17.5rem);
+  z-index: 2;
+  background: transparent;
+  /* Recorta la placa grisácea del canvas WebGL */
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 38%, transparent 68%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 38%, transparent 68%);
+}
+
+.home-hero__electric .electric-logo,
+.home-hero__electric .electric-logo canvas {
+  background: transparent !important;
   mix-blend-mode: screen;
 }
 
-/* SSR text se oculta visualmente cuando el electric ya pinta (sigue en DOM) */
-.home-hero__title--under-electric {
-  opacity: 0 !important;
-  animation: none !important;
-  user-select: none;
-  pointer-events: none;
+.home-hero__logo-fallback {
+  width: min(56vw, 14rem);
+  height: auto;
+  display: block;
+  /* PNG blanco sobre negro: screen elimina el fondo negro */
+  mix-blend-mode: screen;
 }
 
 .home-hero__title-lead {
@@ -310,6 +294,15 @@
   .home-hero__title-lead {
     display: inline;
   }
+}
+
+.home-hero__title--with-mark {
+  margin-top: 0.15rem;
+  font-size: clamp(1.65rem, 4.2vw, 2.75rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--text);
 }
 
 /* Rayos volumétricos globales bajo el título (ref. 1) */
@@ -367,31 +360,23 @@
   }
 }
 
-.home-hero__title-wrap .home-hero__title {
+.home-hero__title {
   position: relative;
   z-index: 3;
-}
-
-.home-hero__title {
   margin: 0;
   font-family: var(--font-geist-sans), var(--font-body), system-ui, sans-serif;
-  font-size: clamp(3.5rem, 11vw, 11rem);
-  font-weight: 700;
-  line-height: 0.9;
-  letter-spacing: -0.045em;
+  font-size: clamp(1.65rem, 4.2vw, 2.75rem);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
   color: var(--home-text);
   max-width: none;
+  text-align: center;
 }
 
 .home-hero__title-accent {
-  display: block;
+  display: inline;
   color: var(--accent-hover);
-}
-
-@media (min-width: 720px) {
-  .home-hero__title-accent {
-    display: inline;
-  }
 }
 
 .home-hero__tagline {
@@ -446,21 +431,21 @@
   max-width: 100%;
 }
 
-/* Descargar CV — primario Dark Cherry */
+/* Descargar CV — primario Dark Cherry (sin glow/niebla) */
 .home-btn--cv {
   color: var(--text);
   background: var(--accent);
   border: 2px solid var(--cherry-400);
-  box-shadow: var(--shadow-glow), var(--edge);
+  box-shadow: none;
   border-radius: var(--r-md);
 }
 
 .home-btn--cv:hover {
   color: var(--text);
   background: var(--cherry-600);
-  border-color: var(--accent-hover);
+  border-color: var(--cherry-300);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
+  box-shadow: none;
 }
 
 .home-btn--cv:hover .cv-btn-text svg {
@@ -494,16 +479,16 @@
   color: var(--text);
   background: var(--accent);
   border: 1px solid var(--cherry-400);
-  box-shadow: var(--shadow-glow), var(--edge);
+  box-shadow: none;
   border-radius: var(--r-md);
 }
 
 .home-btn--primary:hover {
   color: var(--text);
   background: var(--cherry-600);
-  border-color: var(--accent-hover);
+  border-color: var(--cherry-300);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
+  box-shadow: none;
 }
 
 .home-btn--primary:focus-visible {
@@ -513,17 +498,17 @@
 
 .home-btn--ghost {
   color: var(--text);
-  border: 2px solid var(--accent-hover);
+  border: 2px solid var(--cherry-400);
   background: transparent;
-  box-shadow: var(--edge);
+  box-shadow: none;
   border-radius: var(--r-md);
 }
 
 .home-btn--ghost:hover {
   color: var(--text);
-  border-color: var(--accent-text);
-  background: rgb(191 57 87 / 0.16);
-  box-shadow: var(--shadow-glow);
+  border-color: var(--cherry-300);
+  background: var(--cherry-800);
+  box-shadow: none;
   transform: translateY(-2px);
 }
 
