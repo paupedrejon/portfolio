@@ -2,8 +2,10 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import ScrollButton from "@/components/ScrollButton";
 import CurriculumButton from "@/components/CurriculumButton";
+import { Link } from "@/i18n/navigation";
 import { splitHeroTitle } from "@/lib/splitHeroTitle";
 
 const ElectricLogo = dynamic(() => import("@/components/home/ElectricLogo"), {
@@ -24,6 +26,8 @@ type PortfolioPageHeroProps = {
   className?: string;
   ariaLabel?: string;
   showCv?: boolean;
+  /** Enlace Contactar (ghost, como home). Off en /contact. */
+  showContact?: boolean;
   children?: ReactNode;
 };
 
@@ -104,11 +108,15 @@ export default function PortfolioPageHero({
   className = "",
   ariaLabel,
   showCv = true,
+  showContact = true,
   children,
 }: PortfolioPageHeroProps) {
+  const tNav = useTranslations("nav");
   const { lead, accent } = splitHeroTitle(title);
   const brandNode =
     brand === null ? null : (brand ?? <DefaultHeroBrand mounted={mounted} />);
+  const showContactCta = showContact && showCv;
+  const showActions = showCv || showContactCta || Boolean(children);
 
   return (
     <section
@@ -163,7 +171,7 @@ export default function PortfolioPageHero({
           {tagline}
         </p>
 
-        {(showCv || children) && (
+        {showActions ? (
           <div
             className={`home-hero__actions${mounted ? " animate-fade-in-up" : ""}`}
             style={{ animationDelay: "0.24s", animationFillMode: "both" }}
@@ -171,9 +179,14 @@ export default function PortfolioPageHero({
             {showCv ? (
               <CurriculumButton href="/PauPedrejonCV.pdf" className="home-btn--cv" />
             ) : null}
+            {showContactCta ? (
+              <Link href="/contact" className="home-btn--ghost">
+                {tNav("contact")}
+              </Link>
+            ) : null}
             {children}
           </div>
-        )}
+        ) : null}
       </div>
 
       <div

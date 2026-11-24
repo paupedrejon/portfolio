@@ -113,6 +113,7 @@ export default function ContactPage() {
         scrollTargetId="contact"
         mounted={mounted}
         showCv={false}
+        showContact={false}
         background={
           showLightRays ? (
             <LightRays
