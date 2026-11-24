@@ -43,9 +43,10 @@
 
 .sm-logo-img {
   display: block;
-  height: 32px;
-  width: auto;
-  object-fit: contain;
+  height: 40px;
+  width: 40px;
+  object-fit: cover;
+  border-radius: 10px;
 }
 
 .sm-toggle {
@@ -308,9 +309,7 @@
     right: 0;
   }
 
-  .staggered-menu-wrapper[data-open] .sm-logo-img {
-    filter: invert(100%);
-  }
+  /* Logo PAU ya es blanco sobre negro: no invertir al abrir menú claro */
 }
 
 @media (max-width: 640px) {
@@ -318,9 +317,5 @@
     width: 100%;
     left: 0;
     right: 0;
-  }
-
-  .staggered-menu-wrapper[data-open] .sm-logo-img {
-    filter: invert(100%);
   }
 }

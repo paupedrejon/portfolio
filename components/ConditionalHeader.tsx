@@ -403,7 +403,7 @@ export default function ConditionalHeader() {
       openMenuButtonColor="#000"
       changeMenuColorOnOpen
       colors={[...menuColors]}
-      logoUrl="/logo.svg"
+      logoUrl="/LOGO_portfolio.png"
       accentColor={menuAccent}
       isFixed
       closeOnClickAway

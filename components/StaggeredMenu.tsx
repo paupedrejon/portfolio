@@ -46,7 +46,7 @@ export const StaggeredMenu = ({
   displaySocials = true,
   displayItemNumbering = true,
   className,
-  logoUrl = "/logo.svg",
+  logoUrl = "/LOGO_portfolio.png",
   menuButtonColor = "#fff",
   openMenuButtonColor = "#fff",
   accentColor = "#5227FF",
@@ -426,8 +426,8 @@ export const StaggeredMenu = ({
             alt="Logo"
             className="sm-logo-img"
             draggable={false}
-            width={110}
-            height={24}
+            width={40}
+            height={40}
           />
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
