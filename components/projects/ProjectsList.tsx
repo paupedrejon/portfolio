@@ -1,10 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { Star } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import type { ExpertiseAreaId } from "@/components/expertise/types";
 import { ExpertiseAreaFilterIcon } from "@/lib/expertise/area-filter-icons";
+import type { ProjectEntityId } from "@/lib/projects/config";
 
 const AREA_TITLE_KEYS: Record<ExpertiseAreaId, string> = {
   "web-development": "areas.web.title",
@@ -13,8 +15,6 @@ const AREA_TITLE_KEYS: Record<ExpertiseAreaId, string> = {
   videogames: "areas.games.title",
   hardware: "areas.hardware.title",
 };
-
-import type { ProjectEntityId } from "@/lib/projects/config";
 
 export type ProjectListItem = {
   slug: string;
@@ -38,6 +38,8 @@ export type ProjectListItem = {
 
 type ProjectsListProps = {
   projects: ProjectListItem[];
+  isFavorite?: (slug: string) => boolean;
+  onToggleFavorite?: (slug: string) => void;
 };
 
 function orgClassName(style?: "round" | "blend" | "warm"): string {
@@ -55,95 +57,129 @@ function formatCardKicker(kicker: string, hasCompany: boolean): string {
   return year ?? kicker;
 }
 
-export default function ProjectsList({ projects }: ProjectsListProps) {
+export default function ProjectsList({
+  projects,
+  isFavorite,
+  onToggleFavorite,
+}: ProjectsListProps) {
   const t = useTranslations("projects");
   const tExpertise = useTranslations("expertise");
 
   return (
     <ul className="projects-grid">
-      {projects.map((project) => (
-        <li key={project.slug} className="projects-grid__item">
-          <article className="projects-card">
-            <Link
-              href={project.slug === "ego" ? "/ego" : `/proyectos/${project.slug}`}
-              className="projects-card__image-link"
-              aria-label={project.title}
-            >
-              <div className="projects-card__image-wrap">
-                <Image
-                  src={project.imageCard}
-                  alt={
-                    project.title2
-                      ? `${project.title} — ${project.title2}`
-                      : project.title
+      {projects.map((project) => {
+        const favorited = isFavorite?.(project.slug) ?? false;
+        return (
+          <li key={project.slug} className="projects-grid__item">
+            <article className={`projects-card${favorited ? " is-favorite" : ""}`}>
+              {onToggleFavorite ? (
+                <button
+                  type="button"
+                  className={`projects-card__fav${favorited ? " is-active" : ""}`}
+                  aria-pressed={favorited}
+                  aria-label={
+                    favorited ? t("unfavoriteProject") : t("favoriteProject")
                   }
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 33vw"
-                  className="projects-card__image"
-                />
-              </div>
-            </Link>
-
-            <div className="projects-card__body">
-              <div className="projects-card__meta">
-                <p className="projects-card__kicker">
-                  {formatCardKicker(project.kicker, Boolean(project.company))}
-                </p>
-                {project.company ? (
-                  <a
-                    href={project.company.href}
-                    className={orgClassName(project.company.logoStyle)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={project.company.name}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Image
-                      src={project.company.logo}
-                      alt=""
-                      width={project.company.logoStyle === "round" ? 48 : 130}
-                      height={project.company.logoStyle === "round" ? 48 : 32}
-                      className="projects-card__org-logo"
-                    />
-                  </a>
-                ) : null}
-              </div>
-              <h3 className="projects-card__title">
-                <Link href={project.slug === "ego" ? "/ego" : `/proyectos/${project.slug}`}>
-                  {project.title}
-                </Link>
-              </h3>
-              {project.title2 ? (
-                <p className="projects-card__title2">{project.title2}</p>
-              ) : null}
-
-              {project.sections.length > 0 ? (
-                <div className="projects-card__tags">
-                  {project.sections.map((sectionId) => (
-                    <span key={sectionId} className="projects-card__tag">
-                      <ExpertiseAreaFilterIcon
-                        areaId={sectionId}
-                        className="projects-card__tag-icon"
-                        size={13}
-                      />
-                      <span>{tExpertise(AREA_TITLE_KEYS[sectionId])}</span>
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-
-              <div className="projects-card__actions">
-                <Link
-                  href={project.slug === "ego" ? "/ego" : `/proyectos/${project.slug}`}
-                  className="projects-card__btn home-btn--cv"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onToggleFavorite(project.slug);
+                  }}
                 >
-                  {t("moreInfo")}
-                </Link>
+                  <Star
+                    size={16}
+                    strokeWidth={2}
+                    fill={favorited ? "currentColor" : "none"}
+                    aria-hidden
+                  />
+                </button>
+              ) : null}
+
+              <Link
+                href={project.slug === "ego" ? "/ego" : `/proyectos/${project.slug}`}
+                className="projects-card__image-link"
+                aria-label={project.title}
+              >
+                <div className="projects-card__image-wrap">
+                  <Image
+                    src={project.imageCard}
+                    alt={
+                      project.title2
+                        ? `${project.title} — ${project.title2}`
+                        : project.title
+                    }
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 33vw"
+                    className="projects-card__image"
+                  />
+                </div>
+              </Link>
+
+              <div className="projects-card__body">
+                <div className="projects-card__meta">
+                  <p className="projects-card__kicker">
+                    {formatCardKicker(project.kicker, Boolean(project.company))}
+                  </p>
+                  {project.company ? (
+                    <a
+                      href={project.company.href}
+                      className={orgClassName(project.company.logoStyle)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={project.company.name}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Image
+                        src={project.company.logo}
+                        alt=""
+                        width={project.company.logoStyle === "round" ? 48 : 130}
+                        height={project.company.logoStyle === "round" ? 48 : 32}
+                        className="projects-card__org-logo"
+                      />
+                    </a>
+                  ) : null}
+                </div>
+                <h3 className="projects-card__title">
+                  <Link
+                    href={project.slug === "ego" ? "/ego" : `/proyectos/${project.slug}`}
+                  >
+                    {project.title}
+                  </Link>
+                </h3>
+                {project.title2 ? (
+                  <p className="projects-card__title2">{project.title2}</p>
+                ) : null}
+
+                {project.sections.length > 0 ? (
+                  <div className="projects-card__tags">
+                    {project.sections.map((sectionId) => (
+                      <span key={sectionId} className="projects-card__tag">
+                        <ExpertiseAreaFilterIcon
+                          areaId={sectionId}
+                          className="projects-card__tag-icon"
+                          size={13}
+                        />
+                        <span>{tExpertise(AREA_TITLE_KEYS[sectionId])}</span>
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+
+                <div className="projects-card__actions">
+                  <Link
+                    href={
+                      project.slug === "ego" ? "/ego" : `/proyectos/${project.slug}`
+                    }
+                    className="projects-card__btn home-btn--ghost"
+                  >
+                    {t("moreInfo")}
+                  </Link>
+                </div>
               </div>
-            </div>
-          </article>
-        </li>
-      ))}
+            </article>
+          </li>
+        );
+      })}
     </ul>
   );
 }

@@ -81,6 +81,10 @@ export function getProjectEntityId(config: ProjectConfig): ProjectEntityId {
   return config.company?.id ?? "personal";
 }
 
+/**
+ * Orden del listado = relevancia para recruiters (producción / estables primero).
+ * Study Agents va más abajo: el despliegue en Railway ya no está activo.
+ */
 export const PROJECTS_CONFIG: ProjectConfig[] = [
   {
     slug: "tealcode",
@@ -90,15 +94,6 @@ export const PROJECTS_CONFIG: ProjectConfig[] = [
     externalHref: "/api/tealcode/installer",
     sections: ["ai", "web-development"],
     hidden: true,
-  },
-  {
-    slug: "study-agents",
-    imageCard: "/react_study_agents.png",
-    sortDate: "2026-01",
-    tech: "Next.js, React, TypeScript, Python, FastAPI, LangChain, OpenAI, Vector DB",
-    externalHref: "/study-agents",
-    sections: ["ai", "web-development"],
-    company: ORG_IIA,
   },
   {
     slug: "turelojya",
@@ -120,21 +115,6 @@ export const PROJECTS_CONFIG: ProjectConfig[] = [
     company: ORG_OWius,
   },
   {
-    slug: "react-course",
-    imageCard: "/curso-react.png",
-    sortDate: "2026-05",
-    tech: "React, Vite, Tailwind CSS, Playwright, Next.js, Supabase",
-    externalHref: "/cursos/react",
-    sections: ["web-development"],
-  },
-  {
-    slug: "portfolio",
-    imageCard: "/react.png",
-    sortDate: "2025-07",
-    tech: "React, Next.js, TypeScript, TailwindCSS, Vercel",
-    sections: ["web-development"],
-  },
-  {
     slug: "ego",
     imageCard: "/egoprojecte.png",
     sortDate: "2026-05",
@@ -146,19 +126,36 @@ export const PROJECTS_CONFIG: ProjectConfig[] = [
     company: ORG_UPC,
   },
   {
+    slug: "portfolio",
+    imageCard: "/react.png",
+    sortDate: "2025-07",
+    tech: "React, Next.js, TypeScript, TailwindCSS, Vercel",
+    sections: ["web-development"],
+  },
+  {
+    slug: "react-course",
+    imageCard: "/curso-react.png",
+    sortDate: "2026-05",
+    tech: "React, Vite, Tailwind CSS, Playwright, Next.js, Supabase",
+    externalHref: "/cursos/react",
+    sections: ["web-development"],
+  },
+  {
+    slug: "study-agents",
+    imageCard: "/react_study_agents.png",
+    sortDate: "2026-01",
+    tech: "Next.js, React, TypeScript, Python, FastAPI, LangChain, OpenAI, Vector DB",
+    externalHref: "/study-agents",
+    sections: ["ai", "web-development"],
+    company: ORG_IIA,
+  },
+  {
     slug: "shooter",
     imageCard: "/salmon2.png",
     sortDate: "2025-06",
     tech: "Unreal Engine, Blender, Substance Painter, Photoshop, Networking, C++, Mixamo",
     externalHref: "https://gamejolt.com/games/salmon_infinite/681208",
     sections: ["videogames"],
-  },
-  {
-    slug: "tire-inflator",
-    imageCard: "/proteus.png",
-    sortDate: "2025-01",
-    tech: "Proteus, C, Microcontroller Simulation, Embedded Systems",
-    sections: ["hardware"],
   },
   {
     slug: "fiblab",
@@ -179,15 +176,6 @@ export const PROJECTS_CONFIG: ProjectConfig[] = [
     company: ORG_UPC,
   },
   {
-    slug: "vr-experience",
-    imageCard: "/portada.png",
-    sortDate: "2022-05",
-    tech: "Unreal Engine VR, Blender, Photoshop, MetaHumans",
-    externalHref: "https://gamejolt.com/games/realyexperience/728307",
-    sections: ["videogames"],
-    company: ORG_ITB,
-  },
-  {
     slug: "drovo",
     imageCard: "/drovo.png",
     sortDate: "2022-07",
@@ -202,6 +190,22 @@ export const PROJECTS_CONFIG: ProjectConfig[] = [
     tech: "Unreal Engine, Blender, Substance Painter, Photoshop, Networking, C++, Mixamo",
     externalHref: "https://gamejolt.com/games/salmon_infinite_experimental/712867",
     sections: ["videogames"],
+  },
+  {
+    slug: "vr-experience",
+    imageCard: "/portada.png",
+    sortDate: "2022-05",
+    tech: "Unreal Engine VR, Blender, Photoshop, MetaHumans",
+    externalHref: "https://gamejolt.com/games/realyexperience/728307",
+    sections: ["videogames"],
+    company: ORG_ITB,
+  },
+  {
+    slug: "tire-inflator",
+    imageCard: "/proteus.png",
+    sortDate: "2025-01",
+    tech: "Proteus, C, Microcontroller Simulation, Embedded Systems",
+    sections: ["hardware"],
   },
   {
     slug: "3dprinting",

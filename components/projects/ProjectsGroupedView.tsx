@@ -28,6 +28,8 @@ const ENTITY_LOGOS: Partial<
 type ProjectsGroupedViewProps = {
   groups: ProjectGroup[];
   variant: "timeline" | "entity" | "category";
+  isFavorite?: (slug: string) => boolean;
+  onToggleFavorite?: (slug: string) => void;
 };
 
 function orgClassName(style?: "round" | "blend" | "warm"): string {
@@ -37,7 +39,15 @@ function orgClassName(style?: "round" | "blend" | "warm"): string {
   ].join(" ");
 }
 
-function ProjectsTimeline({ groups }: { groups: ProjectGroup[] }) {
+function ProjectsTimeline({
+  groups,
+  isFavorite,
+  onToggleFavorite,
+}: {
+  groups: ProjectGroup[];
+  isFavorite?: (slug: string) => boolean;
+  onToggleFavorite?: (slug: string) => void;
+}) {
   const t = useTranslations("projects");
   const locale = useLocale();
 
@@ -76,7 +86,11 @@ function ProjectsTimeline({ groups }: { groups: ProjectGroup[] }) {
                   {t("timelineCount", { count: group.projects.length })}
                 </span>
               </header>
-              <ProjectsList projects={group.projects} />
+              <ProjectsList
+                projects={group.projects}
+                isFavorite={isFavorite}
+                onToggleFavorite={onToggleFavorite}
+              />
             </div>
           </article>
         );
@@ -85,14 +99,25 @@ function ProjectsTimeline({ groups }: { groups: ProjectGroup[] }) {
   );
 }
 
-export default function ProjectsGroupedView({ groups, variant }: ProjectsGroupedViewProps) {
+export default function ProjectsGroupedView({
+  groups,
+  variant,
+  isFavorite,
+  onToggleFavorite,
+}: ProjectsGroupedViewProps) {
   const t = useTranslations("projects");
   const tExpertise = useTranslations("expertise");
 
   if (groups.length === 0) return null;
 
   if (variant === "timeline") {
-    return <ProjectsTimeline groups={groups} />;
+    return (
+      <ProjectsTimeline
+        groups={groups}
+        isFavorite={isFavorite}
+        onToggleFavorite={onToggleFavorite}
+      />
+    );
   }
 
   return (
@@ -132,7 +157,11 @@ export default function ProjectsGroupedView({ groups, variant }: ProjectsGrouped
               ) : null}
               <h3 className="projects-group__title">{title}</h3>
             </header>
-            <ProjectsList projects={group.projects} />
+            <ProjectsList
+              projects={group.projects}
+              isFavorite={isFavorite}
+              onToggleFavorite={onToggleFavorite}
+            />
           </section>
         );
       })}

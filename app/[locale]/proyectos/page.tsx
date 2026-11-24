@@ -8,6 +8,7 @@ import {
   CalendarRange,
   LayoutGrid,
   Shapes,
+  Star,
 } from "lucide-react";
 
 import "../home.css";
@@ -33,6 +34,7 @@ import {
   type ProjectViewMode,
 } from "@/lib/projects/views";
 import { trackPortfolioEvent } from "@/lib/analytics/track-client";
+import { useProjectFavorites } from "@/hooks/useProjectFavorites";
 
 const PROJECT_FILTER_AREAS: { id: ExpertiseAreaId; titleKey: string }[] = [
   { id: "web-development", titleKey: "areas.web.title" },
@@ -64,7 +66,10 @@ export default function ProjectsPage() {
   const [mounted, setMounted] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [weakDevice, setWeakDevice] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const skipFilterScrollRef = useRef(true);
+  const { isFavorite, toggleFavorite, count: favoritesCount } = useProjectFavorites();
 
   const activeSection = useMemo((): ExpertiseAreaId | null => {
     const raw = searchParams.get("section");
@@ -73,9 +78,10 @@ export default function ProjectsPage() {
   }, [searchParams]);
 
   const activeView = useMemo((): ProjectViewMode => {
+    if (isMobile) return "list";
     const raw = searchParams.get("view");
     return isProjectViewMode(raw) ? raw : "list";
-  }, [searchParams]);
+  }, [searchParams, isMobile]);
 
   useEffect(() => {
     setMounted(true);
@@ -85,8 +91,10 @@ export default function ProjectsPage() {
     if (typeof window === "undefined") return;
 
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const mobileMq = window.matchMedia("(max-width: 719px)");
     const update = () => {
       setReducedMotion(media.matches);
+      setIsMobile(mobileMq.matches);
       const lowCpu = (navigator.hardwareConcurrency || 8) < 6;
       const lowMem =
         "deviceMemory" in navigator &&
@@ -96,7 +104,11 @@ export default function ProjectsPage() {
 
     update();
     media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
+    mobileMq.addEventListener("change", update);
+    return () => {
+      media.removeEventListener("change", update);
+      mobileMq.removeEventListener("change", update);
+    };
   }, []);
 
   const cherrySpeed = useMemo(() => hyperspeedPresets.cherry, []);
@@ -138,9 +150,15 @@ export default function ProjectsPage() {
   );
 
   const filteredProjects = useMemo(() => {
-    if (activeSection === null) return projects;
-    return projects.filter((project) => project.sections.includes(activeSection));
-  }, [projects, activeSection]);
+    let next = projects;
+    if (activeSection !== null) {
+      next = next.filter((project) => project.sections.includes(activeSection));
+    }
+    if (showFavoritesOnly) {
+      next = next.filter((project) => isFavorite(project.slug));
+    }
+    return next;
+  }, [projects, activeSection, showFavoritesOnly, isFavorite]);
 
   const groupedView = useMemo(() => {
     switch (activeView) {
@@ -227,7 +245,7 @@ export default function ProjectsPage() {
 
       <div id="projects" className="projects-dark-section projects-list-section">
         <div className="portfolio-filters">
-          <div className="portfolio-filters__bar">
+          <div className="portfolio-filters__bar portfolio-filters__bar--views">
             <h2 className="portfolio-filters__title">{t("viewBy")}</h2>
             <div className="portfolio-filters__group" role="group" aria-label={t("viewBy")}>
               {VIEW_MODES.map(({ id, labelKey, icon: Icon }) => (
@@ -249,19 +267,50 @@ export default function ProjectsPage() {
             <div className="portfolio-filters__group" role="group" aria-label={t("filterByArea")}>
               <button
                 type="button"
-                onClick={() => setFilter(null)}
-                className={`portfolio-filters__btn${activeSection === null ? " is-active" : ""}`}
+                onClick={() => {
+                  setShowFavoritesOnly(false);
+                  setFilter(null);
+                }}
+                className={`portfolio-filters__btn${
+                  activeSection === null && !showFavoritesOnly ? " is-active" : ""
+                }`}
               >
                 <LayoutGrid className="portfolio-filters__btn-icon" size={16} strokeWidth={2} aria-hidden />
                 <span>{t("filterAll")}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowFavoritesOnly(true);
+                  setFilter(null);
+                }}
+                className={`portfolio-filters__btn${showFavoritesOnly ? " is-active" : ""}`}
+              >
+                <Star
+                  className="portfolio-filters__btn-icon"
+                  size={16}
+                  strokeWidth={2}
+                  fill={showFavoritesOnly ? "currentColor" : "none"}
+                  aria-hidden
+                />
+                <span>
+                  {t("filterFavorites")}
+                  {favoritesCount > 0 ? ` (${favoritesCount})` : ""}
+                </span>
               </button>
 
               {PROJECT_FILTER_AREAS.map(({ id, titleKey }) => (
                 <button
                   key={id}
                   type="button"
-                  onClick={() => setFilter(id)}
-                  className={`portfolio-filters__btn${activeSection === id ? " is-active" : ""}`}
+                  onClick={() => {
+                    setShowFavoritesOnly(false);
+                    setFilter(id);
+                  }}
+                  className={`portfolio-filters__btn${
+                    activeSection === id && !showFavoritesOnly ? " is-active" : ""
+                  }`}
                 >
                   <ExpertiseAreaFilterIcon areaId={id} className="portfolio-filters__btn-icon" />
                   <span>{tExpertise(titleKey)}</span>
@@ -273,11 +322,22 @@ export default function ProjectsPage() {
 
         <div className="portfolio-projects-list">
           {!hasResults ? (
-            <p className="portfolio-projects-list__empty">{t("filterEmpty")}</p>
+            <p className="portfolio-projects-list__empty">
+              {showFavoritesOnly ? t("favoritesEmpty") : t("filterEmpty")}
+            </p>
           ) : activeView === "list" ? (
-            <ProjectsList projects={listProjects} />
+            <ProjectsList
+              projects={listProjects}
+              isFavorite={isFavorite}
+              onToggleFavorite={toggleFavorite}
+            />
           ) : groupedView ? (
-            <ProjectsGroupedView groups={groupedView.groups} variant={groupedView.variant} />
+            <ProjectsGroupedView
+              groups={groupedView.groups}
+              variant={groupedView.variant}
+              isFavorite={isFavorite}
+              onToggleFavorite={toggleFavorite}
+            />
           ) : null}
         </div>
       </div>

@@ -251,6 +251,10 @@
     "viewTimeline": "Cronología",
     "viewEntity": "Entidad",
     "viewCategory": "Categoría",
+    "filterFavorites": "Favoritos",
+    "favoritesEmpty": "Aún no has marcado favoritos en esta sesión.",
+    "favoriteProject": "Añadir a favoritos",
+    "unfavoriteProject": "Quitar de favoritos",
     "timelineCount": "{count, plural, one {# proyecto} other {# proyectos}}",
     "entity": {
       "personal": "Proyecto personal",

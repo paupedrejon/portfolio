@@ -353,6 +353,18 @@
   border-top: 1px solid var(--line, rgb(245 238 237 / 0.08));
 }
 
+@media (max-width: 719px) {
+  .portfolio-filters__bar--views {
+    display: none;
+  }
+
+  .portfolio-filters__bar--secondary {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+}
+
 .portfolio-filters__bar {
   max-width: 1400px;
   margin: 0 auto;
@@ -700,6 +712,51 @@
   padding-top: 1.15rem;
 }
 
+.projects-card {
+  position: relative;
+}
+
+.projects-card__fav {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: var(--r-sm, 8px);
+  border: 1px solid rgb(245 238 237 / 0.16);
+  background: rgb(17 5 8 / 0.55);
+  color: var(--text-2, #cab9b9);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition:
+    color 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.projects-card__fav:hover {
+  color: var(--accent-hover, #f58393);
+  border-color: rgb(224 70 103 / 0.55);
+  background: rgb(38 17 21 / 0.85);
+}
+
+.projects-card__fav.is-active {
+  color: var(--accent-text, #e04667);
+  border-color: rgb(224 70 103 / 0.65);
+  background: rgb(191 57 87 / 0.28);
+}
+
+.projects-card__fav:focus-visible {
+  outline: 2px solid var(--glow, #ff4d6d);
+  outline-offset: 2px;
+}
+
 .projects-card__btn {
   width: 100%;
   text-align: center;
@@ -708,28 +765,23 @@
   letter-spacing: 0.04em;
 }
 
-.projects-card .projects-card__btn.home-btn--cv {
+.projects-card .projects-card__btn.home-btn--ghost {
   color: var(--text, #f5eeed);
-  background: var(--accent, #bf3957);
+  background: transparent;
   border: 2px solid var(--cherry-400, #e04667);
   box-shadow: none;
   border-radius: var(--r-md, 14px);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  min-height: 3rem;
+  padding: 0.85rem 1.25rem;
 }
 
-.projects-card .projects-card__btn.home-btn--cv:hover,
-.projects-card:hover .projects-card__btn.home-btn--cv:hover {
+.projects-card .projects-card__btn.home-btn--ghost:hover,
+.projects-card:hover .projects-card__btn.home-btn--ghost:hover {
   color: var(--text, #f5eeed);
-  background: var(--cherry-600, #8e2e45);
+  background: var(--cherry-800, #361b20);
   border-color: var(--cherry-300, #f58393);
   box-shadow: none;
-}
-
-.projects-card:hover .projects-card__btn.home-btn--cv {
-  color: var(--text, #f5eeed);
-  background: var(--accent, #bf3957);
-  border-color: var(--cherry-400, #e04667);
+  transform: translateY(-2px);
 }
 
 .portfolio-projects-list__empty {

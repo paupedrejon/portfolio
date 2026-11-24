@@ -250,6 +250,10 @@
     "viewTimeline": "Timeline",
     "viewEntity": "Organization",
     "viewCategory": "Category",
+    "filterFavorites": "Favorites",
+    "favoritesEmpty": "No favorites in this session yet.",
+    "favoriteProject": "Add to favorites",
+    "unfavoriteProject": "Remove from favorites",
     "timelineCount": "{count, plural, one {# project} other {# projects}}",
     "entity": {
       "personal": "Personal project",
