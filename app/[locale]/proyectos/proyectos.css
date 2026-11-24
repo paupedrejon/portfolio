@@ -4,12 +4,49 @@
   background: var(--home-bg, #110508);
 }
 
+.portfolio-hero__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0.15rem 0 0.35rem;
+}
+
+.proyectos-hero__electric {
+  position: relative;
+  width: min(52vw, 28vh, 15.5rem);
+  height: min(52vw, 28vh, 15.5rem);
+  margin-inline: auto;
+  z-index: 2;
+  background: transparent;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 40%, transparent 72%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 40%, transparent 72%);
+  /* Deja pasar el cursor al ElectricLogo; el resto del hero sigue con copy encima */
+  pointer-events: auto;
+}
+
+.proyectos-hero__electric .electric-logo,
+.proyectos-hero__electric .electric-logo canvas {
+  background: transparent !important;
+  mix-blend-mode: screen;
+}
+
+.proyectos-hero__logo-fallback {
+  width: min(42vw, 22vh, 12rem);
+  height: auto;
+  display: block;
+  margin-inline: auto;
+  mix-blend-mode: screen;
+  opacity: 0.75;
+}
+
 .proyectos-hero .portfolio-hero__fx {
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.72;
+  /* Más suave: el ElectricLogo es el wow principal */
+  opacity: 0.42;
   /* Deja el centro legible: más efecto en bordes/abajo */
   -webkit-mask-image: radial-gradient(
     ellipse 85% 70% at 50% 62%,

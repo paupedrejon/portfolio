@@ -12,6 +12,8 @@ type PortfolioPageHeroProps = {
   scrollTargetId: string;
   mounted: boolean;
   background: ReactNode;
+  /** Marca visual opcional (p. ej. ElectricLogo) entre kicker y título */
+  brand?: ReactNode;
   className?: string;
   ariaLabel?: string;
   showCv?: boolean;
@@ -26,6 +28,7 @@ export default function PortfolioPageHero({
   scrollTargetId,
   mounted,
   background,
+  brand,
   className = "",
   ariaLabel,
   showCv = true,
@@ -54,6 +57,16 @@ export default function PortfolioPageHero({
         >
           {kicker}
         </p>
+
+        {brand ? (
+          <div
+            className={`portfolio-hero__brand${mounted ? " animate-fade-in-up" : ""}`}
+            style={{ animationDelay: "0.04s", animationFillMode: "both" }}
+            aria-hidden
+          >
+            {brand}
+          </div>
+        ) : null}
 
         <h1
           className={`home-hero__title${mounted ? " animate-fade-in-up" : ""}`}
