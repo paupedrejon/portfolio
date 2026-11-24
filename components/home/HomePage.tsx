@@ -196,7 +196,7 @@ export default function HomePage() {
               <p className="home-hero__tagline">{t("tagline")}</p>
 
               <div className="home-hero__actions">
-                <CurriculumButton href="/PauPedrejonCV.pdf" className="home-btn--cv" />
+                <CurriculumButton href="/PauPedrejonCV.pdf" className="home-btn--ghost" />
                 <Link href="/proyectos" className="home-btn--ghost">
                   {t("viewAllProjects")}
                 </Link>

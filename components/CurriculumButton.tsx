@@ -36,6 +36,7 @@ export default function CurriculumButton({ href, label, className }: CurriculumB
   const displayLabel = label ?? t("downloadCv");
 
   const useNeoBrutalist = className?.includes("cv-download-btn--neo");
+  const useGhost = className?.includes("home-btn--ghost");
 
   return (
     <a
@@ -45,7 +46,13 @@ export default function CurriculumButton({ href, label, className }: CurriculumB
       className={
         useNeoBrutalist
           ? ["cv-download-btn", className].filter(Boolean).join(" ")
-          : ["portfolio-btn--cv", "home-btn--cv", className].filter(Boolean).join(" ")
+          : [
+              "portfolio-btn--cv",
+              useGhost ? "home-btn--ghost" : "home-btn--cv",
+              className,
+            ]
+              .filter(Boolean)
+              .join(" ")
       }
       onClick={() => {
         trackPortfolioEvent("cv_download", { source: pathname || "/" }, pathname || "/");

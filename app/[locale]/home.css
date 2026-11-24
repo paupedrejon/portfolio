@@ -521,6 +521,19 @@
   transform: translateY(-2px);
 }
 
+.home-btn--ghost .cv-btn-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.home-btn--ghost .cv-btn-text svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
 @media (min-width: 560px) {
   .home-hero__actions .home-btn--cv,
   .home-hero__actions .home-btn--ghost {

@@ -177,7 +177,7 @@ export default function PortfolioPageHero({
             style={{ animationDelay: "0.24s", animationFillMode: "both" }}
           >
             {showCv ? (
-              <CurriculumButton href="/PauPedrejonCV.pdf" className="home-btn--cv" />
+              <CurriculumButton href="/PauPedrejonCV.pdf" className="home-btn--ghost" />
             ) : null}
             {showContactCta ? (
               <Link href="/contact" className="home-btn--ghost">
