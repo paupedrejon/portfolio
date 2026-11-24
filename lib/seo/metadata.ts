@@ -44,9 +44,14 @@ function resolveOgImage(input: PageMetadataInput): string {
   if (input.image && input.image !== DEFAULT_OG_IMAGE) {
     return resolveImageUrl(input.image);
   }
+  // Evita volcar el seoTitle largo en la tarjeta: marca corta + subtítulo limpio
+  const brandTitle =
+    input.title.includes("—") || input.title.includes("|")
+      ? input.title.split(/[—|]/)[0]!.trim().slice(0, 48)
+      : input.title.slice(0, 48);
   return buildOgImageUrl({
-    title: input.title.slice(0, 80),
-    subtitle: input.description.slice(0, 120),
+    title: brandTitle || "Pau Pedrejon",
+    subtitle: input.description.slice(0, 72),
   });
 }
 

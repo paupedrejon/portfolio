@@ -26,6 +26,10 @@ export async function homeMetadata(locale: string) {
     title: t("seoTitle"),
     description: t("seoDescription"),
     keywords: t.raw("seoKeywords") as string[],
+    ogTitle: "Pau Pedrejon",
+    ogSubtitle: t.has("seoJobTitle")
+      ? t("seoJobTitle")
+      : "Full-Stack Developer & AI",
   });
 }
 

@@ -50,12 +50,14 @@ export default function CherryGlowCursor() {
       <GlowCursor
         color="#e04667"
         secondaryColor="#87002e"
-        intensity={1.3}
+        intensity={1.25}
         trailWidth={3}
-        linger={0.8}
-        glow={1.2}
+        linger={0.75}
+        glow={1.15}
+        followSpeed={1}
         clickBurst
         quality="medium"
+        maxDevicePixelRatio={1.5}
         theme="dark"
       />
     </div>

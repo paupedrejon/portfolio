@@ -259,7 +259,7 @@ const QUALITY = {
  high: { sim: 160, dye: 768 }
 };
 
-const PRESSURE_STEPS = 20;
+const PRESSURE_STEPS = 12;
 const FLOW = 0.75;
 const BLOOM_LEVELS = 5;
 

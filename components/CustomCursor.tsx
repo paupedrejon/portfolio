@@ -23,12 +23,22 @@ export default function CustomCursor() {
 
     let hoveringInteractive = false;
     let mouseDown = false;
+    let x = window.innerWidth / 2;
+    let y = window.innerHeight / 2;
+    let raf = 0;
+    let dirty = false;
 
-    const moveTo = (x: number, y: number) => {
+    const paint = () => {
+      raf = 0;
+      dirty = false;
       const root = rootRef.current;
       if (!root) return;
-      root.style.left = `${x}px`;
-      root.style.top = `${y}px`;
+      root.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    };
+
+    const schedulePaint = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(paint);
     };
 
     const applyState = () => {
@@ -55,7 +65,10 @@ export default function CustomCursor() {
     };
 
     const onPointerMove = (event: PointerEvent) => {
-      moveTo(event.clientX, event.clientY);
+      x = event.clientX;
+      y = event.clientY;
+      dirty = true;
+      schedulePaint();
       const hovered = event.target instanceof Element ? event.target : null;
       updateHoverState(hovered);
     };
@@ -80,7 +93,7 @@ export default function CustomCursor() {
       if (root) root.style.opacity = "1";
     };
 
-    moveTo(window.innerWidth / 2, window.innerHeight / 2);
+    schedulePaint();
     applyState();
 
     window.addEventListener("pointermove", onPointerMove, { passive: true });
@@ -90,6 +103,8 @@ export default function CustomCursor() {
     document.addEventListener("mouseenter", onMouseEnter, { passive: true });
 
     return () => {
+      if (raf) cancelAnimationFrame(raf);
+      void dirty;
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("mousedown", onMouseDown);
       window.removeEventListener("mouseup", onMouseUp);
