@@ -530,11 +530,11 @@
 }
 
 .home-hero__scroll {
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 3;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  margin-top: 1.75rem;
 }
 
 /* —— e-Go —— */

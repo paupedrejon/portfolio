@@ -183,10 +183,10 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="home-hero__scroll">
-          <ScrollButton targetId="explore-section" color="transparent" iconColor="#e04667" />
+          <div className="home-hero__scroll">
+            <ScrollButton targetId="explore-section" color="transparent" iconColor="#e04667" />
+          </div>
         </div>
       </section>
 
