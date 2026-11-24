@@ -48,8 +48,11 @@ export function useProjectLikes(slugs: string[]) {
         cache: "no-store",
       });
       const data = (await res.json()) as LikesResponse;
-      if (data.counts) setCounts(data.counts);
-      if (Array.isArray(data.liked) && hasAnalyticsConsent()) {
+      // Solo sustituir contadores si la respuesta es válida (si no, conservar los actuales)
+      if (res.ok && data.ok !== false && data.counts && typeof data.counts === "object") {
+        setCounts(data.counts);
+      }
+      if (res.ok && Array.isArray(data.liked) && hasAnalyticsConsent()) {
         setLiked(new Set(data.liked));
       } else if (!hasAnalyticsConsent()) {
         setLiked(new Set());
