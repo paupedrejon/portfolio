@@ -1,6 +1,7 @@
 import { contactMetadata } from "@/lib/seo/sections";
 import FaqSection from "@/components/seo/FaqSection";
 import { getTranslations } from "next-intl/server";
+import "./contact.css";
 
 type Props = {
   children: React.ReactNode;
@@ -20,12 +21,8 @@ export default async function ContactLayout({ children, params }: Props) {
   return (
     <>
       {children}
-      <div className="mx-auto w-full max-w-3xl px-4 pb-20 sm:px-6">
-        <FaqSection
-          title={t("faqTitle")}
-          items={faqItems}
-          className="rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8"
-        />
+      <div className="contact-faq-wrap">
+        <FaqSection title={t("faqTitle")} items={faqItems} />
       </div>
     </>
   );

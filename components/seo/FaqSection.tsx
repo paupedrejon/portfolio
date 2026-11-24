@@ -13,16 +13,19 @@ type FaqSectionProps = {
 
 export default function FaqSection({ title, items, className }: FaqSectionProps) {
   return (
-    <section className={className} aria-labelledby="faq-heading">
+    <section
+      className={["faq-section", className].filter(Boolean).join(" ")}
+      aria-labelledby="faq-heading"
+    >
       <FaqJsonLd items={items} />
-      <h2 id="faq-heading" className="text-xl font-bold sm:text-2xl">
+      <h2 id="faq-heading" className="faq-section__title">
         {title}
       </h2>
-      <dl className="mt-6 space-y-5">
+      <dl className="faq-section__list">
         {items.map((item) => (
-          <div key={item.question}>
-            <dt className="font-semibold text-base">{item.question}</dt>
-            <dd className="mt-1.5 text-sm opacity-85 leading-relaxed">{item.answer}</dd>
+          <div key={item.question} className="faq-section__item">
+            <dt className="faq-section__question">{item.question}</dt>
+            <dd className="faq-section__answer">{item.answer}</dd>
           </div>
         ))}
       </dl>
