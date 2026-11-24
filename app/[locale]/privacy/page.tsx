@@ -28,7 +28,7 @@ export default function PrivacyPage() {
   }, []);
 
   return (
-    <div className="portfolio-page">
+    <div className="portfolio-page portfolio-page--cherry">
       <PortfolioPageHero
         className="privacy-hero"
         kicker={t("badge")}

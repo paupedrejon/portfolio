@@ -9,10 +9,10 @@ import PrismaticBurst from "@/components/PrismaticBurst";
 import { FaUniversity, FaGraduationCap, FaCertificate } from "react-icons/fa";
 
 const EDUCATION_CONFIG = [
-  { key: "iia10x", icon: <FaCertificate size={24} />, href: "https://www.credential.net/9340a704-7896-4104-b745-d6e2c9605eb0#acc.zYw8lsuv", years: "2025–2026", type: "certificate" as const, gradient: "linear-gradient(135deg, #358c9f, #4eb3c8)" },
-  { key: "upcDegree", icon: <FaGraduationCap size={24} />, href: "https://www.upc.edu/ca/graus/enginyeria-informatica-barcelona-fib", years: "2023–2027*", type: "degree" as const, gradient: "linear-gradient(135deg, #4eb3c8, #2a6f7d)" },
-  { key: "unityCourse", icon: <FaCertificate size={24} />, href: "https://www.fib.upc.edu/es/noticias/cursos-vgafib-febrero-2022", years: "2024", type: "course" as const, gradient: "linear-gradient(135deg, #358c9f, #4eb3c8)" },
-  { key: "itbDiploma", icon: <FaUniversity size={24} />, href: "https://itecbcn.eu/portfolio/batxillerat-tecnologic-digital/", years: "2021–2023", type: "diploma" as const, gradient: "linear-gradient(135deg, #2a6f7d, #358c9f)" },
+  { key: "iia10x", icon: <FaCertificate size={24} />, href: "https://www.credential.net/9340a704-7896-4104-b745-d6e2c9605eb0#acc.zYw8lsuv", years: "2025–2026", type: "certificate" as const, gradient: "linear-gradient(135deg, #bf3957, #e04667)" },
+  { key: "upcDegree", icon: <FaGraduationCap size={24} />, href: "https://www.upc.edu/ca/graus/enginyeria-informatica-barcelona-fib", years: "2023–2027*", type: "degree" as const, gradient: "linear-gradient(135deg, #e04667, #8e2e45)" },
+  { key: "unityCourse", icon: <FaCertificate size={24} />, href: "https://www.fib.upc.edu/es/noticias/cursos-vgafib-febrero-2022", years: "2024", type: "course" as const, gradient: "linear-gradient(135deg, #bf3957, #e04667)" },
+  { key: "itbDiploma", icon: <FaUniversity size={24} />, href: "https://itecbcn.eu/portfolio/batxillerat-tecnologic-digital/", years: "2021–2023", type: "diploma" as const, gradient: "linear-gradient(135deg, #8e2e45, #bf3957)" },
 ] as const;
 
 export default function EducationPage() {
@@ -61,7 +61,7 @@ export default function EducationPage() {
   const showPrismatic = !reducedMotion && !weakDevice;
 
   return (
-    <div className="portfolio-page">
+    <div className="portfolio-page portfolio-page--cherry">
       <PortfolioPageHero
         className="education-hero"
         kicker={t("badge")}
@@ -81,7 +81,7 @@ export default function EducationPage() {
               hoverDampness={0.25}
               rayCount={0}
               mixBlendMode="lighten"
-              colors={["#4eb3c8", "#358c9f", "#ffffff"]}
+              colors={["#e04667", "#bf3957", "#ffffff"]}
             />
           ) : (
             <HomeHeroBackground />
@@ -91,7 +91,7 @@ export default function EducationPage() {
 
       {/* Education Section - Dark mode */}
       <section id="education" style={{ 
-        background: '#030d14',
+        background: '#110508',
         padding: '5rem 2rem',
       }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -103,7 +103,7 @@ export default function EducationPage() {
                 fontSize: '0.75rem',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
-                color: '#4eb3c8',
+                color: '#e04667',
                 marginBottom: '0.75rem',
               }}
             >
@@ -161,7 +161,7 @@ export default function EducationPage() {
                     width: '1rem',
                     height: '1rem',
                     borderRadius: '50%',
-                    background: '#4eb3c8',
+                    background: '#e04667',
                     border: '3px solid #12121a',
                     zIndex: 2,
                     transition: 'all 0.3s ease',
@@ -222,7 +222,7 @@ export default function EducationPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         background: 'rgba(16, 185, 129, 0.2)',
-                        color: '#4eb3c8',
+                        color: '#e04667',
                         flexShrink: 0,
                         transition: 'all 0.4s ease',
                         transform: 'rotate(0) scale(1)',
@@ -271,7 +271,7 @@ export default function EducationPage() {
                             padding: '0.25rem 0.75rem',
                             borderRadius: '100px',
                             background: 'rgba(16, 185, 129, 0.2)',
-                            color: '#4eb3c8',
+                            color: '#e04667',
                             fontWeight: 600,
                             transition: 'all 0.3s ease',
                           }}
@@ -327,7 +327,7 @@ export default function EducationPage() {
             onClick={(e) => e.stopPropagation()}
             style={{
               position: 'relative',
-              backgroundColor: '#142a38',
+              backgroundColor: '#261115',
               border: '1px solid rgba(16, 185, 129, 0.3)',
               borderRadius: '28px',
               padding: '48px',
@@ -493,7 +493,7 @@ export default function EducationPage() {
                   padding: '0.4rem 1rem',
                   borderRadius: '100px',
                   background: 'rgba(16, 185, 129, 0.15)',
-                  color: '#4eb3c8',
+                  color: '#e04667',
                   fontSize: '0.9rem',
                   fontWeight: 600,
                   fontFamily: 'var(--font-mono)',

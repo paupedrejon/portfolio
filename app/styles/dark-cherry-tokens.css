@@ -4,6 +4,7 @@
  */
 
 .home-page,
+.portfolio-page,
 .portfolio-page--cherry,
 .project-detail-page,
 [data-theme="dark-cherry"] {
@@ -82,6 +83,7 @@
 }
 
 .home-page ::selection,
+.portfolio-page ::selection,
 .portfolio-page--cherry ::selection,
 .project-detail-page ::selection,
 [data-theme="dark-cherry"] ::selection {
@@ -90,6 +92,7 @@
 }
 
 .home-page,
+.portfolio-page,
 .portfolio-page--cherry,
 .project-detail-page {
   position: relative;
@@ -98,12 +101,14 @@
 
 /* Grano global (home / cherry) */
 .home-page::before,
+.portfolio-page::before,
 .portfolio-page--cherry::before,
 .project-detail-page::before {
   content: none; /* sin grano — evita niebla visual */
 }
 
 .home-page :focus-visible,
+.portfolio-page :focus-visible,
 .portfolio-page--cherry :focus-visible,
 .project-detail-page :focus-visible {
   outline: 2px solid var(--glow);

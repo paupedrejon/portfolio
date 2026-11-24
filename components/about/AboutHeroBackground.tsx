@@ -15,7 +15,7 @@ function lineStyle(i: number) {
   const delay = (seed % 50) / 10;
   const opacity = (seed % 40) / 100 + 0.2;
   const shadowSize = (seed % 100) / 10 + 5;
-  const colorVariant = seed % 2 === 0 ? "53, 140, 159" : "78, 179, 200";
+  const colorVariant = seed % 2 === 0 ? "191, 57, 87" : "224, 70, 103";
   return {
     width: `${width}px`,
     height: `${height}px`,
@@ -27,7 +27,7 @@ function lineStyle(i: number) {
   } as const;
 }
 
-/** Fondo original de Sobre mí: grid, orbes y líneas ascendentes — paleta home teal */
+/** Fondo Sobre mí: grid, orbes y líneas — Dark Cherry */
 export default function AboutHeroBackground({ mounted }: AboutHeroBackgroundProps) {
   return (
     <div className="about-hero-bg" aria-hidden>

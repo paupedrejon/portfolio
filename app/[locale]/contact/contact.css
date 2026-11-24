@@ -1,7 +1,7 @@
 /* /contact — sección y tarjetas (fondo animado conservado, tinte teal) */
 
 .contact-hero.home-hero {
-  background: #030d14;
+  background: #110508;
 }
 
 .contact-hero .home-hero__bg {
@@ -12,7 +12,7 @@
   scroll-margin-top: clamp(5rem, 10vh, 6.5rem);
   position: relative;
   overflow: hidden;
-  background: #030d14;
+  background: #110508;
   padding: 0 0 clamp(5rem, 12vw, 7rem);
 }
 
@@ -26,8 +26,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 20% 30%, rgba(53, 140, 159, 0.12) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(78, 179, 200, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 20% 30%, rgb(191 57 87 / 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgb(224 70 103 / 0.1) 0%, transparent 50%),
     radial-gradient(circle at 50% 50%, rgba(42, 111, 125, 0.06) 0%, transparent 50%);
   animation: contactPulseBg 30s ease-in-out infinite;
 }
@@ -108,7 +108,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(53, 140, 159, 0.16), rgba(78, 179, 200, 0.08));
+  background: linear-gradient(135deg, rgb(191 57 87 / 0.16), rgb(224 70 103 / 0.08));
   opacity: 0;
   transition: opacity 0.22s ease;
   pointer-events: none;
@@ -116,11 +116,11 @@
 
 .contact-method-card:hover,
 .contact-method-card:focus-visible {
-  border-color: #00d9ff;
+  border-color: #e04667;
   transform: translateY(-6px);
   box-shadow:
     0 14px 36px rgba(0, 0, 0, 0.32),
-    0 0 40px rgba(0, 213, 255, 0.18);
+    0 0 40px rgb(224 70 103 / 0.18);
   outline: none;
 }
 
@@ -139,9 +139,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(53, 140, 159, 0.18);
-  border: 1px solid rgba(78, 179, 200, 0.32);
-  color: #4eb3c8;
+  background: rgb(191 57 87 / 0.18);
+  border: 1px solid rgb(224 70 103 / 0.32);
+  color: var(--accent-text, #e04667);
   transition:
     background 0.22s ease,
     color 0.22s ease,
@@ -150,7 +150,7 @@
 
 .contact-method-card:hover .contact-method-card__icon,
 .contact-method-card:focus-visible .contact-method-card__icon {
-  background: linear-gradient(135deg, #358c9f, #4eb3c8);
+  background: linear-gradient(135deg, var(--accent, #bf3957), var(--accent-text, #e04667));
   color: #fff;
   transform: rotate(-4deg) scale(1.05);
 }
@@ -188,13 +188,13 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #4eb3c8;
+  color: var(--accent-text, #e04667);
   transition: color 0.22s ease, gap 0.22s ease;
 }
 
 .contact-method-card:hover .contact-method-card__cta,
 .contact-method-card:focus-visible .contact-method-card__cta {
-  color: #00d9ff;
+  color: #e04667;
   gap: 0.55rem;
 }
 
@@ -220,8 +220,8 @@
   inset: 0;
   background: linear-gradient(
     135deg,
-    rgba(53, 140, 159, 0.12) 0%,
-    rgba(78, 179, 200, 0.06) 50%,
+    rgb(191 57 87 / 0.12) 0%,
+    rgb(224 70 103 / 0.06) 50%,
     transparent 100%
   );
   pointer-events: none;
@@ -289,13 +289,13 @@
 }
 
 .contact-form-block__btn-primary:hover {
-  color: #061018;
-  background: #00d9ff;
-  border-color: #00d9ff;
+  color: #110508;
+  background: #e04667;
+  border-color: #e04667;
   transform: translateY(-3px);
   box-shadow:
     0 12px 36px rgba(0, 0, 0, 0.3),
-    0 0 48px rgba(0, 213, 255, 0.45);
+    0 0 48px rgb(224 70 103 / 0.45);
 }
 
 .contact-form-block__btn-secondary {
@@ -308,10 +308,10 @@
   font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 600;
-  color: #4eb3c8;
+  color: var(--accent-text, #e04667);
   text-decoration: none;
-  background: rgba(53, 140, 159, 0.12);
-  border: 2px solid rgba(78, 179, 200, 0.38);
+  background: rgb(191 57 87 / 0.12);
+  border: 2px solid rgb(224 70 103 / 0.38);
   border-radius: 12px;
   transition:
     transform 0.22s ease,
@@ -322,8 +322,8 @@
 
 .contact-form-block__btn-secondary:hover {
   color: #fff;
-  background: rgba(53, 140, 159, 0.28);
-  border-color: #4eb3c8;
+  background: rgb(191 57 87 / 0.28);
+  border-color: var(--accent-text, #e04667);
   transform: translateY(-2px);
 }
 

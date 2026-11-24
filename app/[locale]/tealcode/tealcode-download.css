@@ -1,7 +1,7 @@
 .tealcode-download {
   position: relative;
   min-height: 100vh;
-  background: #030d14;
+  background: #110508;
   color: #f8fafc;
   padding: 48px 24px 80px;
 }
@@ -10,8 +10,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(53, 140, 159, 0.28), transparent),
-    radial-gradient(ellipse 60% 40% at 80% 60%, rgba(78, 179, 200, 0.12), transparent);
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgb(191 57 87 / 0.28), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 60%, rgb(224 70 103 / 0.12), transparent);
   pointer-events: none;
 }
 
@@ -30,7 +30,7 @@
 }
 
 .tealcode-download__back:hover {
-  color: #4eb3c8;
+  color: var(--accent-text, #e04667);
 }
 
 .tealcode-download__kicker {
@@ -38,7 +38,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #4eb3c8;
+  color: var(--accent-text, #e04667);
   margin-bottom: 8px;
 }
 
@@ -64,14 +64,14 @@
 
 .tealcode-download__card {
   background: rgba(20, 42, 56, 0.85);
-  border: 1px solid rgba(53, 140, 159, 0.45);
+  border: 1px solid rgb(191 57 87 / 0.45);
   border-radius: 12px;
   padding: 24px;
 }
 
 .tealcode-download__card h2 {
   font-size: 1.1rem;
-  color: #4eb3c8;
+  color: var(--accent-text, #e04667);
   margin-bottom: 12px;
 }
 
@@ -100,31 +100,31 @@
 }
 
 .tealcode-download__btn--primary {
-  background: #358c9f;
+  background: var(--accent, #bf3957);
   color: #fff;
 }
 
 .tealcode-download__btn--primary:hover {
-  background: #4eb3c8;
+  background: var(--accent-text, #e04667);
 }
 
 .tealcode-download__btn--accent {
-  background: #00d9ff;
-  color: #061018;
+  background: #e04667;
+  color: #110508;
 }
 
 .tealcode-download__btn--accent:hover {
-  box-shadow: 0 0 16px rgba(0, 213, 255, 0.5);
+  box-shadow: 0 0 16px rgb(224 70 103 / 0.5);
 }
 
 .tealcode-download__btn--ghost {
   margin-top: 12px;
-  border: 1px solid rgba(53, 140, 159, 0.45);
+  border: 1px solid rgb(191 57 87 / 0.45);
   color: #94a3b8;
 }
 
 .tealcode-download__btn--ghost:hover {
-  border-color: #4eb3c8;
+  border-color: var(--accent-text, #e04667);
   color: #f8fafc;
 }
 
@@ -135,7 +135,7 @@
 .tealcode-download__dev {
   margin-top: 24px;
   padding: 16px;
-  border: 1px solid rgba(53, 140, 159, 0.25);
+  border: 1px solid rgb(191 57 87 / 0.25);
   border-radius: 8px;
   color: #94a3b8;
 }
@@ -143,7 +143,7 @@
 .tealcode-download__dev summary {
   cursor: pointer;
   font-weight: 600;
-  color: #4eb3c8;
+  color: var(--accent-text, #e04667);
 }
 
 .tealcode-download__section {
@@ -152,7 +152,7 @@
 
 .tealcode-download__section h2 {
   font-size: 1.05rem;
-  color: #4eb3c8;
+  color: var(--accent-text, #e04667);
   margin-bottom: 12px;
 }
 

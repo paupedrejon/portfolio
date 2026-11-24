@@ -104,7 +104,7 @@ export default function ContactPage() {
   const showLightRays = !reducedMotion && !weakDevice;
 
   return (
-    <div className="portfolio-page">
+    <div className="portfolio-page portfolio-page--cherry">
       <PortfolioPageHero
         className="contact-hero"
         kicker={t("badge")}
@@ -117,7 +117,7 @@ export default function ContactPage() {
           showLightRays ? (
             <LightRays
               raysOrigin="top-center"
-              raysColor="#ffffff"
+              raysColor="#e04667"
               raysSpeed={isMobile ? 0.75 : 1}
               lightSpread={0.5}
               rayLength={isMobile ? 2.2 : 3}

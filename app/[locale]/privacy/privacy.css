@@ -24,7 +24,7 @@
 .privacy-card {
   padding: 1.35rem 1.4rem;
   border-radius: 1rem;
-  border: 1px solid rgba(53, 140, 159, 0.28);
+  border: 1px solid rgb(191 57 87 / 0.28);
   background: linear-gradient(160deg, rgba(20, 42, 56, 0.72), rgba(10, 24, 34, 0.88));
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22);
 }
@@ -34,7 +34,7 @@
   font-family: var(--font-body);
   font-size: 1.05rem;
   font-weight: 700;
-  color: #4eb3c8;
+  color: var(--accent-text, #e04667);
   letter-spacing: 0.01em;
 }
 

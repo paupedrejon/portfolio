@@ -145,7 +145,7 @@ export default function SkillsPage() {
   };
 
   return (
-    <div className="portfolio-page">
+    <div className="portfolio-page portfolio-page--cherry">
       <PortfolioPageHero
         className="skills-hero"
         kicker={t("heroBadge")}
@@ -160,7 +160,7 @@ export default function SkillsPage() {
               hoverIntensity={0.58}
               rotateOnHover
               forceHoverState={false}
-              backgroundColor="#030d14"
+              backgroundColor="#110508"
             />
           ) : null
         }

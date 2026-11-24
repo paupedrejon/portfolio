@@ -108,7 +108,7 @@ export default function PortfolioPageHero({
         <ScrollButton
           targetId={scrollTargetId}
           color="transparent"
-          iconColor="var(--portfolio-accent-bright, #358c9f)"
+          iconColor="var(--portfolio-accent-bright, #e04667)"
         />
       </div>
     </section>

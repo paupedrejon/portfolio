@@ -1,25 +1,6 @@
-/* Páginas principales — teal por defecto; Dark Cherry vía .portfolio-page--cherry */
+/* Páginas principales — Dark Cherry por defecto (.portfolio-page) */
 
-.portfolio-page {
-  --portfolio-bg: #030d14;
-  --portfolio-bg-elevated: #0a1c28;
-  --portfolio-card: #142a38;
-  --portfolio-accent: #358c9f;
-  --portfolio-accent-bright: #4eb3c8;
-  --portfolio-accent-soft: rgba(53, 140, 159, 0.28);
-  --portfolio-text: #ffffff;
-  --portfolio-text-muted: rgba(255, 255, 255, 0.82);
-  /* Alias home.css (variables solo existían en .home-page) */
-  --home-bg: #030d14;
-  --home-text: #ffffff;
-  --home-text-muted: rgba(255, 255, 255, 0.82);
-  --home-accent: #358c9f;
-  --home-accent-bright: #4eb3c8;
-  --home-accent-soft: rgba(53, 140, 159, 0.28);
-  background: var(--portfolio-bg);
-  color: var(--portfolio-text);
-}
-
+.portfolio-page,
 .portfolio-page--cherry {
   --portfolio-bg: var(--cherry-950, #110508);
   --portfolio-bg-elevated: var(--cherry-900, #1b0b0e);
@@ -47,7 +28,7 @@
 
 /* —— Héroe portfolio (misma capa que home) —— */
 .portfolio-page .home-hero {
-  background: var(--home-bg, #030d14);
+  background: var(--home-bg, #110508);
 }
 
 .portfolio-hero__fx,
@@ -86,34 +67,34 @@
   opacity: 0.55;
 }
 
-.portfolio-page--cherry .portfolio-hero__fx > .hyperspeed-container,
-.portfolio-page--cherry .portfolio-hero__fx > #lights {
+.portfolio-page .portfolio-hero__fx > .hyperspeed-container,
+.portfolio-page .portfolio-hero__fx > #lights {
   opacity: 1;
 }
 
 .portfolio-page .home-hero__kicker {
   margin: 0 0 1.5rem;
-  font-family: var(--font-body);
-  font-size: clamp(0.95rem, 2vw, 1.15rem);
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: clamp(0.72rem, 1.6vw, 0.82rem);
+  font-weight: 500;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--home-accent-bright, #4eb3c8);
+  color: var(--accent-text, #e04667);
 }
 
 .portfolio-page .home-hero__title {
   margin: 0;
-  font-family: var(--font-body);
-  font-size: clamp(3.25rem, 12vw, 6.75rem);
-  font-weight: 800;
-  line-height: 1.02;
-  letter-spacing: -0.03em;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: clamp(2.75rem, 10vw, 5.5rem);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
   text-transform: none;
-  color: var(--home-text, #ffffff);
+  color: var(--text, #f5eeed);
 }
 
 .portfolio-page .home-hero__title-accent {
-  color: var(--home-accent-bright, #4eb3c8);
+  color: var(--accent-text, #e04667);
 }
 
 @media (min-width: 720px) {
@@ -124,39 +105,12 @@
 
 .portfolio-page .home-hero__tagline {
   margin: 1.75rem auto 0;
-  max-width: 46rem;
+  max-width: 42rem;
   font-family: var(--font-body);
   font-size: clamp(1.1rem, 2.8vw, 1.45rem);
   font-weight: 400;
   line-height: 1.6;
-  color: var(--home-text-muted, rgba(255, 255, 255, 0.82));
-}
-
-/* Dark Cherry — tipografía display en héroes de sección */
-.portfolio-page--cherry .home-hero__kicker {
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
-  font-size: clamp(0.72rem, 1.6vw, 0.82rem);
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  color: var(--accent-text, #e04667);
-}
-
-.portfolio-page--cherry .home-hero__title {
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
-  font-size: clamp(2.75rem, 10vw, 5.5rem);
-  font-weight: 700;
-  letter-spacing: -0.045em;
-  line-height: 0.95;
-  color: var(--text, #f5eeed);
-}
-
-.portfolio-page--cherry .home-hero__title-accent {
-  color: var(--accent-text, #e04667);
-}
-
-.portfolio-page--cherry .home-hero__tagline {
   color: var(--text-2, #cab9b9);
-  max-width: 42rem;
 }
 
 .portfolio-page .home-hero__inner {
@@ -190,18 +144,18 @@
   font-weight: 500;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(78, 179, 200, 0.95);
+  color: rgb(224 70 103 / 0.95);
   background: linear-gradient(
     135deg,
-    rgba(53, 140, 159, 0.14) 0%,
-    rgba(78, 179, 200, 0.1) 100%
+    rgb(191 57 87 / 0.14) 0%,
+    rgb(224 70 103 / 0.1) 100%
   );
-  border: 1px solid rgba(53, 140, 159, 0.35);
+  border: 1px solid rgb(191 57 87 / 0.35);
   border-radius: 50px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow:
-    0 4px 20px rgba(53, 140, 159, 0.12),
+    0 4px 20px rgb(191 57 87 / 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   overflow: hidden;
 }
@@ -217,7 +171,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(78, 179, 200, 0.12),
+    rgb(224 70 103 / 0.12),
     transparent
   );
   animation: shimmer 3s ease-in-out infinite;
@@ -226,13 +180,13 @@
 /* —— Héroe secciones —— */
 .portfolio-page .hero-section,
 .hero-section.portfolio-hero {
-  background: var(--portfolio-bg, #030d14);
+  background: var(--portfolio-bg, #110508);
 }
 
 .hero-section:not(.proyectos-hero):not(.skills-hero):not(.experience-hero):not(.about-hero):not(.contact-hero)::before {
   background:
-    radial-gradient(circle at 30% 20%, rgba(53, 140, 159, 0.22) 0%, transparent 50%),
-    radial-gradient(circle at 70% 80%, rgba(78, 179, 200, 0.14) 0%, transparent 50%);
+    radial-gradient(circle at 30% 20%, rgb(191 57 87 / 0.22) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgb(224 70 103 / 0.14) 0%, transparent 50%);
 }
 
 .hero-section .hero-title {
@@ -247,14 +201,14 @@
 }
 
 .hero-section .gradient-text {
-  background: linear-gradient(135deg, #4eb3c8, #358c9f, #2a6f7d);
+  background: linear-gradient(135deg, #e04667, #bf3957, #8e2e45);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* Botón CV / CTA — teal (páginas legacy). Dark Cherry lo redefine en home.css */
-.portfolio-page:not(.portfolio-page--cherry) .home-btn--cv,
+/* Botón CV / CTA — Dark Cherry */
+.portfolio-page .home-btn--cv,
 .hero-section .cv-download-btn.portfolio-btn--cv,
 .hero-section button.portfolio-btn--cv {
   display: inline-flex;
@@ -268,16 +222,14 @@
   font-weight: 600;
   line-height: 1.2;
   text-decoration: none;
-  border-radius: 12px;
+  border-radius: var(--r-md, 14px);
   cursor: pointer;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.07);
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  color: var(--text, #f5eeed);
+  background: var(--accent, #bf3957);
+  border: 2px solid var(--cherry-400, #e04667);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   letter-spacing: normal;
   text-transform: none;
   transition:
@@ -288,42 +240,9 @@
     color 0.22s ease;
 }
 
-.portfolio-page:not(.portfolio-page--cherry) .home-btn--cv:hover,
+.portfolio-page .home-btn--cv:hover,
 .hero-section .cv-download-btn.portfolio-btn--cv:hover,
 .hero-section button.portfolio-btn--cv:hover {
-  color: #061018;
-  background: #00d9ff;
-  border-color: #00d9ff;
-  transform: translateY(-3px);
-  box-shadow:
-    0 12px 36px rgba(0, 0, 0, 0.3),
-    0 0 56px rgba(0, 213, 255, 0.7);
-}
-
-.portfolio-page:not(.portfolio-page--cherry) .home-btn--cv:hover .cv-btn-text svg,
-.hero-section .cv-download-btn.portfolio-btn--cv:hover .cv-btn-text svg {
-  stroke: #061018;
-}
-
-.portfolio-page:not(.portfolio-page--cherry) .home-btn--cv:focus-visible,
-.hero-section .cv-download-btn.portfolio-btn--cv:focus-visible,
-.hero-section button.portfolio-btn--cv:focus-visible {
-  outline: 2px solid var(--portfolio-accent-bright, #4eb3c8);
-  outline-offset: 3px;
-}
-
-/* CV button on cherry pages — refuerzo por si home.css no cargó aún */
-.portfolio-page--cherry .home-btn--cv {
-  color: var(--text, #f5eeed);
-  background: var(--accent, #bf3957);
-  border: 2px solid var(--cherry-400, #e04667);
-  box-shadow: none;
-  border-radius: var(--r-md, 14px);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-
-.portfolio-page--cherry .home-btn--cv:hover {
   color: var(--text, #f5eeed);
   background: var(--cherry-600, #8e2e45);
   border-color: var(--cherry-300, #f58393);
@@ -331,11 +250,14 @@
   box-shadow: none;
 }
 
-.portfolio-page--cherry .home-btn--cv:hover .cv-btn-text svg {
+.portfolio-page .home-btn--cv:hover .cv-btn-text svg,
+.hero-section .cv-download-btn.portfolio-btn--cv:hover .cv-btn-text svg {
   stroke: var(--text, #f5eeed);
 }
 
-.portfolio-page--cherry .home-btn--cv:focus-visible {
+.portfolio-page .home-btn--cv:focus-visible,
+.hero-section .cv-download-btn.portfolio-btn--cv:focus-visible,
+.hero-section button.portfolio-btn--cv:focus-visible {
   outline: 2px solid var(--glow, #ff4d6d);
   outline-offset: 3px;
 }
@@ -357,12 +279,12 @@
 
 /* Scroll */
 .hero-section .scroll-btn:hover {
-  border-color: rgba(78, 179, 200, 0.8);
-  box-shadow: 0 8px 32px rgba(53, 140, 159, 0.35);
+  border-color: rgb(224 70 103 / 0.8);
+  box-shadow: 0 8px 32px rgb(191 57 87 / 0.35);
 }
 
 .hero-section .scroll-btn.clicked::after {
-  border-color: var(--portfolio-accent, #358c9f);
+  border-color: var(--portfolio-accent, #bf3957);
 }
 
 /* Secciones oscuras */
@@ -379,8 +301,8 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  background-color: var(--portfolio-card, #142a38) !important;
-  border: 1px solid rgba(53, 140, 159, 0.2) !important;
+  background-color: var(--portfolio-card, #261115) !important;
+  border: 1px solid rgb(191 57 87 / 0.2) !important;
   border-radius: 16px !important;
   cursor: pointer;
   overflow: hidden;
@@ -393,10 +315,10 @@
 
 .portfolio-skill-card:hover {
   transform: scale(1.03) !important;
-  border-color: rgba(78, 179, 200, 0.55) !important;
+  border-color: rgb(224 70 103 / 0.55) !important;
   box-shadow:
     0 12px 36px rgba(0, 0, 0, 0.35),
-    0 0 32px rgba(53, 140, 159, 0.25) !important;
+    0 0 32px rgb(191 57 87 / 0.25) !important;
 }
 
 .portfolio-skill-card__glow {
@@ -406,7 +328,7 @@
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(53, 140, 159, 0.25) 0%, transparent 70%);
+  background: radial-gradient(circle, rgb(191 57 87 / 0.25) 0%, transparent 70%);
   filter: blur(20px);
   pointer-events: none;
 }
@@ -414,8 +336,8 @@
 .portfolio-skill-card__icon {
   width: 88px;
   height: 88px;
-  background-color: rgba(53, 140, 159, 0.14) !important;
-  border: 1px solid rgba(53, 140, 159, 0.35) !important;
+  background-color: rgb(191 57 87 / 0.14) !important;
+  border: 1px solid rgb(191 57 87 / 0.35) !important;
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -439,24 +361,24 @@
 }
 
 .portfolio-orb--teal-lg {
-  background: linear-gradient(135deg, #4eb3c8, #358c9f);
+  background: linear-gradient(135deg, #e04667, #bf3957);
 }
 
 .portfolio-orb--teal-md {
-  background: linear-gradient(135deg, #358c9f, #2a6f7d);
+  background: linear-gradient(135deg, #bf3957, #8e2e45);
 }
 
 .portfolio-orb--teal-sm {
-  background: linear-gradient(135deg, #4eb3c8, #358c9f);
+  background: linear-gradient(135deg, #e04667, #bf3957);
 }
 
 .portfolio-bg-pattern {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 30% 20%, rgba(53, 140, 159, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 70% 80%, rgba(78, 179, 200, 0.12) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(42, 111, 125, 0.08) 0%, transparent 50%);
+    radial-gradient(circle at 30% 20%, rgb(191 57 87 / 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgb(224 70 103 / 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgb(142 46 69 / 0.08) 0%, transparent 50%);
   animation: pulseBg 30s ease-in-out infinite;
   pointer-events: none;
 }
@@ -472,7 +394,7 @@
 .portfolio-page .projects-dark-section .project-section h3,
 .portfolio-page .projects-dark-section .project-section .scroll-reveal h3 {
   font-family: var(--font-body) !important;
-  color: var(--portfolio-accent-bright, #4eb3c8) !important;
+  color: var(--portfolio-accent-bright, #e04667) !important;
 }
 
 .portfolio-page .projects-dark-section .project-section p.leading-relaxed,
@@ -515,27 +437,27 @@
 }
 
 .portfolio-page .projects-dark-section .btn-primary:hover {
-  color: #061018;
-  background: #00d9ff;
-  border-color: #00d9ff;
+  color: var(--text, #f5eeed);
+  background: var(--cherry-600, #8e2e45);
+  border-color: var(--accent-hover, #f58393);
   transform: translateY(-3px);
   box-shadow:
     0 12px 36px rgba(0, 0, 0, 0.3),
-    0 0 48px rgba(0, 213, 255, 0.55);
+    0 0 48px rgb(245 131 147 / 0.45);
 }
 
 .portfolio-page .projects-dark-section .btn-primary:hover svg {
-  stroke: #061018;
+  stroke: var(--text, #f5eeed);
   transform: translate(2px, -2px);
 }
 
 .portfolio-page .projects-dark-section .project-section {
-  border-bottom-color: rgba(53, 140, 159, 0.15) !important;
+  border-bottom-color: rgb(191 57 87 / 0.15) !important;
 }
 
 .portfolio-page .projects-dark-section .project-image {
   border-radius: 16px;
-  border: 1px solid rgba(53, 140, 159, 0.25);
+  border: 1px solid rgb(191 57 87 / 0.25);
   overflow: hidden;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }

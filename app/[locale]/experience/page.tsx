@@ -51,7 +51,7 @@ export default function ExperiencePage() {
   }, []);
 
   return (
-    <div className="portfolio-page">
+    <div className="portfolio-page portfolio-page--cherry">
       <PortfolioPageHero
         className="experience-hero"
         kicker={t("badge")}
@@ -67,7 +67,7 @@ export default function ExperiencePage() {
               height={3.5}
               baseWidth={5.5}
               scale={3.6}
-              hueShift={0}
+              hueShift={-0.42}
               colorFrequency={1}
               noise={0}
               glow={1}

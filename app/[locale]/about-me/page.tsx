@@ -26,7 +26,7 @@ export default function AboutMePage() {
   }, []);
 
   return (
-    <div className="portfolio-page">
+    <div className="portfolio-page portfolio-page--cherry">
       <PortfolioPageHero
         className="about-hero"
         kicker={t("badge")}

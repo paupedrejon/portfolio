@@ -66,12 +66,12 @@ function hslToRgb(
 export type OrbVariant = "default" | "portfolio";
 
 const PORTFOLIO_ORB_COLORS = {
-  /** #4eb3c8 */
-  color1: new Vec3(78 / 255, 179 / 255, 200 / 255),
-  /** #358c9f */
-  color2: new Vec3(53 / 255, 140 / 255, 159 / 255),
-  /** #0a1c28 */
-  color3: new Vec3(10 / 255, 28 / 255, 40 / 255),
+  /** #e04667 Dark Cherry */
+  color1: new Vec3(224 / 255, 70 / 255, 103 / 255),
+  /** #bf3957 */
+  color2: new Vec3(191 / 255, 57 / 255, 87 / 255),
+  /** #110508 */
+  color3: new Vec3(17 / 255, 5 / 255, 8 / 255),
 };
 
 interface OrbProps {

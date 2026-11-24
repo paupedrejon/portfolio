@@ -19,19 +19,21 @@ export default function ConditionalHeader() {
     !pathname ||
     pathname === "/" ||
     /^\/(es|en|it)\/?$/.test(pathname);
+  /** Portfolio locale pages → Dark Cherry. Cursos / Study Agents fuera. */
   const isDarkCherryPage =
     isHomePage ||
     Boolean(
       pathname &&
-        (/\/(proyectos|projects|progetti)(\/|$)/.test(pathname) ||
-          pathname.includes("/ego"))
+        !pathname.includes("/cursos") &&
+        !pathname.startsWith("/study-agents") &&
+        !pathname.includes("/admin") &&
+        (/\/(proyectos|projects|progetti|skills|experience|education|about-me|contact|privacy|blog|ego|tealcode)(\/|$)/.test(
+          pathname
+        ) ||
+          /\/(experiencia|educacion|sobre-mi|contacto|privacidad)(\/|$)/.test(
+            pathname
+          ))
     );
-  const forceDarkProjectsTheme =
-    pathname?.includes("/skills") ||
-    pathname?.includes("/experience") ||
-    pathname?.includes("/education") ||
-    pathname?.includes("/about-me") ||
-    pathname?.includes("/contact");
   const forceLightCursosTheme = pathname?.includes("/cursos");
   const menuAccent = isDarkCherryPage ? "#e04667" : "#4EB3C8";
   const menuLine = isDarkCherryPage ? "#48292f" : "#1a3a44";
@@ -66,21 +68,11 @@ export default function ConditionalHeader() {
         document.documentElement.setAttribute("data-theme", "dark-cherry");
         return;
       }
-      if (forceDarkProjectsTheme) {
-        document.documentElement.setAttribute("data-theme", "dark");
-        return;
-      }
       localStorage.setItem("study_agents_color_theme", colorTheme);
       // Aplicar el tema al documento
       document.documentElement.setAttribute("data-theme", colorTheme);
     }
-  }, [
-    colorTheme,
-    mounted,
-    isDarkCherryPage,
-    forceDarkProjectsTheme,
-    forceLightCursosTheme,
-  ]);
+  }, [colorTheme, mounted, isDarkCherryPage, forceLightCursosTheme]);
 
   // Cerrar el menú cuando se hace click fuera
   useEffect(() => {
