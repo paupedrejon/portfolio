@@ -29,6 +29,10 @@ type PortfolioPageHeroProps = {
   /** Enlace Contactar (ghost, como home). Off en /contact. */
   showContact?: boolean;
   children?: ReactNode;
+  /** Bloque bajo el tagline (p. ej. buscador Skyscanner en /viajes). */
+  afterTagline?: ReactNode;
+  /** Oculta el scroll cue (útil si el CTA principal ya está en afterTagline). */
+  hideScroll?: boolean;
 };
 
 function DefaultHeroBrand({ mounted }: { mounted: boolean }) {
@@ -110,6 +114,8 @@ export default function PortfolioPageHero({
   showCv = true,
   showContact = true,
   children,
+  afterTagline,
+  hideScroll = false,
 }: PortfolioPageHeroProps) {
   const tNav = useTranslations("nav");
   const { lead, accent } = splitHeroTitle(title);
@@ -171,6 +177,15 @@ export default function PortfolioPageHero({
           {tagline}
         </p>
 
+        {afterTagline ? (
+          <div
+            className={`portfolio-hero__after${mounted ? " animate-fade-in-up" : ""}`}
+            style={{ animationDelay: "0.22s", animationFillMode: "both" }}
+          >
+            {afterTagline}
+          </div>
+        ) : null}
+
         {showActions ? (
           <div
             className={`home-hero__actions${mounted ? " animate-fade-in-up" : ""}`}
@@ -189,16 +204,18 @@ export default function PortfolioPageHero({
         ) : null}
       </div>
 
-      <div
-        className={`home-hero__scroll${mounted ? " animate-fade-in" : ""}`}
-        style={{ animationDelay: "0.38s", animationFillMode: "both" }}
-      >
-        <ScrollButton
-          targetId={scrollTargetId}
-          color="transparent"
-          iconColor="var(--portfolio-accent-bright, #e04667)"
-        />
-      </div>
+      {!hideScroll ? (
+        <div
+          className={`home-hero__scroll${mounted ? " animate-fade-in" : ""}`}
+          style={{ animationDelay: "0.38s", animationFillMode: "both" }}
+        >
+          <ScrollButton
+            targetId={scrollTargetId}
+            color="transparent"
+            iconColor="var(--portfolio-accent-bright, #e04667)"
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

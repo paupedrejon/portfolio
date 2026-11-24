@@ -67,6 +67,7 @@ export function parseTripPlanInput(body: unknown): TripPlanInput | null {
     daysMax: dateMode === "flexible" ? daysMax : undefined,
     days: dateMode === "flexible" ? daysMin : undefined,
     luxury: asInt(b.luxury, 1, 5, 3),
+    travelers: asInt(b.travelers, 1, 12, 2),
     interests,
     interestsNote: asString(b.interestsNote, 400) || undefined,
     transport,

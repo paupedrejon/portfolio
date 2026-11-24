@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import PortfolioPageHero from "@/components/portfolio/PortfolioPageHero";
+import HomeHeroBackground from "@/components/home/HomeHeroBackground";
 import TripWizard from "@/components/viajes/TripWizard";
 import GuidePreview from "@/components/viajes/GuidePreview";
 import GuideChat, { type ChatMessage } from "@/components/viajes/GuideChat";
 import type { TripPlanInput } from "@/lib/viajes/types";
 
-const STORAGE_KEY = "viajes-guide-v2";
+const STORAGE_KEY = "viajes-guide-v3";
 
 function purify(html: string): string {
   if (typeof window === "undefined") return html;
@@ -38,6 +40,7 @@ function defaultTrip(locale: string): TripPlanInput {
     daysMin: 4,
     daysMax: 7,
     luxury: 3,
+    travelers: 2,
     interests: ["food", "culture"],
     interestsNote: "",
     transport: "flexible",
@@ -48,6 +51,7 @@ function defaultTrip(locale: string): TripPlanInput {
 export default function TravelPlannerApp() {
   const t = useTranslations("viajes");
   const locale = useLocale();
+  const [mounted, setMounted] = useState(false);
   const [trip, setTrip] = useState<TripPlanInput>(() => defaultTrip(locale));
   const [html, setHtml] = useState<string | null>(null);
   const [title, setTitle] = useState<string | null>(null);
@@ -56,6 +60,10 @@ export default function TravelPlannerApp() {
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [showWizard, setShowWizard] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setTrip((prev) => ({ ...prev, locale }));
@@ -81,6 +89,7 @@ export default function TravelPlannerApp() {
           ...defaultTrip(locale),
           ...parsed.trip,
           locale,
+          travelers: parsed.trip.travelers || 2,
           dateMode:
             parsed.trip.dateMode === "flexible" ? "flexible" : "exact",
         });
@@ -104,12 +113,8 @@ export default function TravelPlannerApp() {
   }, [html, title, trip, messages]);
 
   const busy = loadingPlan || loadingEdit;
-
-  const statusText = useMemo(() => {
-    if (loadingPlan) return t("status.generating");
-    if (loadingEdit) return t("status.editing");
-    return null;
-  }, [loadingPlan, loadingEdit, t]);
+  const hasGuide = Boolean(html);
+  const wizardVisible = !hasGuide || showWizard;
 
   async function generate() {
     setError(null);
@@ -128,12 +133,13 @@ export default function TravelPlannerApp() {
       setHtml(clean);
       setTitle(data.title || null);
       setShowWizard(false);
-      setMessages([
-        {
-          role: "assistant",
-          text: t("chat.ready"),
-        },
-      ]);
+      setMessages([{ role: "assistant", text: t("chat.ready") }]);
+      requestAnimationFrame(() => {
+        document.getElementById("viajes-app")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("errors.generic"));
     } finally {
@@ -211,64 +217,88 @@ export default function TravelPlannerApp() {
     }
   }
 
-  const hasGuide = Boolean(html);
-
   return (
-    <div className="viajes-main">
-      <p className="viajes-disclaimer">{t("disclaimer")}</p>
+    <>
+      {wizardVisible && (
+        <PortfolioPageHero
+          kicker={t("hero.kicker")}
+          title={t("hero.title")}
+          tagline={t("hero.tagline")}
+          scrollTargetId="viajes-app"
+          mounted={mounted}
+          background={<HomeHeroBackground />}
+          ariaLabel={t("hero.aria")}
+          showCv={false}
+          showContact={false}
+          hideScroll
+          className="viajes-hero"
+          afterTagline={
+            <TripWizard
+              value={trip}
+              onChange={setTrip}
+              onSubmit={generate}
+              loading={busy}
+              variant="hero"
+            />
+          }
+        />
+      )}
 
-      {!hasGuide || showWizard ? (
-        <div className="viajes-setup">
-          <TripWizard
-            value={trip}
-            onChange={setTrip}
-            onSubmit={generate}
-            loading={busy}
-          />
-          {loadingPlan && (
-            <div className="viajes-generating-card">
-              <strong>{t("actions.generating")}</strong>
-              <span>{t("generatingHint")}</span>
+      <div id="viajes-app" className="viajes-main">
+        {loadingPlan && (
+          <div className="viajes-generating-card">
+            <strong>{t("actions.generating")}</strong>
+            <span>{t("generatingHint")}</span>
+          </div>
+        )}
+
+        {hasGuide && !showWizard && (
+          <div className="viajes-workspace">
+            <div className="viajes-workspace__guide">
+              <div className="viajes-workspace__bar">
+                <button
+                  type="button"
+                  className="viajes-btn viajes-btn--ghost"
+                  onClick={() => {
+                    setShowWizard(true);
+                    requestAnimationFrame(() => {
+                      document.getElementById("hero-section")?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      });
+                    });
+                  }}
+                >
+                  {t("actions.newTrip")}
+                </button>
+              </div>
+              <GuidePreview
+                html={html}
+                title={title}
+                loading={loadingEdit}
+                onPrint={printGuide}
+                onDownloadHtml={downloadHtml}
+              />
             </div>
-          )}
-        </div>
-      ) : (
-        <div className="viajes-workspace">
-          <div className="viajes-workspace__guide">
-            <div className="viajes-workspace__bar">
-              <button
-                type="button"
-                className="viajes-btn viajes-btn--ghost"
-                onClick={() => setShowWizard(true)}
-              >
-                {t("actions.newTrip")}
-              </button>
-            </div>
-            <GuidePreview
-              html={html}
-              title={title}
+            <GuideChat
+              disabled={!html}
               loading={loadingEdit}
-              onPrint={printGuide}
-              onDownloadHtml={downloadHtml}
+              messages={messages}
+              onSend={edit}
             />
           </div>
-          <GuideChat
-            disabled={!html}
-            loading={loadingEdit}
-            messages={messages}
-            onSend={edit}
-          />
-        </div>
-      )}
+        )}
 
-      {statusText && !hasGuide && (
-        <p className="viajes-status">{statusText}</p>
-      )}
-      {error && (
-        <p className="viajes-status viajes-status--error" role="alert">
-          {error}
-        </p>
-      )}
-    </div>
+        {!hasGuide && !loadingPlan && (
+          <p className="viajes-disclaimer">{t("disclaimer")}</p>
+        )}
+
+        {error && (
+          <p className="viajes-status viajes-status--error" role="alert">
+            {error}
+          </p>
+        )}
+      </div>
+    </>
   );
 }

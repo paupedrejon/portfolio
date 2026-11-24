@@ -93,10 +93,10 @@ export async function fetchDestinationImages(
   extraQueries: string[] = [],
 ): Promise<GuideImage[]> {
   const queries = [
-    destination,
     `${destination} landmark`,
-    `${destination} city`,
-    ...extraQueries.slice(0, 3).map((q) => `${destination} ${q}`),
+    `${destination} skyline`,
+    `${destination} tower OR cathedral OR plaza -map -plan`,
+    ...extraQueries.slice(0, 2).map((q) => `${destination} ${q}`),
   ];
 
   const images: GuideImage[] = [];

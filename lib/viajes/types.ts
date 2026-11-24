@@ -16,6 +16,8 @@ export type TripPlanInput = {
   /** Legacy single days count (maps to min=max) */
   days?: number;
   luxury: number;
+  /** Number of travelers (for per-person budget). */
+  travelers: number;
   interests: string[];
   interestsNote?: string;
   transport: TransportPref;

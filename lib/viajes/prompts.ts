@@ -1,4 +1,5 @@
 import type { GuideImage, SearchSnippet, TripPlanInput } from "./types";
+import { themeForDestination } from "./destination-theme";
 
 function luxuryCopy(n: number): string {
   const map: Record<number, string> = {
@@ -24,14 +25,17 @@ function dateCopy(input: TripPlanInput): string {
   return "Flexible dates — suggest a realistic window";
 }
 
-export const GUIDE_SYSTEM_PROMPT = `Elite travel art-director. Output ONLY one complete HTML5 document (no markdown).
+export const GUIDE_SYSTEM_PROMPT = `You are an elite travel art-director (agency proposal quality, like a bespoke Claude travel zine).
+Output ONLY one complete HTML5 document. No markdown.
 
-Rules:
-- Inline CSS in <style>. Optional Google Fonts <link>. No JS/iframes.
-- Destination-specific aesthetic (Japan washi/neon; Paris Haussmann cream; etc.).
-- Sections: hero, transport tickets, route, 2–3 stays, budget receipt, day-by-day cards with photos if URLs given.
-- Prices only from snippets; else "No verificado". Mark as estimado. Footer disclaimer + consulted date.
-- Print CSS (@media print). Locale of visible text = user locale.`;
+HARD RULES:
+- Inline CSS + optional Google Fonts. No JS/iframes.
+- Aesthetic MUST feel specific to the destination (Paris = night Haussmann + champagne gold + serif display; Japan = washi/neon/hinomaru; etc.). Never generic beige brochure.
+- Hero: full-bleed photo, DARK overlay, title/meta ALWAYS light (#f7f3ec or similar). Never dark text on photo.
+- Prefer landmark photos for hero (not antique maps).
+- Sections: hero with traveler chips, boarding-pass tickets, stays, RECEIPT with per-person + group total, day-by-day with photo + activities.
+- Prices from snippets only; else "No verificado". Show budget PER PERSON and TOTAL for N travelers.
+- Print CSS. Visible language = user locale.`;
 
 export function buildPlanUserPrompt(params: {
   input: TripPlanInput;
@@ -40,6 +44,7 @@ export function buildPlanUserPrompt(params: {
   consultedAt: string;
 }): string {
   const { input, snippets, images, consultedAt } = params;
+  const theme = themeForDestination(input.destination);
   const interests = [
     ...input.interests,
     input.interestsNote?.trim() ? `note: ${input.interestsNote.trim()}` : "",
@@ -52,13 +57,18 @@ export function buildPlanUserPrompt(params: {
 ORIGIN: ${input.origin}
 DESTINATION: ${input.destination}
 DATES: ${dateCopy(input)}
+TRAVELERS: ${input.travelers}
 LUXURY: ${luxuryCopy(input.luxury)}
-TRANSPORT PREFERENCE: ${input.transport}
+TRANSPORT: ${input.transport}
 INTERESTS: ${interests || "general sightseeing"}
 LOCALE: ${input.locale}
 CONSULTED_AT: ${consultedAt}
+ART DIRECTION HINT: ${theme.mood}
+SUGGESTED PALETTE: bg ${theme.bg}, ink ${theme.ink}, accent ${theme.accent}, paper ${theme.paper}
 
-SEARCH SNIPPETS (cite URLs in a sources strip or footnotes):
+Include explicit "por persona" and "total grupo (${input.travelers})" in the receipt.
+
+SEARCH SNIPPETS:
 ${snippets
   .slice(0, 10)
   .map(
@@ -67,43 +77,51 @@ ${snippets
   )
   .join("\n\n") || "(none — mark all prices as Unverified)"}
 
-IMAGES (use several; keep attribution):
+IMAGES (prefer landmarks for hero; keep attribution):
 ${images
   .slice(0, 6)
   .map(
     (img, i) =>
       `[img${i + 1}] ${img.title}\nURL: ${img.url}\nCredit: ${img.attribution}`,
   )
-  .join("\n\n") || "(none — use elegant CSS geometric hero instead)"}
-
-Make it feel as crafted as a bespoke agency proposal for THIS destination.`;
+  .join("\n\n") || "(none — elegant CSS geometric hero)"}`;
 }
 
-export const JSON_SYSTEM_PROMPT = `You are a travel planner. Return ONLY valid JSON (no markdown) matching:
+export const JSON_SYSTEM_PROMPT = `Travel planner. Return ONLY valid JSON (no markdown):
 {
   "title": string,
   "tagline": string,
-  "palette": {"bg":"#hex","ink":"#hex","accent":"#hex","paper":"#hex"},
+  "datesLabel": string,
+  "luxuryLabel": string,
+  "palette": {"bg":"#dark","ink":"#light","accent":"#hex","paper":"#dark"},
   "transport": {"outbound": string, "inbound": string, "note"?: string},
   "stays": [{"name": string, "price"?: string, "vibe"?: string}],
   "budget": [{"label": string, "amount": string}],
+  "budgetPerPerson": string,
+  "budgetTotal": string,
   "days": [{"title": string, "summary"?: string, "activities": [{"name": string, "price"?: string, "tip"?: string}]}],
   "disclaimer"?: string
 }
-Prices only from snippets; else "No verificado". Palette must evoke the destination. Locale of strings = user locale.`;
+Palette must be DARK bg + LIGHT ink (readable on photos). Prices from snippets else "No verificado".
+budgetPerPerson and budgetTotal required for the traveler count. Locale = user locale.`;
 
 export function buildJsonUserPrompt(params: {
-  input: import("./types").TripPlanInput;
-  snippets: import("./types").SearchSnippet[];
+  input: TripPlanInput;
+  snippets: SearchSnippet[];
   consultedAt: string;
 }): string {
   const { input, snippets, consultedAt } = params;
+  const theme = themeForDestination(input.destination);
   return `Trip JSON for ${input.origin} → ${input.destination}.
-Dates: ${input.dateMode === "exact" ? `${input.startDate}–${input.endDate}` : `${input.flexibleMonth} ${input.daysMin}-${input.daysMax} days`}
+Dates: ${dateCopy(input)}
+Travelers: ${input.travelers}
 Luxury ${input.luxury}/5 · transport ${input.transport}
 Interests: ${[...input.interests, input.interestsNote].filter(Boolean).join(", ") || "general"}
 Locale: ${input.locale}
 Consulted: ${consultedAt}
+Art mood: ${theme.mood}
+Suggested palette: ${JSON.stringify({ bg: theme.bg, ink: theme.ink, accent: theme.accent, paper: theme.paper })}
+Compute budgetPerPerson and budgetTotal for ${input.travelers} travelers.
 Snippets:
 ${snippets
   .slice(0, 8)
@@ -114,7 +132,7 @@ ${snippets
 export const EDIT_SYSTEM_PROMPT = `You edit an existing self-contained travel-guide HTML document.
 Return the FULL updated HTML document only.
 Preserve destination-specific art direction unless the user asks to restyle.
-Keep print CSS. Do not invent precise prices without sources; if the user asks for new price research and none is provided, keep "No verificado".
+Keep print CSS and light text on photo heroes. Do not invent precise prices without sources; if the user asks for new price research and none is provided, keep "No verificado".
 No scripts. Language of edits must match the guide language.`;
 
 export function buildEditUserPrompt(params: {

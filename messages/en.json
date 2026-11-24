@@ -1617,6 +1617,10 @@
     "wizardTitle": "Where to <em>next</em>?",
     "wizardTitle2": "Trip <em>style</em>",
     "wizardHint": "Like a flight search: origin, destination and dates.",
+    "heroSearch": {
+      "route": "Search your route",
+      "style": "Personalize the trip"
+    },
     "previewTitle": "Generated <em>guide</em>",
     "previewTitlePlain": "Your guide",
     "previewHint": "Art direction changes with the destination.",
@@ -1644,6 +1648,9 @@
       "daysMax": "Max days",
       "daysUnit": "days",
       "days": "Number of days",
+      "travelers": "Travelers",
+      "travelerOne": "traveler",
+      "travelerMany": "travelers",
       "luxury": "Luxury level",
       "transport": "Transport",
       "interests": "Interests",

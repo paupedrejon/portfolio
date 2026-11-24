@@ -14,6 +14,8 @@ export type TripWizardProps = {
   onChange: (next: TripPlanInput) => void;
   onSubmit: () => void;
   loading: boolean;
+  /** Compact Skyscanner bar for embedding in the portfolio hero. */
+  variant?: "hero" | "panel";
 };
 
 function monthInputValue(v?: string): string {
@@ -29,6 +31,7 @@ export default function TripWizard({
   onChange,
   onSubmit,
   loading,
+  variant = "hero",
 }: TripWizardProps) {
   const t = useTranslations("viajes");
   const [step, setStep] = useState<1 | 2>(1);
@@ -58,7 +61,10 @@ export default function TripWizard({
   }, [value]);
 
   return (
-    <section className="viajes-search" aria-labelledby="viajes-wizard-title">
+    <section
+      className={`viajes-search viajes-search--${variant}`}
+      aria-labelledby="viajes-wizard-title"
+    >
       <div className="viajes-steps" aria-label={t("steps.label")}>
         <button
           type="button"
@@ -80,11 +86,18 @@ export default function TripWizard({
         </button>
       </div>
 
-      <h2 id="viajes-wizard-title" className="viajes-search__title">
-        {step === 1
-          ? t.rich("wizardTitle", { em: (c) => <em>{c}</em> })
-          : t.rich("wizardTitle2", { em: (c) => <em>{c}</em> })}
-      </h2>
+      {variant === "panel" && (
+        <h2 id="viajes-wizard-title" className="viajes-search__title">
+          {step === 1
+            ? t.rich("wizardTitle", { em: (c) => <em>{c}</em> })
+            : t.rich("wizardTitle2", { em: (c) => <em>{c}</em> })}
+        </h2>
+      )}
+      {variant === "hero" && (
+        <p id="viajes-wizard-title" className="viajes-search__eyebrow">
+          {step === 1 ? t("heroSearch.route") : t("heroSearch.style")}
+        </p>
+      )}
 
       {step === 1 && (
         <form
@@ -95,8 +108,8 @@ export default function TripWizard({
             setStep(2);
           }}
         >
-          <div className="viajes-search__row">
-            <label className="viajes-search__cell">
+          <div className="viajes-bar">
+            <label className="viajes-bar__cell">
               <span>{t("fields.origin")}</span>
               <input
                 value={value.origin}
@@ -120,7 +133,7 @@ export default function TripWizard({
             >
               ⇄
             </button>
-            <label className="viajes-search__cell">
+            <label className="viajes-bar__cell">
               <span>{t("fields.destination")}</span>
               <input
                 value={value.destination}
@@ -128,6 +141,16 @@ export default function TripWizard({
                 placeholder={t("placeholders.destination")}
                 required
                 autoComplete="address-level2"
+              />
+            </label>
+            <label className="viajes-bar__cell viajes-bar__cell--narrow">
+              <span>{t("fields.travelers")}</span>
+              <input
+                type="number"
+                min={1}
+                max={12}
+                value={value.travelers}
+                onChange={(e) => set("travelers", Number(e.target.value))}
               />
             </label>
           </div>
@@ -151,8 +174,8 @@ export default function TripWizard({
           </div>
 
           {value.dateMode === "exact" ? (
-            <div className="viajes-search__row">
-              <label className="viajes-search__cell">
+            <div className="viajes-bar viajes-bar--dates">
+              <label className="viajes-bar__cell">
                 <span>{t("fields.startDate")}</span>
                 <input
                   type="date"
@@ -161,7 +184,7 @@ export default function TripWizard({
                   required
                 />
               </label>
-              <label className="viajes-search__cell">
+              <label className="viajes-bar__cell">
                 <span>{t("fields.endDate")}</span>
                 <input
                   type="date"
@@ -172,8 +195,8 @@ export default function TripWizard({
               </label>
             </div>
           ) : (
-            <div className="viajes-search__row viajes-search__row--flex">
-              <label className="viajes-search__cell">
+            <div className="viajes-bar viajes-bar--flex">
+              <label className="viajes-bar__cell">
                 <span>{t("fields.flexibleMonth")}</span>
                 <input
                   type="month"
@@ -182,7 +205,7 @@ export default function TripWizard({
                   required
                 />
               </label>
-              <label className="viajes-search__cell viajes-search__cell--narrow">
+              <label className="viajes-bar__cell viajes-bar__cell--narrow">
                 <span>{t("fields.daysMin")}</span>
                 <input
                   type="number"
@@ -199,7 +222,7 @@ export default function TripWizard({
                   }}
                 />
               </label>
-              <label className="viajes-search__cell viajes-search__cell--narrow">
+              <label className="viajes-bar__cell viajes-bar__cell--narrow">
                 <span>{t("fields.daysMax")}</span>
                 <input
                   type="number"
@@ -240,6 +263,12 @@ export default function TripWizard({
               {value.dateMode === "exact"
                 ? `${value.startDate} · ${value.endDate}`
                 : `${value.flexibleMonth} · ${value.daysMin}–${value.daysMax} ${t("fields.daysUnit")}`}
+            </span>
+            <span>
+              {value.travelers}{" "}
+              {value.travelers === 1
+                ? t("fields.travelerOne")
+                : t("fields.travelerMany")}
             </span>
             <button type="button" className="viajes-link" onClick={() => setStep(1)}>
               {t("actions.editRoute")}

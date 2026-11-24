@@ -1616,6 +1616,10 @@
     "wizardTitle": "Dove <em>voli</em>?",
     "wizardTitle2": "Stile del <em>viaggio</em>",
     "wizardHint": "Come un motore di voli: origine, destinazione e date.",
+    "heroSearch": {
+      "route": "Cerca la rotta",
+      "style": "Personalizza il viaggio"
+    },
     "previewTitle": "Guida <em>generata</em>",
     "previewTitlePlain": "La tua guida",
     "previewHint": "L'estetica cambia con la destinazione.",
@@ -1643,6 +1647,9 @@
       "daysMax": "Giorni max.",
       "daysUnit": "giorni",
       "days": "Numero di giorni",
+      "travelers": "Persone",
+      "travelerOne": "viaggiatore",
+      "travelerMany": "viaggiatori",
       "luxury": "Livello di lusso",
       "transport": "Trasporto",
       "interests": "Interessi",

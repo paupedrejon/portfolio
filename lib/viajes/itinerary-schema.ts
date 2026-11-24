@@ -7,6 +7,8 @@ export type ItineraryDay = {
 export type ItineraryPlan = {
   title: string;
   tagline: string;
+  datesLabel?: string;
+  luxuryLabel?: string;
   palette: {
     bg: string;
     ink: string;
@@ -20,6 +22,10 @@ export type ItineraryPlan = {
   };
   stays: { name: string; price?: string; vibe?: string }[];
   budget: { label: string; amount: string }[];
+  /** Estimated total per person */
+  budgetPerPerson?: string;
+  /** Estimated total for the whole group */
+  budgetTotal?: string;
   days: ItineraryDay[];
   disclaimer?: string;
 };

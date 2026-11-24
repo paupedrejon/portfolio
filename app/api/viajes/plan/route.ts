@@ -138,6 +138,7 @@ export async function POST(request: Request) {
           destination: input.destination,
           origin: input.origin,
           locale: input.locale,
+          travelers: input.travelers,
         }),
       );
     }

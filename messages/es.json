@@ -1678,6 +1678,10 @@
     "wizardTitle": "¿A dónde <em>vuelas</em>?",
     "wizardTitle2": "Estilo del <em>viaje</em>",
     "wizardHint": "Como un buscador de vuelos: origen, destino y fechas.",
+    "heroSearch": {
+      "route": "Busca tu ruta",
+      "style": "Personaliza el viaje"
+    },
     "previewTitle": "Guía <em>generada</em>",
     "previewTitlePlain": "Tu guía",
     "previewHint": "La estética cambia según el destino.",
@@ -1705,6 +1709,9 @@
       "daysMax": "Días máx.",
       "daysUnit": "días",
       "days": "Número de días",
+      "travelers": "Personas",
+      "travelerOne": "viajero",
+      "travelerMany": "viajeros",
       "luxury": "Nivel de lujo",
       "transport": "Transporte",
       "interests": "Intereses",
