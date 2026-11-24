@@ -1,5 +1,5 @@
-﻿'use client';
-// @ts-nocheck — port from react-bits ElectricLogo
+﻿// @ts-nocheck — port from react-bits ElectricLogo
+'use client';
 
 import { useEffect, useRef } from 'react';
 import { Renderer, Program, Mesh, Triangle, Texture } from 'ogl';
@@ -597,11 +597,11 @@ const ElectricLogo = ({
   cursorIntensity = 0.75,
   cursorRadius = 100,
   theme = 'dark',
-  onRender,
+  onRender = undefined as any,
   /** Ref imperativo: `{ triggerBurst(nx?, ny?) }` — coords 0–1 relativas al logo */
-  apiRef = null,
+  apiRef = undefined as any,
   className = '',
-  style
+  style = undefined as any
 }) => {
   const containerRef = useRef(null);
   const settingsRef = useRef(null);

@@ -1,5 +1,5 @@
-'use client';
 // @ts-nocheck — port from react-bits LightPillar
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 
@@ -249,11 +249,11 @@ const LightPillar = ({
  intro = true,
  mixBlendMode = 'screen',
  quality = 'high',
- resolution,
+ resolution = undefined as any,
  lightMode = false,
  paused = false,
  className = '',
- style
+ style = undefined as any
 }) => {
  const containerRef = useRef(null);
  const canvasRef = useRef(null);

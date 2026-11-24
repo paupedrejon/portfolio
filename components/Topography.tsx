@@ -1,5 +1,6 @@
-'use client';
 // @ts-nocheck — port from react-bits Topography
+'use client';
+
 import { useEffect, useRef, useState } from 'react';
 import './Topography.css';
 
@@ -695,9 +696,9 @@ const Topography = ({
  glitch = 0,
  intro = true,
  lightMode = false,
- dpr,
- className = '',
- style
+  dpr = undefined as any,
+  className = '',
+  style = undefined as any
 }) => {
  const containerRef = useRef(null);
  const canvasRef = useRef(null);

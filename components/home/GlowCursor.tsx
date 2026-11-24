@@ -1,5 +1,5 @@
-'use client';
 // @ts-nocheck — port from react-bits GlowCursor
+'use client';
 
 import { useEffect, useRef } from 'react';
 
@@ -300,7 +300,7 @@ const fromHsv = (hue, saturation, value) => {
 
 const GlowCursor = ({
  color = '#5f8bff',
- secondaryColor,
+ secondaryColor = undefined as any,
  intensity = 1.3,
  trailWidth = 3,
  linger = 1.4,
@@ -311,12 +311,12 @@ const GlowCursor = ({
  clickBurst = true,
  quality = 'high',
  theme = 'dark',
- blendMode,
+ blendMode = undefined as any,
  maxDevicePixelRatio = 2,
  enabled = true,
- children,
+ children = undefined as any,
  className = '',
- style,
+ style = undefined as any,
  ...rest
 }) => {
  const containerRef = useRef(null);

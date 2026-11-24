@@ -29,6 +29,9 @@
     "tmp-final-zip",
     "tmp-zip-test",
     "downloads",
-    "templates"
+    "templates",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ]
 }
