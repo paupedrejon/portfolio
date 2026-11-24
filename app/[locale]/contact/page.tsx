@@ -20,7 +20,7 @@ function lineStyle(i: number) {
   const u = ((i + 2) * 32416190071) % 10000 / 10000;
   const v = ((i + 3) * 2038074743) % 10000 / 10000;
   const w = ((i + 4) * 2166136261) % 10000 / 10000;
-  const color = s > 0.5 ? "53, 140, 159" : "78, 179, 200";
+  const color = s > 0.5 ? "191, 57, 87" : "224, 70, 103";
   return {
     width: `${s * 2 + 1}px`,
     height: `${t * 250 + 120}px`,
@@ -138,7 +138,7 @@ export default function ContactPage() {
         <button
           type="button"
           onClick={() => setContactModalOpen(true)}
-          className="portfolio-btn--cv home-btn--cv"
+          className="home-btn--ghost"
         >
           <span className="cv-btn-text">
             <Mail size={20} strokeWidth={2} />

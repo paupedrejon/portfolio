@@ -259,72 +259,43 @@
   gap: 0.85rem;
 }
 
-.contact-form-block__btn-primary {
+.contact-form-block__btn-primary,
+.contact-form-block__btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.65rem;
   min-height: 3.35rem;
   padding: 1rem 2rem;
-  font-family: var(--font-body);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
   font-size: 1.05rem;
   font-weight: 600;
   line-height: 1.2;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.07);
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  border-radius: 12px;
+  color: var(--text, #f5eeed);
+  text-decoration: none;
+  background: transparent;
+  border: 2px solid var(--cherry-400, #e04667);
+  border-radius: var(--r-md, 14px);
   cursor: pointer;
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-shadow: none;
   transition:
     transform 0.22s ease,
-    box-shadow 0.22s ease,
     background 0.22s ease,
     border-color 0.22s ease,
     color 0.22s ease;
 }
 
-.contact-form-block__btn-primary:hover {
-  color: #110508;
-  background: #e04667;
-  border-color: #e04667;
-  transform: translateY(-3px);
-  box-shadow:
-    0 12px 36px rgba(0, 0, 0, 0.3),
-    0 0 48px rgb(224 70 103 / 0.45);
+.contact-form-block__btn-primary:hover,
+.contact-form-block__btn-secondary:hover {
+  color: var(--text, #f5eeed);
+  background: var(--cherry-800, #361b20);
+  border-color: var(--cherry-300, #f58393);
+  transform: translateY(-2px);
 }
 
 .contact-form-block__btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 3.35rem;
-  padding: 1rem 1.75rem;
-  font-family: var(--font-body);
   font-size: 1rem;
-  font-weight: 600;
-  color: var(--accent-text, #e04667);
-  text-decoration: none;
-  background: rgb(191 57 87 / 0.12);
-  border: 2px solid rgb(224 70 103 / 0.38);
-  border-radius: 12px;
-  transition:
-    transform 0.22s ease,
-    border-color 0.22s ease,
-    background 0.22s ease,
-    color 0.22s ease;
-}
-
-.contact-form-block__btn-secondary:hover {
-  color: #fff;
-  background: rgb(191 57 87 / 0.28);
-  border-color: var(--accent-text, #e04667);
-  transform: translateY(-2px);
+  padding: 1rem 1.75rem;
 }
 
 @keyframes contactPulseBg {
