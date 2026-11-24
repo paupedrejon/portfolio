@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" role="img" aria-label="AI Travel Planner">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a0b10"/>
+      <stop offset="55%" stop-color="#2b1018"/>
+      <stop offset="100%" stop-color="#12080c"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#BF3957"/>
+      <stop offset="100%" stop-color="#E04667"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="70%" cy="30%" r="45%">
+      <stop offset="0%" stop-color="#E04667" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#E04667" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="750" fill="url(#bg)"/>
+  <rect width="1200" height="750" fill="url(#glow)"/>
+  <g fill="none" stroke="#E04667" stroke-opacity="0.25" stroke-width="1.5">
+    <path d="M80 560 C260 420, 420 620, 620 480 S980 360, 1120 220"/>
+    <circle cx="620" cy="480" r="8" fill="#E04667" stroke="none"/>
+    <circle cx="1120" cy="220" r="10" fill="#FFB3C3" stroke="none"/>
+  </g>
+  <rect x="90" y="150" width="420" height="260" rx="22" fill="#241016" stroke="#5a2434"/>
+  <rect x="120" y="190" width="180" height="18" rx="9" fill="url(#accent)"/>
+  <rect x="120" y="230" width="340" height="12" rx="6" fill="#6b3a48"/>
+  <rect x="120" y="258" width="280" height="12" rx="6" fill="#4a2733"/>
+  <rect x="120" y="300" width="140" height="48" rx="24" fill="#E04667"/>
+  <text x="90" y="560" fill="#F7E9ED" font-family="Georgia, serif" font-size="64" font-style="italic">Travel</text>
+  <text x="90" y="630" fill="#F7E9ED" font-family="Arial, sans-serif" font-size="54" font-weight="700" letter-spacing="-2">AI Guide</text>
+  <text x="90" y="680" fill="#C9A0AB" font-family="Arial, sans-serif" font-size="22" letter-spacing="4">GEMINI · TAVILY · ZERO COST</text>
+</svg>

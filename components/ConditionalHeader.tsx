@@ -27,7 +27,7 @@ export default function ConditionalHeader() {
         !pathname.includes("/cursos") &&
         !pathname.startsWith("/study-agents") &&
         !pathname.includes("/admin") &&
-        (/\/(proyectos|projects|progetti|skills|experience|education|about-me|contact|privacy|blog|ego|tealcode)(\/|$)/.test(
+        (/\/(proyectos|projects|progetti|skills|experience|education|about-me|contact|privacy|blog|ego|tealcode|viajes|travel|viaggi)(\/|$)/.test(
           pathname
         ) ||
           /\/(experiencia|educacion|sobre-mi|contacto|privacidad)(\/|$)/.test(

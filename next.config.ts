@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  images: {
+    // Project card cover for AI Travel Planner (`/ai-travel-planner.svg`)
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
   async redirects() {
     return [
       // E-Go: una sola URL canónica (/ego). Debe ir antes de las reglas :slug.
@@ -48,6 +54,8 @@ const nextConfig: NextConfig = {
         source: "/cursos/react-demo/:path*",
         destination: "/cursos/react-demo/index.html",
       },
+      { source: "/en/travel", destination: "/en/viajes" },
+      { source: "/it/viaggi", destination: "/it/viajes" },
     ];
   },
   // Incluir plantilla del curso en el bundle de la API en Vercel

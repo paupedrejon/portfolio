@@ -292,6 +292,13 @@
       "subtitle": "Sistema educativo intelligente che aiuta gli studenti ad apprendere tramite agenti IA. Carica PDF, genera note, fai domande e sostieni test interattivi con feedback in tempo reale.",
       "ctaText": "Prova StudyAgents"
     },
+    "ai-travel-planner": {
+      "title": "AI Travel Planner",
+      "kicker": "2026 - Progetto personale",
+      "title2": "Guide di viaggio con IA",
+      "subtitle": "Planner gratuito: origine, destinazione, date, livello di lusso e interessi. Cerca prezzi orientativi sul web, genera una guida HTML tematica per destinazione e consente di modificarla in chat e stamparla.",
+      "ctaText": "Apri il planner"
+    },
     "turelojya": {
       "title": "TuRelojYa",
       "kicker": "2025 — Tirocinio in azienda",
@@ -854,6 +861,58 @@
         { "name": "UltiMaker Cura", "role": "Slicer" }
       ],
       "role": "Design 3D, preparazione stampa ed esecuzione in laboratorio maker."
+    },
+    "ai-travel-planner": {
+      "heroSummary": "Demo di planner di viaggio con IA a costo zero: Gemini Flash-Lite + Tavily + guide HTML tematiche per destinazione.",
+      "contextTitle": "Perché questo progetto",
+      "context": "Volevo un pezzo di portfolio che unisca prodotto usabile e stack AI gratuito: il visitatore compila il viaggio, il server cerca contesto web e genera una guida stampabile curata come una proposta di agenzia, senza API a pagamento.",
+      "overviewTitle": "Il prodotto",
+      "overview": "Wizard Dark Cherry (origine, destinazione, date o giorni flessibili, lusso 1–5, interessi, trasporto). Pipeline server con Tavily, immagini Wikimedia e Gemini. La guida HTML nasce con lo stile della destinazione. Chat di modifica, download HTML e stampa/PDF lato client.",
+      "highlightsTitle": "Cosa include",
+      "highlights": [
+        {
+          "icon": "sparkles",
+          "title": "Stack 0 € (uso leggero)",
+          "text": "Gemini Flash-Lite + Tavily Researcher + Wikimedia. Rate limit per IP per proteggere la quota free."
+        },
+        {
+          "icon": "bots",
+          "title": "Guida tematica",
+          "text": "HTML autocontenuto con hero, biglietti, hotel, scontrino e giorni — art direction diversa per ogni viaggio."
+        },
+        {
+          "icon": "code",
+          "title": "Chat + print",
+          "text": "Modifiche conversazionali sull'HTML ed export con window.print / download .html."
+        },
+        {
+          "icon": "rocket",
+          "title": "Prezzi con fonti",
+          "text": "Stime ancorate agli snippet di ricerca; senza fonte restano non verificate."
+        }
+      ],
+      "stackIntro": "Next.js + Gemini + search gratis.",
+      "stack": [
+        { "name": "Next.js 15", "role": "App Router · API routes" },
+        { "name": "Gemini Flash-Lite", "role": "Generazione HTML" },
+        { "name": "Tavily", "role": "Ricerca web free" },
+        { "name": "Wikimedia", "role": "Immagini con attribuzione" }
+      ],
+      "role": "UI Dark Cherry, prompt della guida, pipeline di ricerca/generazione e UX di preview/modifica.",
+      "caseStudyTitle": "Case study: AI Travel Planner",
+      "caseStudyIntro": "Una demo pubblica nel portfolio che mostra orchestrazione LLM + search senza costi ricorrenti, con un artefatto visuale forte invece di sola chat.",
+      "caseStudyProblemTitle": "Il problema",
+      "caseStudyProblem": "I planner AI di viaggio dipendono spesso da API a pagamento o inventano i prezzi. Volevo qualcosa dimostrabile, gratis per visitatore e owner (uso basso), con un output attraente come una guida artigianale.",
+      "caseStudySolutionTitle": "Soluzione tecnica",
+      "caseStudySolution": "BFF Next: rate limit → Tavily → Wikimedia → Gemini con prompt da art director. Preview iframe sandbox, sanitize, chat di edit e print client-side. Shell cherry; estetica della guida legata alla destinazione.",
+      "caseStudyResultsTitle": "Risultati",
+      "caseStudyResults": "Route /viajes nel catalogo progetti, pronta per i recruiter. Quote free documentate; disclaimer prezzi stimati in UI.",
+      "caseStudyMetrics": [
+        { "label": "Costo owner", "value": "0 € sul free tier" },
+        { "label": "Search", "value": "Tavily 1k crediti/mese" },
+        { "label": "LLM", "value": "Gemini Flash-Lite" },
+        { "label": "Export", "value": "HTML + print/PDF" }
+      ]
     }
   },
   "skills": {
@@ -1543,5 +1602,92 @@
     "subtitle": "Riflessioni tecniche su progetti reali, IA e sviluppo full-stack.",
     "backToList": "Torna al blog",
     "empty": "Altri articoli in arrivo."
+  },
+  "viajes": {
+    "metaTitle": "AI Travel Planner — Guide di viaggio con IA | Pau Pedrejon",
+    "metaDescription": "Pianifica un viaggio gratis: prezzi orientativi, guida HTML tematica per destinazione, modifiche in chat e stampa.",
+    "hero": {
+      "kicker": "Demo IA · costo zero",
+      "title": "AI Travel Planner",
+      "tagline": "Scegli destinazione, date e stile. Genero una guida HTML con il look del viaggio — pronta da stampare.",
+      "aria": "AI Travel Planner"
+    },
+    "disclaimer": "Prezzi orientativi da ricerca web (non quotazioni prenotabili). Demo con quota gratuita: pochi piani per IP al giorno.",
+    "wizardTitle": "Progetta il tuo <em>viaggio</em>",
+    "wizardHint": "Più sei concreto, meglio viene la guida.",
+    "previewTitle": "Guida <em>generata</em>",
+    "previewHint": "L'estetica cambia con la destinazione.",
+    "previewFrameTitle": "Anteprima della guida",
+    "chatTitle": "Modifica in <em>chat</em>",
+    "chatHint": "Chiedi cambiamenti: togli un giorno, un altro hotel, più cibo locale…",
+    "chatEmpty": "Genera una guida per iniziare a modificare.",
+    "emptyTitle": "Ancora nessuna guida",
+    "emptyBody": "Compila il modulo e genera.",
+    "generatingHint": "Cerco contesto e illustrazioni… ~30–60 s.",
+    "fields": {
+      "origin": "Origine",
+      "destination": "Destinazione",
+      "dateMode": "Date",
+      "startDate": "Andata",
+      "endDate": "Ritorno",
+      "days": "Numero di giorni",
+      "luxury": "Livello di lusso",
+      "transport": "Trasporto",
+      "interests": "Interessi",
+      "interestsNote": "Cosa ti piacerebbe fare"
+    },
+    "placeholders": {
+      "origin": "Barcellona",
+      "destination": "Tokyo",
+      "interestsNote": "Onsen, ramen, Shimokitazawa…",
+      "chat": "Cambia l'hotel del giorno 2 con qualcosa di più centrale"
+    },
+    "dateModes": {
+      "range": "Intervallo",
+      "days": "N. giorni",
+      "flexible": "Flessibili"
+    },
+    "transport": {
+      "flight": "Volo",
+      "bus": "Bus",
+      "flexible": "Flessibile"
+    },
+    "luxury": {
+      "1": "Zaino / ostello",
+      "2": "Budget",
+      "3": "Medio",
+      "4": "Upscale",
+      "5": "Lusso"
+    },
+    "interests": {
+      "food": "Cibo",
+      "culture": "Cultura",
+      "nature": "Natura",
+      "nightlife": "Notte",
+      "shopping": "Shopping",
+      "museums": "Musei",
+      "adventure": "Avventura",
+      "relaxation": "Relax"
+    },
+    "actions": {
+      "generate": "Genera guida",
+      "generating": "Generazione…",
+      "print": "Stampa / PDF",
+      "downloadHtml": "Scarica HTML",
+      "send": "Invia",
+      "editing": "Modifica…"
+    },
+    "status": {
+      "generating": "Genero la guida…",
+      "editing": "Applico le modifiche…"
+    },
+    "chat": {
+      "ready": "Guida pronta. Dimmi cosa cambiare.",
+      "updated": "Guida aggiornata."
+    },
+    "errors": {
+      "generic": "Qualcosa è andato storto. Riprova.",
+      "popup": "Consenti i pop-up per stampare la guida."
+    }
   }
 }

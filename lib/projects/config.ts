@@ -35,6 +35,7 @@ const ORG_OWius = {
 export type ProjectSlug =
   | "tealcode"
   | "study-agents"
+  | "ai-travel-planner"
   | "turelojya"
   | "evenely"
   | "react-course"
@@ -148,6 +149,14 @@ export const PROJECTS_CONFIG: ProjectConfig[] = [
     externalHref: "/study-agents",
     sections: ["ai", "web-development"],
     company: ORG_IIA,
+  },
+  {
+    slug: "ai-travel-planner",
+    imageCard: "/ai-travel-planner.svg",
+    sortDate: "2026-11",
+    tech: "Next.js, Gemini Flash-Lite, Tavily, Wikimedia, TypeScript",
+    externalHref: "/viajes",
+    sections: ["ai", "web-development"],
   },
   {
     slug: "shooter",
