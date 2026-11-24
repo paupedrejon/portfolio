@@ -1294,7 +1294,7 @@
       "sectionTitle": "Message me",
       "kicker": "Form",
       "title": "Get in touch",
-      "subtitle": "Tell me about your project or idea in a few steps.",
+      "subtitle": "Pick a reason, drop your details, write. Done.",
       "openForm": "Open contact form",
       "ctaTitle": "Ready to start a project?",
       "ctaText": "I'm always open to discussing new projects, creative ideas, or opportunities to be part of your vision.",
@@ -1307,30 +1307,17 @@
       "errorGeneric": "Something went wrong",
       "successTitle": "Message sent!",
       "successText": "I'll get back to you soon.",
-      "step1Label": "Step 1 of 4",
-      "step1Title": "What do you need?",
-      "step2Label": "Step 2 of 4",
-      "step2Title": "Your details",
-      "step3Label": "Step 3 of 4",
-      "step3Title": "Your message",
-      "step4Label": "Step 4 of 4",
-      "step4Title": "Review & send",
+      "reasonLabel": "Reason",
+      "messageLabel": "Message",
       "namePlaceholder": "Your name",
       "emailPlaceholder": "your@email.com",
-      "messagePlaceholder": "Tell me about your project or inquiry…",
-      "reviewHint": "When you complete the form, we'll send your message by email.",
-      "review": {
-        "reason": "Reason",
-        "name": "Name",
-        "email": "Email",
-        "message": "Message"
-      },
+      "messagePlaceholder": "How can I help?",
       "reasons": {
-        "project": { "label": "Project / Collaboration", "desc": "Let's build something together" },
-        "job": { "label": "Job offer", "desc": "Full-time or part-time opportunity" },
-        "freelance": { "label": "Freelance work", "desc": "Short-term project or contract" },
-        "question": { "label": "General question", "desc": "Just want to chat or ask something" },
-        "other": { "label": "Other", "desc": "Something else entirely" }
+        "project": { "label": "Project" },
+        "job": { "label": "Job" },
+        "freelance": { "label": "Freelance" },
+        "question": { "label": "Question" },
+        "other": { "label": "Other" }
       }
     }
   },

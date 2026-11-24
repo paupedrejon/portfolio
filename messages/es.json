@@ -1355,7 +1355,7 @@
       "sectionTitle": "Escríbeme",
       "kicker": "Formulario",
       "title": "Ponte en contacto",
-      "subtitle": "Cuéntame tu proyecto o idea en unos pasos.",
+      "subtitle": "Elige un motivo, deja tus datos y escribe. Listo.",
       "openForm": "Abrir formulario",
       "ctaTitle": "¿Empezamos un proyecto?",
       "ctaText": "Siempre estoy abierto a nuevos proyectos, ideas creativas u oportunidades para formar parte de tu visión.",
@@ -1368,30 +1368,17 @@
       "errorGeneric": "Algo ha fallado",
       "successTitle": "¡Mensaje enviado!",
       "successText": "Te responderé pronto.",
-      "step1Label": "Paso 1 de 4",
-      "step1Title": "¿En qué puedo ayudarte?",
-      "step2Label": "Paso 2 de 4",
-      "step2Title": "Tus datos",
-      "step3Label": "Paso 3 de 4",
-      "step3Title": "Tu mensaje",
-      "step4Label": "Paso 4 de 4",
-      "step4Title": "Revisar y enviar",
+      "reasonLabel": "Motivo",
+      "messageLabel": "Mensaje",
       "namePlaceholder": "Tu nombre",
       "emailPlaceholder": "tu@email.com",
-      "messagePlaceholder": "Cuéntame tu proyecto o consulta…",
-      "reviewHint": "Al completar, enviaremos tu mensaje por email.",
-      "review": {
-        "reason": "Motivo",
-        "name": "Nombre",
-        "email": "Email",
-        "message": "Mensaje"
-      },
+      "messagePlaceholder": "¿En qué puedo ayudarte?",
       "reasons": {
-        "project": { "label": "Proyecto / Colaboración", "desc": "Creemos algo juntos" },
-        "job": { "label": "Oferta de trabajo", "desc": "Oportunidad a tiempo completo o parcial" },
-        "freelance": { "label": "Freelance", "desc": "Proyecto o contrato a corto plazo" },
-        "question": { "label": "Consulta general", "desc": "Charlar o preguntar algo" },
-        "other": { "label": "Otro", "desc": "Cualquier otra cosa" }
+        "project": { "label": "Proyecto" },
+        "job": { "label": "Trabajo" },
+        "freelance": { "label": "Freelance" },
+        "question": { "label": "Consulta" },
+        "other": { "label": "Otro" }
       }
     }
   },

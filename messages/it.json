@@ -1293,7 +1293,7 @@
       "sectionTitle": "Scrivimi",
       "kicker": "Modulo",
       "title": "Mettiti in contatto",
-      "subtitle": "Raccontami il tuo progetto o idea in pochi passi.",
+      "subtitle": "Scegli un motivo, lascia i dati e scrivi. Fatto.",
       "openForm": "Apri il modulo",
       "ctaTitle": "Iniziamo un progetto?",
       "ctaText": "Sono sempre aperto a nuovi progetti, idee creative o opportunità per far parte della tua visione.",
@@ -1306,30 +1306,17 @@
       "errorGeneric": "Qualcosa è andato storto",
       "successTitle": "Messaggio inviato!",
       "successText": "Ti risponderò presto.",
-      "step1Label": "Passo 1 di 4",
-      "step1Title": "Di cosa hai bisogno?",
-      "step2Label": "Passo 2 di 4",
-      "step2Title": "I tuoi dati",
-      "step3Label": "Passo 3 di 4",
-      "step3Title": "Il tuo messaggio",
-      "step4Label": "Passo 4 di 4",
-      "step4Title": "Rivedi e invia",
+      "reasonLabel": "Motivo",
+      "messageLabel": "Messaggio",
       "namePlaceholder": "Il tuo nome",
       "emailPlaceholder": "tua@email.com",
-      "messagePlaceholder": "Raccontami il progetto o la richiesta…",
-      "reviewHint": "Al completamento, invieremo il messaggio via email.",
-      "review": {
-        "reason": "Motivo",
-        "name": "Nome",
-        "email": "Email",
-        "message": "Messaggio"
-      },
+      "messagePlaceholder": "Come posso aiutarti?",
       "reasons": {
-        "project": { "label": "Progetto / Collaborazione", "desc": "Creiamo qualcosa insieme" },
-        "job": { "label": "Offerta di lavoro", "desc": "Opportunità full-time o part-time" },
-        "freelance": { "label": "Freelance", "desc": "Progetto o contratto a breve termine" },
-        "question": { "label": "Domanda generale", "desc": "Chiacchierare o chiedere qualcosa" },
-        "other": { "label": "Altro", "desc": "Qualcos'altro" }
+        "project": { "label": "Progetto" },
+        "job": { "label": "Lavoro" },
+        "freelance": { "label": "Freelance" },
+        "question": { "label": "Domanda" },
+        "other": { "label": "Altro" }
       }
     }
   },

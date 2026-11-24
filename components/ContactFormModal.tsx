@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslations } from "next-intl";
-import Stepper, { Step } from "./Stepper";
 import {
   X,
   Zap,
@@ -15,7 +14,6 @@ import {
   Mail,
   Send,
   Check,
-  ArrowRight,
 } from "lucide-react";
 import "./contact-form-modal.css";
 
@@ -35,7 +33,7 @@ type ContactFormModalProps = { isOpen: boolean; onClose: () => void };
 export default function ContactFormModal({ isOpen, onClose }: ContactFormModalProps) {
   const t = useTranslations("contact.form");
   const [formData, setFormData] = useState<ContactFormData>({
-    reason: "",
+    reason: "project",
     name: "",
     email: "",
     message: "",
@@ -57,21 +55,31 @@ export default function ContactFormModal({ isOpen, onClose }: ContactFormModalPr
     };
   }, [isOpen, onClose]);
 
-  const handleFinalStepCompleted = async () => {
+  const canSubmit =
+    formData.reason &&
+    formData.name.trim().length > 1 &&
+    formData.email.includes("@") &&
+    formData.message.trim().length > 2 &&
+    status !== "loading";
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+
     setStatus("loading");
     setErrorMsg("");
     try {
-      const reasonLabel = formData.reason
-        ? t(`reasons.${formData.reason as (typeof REASON_KEYS)[number]}.label`)
-        : formData.reason;
+      const reasonLabel = t(
+        `reasons.${formData.reason as (typeof REASON_KEYS)[number]}.label`,
+      );
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           reason: reasonLabel,
-          name: formData.name,
-          email: formData.email,
-          message: formData.message,
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          message: formData.message.trim(),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -81,26 +89,14 @@ export default function ContactFormModal({ isOpen, onClose }: ContactFormModalPr
       setStatus("success");
       setTimeout(() => {
         onClose();
-        setFormData({ reason: "", name: "", email: "", message: "" });
+        setFormData({ reason: "project", name: "", email: "", message: "" });
         setStatus("idle");
-      }, 2500);
+      }, 2200);
     } catch (err) {
       setStatus("error");
       setErrorMsg(err instanceof Error ? err.message : t("errorGeneric"));
     }
   };
-
-  const reviewRows = [
-    {
-      key: "reason",
-      value: formData.reason
-        ? t(`reasons.${formData.reason as (typeof REASON_KEYS)[number]}.label`)
-        : "",
-    },
-    { key: "name", value: formData.name },
-    { key: "email", value: formData.email },
-    { key: "message", value: formData.message },
-  ] as const;
 
   return (
     <AnimatePresence>
@@ -150,7 +146,7 @@ export default function ContactFormModal({ isOpen, onClose }: ContactFormModalPr
                 <p className="contact-form-modal__success-text">{t("successText")}</p>
               </motion.div>
             ) : (
-              <>
+              <form className="contact-form-modal__form" onSubmit={handleSubmit} noValidate>
                 <header className="contact-form-modal__header">
                   <p className="contact-form-modal__kicker">{t("kicker")}</p>
                   <h2 id="contact-form-title" className="contact-form-modal__title">
@@ -166,148 +162,94 @@ export default function ContactFormModal({ isOpen, onClose }: ContactFormModalPr
                 ) : null}
 
                 <div className="contact-form-modal__body">
-                  <Stepper
-                    initialStep={1}
-                    onFinalStepCompleted={handleFinalStepCompleted}
-                    backButtonText={t("back")}
-                    nextButtonText={
-                      status === "loading" ? (
-                        t("sending")
-                      ) : (
-                        <ArrowRight size={18} strokeWidth={2.5} aria-hidden />
-                      )
-                    }
-                    completeButtonText={status === "loading" ? t("sending") : t("complete")}
-                    variant="premium"
-                    className="contact-modal-stepper contact-form-modal-stepper"
-                    stepCircleContainerClassName=""
-                    stepContainerClassName=""
-                    footerClassName=""
-                    nextButtonProps={{ disabled: status === "loading" }}
-                  >
-                    <Step>
-                      <p className="contact-form-modal__step-label">{t("step1Label")}</p>
-                      <h3 className="contact-form-modal__step-title">{t("step1Title")}</h3>
-                      <div className="contact-form-modal__reasons">
-                        {REASON_KEYS.map((key) => {
-                          const Icon = REASON_ICONS[key];
-                          const sel = formData.reason === key;
-                          return (
-                            <label
-                              key={key}
-                              className={`contact-form-modal__reason${sel ? " is-selected" : ""}`}
-                            >
-                              <input
-                                type="radio"
-                                name="reason"
-                                value={key}
-                                checked={sel}
-                                onChange={(e) =>
-                                  setFormData((p) => ({ ...p, reason: e.target.value }))
-                                }
-                                className="sr-only"
-                              />
-                              <div className="contact-form-modal__reason-icon" aria-hidden>
-                                <Icon size={16} strokeWidth={2} />
-                              </div>
-                              <div className="contact-form-modal__reason-copy">
-                                <div className="contact-form-modal__reason-label">
-                                  {t(`reasons.${key}.label`)}
-                                </div>
-                                <div className="contact-form-modal__reason-desc">
-                                  {t(`reasons.${key}.desc`)}
-                                </div>
-                              </div>
-                              {sel ? (
-                                <span className="contact-form-modal__reason-check" aria-hidden>
-                                  ✓
-                                </span>
-                              ) : null}
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </Step>
+                  <fieldset className="contact-form-modal__fieldset">
+                    <legend className="contact-form-modal__legend">{t("reasonLabel")}</legend>
+                    <div className="contact-form-modal__chips" role="radiogroup">
+                      {REASON_KEYS.map((key) => {
+                        const Icon = REASON_ICONS[key];
+                        const sel = formData.reason === key;
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            role="radio"
+                            aria-checked={sel}
+                            className={`contact-form-modal__chip${sel ? " is-selected" : ""}`}
+                            onClick={() => setFormData((p) => ({ ...p, reason: key }))}
+                          >
+                            <Icon size={15} strokeWidth={2.25} aria-hidden />
+                            <span>{t(`reasons.${key}.label`)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
 
-                    <Step>
-                      <p className="contact-form-modal__step-label">{t("step2Label")}</p>
-                      <h3 className="contact-form-modal__step-title">{t("step2Title")}</h3>
-                      <div className="contact-form-modal__fields">
-                        <label className="contact-form-modal__field">
-                          <User
-                            size={18}
-                            strokeWidth={2}
-                            className="contact-form-modal__field-icon"
-                          />
-                          <input
-                            type="text"
-                            className="contact-form-modal__input"
-                            value={formData.name}
-                            placeholder={t("namePlaceholder")}
-                            required
-                            autoComplete="name"
-                            onChange={(e) =>
-                              setFormData((p) => ({ ...p, name: e.target.value }))
-                            }
-                          />
-                        </label>
-                        <label className="contact-form-modal__field">
-                          <Mail
-                            size={18}
-                            strokeWidth={2}
-                            className="contact-form-modal__field-icon"
-                          />
-                          <input
-                            type="email"
-                            className="contact-form-modal__input"
-                            value={formData.email}
-                            placeholder={t("emailPlaceholder")}
-                            required
-                            autoComplete="email"
-                            onChange={(e) =>
-                              setFormData((p) => ({ ...p, email: e.target.value }))
-                            }
-                          />
-                        </label>
-                      </div>
-                    </Step>
-
-                    <Step>
-                      <p className="contact-form-modal__step-label">{t("step3Label")}</p>
-                      <h3 className="contact-form-modal__step-title">{t("step3Title")}</h3>
-                      <textarea
-                        className="contact-form-modal__textarea"
-                        value={formData.message}
-                        onChange={(e) =>
-                          setFormData((p) => ({ ...p, message: e.target.value }))
-                        }
-                        placeholder={t("messagePlaceholder")}
-                        rows={5}
-                        required
+                  <div className="contact-form-modal__fields contact-form-modal__fields--row">
+                    <label className="contact-form-modal__field">
+                      <User
+                        size={18}
+                        strokeWidth={2}
+                        className="contact-form-modal__field-icon"
                       />
-                    </Step>
+                      <input
+                        type="text"
+                        className="contact-form-modal__input"
+                        value={formData.name}
+                        placeholder={t("namePlaceholder")}
+                        required
+                        autoComplete="name"
+                        onChange={(e) =>
+                          setFormData((p) => ({ ...p, name: e.target.value }))
+                        }
+                      />
+                    </label>
+                    <label className="contact-form-modal__field">
+                      <Mail
+                        size={18}
+                        strokeWidth={2}
+                        className="contact-form-modal__field-icon"
+                      />
+                      <input
+                        type="email"
+                        className="contact-form-modal__input"
+                        value={formData.email}
+                        placeholder={t("emailPlaceholder")}
+                        required
+                        autoComplete="email"
+                        onChange={(e) =>
+                          setFormData((p) => ({ ...p, email: e.target.value }))
+                        }
+                      />
+                    </label>
+                  </div>
 
-                    <Step>
-                      <p className="contact-form-modal__step-label">{t("step4Label")}</p>
-                      <h3 className="contact-form-modal__step-title">{t("step4Title")}</h3>
-                      <div className="contact-form-modal__review">
-                        {reviewRows.map(({ key, value }) => (
-                          <div key={key} className="contact-form-modal__review-row">
-                            <div className="contact-form-modal__review-key">
-                              {t(`review.${key}`)}
-                            </div>
-                            <div className="contact-form-modal__review-val">{value}</div>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="contact-form-modal__hint">
-                        <Send size={13} aria-hidden />
-                        {t("reviewHint")}
-                      </p>
-                    </Step>
-                  </Stepper>
+                  <label className="contact-form-modal__message">
+                    <span className="sr-only">{t("messageLabel")}</span>
+                    <textarea
+                      className="contact-form-modal__textarea"
+                      value={formData.message}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, message: e.target.value }))
+                      }
+                      placeholder={t("messagePlaceholder")}
+                      rows={4}
+                      required
+                    />
+                  </label>
                 </div>
-              </>
+
+                <div className="contact-form-modal__footer">
+                  <button
+                    type="submit"
+                    className="contact-form-modal__submit"
+                    disabled={!canSubmit}
+                  >
+                    <Send size={16} strokeWidth={2.25} aria-hidden />
+                    {status === "loading" ? t("sending") : t("complete")}
+                  </button>
+                </div>
+              </form>
             )}
           </motion.div>
         </div>
