@@ -6,8 +6,12 @@ import {
 } from "@/lib/viajes/gemini";
 import {
   GUIDE_SYSTEM_PROMPT,
+  JSON_SYSTEM_PROMPT,
+  buildJsonUserPrompt,
   buildPlanUserPrompt,
 } from "@/lib/viajes/prompts";
+import { parseItineraryJson } from "@/lib/viajes/itinerary-schema";
+import { renderGuideHtml } from "@/lib/viajes/render-guide";
 import { clientIp, consumeRateLimit } from "@/lib/viajes/rate-limit";
 import { sanitizeGuideHtml } from "@/lib/viajes/sanitize";
 import { searchTravelContext } from "@/lib/viajes/tavily";
@@ -16,7 +20,7 @@ import { fetchDestinationImages } from "@/lib/viajes/wikimedia";
 import type { SearchSnippet } from "@/lib/viajes/types";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST(request: Request) {
   try {
@@ -73,24 +77,68 @@ export async function POST(request: Request) {
       }
     }
 
-    const images = await fetchDestinationImages(input.destination, [
-      ...input.interests.slice(0, 2),
-    ]);
+    let images: Awaited<ReturnType<typeof fetchDestinationImages>> = [];
+    try {
+      images = await fetchDestinationImages(input.destination, [
+        ...input.interests.slice(0, 2),
+      ]);
+    } catch (imgErr) {
+      console.warn("[viajes/plan] wikimedia", imgErr);
+    }
 
-    const raw = await generateGeminiText(
-      GUIDE_SYSTEM_PROMPT,
-      buildPlanUserPrompt({ input, snippets, images, consultedAt }),
-      { temperature: 0.9, maxOutputTokens: 8192 },
-    );
+    let html = "";
+    let usedFallback = false;
 
-    const html = sanitizeGuideHtml(extractHtmlDocument(raw));
-    if (html.length < 200 || !/<html[\s>]/i.test(html)) {
-      return NextResponse.json(
+    // 1) Prefer full art-directed HTML from Gemini
+    try {
+      const rawHtml = await generateGeminiText(
+        GUIDE_SYSTEM_PROMPT,
+        buildPlanUserPrompt({ input, snippets, images, consultedAt }),
         {
-          error: "GENERATION_FAILED",
-          message: "La IA no devolvió una guía HTML válida. Reintenta.",
+          temperature: 0.85,
+          maxOutputTokens: 8192,
+          attemptsPerModel: 1,
+          maxModels: 2,
         },
-        { status: 502 },
+      );
+      html = sanitizeGuideHtml(extractHtmlDocument(rawHtml));
+    } catch (htmlErr) {
+      console.warn("[viajes/plan] html pass failed", htmlErr);
+    }
+
+    // 2) Fallback: compact JSON + our destination-themed renderer
+    if (html.length < 200 || !/<html[\s>]/i.test(html)) {
+      usedFallback = true;
+      const rawJson = await generateGeminiText(
+        JSON_SYSTEM_PROMPT,
+        buildJsonUserPrompt({ input, snippets, consultedAt }),
+        {
+          temperature: 0.55,
+          maxOutputTokens: 4096,
+          attemptsPerModel: 3,
+          maxModels: 3,
+        },
+      );
+      const plan = parseItineraryJson(rawJson);
+      if (!plan) {
+        return NextResponse.json(
+          {
+            error: "GENERATION_FAILED",
+            message:
+              "Gemini está saturado y no pudo armar la guía. Espera ~1 min y reintenta.",
+          },
+          { status: 502 },
+        );
+      }
+      html = sanitizeGuideHtml(
+        renderGuideHtml({
+          plan,
+          images,
+          consultedAt,
+          destination: input.destination,
+          origin: input.origin,
+          locale: input.locale,
+        }),
       );
     }
 
@@ -103,6 +151,7 @@ export async function POST(request: Request) {
       sources: snippets.slice(0, 24),
       images,
       consultedAt,
+      fallback: usedFallback,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "UNKNOWN";
@@ -116,10 +165,20 @@ export async function POST(request: Request) {
       );
     }
     console.error("[viajes/plan]", err);
+    const friendly =
+      /high demand|try again later|unavailable|overloaded|saturad/i.test(
+        message,
+      )
+        ? "Gemini está saturado ahora mismo. Espera unos segundos y vuelve a generar."
+        : message === "GEMINI_EMPTY"
+          ? "La IA no devolvió contenido. Reintenta."
+          : message.startsWith("Gemini") || message.length < 160
+            ? message
+            : "No se pudo generar la guía. Inténtalo de nuevo.";
     return NextResponse.json(
       {
         error: "SERVER",
-        message: "No se pudo generar la guía. Inténtalo de nuevo.",
+        message: friendly,
       },
       { status: 500 },
     );

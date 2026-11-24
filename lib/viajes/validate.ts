@@ -19,15 +19,23 @@ export function parseTripPlanInput(body: unknown): TripPlanInput | null {
   const destination = asString(b.destination, 80);
   if (origin.length < 2 || destination.length < 2) return null;
 
-  const dateModeRaw = asString(b.dateMode, 20) as DateMode;
-  const dateMode: DateMode =
-    dateModeRaw === "days" || dateModeRaw === "flexible" || dateModeRaw === "range"
-      ? dateModeRaw
-      : "range";
+  const dateModeRaw = asString(b.dateMode, 20);
+  // Back-compat: range/days → exact/flexible
+  let dateMode: DateMode = "exact";
+  if (
+    dateModeRaw === "flexible" ||
+    dateModeRaw === "days"
+  ) {
+    dateMode = "flexible";
+  } else if (dateModeRaw === "exact" || dateModeRaw === "range") {
+    dateMode = "exact";
+  }
 
   const transportRaw = asString(b.transport, 20) as TransportPref;
   const transport: TransportPref =
-    transportRaw === "bus" || transportRaw === "flight" || transportRaw === "flexible"
+    transportRaw === "bus" ||
+    transportRaw === "flight" ||
+    transportRaw === "flexible"
       ? transportRaw
       : "flexible";
 
@@ -45,13 +53,19 @@ export function parseTripPlanInput(body: unknown): TripPlanInput | null {
       ? localeRaw
       : "es";
 
+  const daysMin = asInt(b.daysMin ?? b.days, 1, 30, 4);
+  const daysMax = asInt(b.daysMax ?? b.days, daysMin, 30, Math.max(daysMin, 7));
+
   return {
     origin,
     destination,
     dateMode,
     startDate: asString(b.startDate, 32) || undefined,
     endDate: asString(b.endDate, 32) || undefined,
-    days: dateMode === "days" ? asInt(b.days, 1, 21, 5) : undefined,
+    flexibleMonth: asString(b.flexibleMonth, 16) || undefined,
+    daysMin: dateMode === "flexible" ? daysMin : undefined,
+    daysMax: dateMode === "flexible" ? daysMax : undefined,
+    days: dateMode === "flexible" ? daysMin : undefined,
     luxury: asInt(b.luxury, 1, 5, 3),
     interests,
     interestsNote: asString(b.interestsNote, 400) || undefined,

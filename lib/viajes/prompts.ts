@@ -12,35 +12,26 @@ function luxuryCopy(n: number): string {
 }
 
 function dateCopy(input: TripPlanInput): string {
-  if (input.dateMode === "range" && input.startDate && input.endDate) {
-    return `${input.startDate} → ${input.endDate}`;
+  if (input.dateMode === "exact" && input.startDate && input.endDate) {
+    return `Outbound ${input.startDate} · Return ${input.endDate}`;
   }
-  if (input.dateMode === "days" && input.days) {
-    return `${input.days} days (flexible calendar)`;
+  if (input.dateMode === "flexible") {
+    const month = input.flexibleMonth || "flexible month";
+    const min = input.daysMin ?? input.days ?? 4;
+    const max = input.daysMax ?? Math.max(min, 7);
+    return `Flexible in ${month}: ${min}–${max} days (pick best cheap window)`;
   }
   return "Flexible dates — suggest a realistic window";
 }
 
-export const GUIDE_SYSTEM_PROMPT = `You are an elite travel art-director + itinerary writer.
-You produce ONE complete, self-contained HTML5 document (DOCTYPE + html + head + body) that feels like a premium printed travel guide.
+export const GUIDE_SYSTEM_PROMPT = `Elite travel art-director. Output ONLY one complete HTML5 document (no markdown).
 
-HARD RULES:
-- Output ONLY the HTML document. No markdown fences unless wrapping the whole HTML.
-- Inline ALL CSS in a <style> block. No external CSS frameworks. You may use Google Fonts <link> if it fits the destination vibe.
-- Aesthetic MUST be destination-specific and emotionally attractive (Japan → washi/neon/hinomaru; Paris → Haussmann cream + Eiffel ink; Iceland → glacial blues; Morocco → zellige terracotta, etc.). Invent a coherent palette, display type, and motifs for THIS trip.
-- Structure (adapt names to locale/destination):
-  1) Full-bleed hero with destination title + trip dates + short poetic line
-  2) Boarding-pass / ticket cards for outbound + return transport (or bus)
-  3) Route / city hops diagram (simple CSS/HTML, no JS required)
-  4) Stay comparison (2–3 lodging options matching luxury level)
-  5) Itemized receipt / budget breakdown with ESTIMATED prices
-  6) Day-by-day cards (activities + approx price + short tip) with photos when URLs provided
-- Prices: use ONLY figures supported by the search snippets. If unknown, write "No verificado" / "Unverified" — NEVER invent precise flight/hotel prices.
-- Mark every money figure as estimado / estimate. Include a small disclaimer footer: prices are indicative, not bookable quotes; consulted date provided.
-- Use the provided Wikimedia image URLs with <img> and visible attribution captions.
-- Responsive but print-friendly: include @media print { ... } that removes interactive chrome, uses white backgrounds if needed, and paginates cleanly.
-- No scripts, no iframes, no external trackers. Pure HTML+CSS.
-- Language of all visible copy: match the user locale (es / en / it).`;
+Rules:
+- Inline CSS in <style>. Optional Google Fonts <link>. No JS/iframes.
+- Destination-specific aesthetic (Japan washi/neon; Paris Haussmann cream; etc.).
+- Sections: hero, transport tickets, route, 2–3 stays, budget receipt, day-by-day cards with photos if URLs given.
+- Prices only from snippets; else "No verificado". Mark as estimado. Footer disclaimer + consulted date.
+- Print CSS (@media print). Locale of visible text = user locale.`;
 
 export function buildPlanUserPrompt(params: {
   input: TripPlanInput;
@@ -69,14 +60,16 @@ CONSULTED_AT: ${consultedAt}
 
 SEARCH SNIPPETS (cite URLs in a sources strip or footnotes):
 ${snippets
+  .slice(0, 10)
   .map(
     (s, i) =>
-      `[${i + 1}] Q="${s.query}"\nTitle: ${s.title}\nURL: ${s.url}\n${s.content}`,
+      `[${i + 1}] ${s.title}\n${s.url}\n${s.content.slice(0, 420)}`,
   )
   .join("\n\n") || "(none — mark all prices as Unverified)"}
 
 IMAGES (use several; keep attribution):
 ${images
+  .slice(0, 6)
   .map(
     (img, i) =>
       `[img${i + 1}] ${img.title}\nURL: ${img.url}\nCredit: ${img.attribution}`,
@@ -84,6 +77,38 @@ ${images
   .join("\n\n") || "(none — use elegant CSS geometric hero instead)"}
 
 Make it feel as crafted as a bespoke agency proposal for THIS destination.`;
+}
+
+export const JSON_SYSTEM_PROMPT = `You are a travel planner. Return ONLY valid JSON (no markdown) matching:
+{
+  "title": string,
+  "tagline": string,
+  "palette": {"bg":"#hex","ink":"#hex","accent":"#hex","paper":"#hex"},
+  "transport": {"outbound": string, "inbound": string, "note"?: string},
+  "stays": [{"name": string, "price"?: string, "vibe"?: string}],
+  "budget": [{"label": string, "amount": string}],
+  "days": [{"title": string, "summary"?: string, "activities": [{"name": string, "price"?: string, "tip"?: string}]}],
+  "disclaimer"?: string
+}
+Prices only from snippets; else "No verificado". Palette must evoke the destination. Locale of strings = user locale.`;
+
+export function buildJsonUserPrompt(params: {
+  input: import("./types").TripPlanInput;
+  snippets: import("./types").SearchSnippet[];
+  consultedAt: string;
+}): string {
+  const { input, snippets, consultedAt } = params;
+  return `Trip JSON for ${input.origin} → ${input.destination}.
+Dates: ${input.dateMode === "exact" ? `${input.startDate}–${input.endDate}` : `${input.flexibleMonth} ${input.daysMin}-${input.daysMax} days`}
+Luxury ${input.luxury}/5 · transport ${input.transport}
+Interests: ${[...input.interests, input.interestsNote].filter(Boolean).join(", ") || "general"}
+Locale: ${input.locale}
+Consulted: ${consultedAt}
+Snippets:
+${snippets
+  .slice(0, 8)
+  .map((s, i) => `[${i + 1}] ${s.title} | ${s.url} | ${s.content.slice(0, 280)}`)
+  .join("\n")}`;
 }
 
 export const EDIT_SYSTEM_PROMPT = `You edit an existing self-contained travel-guide HTML document.

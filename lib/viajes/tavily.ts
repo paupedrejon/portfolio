@@ -18,15 +18,29 @@ function luxuryLabel(n: number): string {
   return "luxury 5-star hotel";
 }
 
+function whenLabel(input: TripPlanInput): string {
+  if (input.dateMode === "exact" && input.startDate && input.endDate) {
+    return `${input.startDate} to ${input.endDate}`;
+  }
+  if (input.dateMode === "flexible") {
+    const month = input.flexibleMonth || "upcoming months";
+    const min = input.daysMin ?? 3;
+    const max = input.daysMax ?? 10;
+    return `${month} trip ${min}-${max} days`;
+  }
+  if (input.days) return `${input.days} days`;
+  return "flexible dates";
+}
+
 export function buildSearchQueries(input: TripPlanInput): string[] {
   const { origin, destination, transport } = input;
   const lux = luxuryLabel(input.luxury);
-  const when =
-    input.dateMode === "range" && input.startDate && input.endDate
-      ? `${input.startDate} to ${input.endDate}`
-      : input.dateMode === "days" && input.days
-        ? `${input.days} days`
-        : "flexible dates";
+  const when = whenLabel(input);
+
+  const interests =
+    input.interests.length > 0
+      ? input.interests.join(" ")
+      : "sightseeing food";
 
   const transportQ =
     transport === "bus"
@@ -35,19 +49,42 @@ export function buildSearchQueries(input: TripPlanInput): string[] {
         ? `cheapest flights ${origin} to ${destination} round trip prices ${when}`
         : `cheapest transport flight or bus ${origin} to ${destination} prices ${when}`;
 
-  const interests =
-    input.interests.length > 0
-      ? input.interests.join(" ")
-      : "sightseeing food";
-
   return [
     transportQ,
-    `return trip cheapest ${destination} to ${origin} ${transport === "bus" ? "bus" : "flight"} price`,
     `${destination} ${lux} booking prices per night ${when}`,
     `best things to do in ${destination} ${interests} ticket prices`,
-    `${destination} restaurants ${input.luxury <= 2 ? "cheap local" : input.luxury >= 4 ? "fine dining" : "mid-range"} average price`,
-    `${destination} day trip activities costs ${when}`,
-  ].slice(0, 6);
+    `${destination} restaurants average meal price`,
+  ];
+}
+
+async function searchOne(
+  apiKey: string,
+  query: string,
+): Promise<SearchSnippet[]> {
+  const res = await fetch("https://api.tavily.com/search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      api_key: apiKey,
+      query,
+      search_depth: "basic",
+      max_results: 3,
+      include_answer: false,
+    }),
+  });
+
+  if (res.status === 429) throw new Error("TAVILY_QUOTA");
+  if (!res.ok) return [];
+
+  const data = (await res.json()) as TavilyResponse;
+  return (data.results ?? [])
+    .filter((r) => r.url && r.content)
+    .map((r) => ({
+      query,
+      title: r.title || query,
+      url: r.url!,
+      content: (r.content || "").slice(0, 900),
+    }));
 }
 
 export async function searchTravelContext(
@@ -59,43 +96,22 @@ export async function searchTravelContext(
   }
 
   const queries = buildSearchQueries(input);
+  const settled = await Promise.allSettled(
+    queries.map((q) => searchOne(apiKey, q)),
+  );
+
   const snippets: SearchSnippet[] = [];
-
-  for (const query of queries) {
-    try {
-      const res = await fetch("https://api.tavily.com/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          api_key: apiKey,
-          query,
-          search_depth: "basic",
-          max_results: 4,
-          include_answer: false,
-        }),
-      });
-
-      if (res.status === 429) {
-        throw new Error("TAVILY_QUOTA");
+  for (const result of settled) {
+    if (result.status === "rejected") {
+      if (
+        result.reason instanceof Error &&
+        result.reason.message === "TAVILY_QUOTA"
+      ) {
+        throw result.reason;
       }
-      if (!res.ok) {
-        continue;
-      }
-
-      const data = (await res.json()) as TavilyResponse;
-      for (const r of data.results ?? []) {
-        if (!r.url || !r.content) continue;
-        snippets.push({
-          query,
-          title: r.title || query,
-          url: r.url,
-          content: r.content.slice(0, 900),
-        });
-      }
-    } catch (err) {
-      if (err instanceof Error && err.message === "TAVILY_QUOTA") throw err;
+      continue;
     }
+    snippets.push(...result.value);
   }
-
   return snippets;
 }

@@ -1614,23 +1614,35 @@
       "aria": "AI Travel Planner"
     },
     "disclaimer": "Indicative prices from web search (not bookable quotes). Free-quota demo: a few plans per IP per day.",
-    "wizardTitle": "Design your <em>trip</em>",
-    "wizardHint": "The more specific you are, the better the guide.",
+    "wizardTitle": "Where to <em>next</em>?",
+    "wizardTitle2": "Trip <em>style</em>",
+    "wizardHint": "Like a flight search: origin, destination and dates.",
     "previewTitle": "Generated <em>guide</em>",
+    "previewTitlePlain": "Your guide",
     "previewHint": "Art direction changes with the destination.",
     "previewFrameTitle": "Guide preview",
     "chatTitle": "Edit by <em>chat</em>",
-    "chatHint": "Ask for changes: drop a day, another hotel, more local food…",
-    "chatEmpty": "Generate a guide to start editing.",
+    "chatTitlePlain": "Guide chat",
+    "chatHint": "Ask for changes like ChatGPT: another hotel, drop a day, more local food…",
+    "chatEmpty": "Type here to edit the guide.",
     "emptyTitle": "No guide yet",
-    "emptyBody": "Fill the form and hit generate.",
-    "generatingHint": "Searching context and illustrating the destination… ~30–60 s.",
+    "emptyBody": "Complete the search and generate the guide.",
+    "generatingHint": "Searching prices and illustrating the destination… ~30–60 s. If Gemini is busy, retry.",
+    "steps": {
+      "label": "Steps",
+      "route": "Route & dates",
+      "style": "Luxury & interests"
+    },
     "fields": {
-      "origin": "Origin",
-      "destination": "Destination",
+      "origin": "From",
+      "destination": "To",
       "dateMode": "Dates",
       "startDate": "Outbound",
       "endDate": "Return",
+      "flexibleMonth": "Month",
+      "daysMin": "Min days",
+      "daysMax": "Max days",
+      "daysUnit": "days",
       "days": "Number of days",
       "luxury": "Luxury level",
       "transport": "Transport",
@@ -1639,14 +1651,15 @@
     },
     "placeholders": {
       "origin": "Barcelona",
-      "destination": "Tokyo",
-      "interestsNote": "Onsen, ramen, Shimokitazawa…",
+      "destination": "Paris",
+      "interestsNote": "Museums, croissants, Le Marais…",
       "chat": "Swap day-2 hotel for something more central"
     },
     "dateModes": {
+      "exact": "Exact dates",
+      "flexible": "Flexible dates",
       "range": "Range",
-      "days": "# days",
-      "flexible": "Flexible"
+      "days": "# days"
     },
     "transport": {
       "flight": "Flight",
@@ -1676,7 +1689,12 @@
       "print": "Print / PDF",
       "downloadHtml": "Download HTML",
       "send": "Send",
-      "editing": "Editing…"
+      "editing": "Editing…",
+      "next": "Continue",
+      "back": "Back",
+      "swap": "Swap origin and destination",
+      "editRoute": "Edit route",
+      "newTrip": "New trip"
     },
     "status": {
       "generating": "Generating guide…",
@@ -1684,7 +1702,9 @@
     },
     "chat": {
       "ready": "Guide ready. Tell me what to change.",
-      "updated": "Guide updated."
+      "updated": "Guide updated.",
+      "you": "You",
+      "assistant": "Planner"
     },
     "errors": {
       "generic": "Something failed. Try again.",

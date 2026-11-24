@@ -1675,23 +1675,35 @@
       "aria": "AI Travel Planner"
     },
     "disclaimer": "Precios orientativos a partir de búsqueda web (no cotizaciones reservables). Demo con cuota gratuita: unos pocos planes por IP y día.",
-    "wizardTitle": "Diseña tu <em>viaje</em>",
-    "wizardHint": "Cuanto más concreto seas, mejor queda la guía.",
+    "wizardTitle": "¿A dónde <em>vuelas</em>?",
+    "wizardTitle2": "Estilo del <em>viaje</em>",
+    "wizardHint": "Como un buscador de vuelos: origen, destino y fechas.",
     "previewTitle": "Guía <em>generada</em>",
+    "previewTitlePlain": "Tu guía",
     "previewHint": "La estética cambia según el destino.",
     "previewFrameTitle": "Vista previa de la guía",
     "chatTitle": "Editar por <em>chat</em>",
-    "chatHint": "Pide cambios: quitar un día, otro hotel, más comida local…",
-    "chatEmpty": "Genera una guía para empezar a editar.",
+    "chatTitlePlain": "Chat de la guía",
+    "chatHint": "Pide cambios como en ChatGPT: otro hotel, quitar un día, más comida local…",
+    "chatEmpty": "Escribe aquí para modificar la guía.",
     "emptyTitle": "Aún no hay guía",
-    "emptyBody": "Rellena el formulario y pulsa generar.",
-    "generatingHint": "Buscando contexto e ilustrando el destino… puede tardar ~30–60 s.",
+    "emptyBody": "Completa la búsqueda y genera la guía.",
+    "generatingHint": "Buscando precios e ilustrando el destino… ~30–60 s. Si Gemini está saturado, reintenta.",
+    "steps": {
+      "label": "Pasos",
+      "route": "Ruta y fechas",
+      "style": "Lujo e intereses"
+    },
     "fields": {
       "origin": "Origen",
       "destination": "Destino",
       "dateMode": "Fechas",
       "startDate": "Ida",
       "endDate": "Vuelta",
+      "flexibleMonth": "Mes",
+      "daysMin": "Días mín.",
+      "daysMax": "Días máx.",
+      "daysUnit": "días",
       "days": "Número de días",
       "luxury": "Nivel de lujo",
       "transport": "Transporte",
@@ -1700,14 +1712,15 @@
     },
     "placeholders": {
       "origin": "Barcelona",
-      "destination": "Tokio",
-      "interestsNote": "Onsen, ramen, barrio de Shimokitazawa…",
+      "destination": "París",
+      "interestsNote": "Museos, croissants, barrio Le Marais…",
       "chat": "Cambia el hotel del día 2 por algo más céntrico"
     },
     "dateModes": {
+      "exact": "Fechas concretas",
+      "flexible": "Fechas flexibles",
       "range": "Rango",
-      "days": "Nº días",
-      "flexible": "Flexibles"
+      "days": "Nº días"
     },
     "transport": {
       "flight": "Vuelo",
@@ -1737,7 +1750,12 @@
       "print": "Imprimir / PDF",
       "downloadHtml": "Descargar HTML",
       "send": "Enviar",
-      "editing": "Editando…"
+      "editing": "Editando…",
+      "next": "Continuar",
+      "back": "Atrás",
+      "swap": "Intercambiar origen y destino",
+      "editRoute": "Editar ruta",
+      "newTrip": "Nuevo viaje"
     },
     "status": {
       "generating": "Generando guía…",
@@ -1745,7 +1763,9 @@
     },
     "chat": {
       "ready": "Guía lista. Dime qué quieres cambiar.",
-      "updated": "Guía actualizada."
+      "updated": "He actualizado la guía.",
+      "you": "Tú",
+      "assistant": "Planner"
     },
     "errors": {
       "generic": "Algo falló. Inténtalo de nuevo.",

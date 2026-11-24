@@ -43,6 +43,7 @@ async function searchFileTitles(query: string, limit = 3): Promise<string[]> {
 
   const res = await fetch(api.toString(), {
     headers: { "User-Agent": "PortfolioTravelPlanner/1.0 (portfolio demo)" },
+    signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) return [];
   const data = (await res.json()) as WikiSearchResponse;
@@ -66,6 +67,7 @@ async function resolveImage(
 
   const res = await fetch(api.toString(), {
     headers: { "User-Agent": "PortfolioTravelPlanner/1.0 (portfolio demo)" },
+    signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) return null;
   const data = (await res.json()) as WikiImageResponse;

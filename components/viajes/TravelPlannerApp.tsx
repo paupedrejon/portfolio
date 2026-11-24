@@ -7,11 +7,10 @@ import GuidePreview from "@/components/viajes/GuidePreview";
 import GuideChat, { type ChatMessage } from "@/components/viajes/GuideChat";
 import type { TripPlanInput } from "@/lib/viajes/types";
 
-const STORAGE_KEY = "viajes-guide-v1";
+const STORAGE_KEY = "viajes-guide-v2";
 
 function purify(html: string): string {
   if (typeof window === "undefined") return html;
-  // Dynamic require avoids SSR "window is not defined" from dompurify.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const mod = require("dompurify") as {
     default?: { sanitize: (s: string, cfg?: object) => string };
@@ -27,13 +26,17 @@ function purify(html: string): string {
 }
 
 function defaultTrip(locale: string): TripPlanInput {
+  const now = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   return {
     origin: "",
     destination: "",
-    dateMode: "range",
+    dateMode: "exact",
     startDate: "",
     endDate: "",
-    days: 5,
+    flexibleMonth: month,
+    daysMin: 4,
+    daysMax: 7,
     luxury: 3,
     interests: ["food", "culture"],
     interestsNote: "",
@@ -52,6 +55,7 @@ export default function TravelPlannerApp() {
   const [loadingEdit, setLoadingEdit] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [showWizard, setShowWizard] = useState(true);
 
   useEffect(() => {
     setTrip((prev) => ({ ...prev, locale }));
@@ -67,9 +71,20 @@ export default function TravelPlannerApp() {
         trip?: TripPlanInput;
         messages?: ChatMessage[];
       };
-      if (parsed.html) setHtml(purify(parsed.html));
+      if (parsed.html) {
+        setHtml(purify(parsed.html));
+        setShowWizard(false);
+      }
       if (parsed.title) setTitle(parsed.title);
-      if (parsed.trip) setTrip({ ...parsed.trip, locale });
+      if (parsed.trip) {
+        setTrip({
+          ...defaultTrip(locale),
+          ...parsed.trip,
+          locale,
+          dateMode:
+            parsed.trip.dateMode === "flexible" ? "flexible" : "exact",
+        });
+      }
       if (parsed.messages) setMessages(parsed.messages);
     } catch {
       /* ignore */
@@ -84,7 +99,7 @@ export default function TravelPlannerApp() {
         JSON.stringify({ html, title, trip, messages }),
       );
     } catch {
-      /* ignore quota */
+      /* ignore */
     }
   }, [html, title, trip, messages]);
 
@@ -112,6 +127,7 @@ export default function TravelPlannerApp() {
       const clean = purify(data.html as string);
       setHtml(clean);
       setTitle(data.title || null);
+      setShowWizard(false);
       setMessages([
         {
           role: "assistant",
@@ -168,7 +184,11 @@ export default function TravelPlannerApp() {
 
   function printGuide() {
     if (!html) return;
-    const w = window.open("", "_blank", "noopener,noreferrer,width=1024,height=768");
+    const w = window.open(
+      "",
+      "_blank",
+      "noopener,noreferrer,width=1024,height=768",
+    );
     if (!w) {
       setError(t("errors.popup"));
       return;
@@ -191,18 +211,47 @@ export default function TravelPlannerApp() {
     }
   }
 
+  const hasGuide = Boolean(html);
+
   return (
     <div className="viajes-main">
       <p className="viajes-disclaimer">{t("disclaimer")}</p>
 
-      <div className="viajes-grid viajes-grid--split">
-        <div className="viajes-grid">
+      {!hasGuide || showWizard ? (
+        <div className="viajes-setup">
           <TripWizard
             value={trip}
             onChange={setTrip}
             onSubmit={generate}
             loading={busy}
           />
+          {loadingPlan && (
+            <div className="viajes-generating-card">
+              <strong>{t("actions.generating")}</strong>
+              <span>{t("generatingHint")}</span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="viajes-workspace">
+          <div className="viajes-workspace__guide">
+            <div className="viajes-workspace__bar">
+              <button
+                type="button"
+                className="viajes-btn viajes-btn--ghost"
+                onClick={() => setShowWizard(true)}
+              >
+                {t("actions.newTrip")}
+              </button>
+            </div>
+            <GuidePreview
+              html={html}
+              title={title}
+              loading={loadingEdit}
+              onPrint={printGuide}
+              onDownloadHtml={downloadHtml}
+            />
+          </div>
           <GuideChat
             disabled={!html}
             loading={loadingEdit}
@@ -210,16 +259,11 @@ export default function TravelPlannerApp() {
             onSend={edit}
           />
         </div>
-        <GuidePreview
-          html={html}
-          title={title}
-          loading={loadingPlan}
-          onPrint={printGuide}
-          onDownloadHtml={downloadHtml}
-        />
-      </div>
+      )}
 
-      {statusText && <p className="viajes-status">{statusText}</p>}
+      {statusText && !hasGuide && (
+        <p className="viajes-status">{statusText}</p>
+      )}
       {error && (
         <p className="viajes-status viajes-status--error" role="alert">
           {error}

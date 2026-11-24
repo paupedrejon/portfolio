@@ -15,7 +15,7 @@ import { parseTripPlanInput, wantsPriceResearch } from "@/lib/viajes/validate";
 import type { SearchSnippet } from "@/lib/viajes/types";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST(request: Request) {
   try {

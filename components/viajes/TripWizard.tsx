@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   INTEREST_PRESETS,
@@ -15,6 +16,14 @@ export type TripWizardProps = {
   loading: boolean;
 };
 
+function monthInputValue(v?: string): string {
+  if (!v) {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }
+  return v.slice(0, 7);
+}
+
 export default function TripWizard({
   value,
   onChange,
@@ -22,6 +31,7 @@ export default function TripWizard({
   loading,
 }: TripWizardProps) {
   const t = useTranslations("viajes");
+  const [step, setStep] = useState<1 | 2>(1);
 
   const set = <K extends keyof TripPlanInput>(key: K, v: TripPlanInput[K]) => {
     onChange({ ...value, [key]: v });
@@ -37,54 +47,95 @@ export default function TripWizard({
     );
   };
 
+  const step1Valid = useMemo(() => {
+    if (value.origin.trim().length < 2 || value.destination.trim().length < 2) {
+      return false;
+    }
+    if (value.dateMode === "exact") {
+      return Boolean(value.startDate && value.endDate);
+    }
+    return Boolean(value.flexibleMonth && (value.daysMin ?? 0) >= 1);
+  }, [value]);
+
   return (
-    <section className="viajes-panel" aria-labelledby="viajes-wizard-title">
-      <h2 id="viajes-wizard-title" className="viajes-panel__title">
-        {t.rich("wizardTitle", {
-          em: (chunks) => <em>{chunks}</em>,
-        })}
+    <section className="viajes-search" aria-labelledby="viajes-wizard-title">
+      <div className="viajes-steps" aria-label={t("steps.label")}>
+        <button
+          type="button"
+          className={`viajes-steps__item${step === 1 ? " is-active" : ""}`}
+          onClick={() => setStep(1)}
+        >
+          <span className="viajes-steps__num">1</span>
+          {t("steps.route")}
+        </button>
+        <span className="viajes-steps__sep" aria-hidden />
+        <button
+          type="button"
+          className={`viajes-steps__item${step === 2 ? " is-active" : ""}`}
+          onClick={() => step1Valid && setStep(2)}
+          disabled={!step1Valid}
+        >
+          <span className="viajes-steps__num">2</span>
+          {t("steps.style")}
+        </button>
+      </div>
+
+      <h2 id="viajes-wizard-title" className="viajes-search__title">
+        {step === 1
+          ? t.rich("wizardTitle", { em: (c) => <em>{c}</em> })
+          : t.rich("wizardTitle2", { em: (c) => <em>{c}</em> })}
       </h2>
-      <p className="viajes-panel__hint">{t("wizardHint")}</p>
 
-      <form
-        className="viajes-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit();
-        }}
-      >
-        <div className="viajes-row viajes-row--2">
-          <div className="viajes-field">
-            <label htmlFor="viajes-origin">{t("fields.origin")}</label>
-            <input
-              id="viajes-origin"
-              value={value.origin}
-              onChange={(e) => set("origin", e.target.value)}
-              placeholder={t("placeholders.origin")}
-              required
-              autoComplete="address-level2"
-            />
+      {step === 1 && (
+        <form
+          className="viajes-search__form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!step1Valid) return;
+            setStep(2);
+          }}
+        >
+          <div className="viajes-search__row">
+            <label className="viajes-search__cell">
+              <span>{t("fields.origin")}</span>
+              <input
+                value={value.origin}
+                onChange={(e) => set("origin", e.target.value)}
+                placeholder={t("placeholders.origin")}
+                required
+                autoComplete="address-level2"
+              />
+            </label>
+            <button
+              type="button"
+              className="viajes-search__swap"
+              aria-label={t("actions.swap")}
+              onClick={() =>
+                onChange({
+                  ...value,
+                  origin: value.destination,
+                  destination: value.origin,
+                })
+              }
+            >
+              ⇄
+            </button>
+            <label className="viajes-search__cell">
+              <span>{t("fields.destination")}</span>
+              <input
+                value={value.destination}
+                onChange={(e) => set("destination", e.target.value)}
+                placeholder={t("placeholders.destination")}
+                required
+                autoComplete="address-level2"
+              />
+            </label>
           </div>
-          <div className="viajes-field">
-            <label htmlFor="viajes-destination">{t("fields.destination")}</label>
-            <input
-              id="viajes-destination"
-              value={value.destination}
-              onChange={(e) => set("destination", e.target.value)}
-              placeholder={t("placeholders.destination")}
-              required
-              autoComplete="address-level2"
-            />
-          </div>
-        </div>
 
-        <div className="viajes-field">
-          <label>{t("fields.dateMode")}</label>
-          <div className="viajes-seg" role="group">
+          <div className="viajes-seg viajes-seg--dates" role="group">
             {(
               [
-                ["range", t("dateModes.range")],
-                ["days", t("dateModes.days")],
+                ["exact", t("dateModes.exact")],
                 ["flexible", t("dateModes.flexible")],
               ] as [DateMode, string][]
             ).map(([mode, label]) => (
@@ -98,123 +149,189 @@ export default function TripWizard({
               </button>
             ))}
           </div>
-        </div>
 
-        {value.dateMode === "range" && (
-          <div className="viajes-row viajes-row--2">
-            <div className="viajes-field">
-              <label htmlFor="viajes-start">{t("fields.startDate")}</label>
-              <input
-                id="viajes-start"
-                type="date"
-                value={value.startDate || ""}
-                onChange={(e) => set("startDate", e.target.value)}
-              />
+          {value.dateMode === "exact" ? (
+            <div className="viajes-search__row">
+              <label className="viajes-search__cell">
+                <span>{t("fields.startDate")}</span>
+                <input
+                  type="date"
+                  value={value.startDate || ""}
+                  onChange={(e) => set("startDate", e.target.value)}
+                  required
+                />
+              </label>
+              <label className="viajes-search__cell">
+                <span>{t("fields.endDate")}</span>
+                <input
+                  type="date"
+                  value={value.endDate || ""}
+                  onChange={(e) => set("endDate", e.target.value)}
+                  required
+                />
+              </label>
             </div>
-            <div className="viajes-field">
-              <label htmlFor="viajes-end">{t("fields.endDate")}</label>
-              <input
-                id="viajes-end"
-                type="date"
-                value={value.endDate || ""}
-                onChange={(e) => set("endDate", e.target.value)}
-              />
+          ) : (
+            <div className="viajes-search__row viajes-search__row--flex">
+              <label className="viajes-search__cell">
+                <span>{t("fields.flexibleMonth")}</span>
+                <input
+                  type="month"
+                  value={monthInputValue(value.flexibleMonth)}
+                  onChange={(e) => set("flexibleMonth", e.target.value)}
+                  required
+                />
+              </label>
+              <label className="viajes-search__cell viajes-search__cell--narrow">
+                <span>{t("fields.daysMin")}</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={value.daysMin ?? 4}
+                  onChange={(e) => {
+                    const min = Number(e.target.value);
+                    onChange({
+                      ...value,
+                      daysMin: min,
+                      daysMax: Math.max(min, value.daysMax ?? min),
+                    });
+                  }}
+                />
+              </label>
+              <label className="viajes-search__cell viajes-search__cell--narrow">
+                <span>{t("fields.daysMax")}</span>
+                <input
+                  type="number"
+                  min={value.daysMin ?? 1}
+                  max={30}
+                  value={value.daysMax ?? 7}
+                  onChange={(e) => set("daysMax", Number(e.target.value))}
+                />
+              </label>
             </div>
-          </div>
-        )}
+          )}
 
-        {value.dateMode === "days" && (
-          <div className="viajes-field">
-            <label htmlFor="viajes-days">{t("fields.days")}</label>
-            <input
-              id="viajes-days"
-              type="number"
-              min={1}
-              max={21}
-              value={value.days ?? 5}
-              onChange={(e) => set("days", Number(e.target.value))}
-            />
+          <div className="viajes-search__actions">
+            <button
+              type="submit"
+              className="viajes-btn viajes-btn--primary viajes-btn--wide"
+              disabled={!step1Valid}
+            >
+              {t("actions.next")}
+            </button>
           </div>
-        )}
+        </form>
+      )}
 
-        <div className="viajes-field viajes-luxury">
-          <label htmlFor="viajes-luxury">{t("fields.luxury")}</label>
-          <input
-            id="viajes-luxury"
-            type="range"
-            min={1}
-            max={5}
-            step={1}
-            value={value.luxury}
-            onChange={(e) => set("luxury", Number(e.target.value))}
-          />
-          <div className="viajes-luxury__meta">
+      {step === 2 && (
+        <form
+          className="viajes-search__form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit();
+          }}
+        >
+          <div className="viajes-summary">
+            <strong>
+              {value.origin} → {value.destination}
+            </strong>
             <span>
-              {value.luxury}/5 — {t(`luxury.${value.luxury}`)}
+              {value.dateMode === "exact"
+                ? `${value.startDate} · ${value.endDate}`
+                : `${value.flexibleMonth} · ${value.daysMin}–${value.daysMax} ${t("fields.daysUnit")}`}
             </span>
+            <button type="button" className="viajes-link" onClick={() => setStep(1)}>
+              {t("actions.editRoute")}
+            </button>
           </div>
-        </div>
 
-        <div className="viajes-field">
-          <label>{t("fields.transport")}</label>
-          <div className="viajes-seg" role="group">
-            {(
-              [
-                ["flight", t("transport.flight")],
-                ["bus", t("transport.bus")],
-                ["flexible", t("transport.flexible")],
-              ] as [TransportPref, string][]
-            ).map(([mode, label]) => (
-              <button
-                key={mode}
-                type="button"
-                aria-pressed={value.transport === mode}
-                onClick={() => set("transport", mode)}
-              >
-                {label}
-              </button>
-            ))}
+          <div className="viajes-field viajes-luxury">
+            <label htmlFor="viajes-luxury">{t("fields.luxury")}</label>
+            <input
+              id="viajes-luxury"
+              type="range"
+              min={1}
+              max={5}
+              step={1}
+              value={value.luxury}
+              onChange={(e) => set("luxury", Number(e.target.value))}
+            />
+            <div className="viajes-luxury__meta">
+              <span>
+                {value.luxury}/5 — {t(`luxury.${value.luxury}`)}
+              </span>
+            </div>
           </div>
-        </div>
 
-        <div className="viajes-field">
-          <label>{t("fields.interests")}</label>
-          <div className="viajes-chips">
-            {INTEREST_PRESETS.map((id) => (
-              <button
-                key={id}
-                type="button"
-                className="viajes-chip"
-                aria-pressed={value.interests.includes(id)}
-                onClick={() => toggleInterest(id)}
-              >
-                {t(`interests.${id}`)}
-              </button>
-            ))}
+          <div className="viajes-field">
+            <label>{t("fields.transport")}</label>
+            <div className="viajes-seg" role="group">
+              {(
+                [
+                  ["flight", t("transport.flight")],
+                  ["bus", t("transport.bus")],
+                  ["flexible", t("transport.flexible")],
+                ] as [TransportPref, string][]
+              ).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={value.transport === mode}
+                  onClick={() => set("transport", mode)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="viajes-field">
-          <label htmlFor="viajes-note">{t("fields.interestsNote")}</label>
-          <textarea
-            id="viajes-note"
-            rows={3}
-            value={value.interestsNote || ""}
-            onChange={(e) => set("interestsNote", e.target.value)}
-            placeholder={t("placeholders.interestsNote")}
-          />
-        </div>
+          <div className="viajes-field">
+            <label>{t("fields.interests")}</label>
+            <div className="viajes-chips">
+              {INTEREST_PRESETS.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  className="viajes-chip"
+                  aria-pressed={value.interests.includes(id)}
+                  onClick={() => toggleInterest(id)}
+                >
+                  {t(`interests.${id}`)}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <div className="viajes-actions">
-          <button
-            type="submit"
-            className="viajes-btn viajes-btn--primary"
-            disabled={loading}
-          >
-            {loading ? t("actions.generating") : t("actions.generate")}
-          </button>
-        </div>
-      </form>
+          <label className="viajes-field">
+            <span>{t("fields.interestsNote")}</span>
+            <textarea
+              rows={2}
+              value={value.interestsNote || ""}
+              onChange={(e) => set("interestsNote", e.target.value)}
+              placeholder={t("placeholders.interestsNote")}
+            />
+          </label>
+
+          <div className="viajes-search__actions">
+            <button
+              type="button"
+              className="viajes-btn viajes-btn--ghost"
+              onClick={() => setStep(1)}
+              disabled={loading}
+            >
+              {t("actions.back")}
+            </button>
+            <button
+              type="submit"
+              className="viajes-btn viajes-btn--primary viajes-btn--wide"
+              disabled={loading}
+            >
+              {loading ? t("actions.generating") : t("actions.generate")}
+            </button>
+          </div>
+        </form>
+      )}
     </section>
   );
 }

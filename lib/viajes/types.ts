@@ -1,12 +1,19 @@
-export type DateMode = "range" | "days" | "flexible";
+export type DateMode = "exact" | "flexible";
 export type TransportPref = "flight" | "bus" | "flexible";
 
 export type TripPlanInput = {
   origin: string;
   destination: string;
   dateMode: DateMode;
+  /** Exact outbound YYYY-MM-DD */
   startDate?: string;
+  /** Exact return YYYY-MM-DD */
   endDate?: string;
+  /** Flexible: YYYY-MM */
+  flexibleMonth?: string;
+  daysMin?: number;
+  daysMax?: number;
+  /** Legacy single days count (maps to min=max) */
   days?: number;
   luxury: number;
   interests: string[];
