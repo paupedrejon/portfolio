@@ -308,8 +308,6 @@
     left: 0;
     right: 0;
   }
-
-  /* Logo PAU ya es blanco sobre negro: no invertir al abrir menú claro */
 }
 
 @media (max-width: 640px) {
