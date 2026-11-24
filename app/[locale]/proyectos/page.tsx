@@ -8,7 +8,7 @@ import {
   CalendarRange,
   LayoutGrid,
   Shapes,
-  Star,
+  Heart,
 } from "lucide-react";
 
 import "../home.css";
@@ -287,7 +287,7 @@ export default function ProjectsPage() {
                 }}
                 className={`portfolio-filters__btn${showFavoritesOnly ? " is-active" : ""}`}
               >
-                <Star
+                <Heart
                   className="portfolio-filters__btn-icon"
                   size={16}
                   strokeWidth={2}

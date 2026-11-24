@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Star } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import type { ExpertiseAreaId } from "@/components/expertise/types";
@@ -72,29 +72,6 @@ export default function ProjectsList({
         return (
           <li key={project.slug} className="projects-grid__item">
             <article className={`projects-card${favorited ? " is-favorite" : ""}`}>
-              {onToggleFavorite ? (
-                <button
-                  type="button"
-                  className={`projects-card__fav${favorited ? " is-active" : ""}`}
-                  aria-pressed={favorited}
-                  aria-label={
-                    favorited ? t("unfavoriteProject") : t("favoriteProject")
-                  }
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onToggleFavorite(project.slug);
-                  }}
-                >
-                  <Star
-                    size={16}
-                    strokeWidth={2}
-                    fill={favorited ? "currentColor" : "none"}
-                    aria-hidden
-                  />
-                </button>
-              ) : null}
-
               <Link
                 href={project.slug === "ego" ? "/ego" : `/proyectos/${project.slug}`}
                 className="projects-card__image-link"
@@ -174,6 +151,28 @@ export default function ProjectsList({
                   >
                     {t("moreInfo")}
                   </Link>
+                  {onToggleFavorite ? (
+                    <button
+                      type="button"
+                      className={`projects-card__fav${favorited ? " is-active" : ""}`}
+                      aria-pressed={favorited}
+                      aria-label={
+                        favorited ? t("unfavoriteProject") : t("favoriteProject")
+                      }
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onToggleFavorite(project.slug);
+                      }}
+                    >
+                      <Heart
+                        size={18}
+                        strokeWidth={2}
+                        fill={favorited ? "currentColor" : "none"}
+                        aria-hidden
+                      />
+                    </button>
+                  ) : null}
                 </div>
               </div>
             </article>

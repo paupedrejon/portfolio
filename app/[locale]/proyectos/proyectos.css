@@ -707,29 +707,26 @@
 
 .projects-card__actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: stretch;
   gap: 0.65rem;
   margin-top: auto;
   padding-top: 1.15rem;
 }
 
 .projects-card__fav {
-  position: absolute;
-  top: 0.85rem;
-  right: 0.85rem;
-  z-index: 3;
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.35rem;
-  height: 2.35rem;
-  border-radius: var(--r-sm, 8px);
-  border: 1px solid rgb(245 238 237 / 0.16);
-  background: rgb(17 5 8 / 0.55);
-  color: var(--text-2, #cab9b9);
+  width: 3rem;
+  min-width: 3rem;
+  min-height: 3rem;
+  border-radius: 999px;
+  border: 2px solid var(--cherry-400, #e04667);
+  background: transparent;
+  color: var(--accent-text, #e04667);
   cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   transition:
     color 180ms ease,
     background 180ms ease,
@@ -739,14 +736,15 @@
 
 .projects-card__fav:hover {
   color: var(--accent-hover, #f58393);
-  border-color: rgb(224 70 103 / 0.55);
-  background: rgb(38 17 21 / 0.85);
+  border-color: var(--cherry-300, #f58393);
+  background: var(--cherry-800, #361b20);
+  transform: translateY(-2px);
 }
 
 .projects-card__fav.is-active {
-  color: var(--accent-text, #e04667);
-  border-color: rgb(224 70 103 / 0.65);
-  background: rgb(191 57 87 / 0.28);
+  color: var(--text, #f5eeed);
+  border-color: var(--cherry-400, #e04667);
+  background: rgb(191 57 87 / 0.35);
 }
 
 .projects-card__fav:focus-visible {
@@ -755,7 +753,8 @@
 }
 
 .projects-card__btn {
-  width: 100%;
+  flex: 1 1 auto;
+  width: auto;
   text-align: center;
   text-decoration: none;
   font-size: clamp(0.9rem, 1.6vw, 1rem) !important;
