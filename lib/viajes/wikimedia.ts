@@ -33,7 +33,7 @@ function stripHtml(html: string): string {
 }
 
 const BAD_TITLE =
-  /\.(pdf|djvu|svg|tif|tiff)(\b|$)|\/page\d|plan de |map of |carte |atlas |coat of arms|flag of |logo |diagram|screenshot|oj_l_|hermit nation|estudios americanos|cathedral_square.*vilnius|milan_cathedral|duomo|colosseum|eiffel.*when.?not.?paris/i;
+  /\.(pdf|djvu|svg|tif|tiff)(\b|$)|\/page\d|plan de |map of |carte |atlas |coat of arms|flag of |logo |diagram|screenshot|oj_l_|hermit nation|estudios americanos|cathedral_square.*vilnius|milan_cathedral|duomo|colosseum|eiffel.*when.?not.?paris|title.?page|pictorial representation|manuscript|engraving|woodcut|etching|\bia\b|austriae|lingayen|moscow|arbat|book.?cover|scan of|postcard of .*18|old.?map|cadastr/i;
 
 const BAD_URL =
   /\.pdf($|\?)|\/wikipedia\/commons\/.*\.pdf|page\d+-.*\.pdf|\.djvu|\.svg($|\?)/i;
@@ -95,10 +95,41 @@ export function landmarkQueriesForDestination(destination: string): string[] {
       "Times Square New York",
     ];
   }
+  if (/praga|prague|praha/.test(d)) {
+    return [
+      "Charles Bridge Prague",
+      "Prague Castle skyline",
+      "Old Town Square Prague",
+      "Astronomical Clock Prague",
+      "Vltava Prague night",
+    ];
+  }
+  if (/viena|vienna|wien/.test(d)) {
+    return [
+      "Vienna Stephansdom",
+      "Schönbrunn Palace Vienna",
+      "Vienna Ringstrasse",
+      "Hofburg Vienna",
+      "Vienna skyline night",
+    ];
+  }
+  if (/venecia|venice|venezia/.test(d)) {
+    return [
+      "Venice Grand Canal",
+      "St Mark's Square Venice",
+      "Rialto Bridge Venice",
+      "Venice gondola canal",
+      "Venetian lagoon sunset",
+    ];
+  }
+  if (/budapest/.test(d)) {
+    return ["Budapest Parliament", "Chain Bridge Budapest", "Buda Castle"];
+  }
   return [
-    `${destination} landmark filetype:bitmap`,
+    `${destination} landmark photo`,
     `${destination} skyline`,
-    `${destination} cityscape -map -plan -pdf`,
+    `${destination} old town square`,
+    `${destination} cityscape -map -plan -pdf -book`,
   ];
 }
 
@@ -109,7 +140,10 @@ async function searchFileTitles(query: string, limit = 5): Promise<string[]> {
   api.searchParams.set("list", "search");
   api.searchParams.set("srnamespace", "6");
   api.searchParams.set("srlimit", String(limit));
-  api.searchParams.set("srsearch", `${query} -pdf -djvu -svg`);
+  api.searchParams.set(
+    "srsearch",
+    `${query} -pdf -djvu -svg -map -plan -postcard -engraving`,
+  );
   api.searchParams.set("origin", "*");
 
   const res = await fetch(api.toString(), {
@@ -170,6 +204,7 @@ export function filterGuideImages(images: GuideImage[]): GuideImage[] {
   return images.filter((img) => {
     if (!img?.url || seen.has(img.url)) return false;
     if (!isUsableUrl(img.url) || !isUsableTitle(img.title || "")) return false;
+    if (!isUsableTitle(img.query || "")) return false;
     seen.add(img.url);
     return true;
   });
@@ -191,7 +226,7 @@ export async function fetchDestinationImages(
     const titles = await searchFileTitles(q, 4);
     for (const title of titles) {
       if (images.length >= 8) return filterGuideImages(images);
-      const img = await resolveImage(title, q);
+      const img = await resolveImage(title, `${destination}::${q}`);
       if (!img || seen.has(img.url)) continue;
       seen.add(img.url);
       images.push(img);

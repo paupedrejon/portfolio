@@ -40,25 +40,36 @@ export function buildSearchQueries(input: TripPlanInput): string[] {
   const lux = luxuryLabel(input.luxury);
   const when = whenLabel(input);
   const pax = travelers || 2;
-  const route = dests.join(" then ");
 
   const interests =
     input.interests.length > 0
       ? input.interests.join(" ")
       : "sightseeing food";
 
-  const queries = [
-    `cheapest round trip flight OR train OR bus OR ferry ${origin} to ${primary} ${when} ${pax} adults price EUR Skyscanner OR Google Flights OR Trainline OR Flixbus`,
-    dests.length > 1
-      ? `multi-city itinerary ${origin} ${route} transport tickets prices ${when}`
-      : `return flight train bus ${primary} to ${origin} price ${when}`,
-    `Booking.com OR Airbnb ${primary} ${lux} exact price per night ${when} for ${pax} adults best rated cheap`,
-    `GetYourGuide OR official ticket ${primary} attractions ${interests} exact price EUR`,
-    `${primary} museum OR tower OR attraction ticket official price EUR ${when}`,
-    `${primary} average meal street food OR restaurant price EUR ${input.luxury <= 2 ? "budget" : input.luxury >= 4 ? "fine dining" : "local"}`,
-  ];
+  const lodgingQs = dests
+    .slice(0, 3)
+    .map(
+      (city) =>
+        `Booking.com OR Airbnb ${city} ${lux} exact price per night ${when} for ${pax} adults`,
+    );
 
-  return queries.slice(0, 6);
+  const hopQs =
+    dests.length > 1
+      ? dests.slice(0, -1).map((city, i) => {
+          const next = dests[i + 1];
+          return `train OR bus ${city} to ${next} ticket price EUR Flixbus OR Trainline ${when}`;
+        })
+      : [];
+
+  const queries = [
+    `cheapest flight OR train OR bus ${origin} to ${primary} ${when} ${pax} adults price EUR Skyscanner OR Google Flights`,
+    ...hopQs.slice(0, 2),
+    ...lodgingQs.slice(0, 3),
+    `GetYourGuide OR official ticket ${primary} ${interests} exact price EUR`,
+    `${dests.join(" ")} attraction ticket meal price EUR backpacker itinerary`,
+  ].filter(Boolean);
+
+  return [...new Set(queries)].slice(0, 6);
 }
 
 async function searchOne(

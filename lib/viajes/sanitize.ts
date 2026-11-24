@@ -27,5 +27,10 @@ export function sanitizeGuideHtml(html: string): string {
     /url\((['"]?)https?:\/\/upload\.wikimedia\.org\/[^)"']*\/page\d+-[^)"']*\1\)/gi,
     "none",
   );
+  // Drop obvious non-photo / wrong assets that models still paste
+  out = out.replace(
+    /<img\b[^>]+src=["'][^"']*(?:title.?page|pictorial_representation|austriae|lingayen|moscow_arbat|IA_dr_)[^"']*["'][^>]*>/gi,
+    "",
+  );
   return out.trim();
 }

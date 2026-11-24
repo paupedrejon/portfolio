@@ -108,7 +108,7 @@ export async function POST(request: Request) {
         }),
         {
           temperature: 0.7,
-          maxOutputTokens: 8192,
+          maxOutputTokens: 12288,
           attemptsPerModel: 1,
           maxModels: 2,
         },

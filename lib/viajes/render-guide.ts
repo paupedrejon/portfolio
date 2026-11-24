@@ -17,12 +17,38 @@ function googleFontHref(family: string): string {
   return `https://fonts.googleapis.com/css2?family=${q}:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap`;
 }
 
+function normCity(s?: string): string {
+  return (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .trim();
+}
+
 function bookingHrefForLeg(leg: TransportLeg, booking: BookingLinks): string {
+  const from = normCity(leg.fromCity || leg.fromCode);
+  const to = normCity(leg.toCity || leg.toCode);
+  const matched = (booking.legs || []).find(
+    (l) =>
+      (normCity(l.from).includes(from) || from.includes(normCity(l.from))) &&
+      (normCity(l.to).includes(to) || to.includes(normCity(l.to))),
+  );
   const kind = (leg.kind || "flight").toLowerCase();
+  if (matched) {
+    if (kind === "bus") return matched.flixbus;
+    if (kind === "train") return matched.trainline;
+    return matched.skyscanner || matched.google;
+  }
   if (kind === "bus") return booking.busFlixbus || booking.flightsSkyscanner;
   if (kind === "train") return booking.trainsTrainline || booking.flightsSkyscanner;
-  if (kind === "ferry") return booking.flightsSkyscanner;
   return booking.flightsSkyscanner;
+}
+
+function imgForCity(images: GuideImage[], city?: string): GuideImage | null {
+  if (!city) return images[0] || null;
+  const n = normCity(city);
+  const hit = images.find((img) => normCity(img.query).includes(n));
+  return hit || images[0] || null;
 }
 
 function renderPass(leg: TransportLeg, booking: BookingLinks, accent: string): string {
@@ -31,6 +57,15 @@ function renderPass(leg: TransportLeg, booking: BookingLinks, accent: string): s
   const href = bookingHrefForLeg(leg, booking);
   const price = leg.price || "No verificado";
   const label = leg.label || (leg.kind || "TRAMO").toUpperCase();
+  const date =
+    leg.date ||
+    booking.legs?.find(
+      (l) =>
+        normCity(l.from).includes(normCity(leg.fromCity)) &&
+        normCity(l.to).includes(normCity(leg.toCity)),
+    )?.date ||
+    booking.tripStart ||
+    "—";
   return `<article class="pass">
     <header class="pass__head" style="background:${esc(accent)}">
       <span>BOARDING PASS · ${esc(label)}</span>
@@ -43,7 +78,7 @@ function renderPass(leg: TransportLeg, booking: BookingLinks, accent: string): s
     </div>
     <div class="pass__grid">
       <div><span>Operador</span><b>${esc(leg.operator || "—")}</b></div>
-      <div><span>Fecha</span><b>${esc(leg.date || "—")}</b></div>
+      <div><span>Fecha</span><b>${esc(date)}</b></div>
       <div><span>Salida</span><b>${esc(leg.depart || "—")}</b></div>
       <div><span>Precio</span><b class="pass__price">${esc(price)}</b></div>
     </div>
@@ -126,44 +161,55 @@ export function renderGuideHtml(params: {
     })
     .join("\n");
 
-  const stay = (plan.stays || [])[0];
-  const stayHtml = stay
-    ? `<div class="stay">
-        <div class="meta">Alojamiento elegido</div>
-        <h4>${esc(stay.name)}</h4>
-        <p>${esc(stay.vibe || "")}</p>
-        ${stay.nights ? `<div class="meta">${esc(stay.nights)}</div>` : ""}
-        <strong class="stay__price">${esc(stay.price || "No verificado")}</strong>
-        <div class="cta-row">
-          <a class="btn btn--primary" href="${esc(booking.hotelsBooking)}" target="_blank" rel="noopener">Reservar en Booking</a>
-          <a class="btn btn--ghost" href="${esc(booking.hotelsAirbnb)}" target="_blank" rel="noopener">Ver en Airbnb</a>
+  const staysList = plan.stays?.length
+    ? plan.stays
+    : (booking.stays || []).map((s) => ({
+        name: `Alojamiento en ${s.city}`,
+        city: s.city,
+        price: "No verificado",
+        vibe: "",
+        nights: `${s.nights} noches`,
+      }));
+
+  const stayHtml = staysList
+    .map((stay, i) => {
+      const city = stay.city || booking.stays?.[i]?.city || destination;
+      const link =
+        booking.stays?.find((s) => normCity(s.city) === normCity(city)) ||
+        booking.stays?.[i];
+      const photo = imgForCity(images, city);
+      return `<article class="stay">
+        ${
+          photo?.url
+            ? `<figure class="stay__photo"><img src="${esc(photo.url)}" alt="${esc(city)}"/><figcaption>${esc(photo.attribution || "")}</figcaption></figure>`
+            : ""
+        }
+        <div class="stay__body">
+          <div class="meta">${esc(city)} · Alojamiento elegido</div>
+          <h4>${esc(stay.name)}</h4>
+          <p>${esc(stay.vibe || "")}</p>
+          ${stay.nights ? `<div class="meta">${esc(stay.nights)}</div>` : ""}
+          <strong class="stay__price">${esc(stay.price || "No verificado")}</strong>
+          <div class="cta-row">
+            <a class="btn btn--primary" href="${esc(link?.booking || booking.hotelsBooking)}" target="_blank" rel="noopener">Booking</a>
+            <a class="btn btn--ghost" href="${esc(link?.airbnb || booking.hotelsAirbnb)}" target="_blank" rel="noopener">Airbnb</a>
+          </div>
         </div>
-      </div>`
-    : `<p>No verificado</p>`;
+      </article>`;
+    })
+    .join("\n");
 
   const legs: TransportLeg[] =
     plan.legs && plan.legs.length > 0
       ? plan.legs
-      : [
-          {
-            kind: "flight",
-            label: "IDA",
-            fromCity: origin,
-            toCity: destination,
-            operator: "Ver ofertas",
-            price: undefined,
-            note: plan.transport?.outbound,
-          },
-          {
-            kind: "flight",
-            label: "VUELTA",
-            fromCity: destination,
-            toCity: origin,
-            operator: "Ver ofertas",
-            price: undefined,
-            note: plan.transport?.inbound || plan.transport?.note,
-          },
-        ];
+      : (booking.legs || []).map((l) => ({
+          kind: "flight",
+          label: l.label,
+          fromCity: l.from,
+          toCity: l.to,
+          date: l.date,
+          operator: "Ver ofertas",
+        }));
 
   const passesHtml = legs.map((leg) => renderPass(leg, booking, p.accent)).join("\n");
 
@@ -237,7 +283,12 @@ export function renderGuideHtml(params: {
   .pass__footer p{margin:.2rem 0 0;font-size:.82rem;opacity:.8}
   .pass__code{border:1px solid #1a1a1a;border-radius:8px;padding:.45rem .55rem;font-weight:700;font-size:.85rem;white-space:nowrap}
   .pass .cta-row{padding:0 1rem 1rem}
-  .stay{background:var(--paper);padding:1.25rem;border-radius:18px;border-top:3px solid var(--accent);max-width:520px}
+  .stays{display:grid;gap:16px}
+  .stay{display:grid;grid-template-columns:minmax(140px,.9fr) 1.2fr;gap:14px;background:var(--paper);padding:1rem;border-radius:18px;border-top:3px solid var(--accent)}
+  @media (max-width:640px){.stay{grid-template-columns:1fr}}
+  .stay__photo{margin:0;border-radius:12px;overflow:hidden;background:#000}
+  .stay__photo img{width:100%;height:160px;object-fit:cover;display:block}
+  .stay__photo figcaption{font-size:9px;opacity:.55;padding:4px}
   .stay h4{margin:.35rem 0;font-size:1.45rem}
   .stay p{opacity:.78}
   .stay__price{display:block;margin:1rem 0;font-size:1.6rem;color:var(--accent)}
@@ -296,8 +347,8 @@ export function renderGuideHtml(params: {
     <div class="section-title"><h2>Billetes recomendados</h2><span class="meta">Vuelo · tren · bus · ferry</span></div>
     <div class="passes">${passesHtml}</div>
 
-    <div class="section-title"><h2>Alojamiento</h2><span class="meta">1 opción cerrada</span></div>
-    ${stayHtml}
+    <div class="section-title"><h2>Alojamiento</h2><span class="meta">1 por ciudad</span></div>
+    <div class="stays">${stayHtml || "<p>No verificado</p>"}</div>
 
     <div class="section-title"><h2>Itinerario día a día</h2><span class="meta">Foto · actividad · precio</span></div>
     ${daysHtml}

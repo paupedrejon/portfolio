@@ -1640,7 +1640,8 @@
     "fields": {
       "origin": "From",
       "destination": "To",
-      "addDestination": "Add another city",
+      "addDestination": "Add destination",
+      "stop": "Stop",
       "dateMode": "Dates",
       "startDate": "Outbound",
       "endDate": "Return",
@@ -1715,6 +1716,7 @@
       "editRoute": "Edit route",
       "newTrip": "New trip",
       "addStop": "Add",
+      "addDestination": "Add destination",
       "removeStop": "Remove stop"
     },
     "status": {

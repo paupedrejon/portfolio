@@ -1,5 +1,6 @@
 export type ItineraryDay = {
   title: string;
+  city?: string;
   summary?: string;
   activities: { name: string; price?: string; tip?: string }[];
 };
@@ -38,7 +39,13 @@ export type ItineraryPlan = {
     inbound: string;
     note?: string;
   };
-  stays: { name: string; price?: string; vibe?: string; nights?: string }[];
+  stays: {
+    name: string;
+    city?: string;
+    price?: string;
+    vibe?: string;
+    nights?: string;
+  }[];
   budget: { label: string; amount: string }[];
   /** Estimated total per person */
   budgetPerPerson?: string;

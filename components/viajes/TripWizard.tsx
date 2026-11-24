@@ -60,7 +60,7 @@ const LUXURY_ICONS: Record<number, LucideIcon> = {
   5: Crown,
 };
 
-const MONTHS_ES = [
+const MONTHS_SHORT = [
   "ene",
   "feb",
   "mar",
@@ -84,19 +84,13 @@ function parseMonth(v?: string): { year: number; month: number } {
   return { year: y, month: m };
 }
 
-function formatMonthLabel(v?: string, locale = "es"): string {
+/** Short label so it never clips in the bar: "nov 2026" */
+function formatMonthShort(v?: string): string {
   const { year, month } = parseMonth(v);
-  try {
-    return new Intl.DateTimeFormat(locale, {
-      month: "long",
-      year: "numeric",
-    }).format(new Date(year, month - 1, 1));
-  } catch {
-    return `${MONTHS_ES[month - 1]} ${year}`;
-  }
+  return `${MONTHS_SHORT[month - 1]} ${year}`;
 }
 
-function Stepper({
+function NumSelect({
   label,
   value,
   min,
@@ -111,32 +105,22 @@ function Stepper({
   onChange: (n: number) => void;
   suffix?: string;
 }) {
+  const opts = [];
+  for (let i = min; i <= max; i++) opts.push(i);
   return (
-    <div className="viajes-stepper">
+    <label className="viajes-numsel">
       <span className="viajes-sky-label">{label}</span>
-      <div className="viajes-stepper__ctrl">
-        <button
-          type="button"
-          aria-label="−"
-          disabled={value <= min}
-          onClick={() => onChange(Math.max(min, value - 1))}
-        >
-          −
-        </button>
-        <strong>
-          {value}
-          {suffix ? <span>{suffix}</span> : null}
-        </strong>
-        <button
-          type="button"
-          aria-label="+"
-          disabled={value >= max}
-          onClick={() => onChange(Math.min(max, value + 1))}
-        >
-          +
-        </button>
-      </div>
-    </div>
+      <select
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+      >
+        {opts.map((n) => (
+          <option key={n} value={n}>
+            {suffix ? `${n} ${suffix}` : n}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -150,7 +134,8 @@ export default function TripWizard({
   const t = useTranslations("viajes");
   const [step, setStep] = useState<1 | 2>(1);
   const [monthOpen, setMonthOpen] = useState(false);
-  const [extraCity, setExtraCity] = useState("");
+  const [addingStop, setAddingStop] = useState(false);
+  const [draftStop, setDraftStop] = useState("");
   const monthRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -190,28 +175,36 @@ export default function TripWizard({
   }, [value]);
 
   const routeLabel = useMemo(() => {
-    const extra = destinations.length ? ` + ${destinations.join(", ")}` : "";
+    const extra = destinations.length ? ` → ${destinations.join(" → ")}` : "";
     return `${value.origin} → ${value.destination}${extra}`;
   }, [value.origin, value.destination, destinations]);
 
-  const addDestination = () => {
-    const city = extraCity.trim();
-    if (city.length < 2) return;
-    if (
-      city.toLowerCase() === value.destination.trim().toLowerCase() ||
-      destinations.some((d) => d.toLowerCase() === city.toLowerCase())
-    ) {
-      setExtraCity("");
+  const commitStop = (city: string) => {
+    const c = city.trim();
+    if (c.length < 2) return;
+    const all = [value.destination, ...destinations].map((x) =>
+      x.toLowerCase(),
+    );
+    if (all.includes(c.toLowerCase())) {
+      setDraftStop("");
+      setAddingStop(false);
       return;
     }
-    set("destinations", [...destinations, city].slice(0, 4));
-    setExtraCity("");
+    set("destinations", [...destinations, c].slice(0, 4));
+    setDraftStop("");
+    setAddingStop(false);
   };
 
-  const removeDestination = (city: string) => {
+  const updateStop = (index: number, city: string) => {
+    const next = [...destinations];
+    next[index] = city;
+    set("destinations", next);
+  };
+
+  const removeStop = (index: number) => {
     set(
       "destinations",
-      destinations.filter((d) => d !== city),
+      destinations.filter((_, i) => i !== index),
     );
   };
 
@@ -251,209 +244,238 @@ export default function TripWizard({
             </span>
           </div>
 
-          <div className="viajes-sky__bar" id="viajes-wizard-title">
-            <div className="viajes-sky__field viajes-sky__field--city">
-              <CityAutocomplete
-                label={t("fields.origin")}
-                value={value.origin}
-                onChange={(v) => set("origin", v)}
-                placeholder={t("placeholders.originCity")}
-              />
-            </div>
+          <div className="viajes-sky__stack" id="viajes-wizard-title">
+            <div className="viajes-sky__bar">
+              <div className="viajes-sky__field viajes-sky__field--city">
+                <CityAutocomplete
+                  label={t("fields.origin")}
+                  value={value.origin}
+                  onChange={(v) => set("origin", v)}
+                  placeholder={t("placeholders.originCity")}
+                />
+              </div>
 
-            <button
-              type="button"
-              className="viajes-sky__swap"
-              aria-label={t("actions.swap")}
-              onClick={() =>
-                onChange({
-                  ...value,
-                  origin: value.destination,
-                  destination: value.origin,
-                })
-              }
-            >
-              <ArrowLeftRight size={16} aria-hidden />
-            </button>
-
-            <div className="viajes-sky__field viajes-sky__field--city">
-              <CityAutocomplete
-                label={t("fields.destination")}
-                value={value.destination}
-                onChange={(v) => set("destination", v)}
-                placeholder={t("placeholders.destinationCity")}
-              />
-            </div>
-
-            {value.dateMode === "exact" ? (
-              <>
-                <label className="viajes-sky__field">
-                  <span className="viajes-sky-label">{t("fields.startDate")}</span>
-                  <input
-                    type="date"
-                    value={value.startDate || ""}
-                    onChange={(e) => set("startDate", e.target.value)}
-                    required
-                  />
-                </label>
-                <label className="viajes-sky__field">
-                  <span className="viajes-sky-label">{t("fields.endDate")}</span>
-                  <input
-                    type="date"
-                    value={value.endDate || ""}
-                    onChange={(e) => set("endDate", e.target.value)}
-                    required
-                  />
-                </label>
-              </>
-            ) : (
-              <>
-                <div className="viajes-sky__field viajes-sky__field--month" ref={monthRef}>
-                  <span className="viajes-sky-label">{t("fields.flexibleMonth")}</span>
-                  <button
-                    type="button"
-                    className="viajes-month-trigger"
-                    aria-expanded={monthOpen}
-                    onClick={() => setMonthOpen((o) => !o)}
-                  >
-                    {formatMonthLabel(value.flexibleMonth, value.locale)}
-                  </button>
-                  {monthOpen ? (
-                    <div className="viajes-month-pop">
-                      <div className="viajes-month-pop__years">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            set(
-                              "flexibleMonth",
-                              `${year - 1}-${String(month).padStart(2, "0")}`,
-                            )
-                          }
-                        >
-                          ‹
-                        </button>
-                        <strong>{year}</strong>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            set(
-                              "flexibleMonth",
-                              `${year + 1}-${String(month).padStart(2, "0")}`,
-                            )
-                          }
-                        >
-                          ›
-                        </button>
-                      </div>
-                      <div className="viajes-month-pop__grid">
-                        {MONTHS_ES.map((label, i) => {
-                          const m = i + 1;
-                          const active = m === month;
-                          return (
-                            <button
-                              key={label}
-                              type="button"
-                              className={active ? "is-active" : undefined}
-                              onClick={() => {
-                                set(
-                                  "flexibleMonth",
-                                  `${year}-${String(m).padStart(2, "0")}`,
-                                );
-                                setMonthOpen(false);
-                              }}
-                            >
-                              {label}.
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="viajes-sky__field viajes-sky__field--days">
-                  <Stepper
-                    label={t("fields.daysMin")}
-                    value={value.daysMin ?? 4}
-                    min={1}
-                    max={30}
-                    suffix={t("fields.daysUnitShort")}
-                    onChange={(min) =>
-                      onChange({
-                        ...value,
-                        daysMin: min,
-                        daysMax: Math.max(min, value.daysMax ?? min),
-                      })
-                    }
-                  />
-                  <Stepper
-                    label={t("fields.daysMax")}
-                    value={value.daysMax ?? 7}
-                    min={value.daysMin ?? 1}
-                    max={30}
-                    suffix={t("fields.daysUnitShort")}
-                    onChange={(max) => set("daysMax", max)}
-                  />
-                </div>
-              </>
-            )}
-
-            <div className="viajes-sky__field viajes-sky__field--pax">
-              <Stepper
-                label={t("fields.travelers")}
-                value={value.travelers}
-                min={1}
-                max={12}
-                onChange={(n) => set("travelers", n)}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="viajes-sky__search"
-              disabled={!step1Valid}
-            >
-              <Search size={18} aria-hidden />
-              <span>{t("actions.search")}</span>
-            </button>
-          </div>
-
-          <div className="viajes-multi">
-            <div className="viajes-multi__row">
-              <CityAutocomplete
-                label={t("fields.addDestination")}
-                value={extraCity}
-                onChange={setExtraCity}
-                placeholder={t("placeholders.addCity")}
-              />
               <button
                 type="button"
-                className="viajes-multi__add"
-                onClick={addDestination}
-                disabled={extraCity.trim().length < 2 || destinations.length >= 4}
+                className="viajes-sky__swap"
+                aria-label={t("actions.swap")}
+                onClick={() =>
+                  onChange({
+                    ...value,
+                    origin: value.destination,
+                    destination: value.origin,
+                  })
+                }
               >
-                <Plus size={16} aria-hidden />
-                {t("actions.addStop")}
+                <ArrowLeftRight size={16} aria-hidden />
               </button>
-            </div>
-            {destinations.length > 0 ? (
-              <ul className="viajes-multi__chips">
-                {destinations.map((city) => (
-                  <li key={city}>
-                    <span>{city}</span>
+
+              <div className="viajes-sky__field viajes-sky__field--city">
+                <CityAutocomplete
+                  label={t("fields.destination")}
+                  value={value.destination}
+                  onChange={(v) => set("destination", v)}
+                  placeholder={t("placeholders.destinationCity")}
+                />
+              </div>
+
+              {value.dateMode === "exact" ? (
+                <>
+                  <label className="viajes-sky__field">
+                    <span className="viajes-sky-label">{t("fields.startDate")}</span>
+                    <input
+                      type="date"
+                      value={value.startDate || ""}
+                      onChange={(e) => set("startDate", e.target.value)}
+                      required
+                    />
+                  </label>
+                  <label className="viajes-sky__field">
+                    <span className="viajes-sky-label">{t("fields.endDate")}</span>
+                    <input
+                      type="date"
+                      value={value.endDate || ""}
+                      onChange={(e) => set("endDate", e.target.value)}
+                      required
+                    />
+                  </label>
+                </>
+              ) : (
+                <>
+                  <div
+                    className="viajes-sky__field viajes-sky__field--month"
+                    ref={monthRef}
+                  >
+                    <span className="viajes-sky-label">
+                      {t("fields.flexibleMonth")}
+                    </span>
                     <button
                       type="button"
-                      aria-label={t("actions.removeStop")}
-                      onClick={() => removeDestination(city)}
+                      className="viajes-month-trigger"
+                      aria-expanded={monthOpen}
+                      onClick={() => setMonthOpen((o) => !o)}
                     >
-                      <X size={14} aria-hidden />
+                      {formatMonthShort(value.flexibleMonth)}
                     </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="viajes-multi__hint">{t("hints.multiDest")}</p>
-            )}
+                    {monthOpen ? (
+                      <div className="viajes-month-pop">
+                        <div className="viajes-month-pop__years">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              set(
+                                "flexibleMonth",
+                                `${year - 1}-${String(month).padStart(2, "0")}`,
+                              )
+                            }
+                          >
+                            ‹
+                          </button>
+                          <strong>{year}</strong>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              set(
+                                "flexibleMonth",
+                                `${year + 1}-${String(month).padStart(2, "0")}`,
+                              )
+                            }
+                          >
+                            ›
+                          </button>
+                        </div>
+                        <div className="viajes-month-pop__grid">
+                          {MONTHS_SHORT.map((label, i) => {
+                            const m = i + 1;
+                            const active = m === month;
+                            return (
+                              <button
+                                key={label}
+                                type="button"
+                                className={active ? "is-active" : undefined}
+                                onClick={() => {
+                                  set(
+                                    "flexibleMonth",
+                                    `${year}-${String(m).padStart(2, "0")}`,
+                                  );
+                                  setMonthOpen(false);
+                                }}
+                              >
+                                {label}.
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="viajes-sky__field viajes-sky__field--days">
+                    <NumSelect
+                      label={t("fields.daysMin")}
+                      value={value.daysMin ?? 4}
+                      min={1}
+                      max={30}
+                      suffix={t("fields.daysUnitShort")}
+                      onChange={(min) =>
+                        onChange({
+                          ...value,
+                          daysMin: min,
+                          daysMax: Math.max(min, value.daysMax ?? min),
+                        })
+                      }
+                    />
+                    <NumSelect
+                      label={t("fields.daysMax")}
+                      value={value.daysMax ?? 7}
+                      min={value.daysMin ?? 1}
+                      max={30}
+                      suffix={t("fields.daysUnitShort")}
+                      onChange={(max) => set("daysMax", max)}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="viajes-sky__field viajes-sky__field--pax">
+                <NumSelect
+                  label={t("fields.travelers")}
+                  value={value.travelers}
+                  min={1}
+                  max={12}
+                  onChange={(n) => set("travelers", n)}
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="viajes-sky__search"
+                disabled={!step1Valid}
+              >
+                <Search size={18} aria-hidden />
+                <span>{t("actions.search")}</span>
+              </button>
+            </div>
+
+            <div className="viajes-stops">
+              {destinations.map((city, i) => (
+                <div key={`stop-${i}`} className="viajes-stops__row">
+                  <CityAutocomplete
+                    label={`${t("fields.stop")} ${i + 2}`}
+                    value={city}
+                    onChange={(v) => updateStop(i, v)}
+                    placeholder={t("placeholders.destinationCity")}
+                  />
+                  <button
+                    type="button"
+                    className="viajes-stops__remove"
+                    aria-label={t("actions.removeStop")}
+                    onClick={() => removeStop(i)}
+                  >
+                    <X size={16} aria-hidden />
+                  </button>
+                </div>
+              ))}
+
+              {addingStop ? (
+                <div className="viajes-stops__row">
+                  <CityAutocomplete
+                    label={`${t("fields.stop")} ${destinations.length + 2}`}
+                    value={draftStop}
+                    onChange={setDraftStop}
+                    placeholder={t("placeholders.addCity")}
+                  />
+                  <button
+                    type="button"
+                    className="viajes-stops__confirm"
+                    disabled={draftStop.trim().length < 2}
+                    onClick={() => commitStop(draftStop)}
+                  >
+                    {t("actions.addStop")}
+                  </button>
+                  <button
+                    type="button"
+                    className="viajes-stops__remove"
+                    aria-label={t("actions.removeStop")}
+                    onClick={() => {
+                      setDraftStop("");
+                      setAddingStop(false);
+                    }}
+                  >
+                    <X size={16} aria-hidden />
+                  </button>
+                </div>
+              ) : destinations.length < 4 ? (
+                <button
+                  type="button"
+                  className="viajes-stops__add"
+                  onClick={() => setAddingStop(true)}
+                >
+                  <Plus size={15} aria-hidden />
+                  {t("actions.addDestination")}
+                </button>
+              ) : null}
+            </div>
           </div>
         </form>
       )}
@@ -471,7 +493,7 @@ export default function TripWizard({
             <span>
               {value.dateMode === "exact"
                 ? `${value.startDate} · ${value.endDate}`
-                : `${formatMonthLabel(value.flexibleMonth, value.locale)} · ${value.daysMin}–${value.daysMax}d`}
+                : `${formatMonthShort(value.flexibleMonth)} · ${value.daysMin}–${value.daysMax}d`}
             </span>
             <span className="viajes-sky__summary-pax">
               <Users size={14} aria-hidden />

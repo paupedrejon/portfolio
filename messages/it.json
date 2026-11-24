@@ -1639,7 +1639,8 @@
     "fields": {
       "origin": "Da",
       "destination": "A",
-      "addDestination": "Aggiungi un'altra città",
+      "addDestination": "Aggiungi destinazione",
+      "stop": "Tappa",
       "dateMode": "Date",
       "startDate": "Andata",
       "endDate": "Ritorno",
@@ -1714,6 +1715,7 @@
       "editRoute": "Modifica rotta",
       "newTrip": "Nuovo viaggio",
       "addStop": "Aggiungi",
+      "addDestination": "Aggiungi destinazione",
       "removeStop": "Rimuovi destinazione"
     },
     "status": {

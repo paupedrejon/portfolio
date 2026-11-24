@@ -119,11 +119,118 @@
   color: #9aa3b2;
 }
 
+.viajes-sky__stack {
+  display: grid;
+  gap: 0.55rem;
+}
+
 .viajes-sky__field--days {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.45rem;
+  gap: 0.55rem;
   align-content: center;
+}
+
+.viajes-numsel {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.viajes-numsel select {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #12151c;
+  font: inherit;
+  font-size: 0.98rem;
+  padding: 0.2rem 1.1rem 0.2rem 0;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%),
+    linear-gradient(135deg, #6b7280 50%, transparent 50%);
+  background-position:
+    calc(100% - 6px) calc(50% - 2px),
+    calc(100% - 1px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.viajes-stops {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.viajes-stops__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.45rem;
+  align-items: end;
+  background: #fff;
+  border-radius: 12px;
+  padding: 0.55rem 0.75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.viajes-stops__row .viajes-sky-label {
+  color: #5b6270;
+}
+
+.viajes-stops__row .viajes-sky-input {
+  color: #12151c;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+.viajes-stops__add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  border: 1px dashed color-mix(in srgb, #fff 45%, transparent);
+  background: color-mix(in srgb, #fff 10%, transparent);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.55rem 0.95rem;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.viajes-sky--panel .viajes-stops__add {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.viajes-stops__confirm {
+  border: 0;
+  border-radius: 10px;
+  background: #12151c;
+  color: #fff;
+  font-weight: 650;
+  font-size: 0.86rem;
+  padding: 0.65rem 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.viajes-stops__confirm:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.viajes-stops__remove {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #e6e6e6;
+  background: #f4f6f9;
+  color: #1a2230;
+  cursor: pointer;
 }
 
 .viajes-sky__field--month {
@@ -179,54 +286,6 @@
   cursor: not-allowed;
 }
 
-.viajes-stepper {
-  display: grid;
-  gap: 0.25rem;
-  min-width: 0;
-}
-
-.viajes-stepper__ctrl {
-  display: inline-grid;
-  grid-template-columns: 28px minmax(2.4rem, auto) 28px;
-  align-items: center;
-  gap: 0.2rem;
-  width: fit-content;
-}
-
-.viajes-stepper__ctrl button {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  border: 1px solid #d7dbe3;
-  background: #f4f6f9;
-  color: #1a2230;
-  font-size: 1rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.viajes-stepper__ctrl button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.viajes-stepper__ctrl strong {
-  text-align: center;
-  color: #12151c;
-  font-size: 1rem;
-  font-variant-numeric: tabular-nums;
-  display: inline-flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 0.15rem;
-}
-
-.viajes-stepper__ctrl strong span {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #5b6270;
-}
-
 .viajes-month-trigger {
   width: 100%;
   border: 0;
@@ -238,9 +297,9 @@
   padding: 0.2rem 0;
   cursor: pointer;
   white-space: nowrap;
-  overflow: visible;
-  text-overflow: clip;
-  text-transform: capitalize;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: lowercase;
 }
 
 .viajes-month-pop {
@@ -338,113 +397,6 @@
 .viajes-ac-option.is-active,
 .viajes-ac-option:hover {
   background: #eef2ff;
-}
-
-.viajes-multi {
-  margin-top: 0.75rem;
-  display: grid;
-  gap: 0.55rem;
-}
-
-.viajes-multi__row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.55rem;
-  align-items: end;
-  background: color-mix(in srgb, #fff 12%, transparent);
-  border: 1px solid color-mix(in srgb, #fff 28%, transparent);
-  border-radius: 12px;
-  padding: 0.55rem 0.75rem;
-}
-
-.viajes-sky--panel .viajes-multi__row {
-  background: var(--surface);
-  border-color: var(--line);
-}
-
-.viajes-multi__row .viajes-sky-label {
-  color: color-mix(in srgb, #fff 75%, transparent);
-}
-
-.viajes-sky--panel .viajes-multi__row .viajes-sky-label {
-  color: var(--muted);
-}
-
-.viajes-multi__row .viajes-sky-input {
-  color: #fff;
-  border-bottom: 1px solid color-mix(in srgb, #fff 25%, transparent);
-}
-
-.viajes-sky--panel .viajes-multi__row .viajes-sky-input {
-  color: var(--text);
-  border-bottom-color: var(--line);
-}
-
-.viajes-multi__add {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border: 0;
-  border-radius: 10px;
-  background: #fff;
-  color: #12151c;
-  font-weight: 650;
-  font-size: 0.88rem;
-  padding: 0.65rem 0.9rem;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.viajes-multi__add:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.viajes-multi__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.viajes-multi__chips li {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  background: color-mix(in srgb, var(--accent) 22%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  color: #fff;
-  border-radius: 999px;
-  padding: 0.3rem 0.35rem 0.3rem 0.75rem;
-  font-size: 0.86rem;
-}
-
-.viajes-sky--panel .viajes-multi__chips li {
-  color: var(--text);
-}
-
-.viajes-multi__chips button {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border: 0;
-  border-radius: 999px;
-  background: color-mix(in srgb, #000 25%, transparent);
-  color: inherit;
-  cursor: pointer;
-}
-
-.viajes-multi__hint {
-  margin: 0;
-  font-size: 0.82rem;
-  color: color-mix(in srgb, #fff 72%, transparent);
-}
-
-.viajes-sky--panel .viajes-multi__hint {
-  color: var(--muted);
 }
 
 .viajes-sky__step2 {
@@ -583,8 +535,8 @@
   .viajes-lux {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .viajes-multi__row {
-    grid-template-columns: 1fr;
+  .viajes-stops__row {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 }
 

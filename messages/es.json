@@ -1701,7 +1701,8 @@
     "fields": {
       "origin": "Origen",
       "destination": "Destino",
-      "addDestination": "Añadir otra ciudad",
+      "addDestination": "Añadir destino",
+      "stop": "Destino",
       "dateMode": "Fechas",
       "startDate": "Ida",
       "endDate": "Vuelta",
@@ -1776,6 +1777,7 @@
       "editRoute": "Editar ruta",
       "newTrip": "Nuevo viaje",
       "addStop": "Añadir",
+      "addDestination": "Añadir destino",
       "removeStop": "Quitar destino"
     },
     "status": {
