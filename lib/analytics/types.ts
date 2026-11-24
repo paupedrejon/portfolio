@@ -3,6 +3,7 @@ export const ANALYTICS_EVENT_TYPES = [
   "projects_view_change",
   "project_filter",
   "project_view",
+  "project_like",
   "cv_download",
   "study_agents_view",
   "react_course_view",
