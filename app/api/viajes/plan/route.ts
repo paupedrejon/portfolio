@@ -18,7 +18,7 @@ import { searchTravelContext } from "@/lib/viajes/tavily";
 import { parseTripPlanInput } from "@/lib/viajes/validate";
 import { fetchDestinationImages, filterGuideImages } from "@/lib/viajes/wikimedia";
 import { buildBookingLinks } from "@/lib/viajes/booking-links";
-import type { SearchSnippet } from "@/lib/viajes/types";
+import { allDestinations, type SearchSnippet } from "@/lib/viajes/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -80,11 +80,13 @@ export async function POST(request: Request) {
 
     let images: Awaited<ReturnType<typeof fetchDestinationImages>> = [];
     try {
-      images = filterGuideImages(
-        await fetchDestinationImages(input.destination, [
-          ...input.interests.slice(0, 2),
-        ]),
+      const dests = allDestinations(input);
+      const batches = await Promise.all(
+        dests.slice(0, 3).map((d) =>
+          fetchDestinationImages(d, [...input.interests.slice(0, 2)]),
+        ),
       );
+      images = filterGuideImages(batches.flat());
     } catch (imgErr) {
       console.warn("[viajes/plan] wikimedia", imgErr);
     }

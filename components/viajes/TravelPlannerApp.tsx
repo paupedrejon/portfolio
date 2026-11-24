@@ -33,6 +33,7 @@ function defaultTrip(locale: string): TripPlanInput {
   return {
     origin: "",
     destination: "",
+    destinations: [],
     dateMode: "exact",
     startDate: "",
     endDate: "",
@@ -89,7 +90,9 @@ export default function TravelPlannerApp() {
           ...defaultTrip(locale),
           ...parsed.trip,
           locale,
+          destinations: parsed.trip.destinations || [],
           travelers: parsed.trip.travelers || 2,
+          transport: "flexible",
           dateMode:
             parsed.trip.dateMode === "flexible" ? "flexible" : "exact",
         });

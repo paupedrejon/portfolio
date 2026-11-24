@@ -1701,15 +1701,17 @@
     "fields": {
       "origin": "Origen",
       "destination": "Destino",
+      "addDestination": "Añadir otra ciudad",
       "dateMode": "Fechas",
       "startDate": "Ida",
       "endDate": "Vuelta",
       "flexibleMonth": "Mes",
-      "daysMin": "Días mín.",
-      "daysMax": "Días máx.",
+      "daysMin": "Mín. días",
+      "daysMax": "Máx. días",
       "daysUnit": "días",
+      "daysUnitShort": "d",
       "days": "Número de días",
-      "travelers": "Personas",
+      "travelers": "Viajeros",
       "travelersClass": "Viajeros",
       "travelerOne": "viajero",
       "travelerMany": "viajeros",
@@ -1721,10 +1723,14 @@
     "placeholders": {
       "origin": "Barcelona",
       "destination": "París",
-      "originCity": "Ciudad o aeropuerto",
-      "destinationCity": "Ciudad o aeropuerto",
+      "originCity": "Ciudad o país",
+      "destinationCity": "Ciudad o país",
+      "addCity": "Praga, Viena…",
       "interestsNote": "Museos, croissants, barrio Le Marais…",
       "chat": "Cambia el hotel del día 2 por algo más céntrico"
+    },
+    "hints": {
+      "multiDest": "Puedes encadenar destinos (ej. Praga + Viena)."
     },
     "dateModes": {
       "exact": "Fechas concretas",
@@ -1736,7 +1742,8 @@
     "transport": {
       "flight": "Vuelo",
       "bus": "Bus",
-      "flexible": "Flexible"
+      "flexible": "Flexible",
+      "allModes": "Vuelo, tren, bus o ferry — lo más barato"
     },
     "luxury": {
       "1": "Mochilero / hostal",
@@ -1767,7 +1774,9 @@
       "back": "Atrás",
       "swap": "Intercambiar origen y destino",
       "editRoute": "Editar ruta",
-      "newTrip": "Nuevo viaje"
+      "newTrip": "Nuevo viaje",
+      "addStop": "Añadir",
+      "removeStop": "Quitar destino"
     },
     "status": {
       "generating": "Generando guía…",

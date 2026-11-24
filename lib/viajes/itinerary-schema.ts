@@ -4,6 +4,23 @@ export type ItineraryDay = {
   activities: { name: string; price?: string; tip?: string }[];
 };
 
+export type TransportLeg = {
+  kind?: "flight" | "train" | "bus" | "ferry" | string;
+  label?: string;
+  fromCode?: string;
+  toCode?: string;
+  fromCity?: string;
+  toCity?: string;
+  operator?: string;
+  date?: string;
+  depart?: string;
+  arrive?: string;
+  duration?: string;
+  vehicleNo?: string;
+  price?: string;
+  note?: string;
+};
+
 export type ItineraryPlan = {
   title: string;
   tagline: string;
@@ -15,12 +32,13 @@ export type ItineraryPlan = {
     accent: string;
     paper: string;
   };
+  legs?: TransportLeg[];
   transport: {
     outbound: string;
     inbound: string;
     note?: string;
   };
-  stays: { name: string; price?: string; vibe?: string }[];
+  stays: { name: string; price?: string; vibe?: string; nights?: string }[];
   budget: { label: string; amount: string }[];
   /** Estimated total per person */
   budgetPerPerson?: string;

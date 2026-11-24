@@ -19,25 +19,29 @@ export function parseTripPlanInput(body: unknown): TripPlanInput | null {
   const destination = asString(b.destination, 80);
   if (origin.length < 2 || destination.length < 2) return null;
 
+  const destinations = Array.isArray(b.destinations)
+    ? b.destinations
+        .filter((x): x is string => typeof x === "string")
+        .map((x) => x.trim().slice(0, 80))
+        .filter(
+          (x) =>
+            x.length >= 2 &&
+            x.toLowerCase() !== destination.toLowerCase(),
+        )
+        .slice(0, 4)
+    : [];
+
   const dateModeRaw = asString(b.dateMode, 20);
   // Back-compat: range/days → exact/flexible
   let dateMode: DateMode = "exact";
-  if (
-    dateModeRaw === "flexible" ||
-    dateModeRaw === "days"
-  ) {
+  if (dateModeRaw === "flexible" || dateModeRaw === "days") {
     dateMode = "flexible";
   } else if (dateModeRaw === "exact" || dateModeRaw === "range") {
     dateMode = "exact";
   }
 
-  const transportRaw = asString(b.transport, 20) as TransportPref;
-  const transport: TransportPref =
-    transportRaw === "bus" ||
-    transportRaw === "flight" ||
-    transportRaw === "flexible"
-      ? transportRaw
-      : "flexible";
+  // Always multi-modal; ignore legacy flight/bus preference.
+  const transport: TransportPref = "flexible";
 
   const interests = Array.isArray(b.interests)
     ? b.interests
@@ -59,6 +63,7 @@ export function parseTripPlanInput(body: unknown): TripPlanInput | null {
   return {
     origin,
     destination,
+    destinations,
     dateMode,
     startDate: asString(b.startDate, 32) || undefined,
     endDate: asString(b.endDate, 32) || undefined,
@@ -76,7 +81,7 @@ export function parseTripPlanInput(body: unknown): TripPlanInput | null {
 }
 
 export function wantsPriceResearch(instruction: string): boolean {
-  return /\b(precio|precios|price|prices|vuelo|vuelos|flight|hotel|bus|flixbus|barato|cheap|rebusca|research|buscar|search)\b/i.test(
+  return /\b(precio|precios|price|prices|vuelo|vuelos|flight|hotel|bus|flixbus|tren|train|ferry|barco|barato|cheap|rebusca|research|buscar|search|alojamiento|hostel|airbnb|booking)\b/i.test(
     instruction,
   );
 }

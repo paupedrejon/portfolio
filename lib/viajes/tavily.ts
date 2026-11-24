@@ -1,3 +1,4 @@
+import { allDestinations } from "./types";
 import type { SearchSnippet, TripPlanInput } from "./types";
 
 type TavilyResult = {
@@ -11,7 +12,7 @@ type TavilyResponse = {
 };
 
 function luxuryLabel(n: number): string {
-  if (n <= 1) return "budget hostel backpacker";
+  if (n <= 1) return "budget hostel backpacker dorm";
   if (n === 2) return "budget mid-range hotel";
   if (n === 3) return "mid-range hotel apartment";
   if (n === 4) return "upscale boutique hotel";
@@ -33,27 +34,31 @@ function whenLabel(input: TripPlanInput): string {
 }
 
 export function buildSearchQueries(input: TripPlanInput): string[] {
-  const { origin, destination, transport, travelers } = input;
+  const dests = allDestinations(input);
+  const primary = dests[0] || input.destination;
+  const { origin, travelers } = input;
   const lux = luxuryLabel(input.luxury);
   const when = whenLabel(input);
   const pax = travelers || 2;
+  const route = dests.join(" then ");
 
   const interests =
     input.interests.length > 0
       ? input.interests.join(" ")
       : "sightseeing food";
 
-  const flightQ = `Google Flights OR Skyscanner cheapest round trip ${origin} to ${destination} ${when} ${pax} adults price EUR`;
-  const busQ = `Flixbus ${origin} ${destination} ticket price ${when}`;
+  const queries = [
+    `cheapest round trip flight OR train OR bus OR ferry ${origin} to ${primary} ${when} ${pax} adults price EUR Skyscanner OR Google Flights OR Trainline OR Flixbus`,
+    dests.length > 1
+      ? `multi-city itinerary ${origin} ${route} transport tickets prices ${when}`
+      : `return flight train bus ${primary} to ${origin} price ${when}`,
+    `Booking.com OR Airbnb ${primary} ${lux} exact price per night ${when} for ${pax} adults best rated cheap`,
+    `GetYourGuide OR official ticket ${primary} attractions ${interests} exact price EUR`,
+    `${primary} museum OR tower OR attraction ticket official price EUR ${when}`,
+    `${primary} average meal street food OR restaurant price EUR ${input.luxury <= 2 ? "budget" : input.luxury >= 4 ? "fine dining" : "local"}`,
+  ];
 
-  return [
-    transport === "bus" ? busQ : flightQ,
-    transport === "flexible" ? busQ : `return flight ${destination} to ${origin} price ${when}`,
-    `Booking.com ${destination} ${lux} price per night ${when} for ${pax} adults`,
-    `GetYourGuide OR Viator ${destination} top attractions ticket price ${interests}`,
-    `${destination} museum OR tower ticket official price EUR`,
-    `${destination} average restaurant meal price ${input.luxury >= 4 ? "fine dining" : "local"}`,
-  ].slice(0, 6);
+  return queries.slice(0, 6);
 }
 
 async function searchOne(

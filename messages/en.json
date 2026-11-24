@@ -1640,6 +1640,7 @@
     "fields": {
       "origin": "From",
       "destination": "To",
+      "addDestination": "Add another city",
       "dateMode": "Dates",
       "startDate": "Outbound",
       "endDate": "Return",
@@ -1647,6 +1648,7 @@
       "daysMin": "Min days",
       "daysMax": "Max days",
       "daysUnit": "days",
+      "daysUnitShort": "d",
       "days": "Number of days",
       "travelers": "Travelers",
       "travelersClass": "Travelers",
@@ -1660,10 +1662,14 @@
     "placeholders": {
       "origin": "Barcelona",
       "destination": "Paris",
-      "originCity": "City or airport",
-      "destinationCity": "City or airport",
+      "originCity": "City or country",
+      "destinationCity": "City or country",
+      "addCity": "Prague, Vienna…",
       "interestsNote": "Museums, croissants, Le Marais…",
       "chat": "Swap day-2 hotel for something more central"
+    },
+    "hints": {
+      "multiDest": "You can chain destinations (e.g. Prague + Vienna)."
     },
     "dateModes": {
       "exact": "Exact dates",
@@ -1675,7 +1681,8 @@
     "transport": {
       "flight": "Flight",
       "bus": "Bus",
-      "flexible": "Flexible"
+      "flexible": "Flexible",
+      "allModes": "Flight, train, bus or ferry — cheapest wins"
     },
     "luxury": {
       "1": "Backpacker / hostel",
@@ -1706,7 +1713,9 @@
       "back": "Back",
       "swap": "Swap origin and destination",
       "editRoute": "Edit route",
-      "newTrip": "New trip"
+      "newTrip": "New trip",
+      "addStop": "Add",
+      "removeStop": "Remove stop"
     },
     "status": {
       "generating": "Generating guide…",
