@@ -19,9 +19,9 @@ export const geistMono = GeistMono;
 
 /** Accent words in headlines (italic only) */
 export const instrumentSerif = Instrument_Serif({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400"],
-  style: ["italic"],
+  subsets: ["latin"],
+  weight: "400",
+  style: "italic",
   display: "swap",
   variable: "--font-instrument-serif",
 });
