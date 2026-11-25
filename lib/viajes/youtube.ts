@@ -135,7 +135,7 @@ export async function fetchTripVideos(
       if (seen.has(v.id)) continue;
       seen.add(v.id);
       videos.push(v);
-      if (videos.length >= 8) return videos;
+      if (videos.length >= 5) return videos;
     }
   }
   return videos;

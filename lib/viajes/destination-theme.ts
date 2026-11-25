@@ -153,8 +153,12 @@ export function pickHeroImage<T extends { url: string; title?: string; query?: s
     )
       score += 5;
     if (/vista|panorama|street|avenue/.test(t)) score += 2;
-    if (/map|plan de|carte|atlas|diagram|flag|coat of arms|logo|svg|satellite|modis/.test(t))
-      score -= 8;
+    if (
+      /map|plan de|carte|atlas|diagram|flag|coat of arms|logo|svg|satellite|modis|black.?and.?white|blanco.?y.?negro|soldiers?|military|parade|conquista|banner|engraving|siglo|19th|18th/.test(
+        t,
+      )
+    )
+      score -= 12;
     return { img, score };
   });
   scored.sort((a, b) => b.score - a.score);

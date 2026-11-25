@@ -33,10 +33,10 @@ function stripHtml(html: string): string {
 }
 
 const BAD_TITLE =
-  /\.(pdf|djvu|svg|tif|tiff)(\b|$)|\/page\d|plan de |map of |carte |atlas |coat of arms|flag of |logo |diagram|screenshot|oj_l_|title.?page|pictorial representation|manuscript|engraving|woodcut|etching|book.?cover|scan of|postcard of .*18|old.?map|cadastr|burn.?scar|modis|satellite|nasa |documents_de_la_session|session_de_la|chart of |graph of |topo(graphic)? map|cadastral|scan_|page_from|newspaper|gazette|worksheet|infographic|emblem|seal of |crest of |locator map|orthophoto|aerial survey/i;
+  /\.(pdf|djvu|svg|tif|tiff)(\b|$)|\/page\d|plan de |map of |carte |atlas |coat of arms|flag of |logo |diagram|screenshot|oj_l_|title.?page|pictorial representation|manuscript|engraving|woodcut|etching|book.?cover|scan of|postcard|old.?map|cadastr|burn.?scar|modis|satellite|nasa |documents_de_la_session|session_de_la|chart of |graph of |topo(graphic)? map|cadastral|scan_|page_from|newspaper|gazette|worksheet|infographic|emblem|seal of |crest of |locator map|orthophoto|aerial survey|black.?and.?white|blanco.?y.?negro|b&w|sepia|banner|soldiers?|military|parade|banda militar|conquista|tropa|ejercito|army|troops|vintage|historical.?photo|fotografi[aá]\s*hist|siglo\s*(x+|i+v?|\d)|19th.?century|18th.?century/i;
 
 const BAD_URL =
-  /\.pdf($|\?)|\/wikipedia\/commons\/.*\.pdf|page\d+-.*\.pdf|\.djvu|\.svg($|\?)|Burn_Scars|MODIS|Documents_de_la_session|locator_map/i;
+  /\.pdf($|\?)|\/wikipedia\/commons\/.*\.pdf|page\d+-.*\.pdf|\.djvu|\.svg($|\?)|Burn_Scars|MODIS|Documents_de_la_session|locator_map|black_and_white|blanco_y_negro|_banner\./i;
 
 function isUsableTitle(title: string): boolean {
   return !BAD_TITLE.test(title);
@@ -75,7 +75,7 @@ async function searchFileTitles(query: string, limit = 5): Promise<string[]> {
   api.searchParams.set("srlimit", String(limit));
   api.searchParams.set(
     "srsearch",
-    `${query} -pdf -djvu -svg -map -plan -postcard -engraving -manuscript -book -satellite -MODIS`,
+    `${query} -pdf -djvu -svg -map -plan -postcard -engraving -manuscript -book -satellite -MODIS -banner -military -soldiers -parade -"black and white" -sepia`,
   );
   api.searchParams.set("origin", "*");
 

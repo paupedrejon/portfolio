@@ -297,10 +297,15 @@ export function renderGuideHtml(params: {
     travelers,
     booking,
   } = params;
-  const videos = (params.videos || []).slice(0, 8);
+  const videos = (params.videos || []).slice(0, 5);
   const activityImages = params.activityImages || new Map();
   const luxury = params.luxury ?? 3;
-  const images = filterGuideImages(params.images);
+  const images = filterGuideImages(params.images).filter(
+    (img) =>
+      !/black.?and.?white|blanco.?y.?negro|soldiers?|military|parade|conquista|engraving|banner|siglo|19th|18th/i.test(
+        `${img.title} ${img.query} ${img.url}`,
+      ),
+  );
   const theme = themeForDestination(destination);
   const p = {
     bg: plan.palette?.bg || theme.bg,
@@ -308,16 +313,31 @@ export function renderGuideHtml(params: {
     accent: plan.palette?.accent || theme.accent,
     paper: plan.palette?.paper || theme.paper,
   };
-  const hero = pickHeroImage(images);
-  const pool = images.filter((img) => img.url !== hero?.url);
+  // Prefer Wikipedia city summary (::hero) over random Commons historical shots
+  const hero =
+    images.find((img) => /::hero$/i.test(img.query || "")) ||
+    pickHeroImage(images);
+  const pool = images.filter(
+    (img) => img.url !== hero?.url && !/::hero$/i.test(img.query || ""),
+  );
   const pax = Math.max(1, travelers || 1);
   const seals = theme.scriptSamples;
   const dateLine = plan.datesLabel || `${booking.tripStart} → ${booking.tripEnd}`;
   const lang = locale || "es";
   const consulted = consultedAt.slice(0, 10);
 
+  const urlKey = (url: string) => {
+    try {
+      const u = new URL(url);
+      u.search = "";
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return url.split("?")[0];
+    }
+  };
   const usedUrls = new Set<string>();
-  if (hero?.url) usedUrls.add(hero.url);
+  if (hero?.url) usedUrls.add(urlKey(hero.url));
 
   const scoreImg = (img: GuideImage, tokens: string[], city?: string) => {
     const blob = `${img.query} ${img.title}`.toLowerCase();
@@ -329,39 +349,39 @@ export function renderGuideHtml(params: {
       if (t.length < 4) continue;
       if (blob.includes(t)) score += 3;
     }
-    if (usedUrls.has(img.url)) score -= 20;
+    if (usedUrls.has(urlKey(img.url))) score -= 50;
     return score;
   };
 
-  const nextImg = (
-    city?: string,
-    hint?: string,
-    opts?: { allowReuse?: boolean },
-  ): GuideImage | null => {
+  /** Unique image only — never recycle the same URL across cards. */
+  const nextImg = (city?: string, hint?: string): GuideImage | null => {
     const tokens = tokensOf(hint || "");
     const ranked = [...pool, ...images]
       .map((img) => ({ img, score: scoreImg(img, tokens, city) }))
       .sort((a, b) => b.score - a.score);
     const pick =
-      ranked.find((r) => r.score > 0 && !usedUrls.has(r.img.url))?.img ||
-      ranked.find((r) => !usedUrls.has(r.img.url))?.img ||
-      (opts?.allowReuse
-        ? ranked.find((r) => r.score > 0)?.img || ranked[0]?.img || null
-        : null);
-    if (pick?.url) usedUrls.add(pick.url);
+      ranked.find((r) => r.score > 0 && !usedUrls.has(urlKey(r.img.url)))?.img ||
+      ranked.find((r) => !usedUrls.has(urlKey(r.img.url)))?.img ||
+      null;
+    if (pick?.url) usedUrls.add(urlKey(pick.url));
     return pick;
   };
 
+  /**
+   * Activity photos ONLY from the per-activity map (Wikipedia → pageimage).
+   * Never reuse a pool image — that produced identical / unrelated photos.
+   * Empty placeholder beats a wrong photo.
+   */
   const photoForActivity = (
     city: string,
     activity: string,
   ): GuideImage | null => {
     const direct = lookupActivityImage(activityImages, city, activity);
-    if (direct?.url) {
-      usedUrls.add(direct.url);
+    if (direct?.url && !usedUrls.has(urlKey(direct.url))) {
+      usedUrls.add(urlKey(direct.url));
       return direct;
     }
-    return nextImg(city, activity, { allowReuse: true });
+    return null;
   };
 
   const legs: TransportLeg[] =
@@ -421,7 +441,7 @@ export function renderGuideHtml(params: {
     .map((stay) => {
       const photo =
         lookupActivityImage(activityImages, stay.city, stay.name) ||
-        nextImg(stay.city, stay.name, { allowReuse: true });
+        nextImg(stay.city, stay.name);
       const nightlyNum = parseEuro(stay.nightly);
       const nightlyShown = nightlyNum
         ? formatEuro(nightlyNum)

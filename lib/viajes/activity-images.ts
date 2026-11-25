@@ -1,34 +1,52 @@
 import type { ItineraryPlan } from "./itinerary-schema";
 import type { GuideImage } from "./types";
-import { filterGuideImages, fetchDestinationImages } from "./wikimedia";
 
 export type ActivityImageKey = string; // `${city}::${activity}`
 
 const UA = "PortfolioTravelPlanner/1.0 (portfolio demo)";
 
+/** Junk that must never appear on travel cards / hero. */
+const BAD_ASSET =
+  /map|locator|flag|coat.?of.?arms|diagram|modis|satellite|\.svg|banner|black.?and.?white|blanco.?y.?negro|b&w|sepia|engraving|woodcut|etching|lithograph|postcard|manuscript|painting of|mural|conquista|soldiers?|military|parade|banda militar|tropa|ej[eé]rcito|army|troops|19th|18th|17th|siglo\s*(x+|i+v?|\d)|(?:^|[^\d])(1[5-9]\d{2})(?:[^\d]|$)|a[nñ]o\s*1[789]\d{2}|circa?\s*1[789]\d{2}|inauguraci[oó]n|vintage|old.?photo|fotografi[aá]\s*hist|historical.?photo|newspaper|scan_|book.?cover|infographic|emblem|seal of|crest of|disambiguation|desambiguaci|subte|estaci[oó]n de|metro de|plantilla:|template:|category:|anexo:|lista de|list of/i;
+
 function keyFor(city: string, activity: string): ActivityImageKey {
   return `${city.trim()}::${activity.trim()}`.toLowerCase();
 }
 
-const BAD_PAGE =
-  /desambiguaci|disambiguation|lista de|list of|anexo:|subte|estaci[oó]n|station|metro de|line [a-z0-9]|l[ií]nea |category:|plantilla:|template:/i;
+/** Strip tracking query so the same file isn't reused via ?utm=… */
+function urlKey(url: string): string {
+  try {
+    const u = new URL(url);
+    u.search = "";
+    u.hash = "";
+    return u.toString();
+  } catch {
+    return url.split("?")[0];
+  }
+}
 
-/** Strip action verbs that pollute Wikipedia titles — keep articles (Plaza de Mayo). */
-function cleanQuery(s: string): string {
+function norm(s: string): string {
   return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .trim();
+}
+
+function landmarkCore(activity: string): string {
+  return activity
     .replace(
-      /\b(visita(s)?|tour|cena|desayuno|almuerzo|paseo|compras|shopping|show|entrada|privada|privado|incluido|traslado|regreso|excursi[oó]n|caminata|ascenso|degustaci[oó]n)\b/gi,
+      /\b(visita(s)?|r[aá]pida|tour|cena|desayuno|almuerzo|paseo|compras|shopping|show|entrada|privada|privado|incluido|traslado(s)?|regreso|vuelo(s)?|aeropuerto|excursi[oó]n|caminata|ascenso|degustaci[oó]n|inmersi[oó]n|y)\b/gi,
       " ",
     )
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function usableThumb(src?: string): string | null {
+function usableThumb(src?: string, title = ""): string | null {
   if (!src) return null;
+  if (BAD_ASSET.test(src) || BAD_ASSET.test(title)) return null;
   if (/\.svg($|\?)/i.test(src)) return null;
-  if (/map|locator|flag|coat_of_arms|diagram|modis|satellite/i.test(src))
-    return null;
   return src;
 }
 
@@ -36,8 +54,9 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   try {
     const res = await fetch(url, {
       headers: { "User-Agent": UA, Accept: "application/json" },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(12000),
     });
+    if (res.status === 429) return null;
     if (!res.ok) return null;
     const ct = res.headers.get("content-type") || "";
     if (!ct.includes("json")) return null;
@@ -49,25 +68,28 @@ async function fetchJson<T>(url: string): Promise<T | null> {
 
 type PageThumb = { title: string; url: string };
 
-/** One MediaWiki request → many page thumbnails. */
+/** Few HTTP calls: pipe many titles into pageimages. */
 async function batchPageImages(
   titles: string[],
   lang: "es" | "en",
 ): Promise<Map<string, PageThumb>> {
   const out = new Map<string, PageThumb>();
-  const unique = [...new Set(titles.map((t) => t.trim()).filter(Boolean))];
-  for (let i = 0; i < unique.length; i += 18) {
-    const chunk = unique.slice(i, i + 18);
+  const unique = [...new Set(titles.map((t) => t.trim()).filter((t) => t.length > 2))];
+  for (let i = 0; i < unique.length; i += 20) {
+    const chunk = unique.slice(i, i + 20);
     const api = new URL(`https://${lang}.wikipedia.org/w/api.php`);
     api.searchParams.set("action", "query");
     api.searchParams.set("format", "json");
     api.searchParams.set("prop", "pageimages");
     api.searchParams.set("piprop", "thumbnail");
-    api.searchParams.set("pithumbsize", "1200");
+    api.searchParams.set("pithumbsize", "1280");
+    api.searchParams.set("redirects", "1");
     api.searchParams.set("titles", chunk.join("|"));
     api.searchParams.set("origin", "*");
     const data = await fetchJson<{
       query?: {
+        redirects?: { from: string; to: string }[];
+        normalized?: { from: string; to: string }[];
         pages?: Record<
           string,
           {
@@ -78,94 +100,151 @@ async function batchPageImages(
         >;
       };
     }>(api.toString());
-    for (const page of Object.values(data?.query?.pages ?? {})) {
-      if (!page?.title || page.missing || BAD_PAGE.test(page.title)) continue;
-      const url = usableThumb(page.thumbnail?.source);
+    if (!data?.query) continue;
+
+    const alias = new Map<string, string>();
+    for (const n of data.query.normalized || []) alias.set(norm(n.from), n.to);
+    for (const r of data.query.redirects || []) alias.set(norm(r.from), r.to);
+
+    const byTitle = new Map<string, PageThumb>();
+    for (const page of Object.values(data.query.pages ?? {})) {
+      if (!page?.title || page.missing || BAD_ASSET.test(page.title)) continue;
+      const url = usableThumb(page.thumbnail?.source, page.title);
       if (!url) continue;
-      out.set(page.title.toLowerCase(), { title: page.title, url });
-      // Also index without diacritics-ish lowercase exact
-      out.set(norm(page.title), { title: page.title, url });
+      const thumb = { title: page.title, url };
+      byTitle.set(norm(page.title), thumb);
     }
+
+    for (const asked of chunk) {
+      const n = norm(asked);
+      const resolved = alias.get(n) || asked;
+      const thumb = byTitle.get(norm(resolved));
+      if (thumb) {
+        out.set(n, thumb);
+        out.set(norm(resolved), thumb);
+      }
+    }
+    for (const [k, v] of byTitle) out.set(k, v);
   }
   return out;
 }
 
-function norm(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .trim();
+/**
+ * Candidate Wikipedia titles for an activity — no search API (avoids 429).
+ * Landmark-name aliases are pattern-based, not country lists.
+ */
+function titleCandidates(activity: string, city: string): string[] {
+  const raw = activity.trim();
+  const core = landmarkCore(raw);
+  const words = core.split(/\s+/).filter(Boolean);
+  const out: string[] = [];
+
+  const add = (...xs: string[]) => {
+    for (const x of xs) {
+      const t = x.trim();
+      if (t.length > 2) out.push(t);
+    }
+  };
+
+  add(core, raw, words.slice(0, 5).join(" "), words.slice(0, 4).join(" "));
+  if (city) {
+    add(`${core} (${city})`, `${words.slice(0, 4).join(" ")} (${city})`);
+  }
+
+  // Pattern aliases (work worldwide when the name appears in the activity)
+  if (/antropolog/i.test(raw)) add("Museo Nacional de Antropología");
+  if (/chapultepec/i.test(raw)) {
+    add("Bosque de Chapultepec", "Castillo de Chapultepec");
+  }
+  if (/bellas artes/i.test(raw)) add("Palacio de Bellas Artes");
+  if (/z[oó]calo/i.test(raw)) add("Zócalo", "Plaza de la Constitución (Ciudad de México)");
+  if (/mercado de san juan/i.test(raw)) add("Mercado de San Juan");
+  if (/frida|kahlo|azul/i.test(raw)) add("Museo Frida Kahlo");
+  if (/teotihuac/i.test(raw)) add("Teotihuacán");
+  if (/xochimilco/i.test(raw)) add("Xochimilco");
+  if (/malba/i.test(raw)) add("Museo de Arte Latinoamericano de Buenos Aires", "MALBA");
+  if (/aten(eo)?|grand splendid/i.test(raw)) add("El Ateneo Grand Splendid");
+  if (/teatro col[oó]n/i.test(raw)) add("Teatro Colón");
+  if (/plaza de mayo/i.test(raw)) add("Plaza de Mayo");
+  if (/casa rosada/i.test(raw)) add("Casa Rosada");
+  if (/recoleta/i.test(raw) && /cementerio|cemetery/i.test(raw)) {
+    add("Cementerio de la Recoleta");
+  }
+  if (/llao/i.test(raw)) add("Hotel Llao Llao");
+  if (/campanario/i.test(raw)) add("Cerro Campanario");
+  if (/catedral/i.test(raw) && /bariloche|cerro/i.test(`${raw} ${city}`)) {
+    add("Cerro Catedral");
+  }
+  if (/shinjuku.?gyoen/i.test(raw)) add("Shinjuku Gyoen");
+  if (/shibuya/i.test(raw)) add("Shibuya");
+  if (/senso-?ji|sensō-?ji|asakusa/i.test(raw)) add("Sensō-ji");
+  if (/fushimi|inari/i.test(raw)) add("Fushimi Inari-taisha");
+  if (/arashiyama/i.test(raw)) add("Arashiyama");
+  if (/polanco/i.test(raw) && /cena|restaurante|comer/i.test(raw)) {
+    add("Polanco (Ciudad de México)");
+  }
+  // Airport → airport page (better than random city history)
+  if (/aeropuerto|airport|benito ju[aá]rez/i.test(raw)) {
+    add(
+      `Aeropuerto Internacional de ${city}`,
+      "Aeropuerto Internacional de la Ciudad de México",
+      city ? `${city} International Airport` : "",
+    );
+  }
+
+  return [...new Set(out)];
 }
 
-function scoreMatch(candidateTitle: string, activity: string, city: string): number {
-  const t = norm(candidateTitle);
+function scoreCandidate(
+  candidate: string,
+  pageTitle: string,
+  activity: string,
+  city: string,
+): number {
+  if (BAD_ASSET.test(pageTitle)) return -100;
+  const t = norm(pageTitle);
   const a = norm(activity);
   const c = norm(city);
-  if (BAD_PAGE.test(candidateTitle)) return -100;
+  const cand = norm(candidate);
   let score = 0;
-  const tokens = a.split(/[^a-z0-9]+/).filter((x) => x.length > 2);
+
+  // Exact / near-exact candidate hit is strong
+  if (t === cand) score += 20;
+  else if (t.includes(cand) || cand.includes(t)) score += 12;
+
+  const tokens = a.split(/[^a-z0-9]+/).filter((x) => x.length > 3);
+  let hits = 0;
   for (const tok of tokens) {
-    if (t.includes(tok)) score += tok.length > 5 ? 5 : 2;
+    if (t.includes(tok)) {
+      hits += 1;
+      score += tok.length > 5 ? 5 : 2;
+    }
   }
-  if (c && t.includes(c)) score += 2;
-  // Penalize generic city dump pages when activity is specific
-  if (tokens.length >= 2 && (t === c || t.startsWith("san carlos de "))) score -= 8;
-  if (candidateTitle.length < 50) score += 1;
+  if (hits === 0 && tokens.length > 0) score -= 8;
+
+  if (c && (t === c || t === `ciudad de ${c}`)) score -= 15;
+  if (pageTitle.length < 60) score += 1;
   return score;
 }
 
-/** Candidate Wikipedia titles for an activity. */
-function titleCandidates(activity: string, city: string): string[] {
-  const cleaned = cleanQuery(activity);
-  const words = cleaned.split(/\s+/).filter(Boolean);
-  const out = [
-    cleaned,
-    activity.trim(),
-    words.slice(0, 4).join(" "),
-    words.slice(0, 3).join(" "),
-    `${cleaned} (${city})`,
-    `${words.slice(0, 3).join(" ")} ${city}`,
-  ];
-  // Known Spanish landmark aliases
-  if (/malba/i.test(activity)) {
-    out.push("Museo de Arte Latinoamericano de Buenos Aires", "MALBA");
-  }
-  if (/aten(eo)?|grand splendid/i.test(activity)) {
-    out.push("El Ateneo Grand Splendid");
-  }
-  if (/teatro col[oó]n/i.test(activity)) out.push("Teatro Colón");
-  if (/plaza de mayo|casa rosada/i.test(activity)) {
-    out.push("Plaza de Mayo", "Casa Rosada");
-  }
-  if (/recoleta/i.test(activity) && /cementerio|cementery|cemetery/i.test(activity)) {
-    out.push("Cementerio de la Recoleta");
-  }
-  if (/llao/i.test(activity)) out.push("Hotel Llao Llao", "Llao Llao");
-  if (/campanario/i.test(activity)) {
-    out.push("Cerro Campanario", "Cerro Campanario (Bariloche)");
-  }
-  if (/nahuel|huapi/i.test(activity)) out.push("Nahuel Huapi", "Lago Nahuel Huapi");
-  if (/catedral/i.test(activity) && /bariloche|cerro/i.test(`${activity} ${city}`)) {
-    out.push("Cerro Catedral");
-  }
-  return [...new Set(out.map((s) => s.trim()).filter((s) => s.length > 2))];
-}
-
-async function commonsThumb(query: string): Promise<string | null> {
+async function commonsPhoto(
+  query: string,
+  used: Set<string>,
+): Promise<GuideImage | null> {
+  const isUsed = (url: string) => used.has(urlKey(url));
   const api = new URL("https://commons.wikimedia.org/w/api.php");
   api.searchParams.set("action", "query");
   api.searchParams.set("format", "json");
   api.searchParams.set("generator", "search");
   api.searchParams.set(
     "gsrsearch",
-    `${query} -map -plan -pdf -svg -diagram -flag -satellite -MODIS`,
+    `${query} -map -plan -pdf -svg -diagram -flag -banner -engraving -postcard -military -soldiers -parade -satellite -MODIS -"black and white" -sepia`,
   );
   api.searchParams.set("gsrnamespace", "6");
-  api.searchParams.set("gsrlimit", "5");
+  api.searchParams.set("gsrlimit", "10");
   api.searchParams.set("prop", "imageinfo");
-  api.searchParams.set("iiprop", "url|mime");
-  api.searchParams.set("iiurlwidth", "1200");
+  api.searchParams.set("iiprop", "url|mime|extmetadata");
+  api.searchParams.set("iiurlwidth", "1280");
   api.searchParams.set("origin", "*");
   const data = await fetchJson<{
     query?: {
@@ -173,43 +252,74 @@ async function commonsThumb(query: string): Promise<string | null> {
         string,
         {
           title?: string;
-          imageinfo?: { url?: string; thumburl?: string; mime?: string }[];
+          imageinfo?: {
+            url?: string;
+            thumburl?: string;
+            mime?: string;
+            extmetadata?: {
+              DateTime?: { value?: string };
+              DateTimeOriginal?: { value?: string };
+            };
+          }[];
         }
       >;
     };
   }>(api.toString());
+
   for (const page of Object.values(data?.query?.pages ?? {})) {
     const title = page.title || "";
-    if (/map|plan|diagram|pdf|svg|flag|coat|satellite|modis|locator/i.test(title))
-      continue;
+    if (BAD_ASSET.test(title)) continue;
     const info = page.imageinfo?.[0];
     if (!info?.mime?.startsWith("image/") || info.mime.includes("svg")) continue;
-    const url = usableThumb(info.thumburl || info.url);
-    if (url) return url;
+    const url = usableThumb(info.thumburl || info.url, title);
+    if (!url || isUsed(url)) continue;
+    const when =
+      info.extmetadata?.DateTimeOriginal?.value ||
+      info.extmetadata?.DateTime?.value ||
+      "";
+    if (/^1[789]\d{2}/.test(when)) continue;
+    return {
+      url,
+      title: title.replace(/^File:/i, ""),
+      attribution: "Wikimedia Commons",
+      query,
+    };
   }
   return null;
 }
 
-async function openverseThumb(query: string): Promise<string | null> {
-  const api = new URL("https://api.openverse.org/v1/images/");
-  api.searchParams.set("q", query);
-  api.searchParams.set("page_size", "4");
+async function wikiSummaryThumb(
+  title: string,
+  lang: "es" | "en",
+): Promise<GuideImage | null> {
+  const slug = encodeURIComponent(title.replace(/ /g, "_"));
   const data = await fetchJson<{
-    results?: { title?: string; url?: string; thumbnail?: string }[];
-  }>(api.toString());
-  for (const r of data?.results || []) {
-    const url = usableThumb(r.thumbnail || r.url);
-    if (!url) continue;
-    if (/map|diagram|flag|svg/i.test(`${r.title || ""} ${url}`)) continue;
-    return url;
-  }
-  return null;
+    title?: string;
+    type?: string;
+    thumbnail?: { source?: string };
+    originalimage?: { source?: string };
+  }>(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${slug}`);
+  if (!data || data.type === "disambiguation") return null;
+  if (BAD_ASSET.test(data.title || title)) return null;
+  const url =
+    usableThumb(data.thumbnail?.source, data.title || title) ||
+    usableThumb(data.originalimage?.source, data.title || title);
+  if (!url) return null;
+  return {
+    url,
+    title: data.title || title,
+    attribution: `Wikipedia ${lang}`,
+    query: title,
+  };
 }
 
 /**
- * Fetch a photo for (almost) every activity in the plan.
- * Solid strategy: batched Wikipedia pageimages (few HTTP calls) →
- * Commons/Openverse only for misses → city skyline fallbacks.
+ * Solid image map:
+ * 1) Guess Wikipedia titles from activity names (0 search API calls)
+ * 2) Batch pageimages (2 HTTP calls total for es+en)
+ * 3) Assign uniquely — never the same URL twice
+ * 4) Commons only for remaining misses
+ * 5) City Wikipedia summary for hero
  */
 export async function fetchActivityImageMap(
   plan: ItineraryPlan,
@@ -228,14 +338,9 @@ export async function fetchActivityImageMap(
     seenJob.add(k);
     jobs.push({ city: c, activity: n, key: k });
   };
-  for (const stay of plan.stays || []) {
-    pushJob(stay.city || "", stay.name || "");
-  }
+  for (const stay of plan.stays || []) pushJob(stay.city || "", stay.name || "");
   for (const day of plan.days || []) {
-    const city = (day.city || "").trim() || "destino";
-    for (const a of day.activities || []) {
-      pushJob(city, a.name || "");
-    }
+    for (const a of day.activities || []) pushJob(day.city || "", a.name || "");
   }
 
   const capped = jobs.slice(0, 40);
@@ -245,82 +350,84 @@ export async function fetchActivityImageMap(
     ),
   ].slice(0, 4);
 
-  // City pools in parallel with Wikipedia batches
-  const cityPromise = Promise.all(
-    cities.map((c) =>
-      fetchDestinationImages(c, ["landmark", "skyline", "plaza", "lake"]),
-    ),
-  );
-
-  const candidatesByJob = capped.map((job) => ({
+  const withCandidates = capped.map((job) => ({
     ...job,
     candidates: titleCandidates(job.activity, job.city),
   }));
-  const allTitles = candidatesByJob.flatMap((j) => j.candidates);
+  const allTitles = withCandidates.flatMap((j) => j.candidates);
 
-  const [esPages, enPages] = await Promise.all([
+  const [esPages, enPages, citySummaries] = await Promise.all([
     batchPageImages(allTitles, "es"),
     batchPageImages(allTitles, "en"),
+    Promise.all(
+      cities.map(async (city) => {
+        for (const lang of ["es", "en"] as const) {
+          const sum = await wikiSummaryThumb(city, lang);
+          if (sum) return { ...sum, query: `${city}::hero` };
+        }
+        return null;
+      }),
+    ),
   ]);
 
   const byActivity = new Map<ActivityImageKey, GuideImage>();
+  const usedUrls = new Set<string>();
+  const markUsed = (url: string) => usedUrls.add(urlKey(url));
+  const isUsed = (url: string) => usedUrls.has(urlKey(url));
 
-  for (const job of candidatesByJob) {
+  for (const job of withCandidates) {
     let best: { score: number; thumb: PageThumb } | null = null;
     for (const cand of job.candidates) {
-      const hit =
-        esPages.get(cand.toLowerCase()) ||
-        esPages.get(norm(cand)) ||
-        enPages.get(cand.toLowerCase()) ||
-        enPages.get(norm(cand));
-      if (!hit) continue;
-      const score = scoreMatch(hit.title, job.activity, job.city);
-      if (!best || score > best.score) best = { score, thumb: hit };
+      const thumb =
+        esPages.get(norm(cand)) || enPages.get(norm(cand)) || null;
+      if (!thumb) continue;
+      if (isUsed(thumb.url)) continue;
+      const score = scoreCandidate(cand, thumb.title, job.activity, job.city);
+      if (!best || score > best.score) best = { score, thumb };
     }
-    // Also scan all returned pages for fuzzy match
-    for (const thumb of [...esPages.values(), ...enPages.values()]) {
-      const score = scoreMatch(thumb.title, job.activity, job.city);
-      if (score >= 6 && (!best || score > best.score)) {
-        best = { score, thumb };
-      }
-    }
-    if (best && best.score >= 4) {
-      byActivity.set(job.key, {
-        url: best.thumb.url,
-        title: best.thumb.title,
-        attribution: "Wikipedia",
-        query: `${job.city}::${job.activity}`,
-      });
-    }
+    // Require a real match — don't assign weak city dump pages
+    if (!best || best.score < 6) continue;
+    markUsed(best.thumb.url);
+    byActivity.set(job.key, {
+      url: best.thumb.url,
+      title: best.thumb.title,
+      attribution: "Wikipedia",
+      query: `${job.city}::${job.activity}`,
+    });
   }
 
-  // Fill misses with Commons / Openverse (capped, sequential-ish)
-  const misses = candidatesByJob.filter((j) => !byActivity.has(j.key)).slice(0, 12);
+  // Commons for misses (sequential, short pause to avoid 429)
+  const misses = withCandidates.filter((j) => !byActivity.has(j.key)).slice(0, 14);
   for (const job of misses) {
-    const q = `${cleanQuery(job.activity) || job.activity} ${job.city}`;
-    const commons = await commonsThumb(q);
-    if (commons) {
-      byActivity.set(job.key, {
-        url: commons,
-        title: q,
-        attribution: "Wikimedia Commons",
-        query: `${job.city}::${job.activity}`,
-      });
+    const core = landmarkCore(job.activity);
+    if (core.length < 4) continue;
+    const img = await commonsPhoto(`${core} ${job.city}`, usedUrls);
+    if (!img) {
+      await new Promise((r) => setTimeout(r, 80));
       continue;
     }
-    const ov = await openverseThumb(q);
-    if (ov) {
-      byActivity.set(job.key, {
-        url: ov,
-        title: q,
-        attribution: "Openverse",
-        query: `${job.city}::${job.activity}`,
-      });
-    }
+    markUsed(img.url);
+    byActivity.set(job.key, {
+      ...img,
+      query: `${job.city}::${job.activity}`,
+    });
+    await new Promise((r) => setTimeout(r, 80));
   }
 
-  const cityBatches = await cityPromise;
-  const cityFallbacks = filterGuideImages(cityBatches.flat());
+  const cityFallbacks: GuideImage[] = [];
+  for (const sum of citySummaries) {
+    if (sum && !BAD_ASSET.test(sum.title) && !isUsed(sum.url)) {
+      markUsed(sum.url);
+      cityFallbacks.push(sum);
+    }
+  }
+  for (const city of cities) {
+    const sky = await commonsPhoto(`${city} skyline`, usedUrls);
+    if (sky && !isUsed(sky.url)) {
+      markUsed(sky.url);
+      cityFallbacks.push({ ...sky, query: `${city}::skyline` });
+    }
+  }
 
   return { byActivity, cityFallbacks };
 }
@@ -331,22 +438,4 @@ export function lookupActivityImage(
   activity: string,
 ): GuideImage | null {
   return map.get(keyFor(city, activity)) || null;
-}
-
-/** @deprecated kept for direct tests */
-export async function resolveActivityImage(
-  activity: string,
-  city: string,
-): Promise<GuideImage | null> {
-  const fake: ItineraryPlan = {
-    title: "x",
-    tagline: "",
-    palette: { bg: "", ink: "", accent: "", paper: "" },
-    transport: { outbound: "", inbound: "" },
-    stays: [],
-    budget: [],
-    days: [{ title: "1", city, activities: [{ name: activity }] }],
-  };
-  const { byActivity } = await fetchActivityImageMap(fake);
-  return byActivity.get(keyFor(city, activity)) || null;
 }
