@@ -20,10 +20,51 @@ import { parseTripPlanInput } from "@/lib/viajes/validate";
 import { fetchDestinationImages, filterGuideImages } from "@/lib/viajes/wikimedia";
 import { fetchTripVideos, type GuideVideo } from "@/lib/viajes/youtube";
 import { buildBookingLinks } from "@/lib/viajes/booking-links";
-import { allDestinations, type SearchSnippet } from "@/lib/viajes/types";
+import {
+  allDestinations,
+  citiesFromPlan,
+  type SearchSnippet,
+} from "@/lib/viajes/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
+
+async function loadMediaForCities(
+  cities: string[],
+  interests: string[],
+): Promise<{
+  images: Awaited<ReturnType<typeof fetchDestinationImages>>;
+  videos: GuideVideo[];
+}> {
+  const targets = cities.slice(0, 4);
+  const extras = ["skyline", "landmark", "street", "night", ...interests.slice(0, 2)];
+  const batches = await Promise.all(
+    targets.map((d) => fetchDestinationImages(d, extras)),
+  );
+  let videos: GuideVideo[] = [];
+  try {
+    if (process.env.TAVILY_API_KEY) {
+      videos = await fetchTripVideos(
+        {
+          origin: "",
+          destination: targets[0] || "",
+          destinations: targets.slice(1),
+          dateMode: "flexible",
+          luxury: 3,
+          travelers: 1,
+          interests: [],
+          transport: "flexible",
+          locale: "es",
+        },
+        targets,
+      );
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message === "TAVILY_QUOTA") throw err;
+    console.warn("[viajes/plan] youtube", err);
+  }
+  return { images: filterGuideImages(batches.flat()), videos };
+}
 
 export async function POST(request: Request) {
   try {
@@ -61,7 +102,7 @@ export async function POST(request: Request) {
     }
 
     const consultedAt = new Date().toISOString();
-    const dests = allDestinations(input);
+    const userLabels = allDestinations(input);
 
     let snippets: SearchSnippet[] = [];
     try {
@@ -81,62 +122,18 @@ export async function POST(request: Request) {
       }
     }
 
-    let images: Awaited<ReturnType<typeof fetchDestinationImages>> = [];
-    try {
-      const landmarkExtras = [
-        "skyline",
-        "landmark",
-        "bridge",
-        "museum",
-        "park",
-        "night",
-        "winter",
-      ];
-      const batches = await Promise.all(
-        dests.slice(0, 4).map((d) =>
-          fetchDestinationImages(d, [
-            ...input.interests.slice(0, 2),
-            ...landmarkExtras.slice(0, 4),
-          ]),
-        ),
-      );
-      images = filterGuideImages(batches.flat());
-    } catch (imgErr) {
-      console.warn("[viajes/plan] wikimedia", imgErr);
-    }
-
-    let videos: GuideVideo[] = [];
-    try {
-      if (process.env.TAVILY_API_KEY) {
-        videos = await fetchTripVideos(input);
-      }
-    } catch (vidErr) {
-      if (vidErr instanceof Error && vidErr.message === "TAVILY_QUOTA") {
-        return NextResponse.json(
-          {
-            error: "TAVILY_QUOTA",
-            message:
-              "Cuota gratuita de búsqueda agotada este mes. Prueba más adelante.",
-          },
-          { status: 429 },
-        );
-      }
-      console.warn("[viajes/plan] youtube", vidErr);
-    }
-
-    const booking = buildBookingLinks(input);
+    // Seed booking/search with whatever the user typed (city or country)
+    let booking = buildBookingLinks(input);
     const nights = Math.max(
       1,
-      (booking.stays || []).reduce((a, s) => a + s.nights, 0) ||
-        Math.round(
-          (new Date(`${booking.tripEnd}T12:00:00`).getTime() -
-            new Date(`${booking.tripStart}T12:00:00`).getTime()) /
-            86400000,
-        ),
+      (booking.stays || []).reduce((a, s) => a + s.nights, 0),
     );
 
     let html = "";
     let usedFallback = false;
+    let images: Awaited<ReturnType<typeof fetchDestinationImages>> = [];
+    let videos: GuideVideo[] = [];
+    let resolvedCities = userLabels;
 
     const tryJsonPass = async (strictExtra: string) => {
       const rawJson = await generateGeminiText(
@@ -152,15 +149,17 @@ export async function POST(request: Request) {
       return parseItineraryJson(rawJson);
     };
 
-    // 1) Structured JSON → renderer (retry once if itinerary too thin)
     try {
-      let plan = await tryJsonPass("");
+      let plan = await tryJsonPass(
+        `\nResolve destinations for ANY place on Earth. User labels: ${userLabels.join(" · ")}. If a label is a country/region, pick 2–4 concrete cities and use ONLY those in stays[].city and days[].city.`,
+      );
+
       if (plan) {
         const quality = isItineraryDenseEnough(plan, { nights });
         if (!quality.ok) {
           console.warn("[viajes/plan] thin itinerary:", quality.reason);
           const retry = await tryJsonPass(
-            `\nPREVIOUS DRAFT REJECTED: ${quality.reason}. Output ALL ${nights} days with ≥3 activities each across ${dests.join(", ")}.`,
+            `\nPREVIOUS DRAFT REJECTED: ${quality.reason}. Output ALL ~${nights} days with ≥3 activities each. Cities must be concrete (not a country name).`,
           );
           if (retry) {
             const q2 = isItineraryDenseEnough(retry, { nights });
@@ -169,13 +168,42 @@ export async function POST(request: Request) {
             }
           }
         }
+
+        resolvedCities = citiesFromPlan(plan, userLabels).filter(
+          (c) => c.toLowerCase() !== input.origin.trim().toLowerCase(),
+        );
+        if (resolvedCities.length === 0) resolvedCities = userLabels;
+
+        // Rebuild booking + media for the concrete cities the plan chose
+        booking = buildBookingLinks(input, resolvedCities);
+        try {
+          const media = await loadMediaForCities(
+            resolvedCities,
+            input.interests,
+          );
+          images = media.images;
+          videos = media.videos;
+        } catch (mediaErr) {
+          if (mediaErr instanceof Error && mediaErr.message === "TAVILY_QUOTA") {
+            return NextResponse.json(
+              {
+                error: "TAVILY_QUOTA",
+                message:
+                  "Cuota gratuita de búsqueda agotada este mes. Prueba más adelante.",
+              },
+              { status: 429 },
+            );
+          }
+          console.warn("[viajes/plan] media", mediaErr);
+        }
+
         html = sanitizeGuideHtml(
           renderGuideHtml({
             plan,
             images,
             videos,
             consultedAt,
-            destination: dests.join(" · ") || input.destination,
+            destination: resolvedCities.join(" · ") || input.destination,
             origin: input.origin,
             locale: input.locale,
             travelers: input.travelers,
@@ -189,9 +217,13 @@ export async function POST(request: Request) {
       console.warn("[viajes/plan] json pass failed", jsonErr);
     }
 
-    // 2) Optional art-directed HTML only if JSON path failed
     if (!html || html.length < 400) {
       try {
+        if (images.length === 0) {
+          const media = await loadMediaForCities(userLabels, input.interests);
+          images = media.images;
+          videos = media.videos;
+        }
         const rawHtml = await generateGeminiText(
           GUIDE_SYSTEM_PROMPT,
           buildPlanUserPrompt({
@@ -210,11 +242,13 @@ export async function POST(request: Request) {
           },
         );
         const candidate = sanitizeGuideHtml(extractHtmlDocument(rawHtml));
-        if (isGuideComplete(candidate, { minStays: Math.min(dests.length, 2) })) {
+        if (
+          isGuideComplete(candidate, {
+            minStays: Math.min(Math.max(resolvedCities.length, 1), 2),
+          })
+        ) {
           html = candidate;
           usedFallback = false;
-        } else {
-          console.warn("[viajes/plan] html incomplete — rejected");
         }
       } catch (htmlErr) {
         console.warn("[viajes/plan] html pass failed", htmlErr);
@@ -241,6 +275,7 @@ export async function POST(request: Request) {
       sources: snippets.slice(0, 24),
       images,
       videos,
+      cities: resolvedCities,
       consultedAt,
       fallback: usedFallback,
     });

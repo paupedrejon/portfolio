@@ -1,5 +1,5 @@
-import { allDestinations } from "./types";
 import type { TripPlanInput } from "./types";
+import { allDestinations } from "./types";
 
 export type GuideVideo = {
   id: string;
@@ -36,75 +36,14 @@ function thumbFor(id: string): string {
   return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
 }
 
-/** Landmark / vibe search queries per city for atmospheric walk videos. */
+/** Generic vibe queries — works for any city on Earth. */
 export function videoQueriesForCity(city: string): string[] {
   const c = city.trim();
-  const d = c
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "");
-
-  if (/tokio|tokyo/.test(d)) {
-    return [
-      `site:youtube.com Tokyo night walk Shibuya Shinjuku 4K`,
-      `site:youtube.com Tokyo snow night walking tour`,
-    ];
-  }
-  if (/kioto|kyoto/.test(d)) {
-    return [
-      `site:youtube.com Fushimi Inari walking tour 4K`,
-      `site:youtube.com Kyoto Arashiyama Gion walk`,
-    ];
-  }
-  if (/osaka/.test(d)) {
-    return [`site:youtube.com Dotonbori Osaka night walk 4K`];
-  }
-  if (/nueva york|new york|nyc|manhattan/.test(d)) {
-    return [
-      `site:youtube.com New York City walking tour 4K Manhattan`,
-      `site:youtube.com Times Square night walk New York`,
-      `site:youtube.com Brooklyn Bridge walk New York 4K`,
-    ];
-  }
-  if (/paris|par[ií]s/.test(d)) {
-    return [
-      `site:youtube.com Paris walking tour 4K Seine`,
-      `site:youtube.com Montmartre night walk Paris`,
-    ];
-  }
-  if (/seul|seoul/.test(d)) {
-    return [`site:youtube.com Seoul night walk Myeongdong Hongdae 4K`];
-  }
-  if (/montreal|montr[eé]al/.test(d)) {
-    return [
-      `site:youtube.com Old Montreal winter walking tour snow`,
-      `site:youtube.com Montreal night walk winter 4K`,
-    ];
-  }
-  if (/quebec|qu[eé]bec/.test(d)) {
-    return [`site:youtube.com Old Quebec City winter night walk snow`];
-  }
-  if (/toronto/.test(d)) {
-    return [`site:youtube.com Toronto winter walking tour 4K`];
-  }
-  if (/canada|canad[aá]/.test(d)) {
-    return [
-      `site:youtube.com Quebec City winter walk snow 4K`,
-      `site:youtube.com Montreal winter Old Port walk`,
-    ];
-  }
-  if (/roma|rome/.test(d)) {
-    return [`site:youtube.com Rome walking tour Colosseum 4K`];
-  }
-  if (/barcelona/.test(d)) {
-    return [`site:youtube.com Barcelona walking tour Gothic Quarter 4K`];
-  }
-  if (/london|londres/.test(d)) {
-    return [`site:youtube.com London walking tour 4K`];
-  }
+  if (!c) return [];
   return [
     `site:youtube.com ${c} walking tour 4K`,
     `site:youtube.com ${c} night walk travel`,
+    `site:youtube.com ${c} city walk no talking`,
   ];
 }
 
@@ -123,7 +62,7 @@ async function searchYoutube(
       api_key: apiKey.trim(),
       query,
       search_depth: "basic",
-      max_results: 5,
+      max_results: 4,
       include_domains: ["youtube.com", "www.youtube.com", "youtu.be"],
       include_answer: false,
     }),
@@ -137,8 +76,12 @@ async function searchYoutube(
     if (!r.url) continue;
     const id = extractYoutubeId(r.url);
     if (!id) continue;
-    const title = (r.title || `${city} — vídeo`).replace(/\s*-\s*YouTube\s*$/i, "").trim();
-    const description = (r.content || "").slice(0, 120).trim() || `Paseo / ambiente en ${city}`;
+    const title = (r.title || `${city} — vídeo`)
+      .replace(/\s*-\s*YouTube\s*$/i, "")
+      .trim();
+    const description =
+      (r.content || "").replace(/^###?\s*Description\s*/i, "").slice(0, 120).trim() ||
+      `Ambiente en ${city}`;
     out.push({
       id,
       title,
@@ -151,25 +94,29 @@ async function searchYoutube(
   return out;
 }
 
-/** Fetch 4–8 destination vibe videos (YouTube) via Tavily. Free tier friendly. */
+/** Fetch vibe videos for the given cities (from AI plan or user input). */
 export async function fetchTripVideos(
   input: TripPlanInput,
+  cityOverride?: string[],
 ): Promise<GuideVideo[]> {
   const apiKey = process.env.TAVILY_API_KEY?.trim();
   if (!apiKey) return [];
 
-  const cities = allDestinations(input).slice(0, 4);
+  const cities =
+    cityOverride && cityOverride.length > 0
+      ? cityOverride
+      : allDestinations(input);
+  const limitedCities = cities.slice(0, 4);
+
   const queries: { city: string; q: string }[] = [];
-  for (const city of cities) {
+  for (const city of limitedCities) {
     for (const q of videoQueriesForCity(city).slice(0, 2)) {
       queries.push({ city, q });
     }
   }
-  // Cap parallel searches to protect free quota
-  const limited = queries.slice(0, 6);
 
   const settled = await Promise.allSettled(
-    limited.map(({ city, q }) => searchYoutube(apiKey, q, city)),
+    queries.slice(0, 6).map(({ city, q }) => searchYoutube(apiKey, q, city)),
   );
 
   const seen = new Set<string>();

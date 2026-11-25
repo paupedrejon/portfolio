@@ -175,7 +175,7 @@ function heroOrnament(theme: DestinationTheme): string {
   if (theme.style === "metro") {
     return `<div class="motif motif-taxi" aria-hidden="true"></div>`;
   }
-  if (theme.style === "editorial" || theme.style === "mediterranean") {
+  if (theme.style === "editorial" || theme.style === "metro") {
     return `<div class="motif motif-bar" aria-hidden="true"></div>`;
   }
   return `<div class="motif motif-bar" aria-hidden="true"></div>`;

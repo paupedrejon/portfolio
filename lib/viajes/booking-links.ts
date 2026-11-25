@@ -115,10 +115,17 @@ function getYourGuide(city: string): string {
   return `https://www.getyourguide.com/s/?q=${enc(city)}&searchSource=2`;
 }
 
-/** Public deep-links (no paid API) for “buy / book” CTAs. */
-export function buildBookingLinks(input: TripPlanInput) {
+/** Public deep-links (no paid API) for “buy / book” CTAs.
+ * Pass `cityOverride` with concrete cities from the AI plan for any country/region. */
+export function buildBookingLinks(
+  input: TripPlanInput,
+  cityOverride?: string[],
+) {
   const from = input.origin;
-  const dests = allDestinations(input);
+  const dests =
+    cityOverride && cityOverride.length > 0
+      ? [...new Set(cityOverride.map((c) => c.trim()).filter(Boolean))]
+      : allDestinations(input);
   const to = dests[0] || input.destination;
   const adults = Math.max(1, input.travelers || 1);
   const { start, end, nights } = resolveTripDates(input);

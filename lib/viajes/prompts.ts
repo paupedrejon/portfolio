@@ -125,7 +125,8 @@ export function buildPlanUserPrompt(params: {
   return `Travel guide HTML for:
 
 ORIGIN: ${input.origin}
-DESTINATIONS (in order — ONE stay card EACH): ${dests.join(" → ")}
+USER DESTINATION LABELS: ${dests.join(" → ")}
+(If a label is a country/region, pick 2–4 concrete cities that fit — ONE stay per chosen city. Any place on Earth.)
 DATES: ${dateCopy(input)}
 SUGGESTED WINDOW: ${booking.tripStart} → ${booking.tripEnd}
 TRAVELERS: ${input.travelers}
@@ -227,7 +228,7 @@ export const JSON_SYSTEM_PROMPT = `Travel planner. Return ONLY valid JSON (no ma
   "transport": {"outbound": string, "inbound": string, "note"?: string},
   "stays": [{
     "name": "specific property name",
-    "city": "Montreal",
+    "city": "ConcreteCityName",
     "price": "2000 €",
     "nightly": "125 €",
     "vibe": "neighborhood + why",
@@ -251,14 +252,15 @@ export const JSON_SYSTEM_PROMPT = `Travel planner. Return ONLY valid JSON (no ma
   }],
   "disclaimer": string
 }
-RULES (agency-quality — not a vague brochure):
-- LIGHT paper palette matching ART BRIEF. NO emoji. NO Japanese motifs unless destination is Japan.
-- Stay price MUST equal nightly × nights (125×16 = 2000). Never invent inconsistent totals.
-- stays: EXACTLY one per destination city; specific hotel; platform "booking"|"airbnb".
-- legs: every hop + return; vehicleNo only if real from snippets.
-- days: ONE object PER calendar day of the trip (16 nights ⇒ ~16 days). NEVER stop after day 2.
-- Each day ≥3 activities (morning/afternoon/evening) with concrete places + prices. No empty days.
-- Split days across ALL destination cities in order.
+RULES (agency-quality — works for ANY country/city on Earth):
+- If the user typed a COUNTRY or REGION (e.g. Canadá, Japón, Italia, Patagonia), YOU must pick 2–4 concrete CITIES that fit trip length + interests. Never use the country name as stays[].city.
+- If the user already typed cities, use those cities (in order). Do not invent unrelated countries.
+- LIGHT paper palette matching ART BRIEF. NO emoji. Japanese ornaments ONLY if destination is Japan.
+- Stay price MUST equal nightly × nights. One platform per stay: "booking"|"airbnb".
+- legs: every hop between chosen cities + return; vehicleNo only if real from snippets.
+- days: ONE object PER calendar day (16 nights ⇒ ~16 days). NEVER stop after day 2.
+- Each day ≥3 activities (morning/afternoon/evening) with concrete places + prices.
+- Split days across the chosen cities in order.
 - budget MUST list legs + stays + food + activities; budgetPerPerson + budgetTotal required.
 Locale = user locale.`;
 
@@ -293,11 +295,11 @@ Palette: ${JSON.stringify({
     accent: theme.accent,
     paper: theme.paper,
   })}
-REQUIRED stays (one each): ${dests.join(", ")}
-Stay windows: ${stayHint || "derive from window"}
-Nights total: ${(booking?.stays || []).reduce((a, s) => a + s.nights, 0) || "?"} — output that many DAY objects (or nights+1), each with ≥3 activities.
-If nightly known, price = nightly × nights exactly (math must add up).
-HARD FAIL if you only plan 1–2 days for a long trip.
+User labels (may be cities OR a country/region): ${dests.join(" · ")}
+If those labels are not concrete lodging cities, invent 2–4 real cities inside that place for stays/days.
+Stay windows hint: ${stayHint || "derive from window"}
+Nights total: ${(booking?.stays || []).reduce((a, s) => a + s.nights, 0) || "?"} — that many DAY objects, ≥3 activities each.
+price = nightly × nights exactly. HARD FAIL if only 1–2 days on a long trip.
 PRICE FACTS:
 ${priceFacts.map((f, i) => `(p${i + 1}) ${f}`).join("\n") || "(none — use realistic orient. amounts, not blank No verificado everywhere)"}
 Snippets:

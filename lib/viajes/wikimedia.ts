@@ -33,10 +33,10 @@ function stripHtml(html: string): string {
 }
 
 const BAD_TITLE =
-  /\.(pdf|djvu|svg|tif|tiff)(\b|$)|\/page\d|plan de |map of |carte |atlas |coat of arms|flag of |logo |diagram|screenshot|oj_l_|hermit nation|estudios americanos|cathedral_square.*vilnius|milan_cathedral|duomo|colosseum|eiffel.*when.?not.?paris|title.?page|pictorial representation|manuscript|engraving|woodcut|etching|\bia\b|austriae|lingayen|moscow|arbat|book.?cover|scan of|postcard of .*18|old.?map|cadastr|burn.?scar|modis|satellite|nasa |documents_de_la_session|session_de_la|puissance_du_canada|chart of |graph of |topo(graphic)? map|cadastral|scan_|page_from|newspaper|gazette|peel\b.*map|victoria.?pei|prince edward|worksheet|infographic|emblem|seal of |crest of /i;
+  /\.(pdf|djvu|svg|tif|tiff)(\b|$)|\/page\d|plan de |map of |carte |atlas |coat of arms|flag of |logo |diagram|screenshot|oj_l_|title.?page|pictorial representation|manuscript|engraving|woodcut|etching|book.?cover|scan of|postcard of .*18|old.?map|cadastr|burn.?scar|modis|satellite|nasa |documents_de_la_session|session_de_la|chart of |graph of |topo(graphic)? map|cadastral|scan_|page_from|newspaper|gazette|worksheet|infographic|emblem|seal of |crest of |locator map|orthophoto|aerial survey/i;
 
 const BAD_URL =
-  /\.pdf($|\?)|\/wikipedia\/commons\/.*\.pdf|page\d+-.*\.pdf|\.djvu|\.svg($|\?)|Burn_Scars|MODIS|Documents_de_la_session/i;
+  /\.pdf($|\?)|\/wikipedia\/commons\/.*\.pdf|page\d+-.*\.pdf|\.djvu|\.svg($|\?)|Burn_Scars|MODIS|Documents_de_la_session|locator_map/i;
 
 function isUsableTitle(title: string): boolean {
   return !BAD_TITLE.test(title);
@@ -47,145 +47,22 @@ function isUsableUrl(url: string): boolean {
   return /\.(jpe?g|png|webp)($|\?)/i.test(url) || /\/thumb\//i.test(url);
 }
 
-/** Landmark-first queries so Korea ≠ Milan Duomo. */
+/**
+ * Generic landmark queries for ANY city/country — no per-destination hardcoding.
+ * Works for Montreal, Osaka, Cape Town, Patagonia, etc.
+ */
 export function landmarkQueriesForDestination(destination: string): string[] {
-  const d = destination.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
-  if (/corea|korea|seul|seoul|busan|incheon/.test(d)) {
-    return [
-      "Seoul South Korea skyline night",
-      "Gyeongbokgung palace Seoul",
-      "N Seoul Tower",
-      "Busan Haeundae",
-      "Gwanghwamun Seoul",
-    ];
-  }
-  if (/paris|par[ií]s/.test(d)) {
-    return [
-      "Eiffel Tower Paris",
-      "Louvre Pyramid Paris",
-      "Seine Paris night",
-      "Arc de Triomphe Paris",
-    ];
-  }
-  if (/kioto|kyoto/.test(d)) {
-    return [
-      "Fushimi Inari Kyoto",
-      "Kinkakuji Golden Pavilion Kyoto",
-      "Arashiyama bamboo Kyoto",
-      "Kiyomizu-dera Kyoto",
-    ];
-  }
-  if (/osaka/.test(d)) {
-    return [
-      "Dotonbori Osaka night",
-      "Osaka Castle",
-      "Shinsekai Osaka",
-      "Shinsaibashi Osaka",
-    ];
-  }
-  if (/tokio|tokyo|japon|japan/.test(d)) {
-    return [
-      "Tokyo skyline night",
-      "Sensoji temple Tokyo",
-      "Shibuya crossing Tokyo",
-      "Meiji Shrine Tokyo",
-    ];
-  }
-  if (/barcelona/.test(d)) {
-    return [
-      "Sagrada Familia Barcelona",
-      "Park Guell Barcelona",
-      "Barcelona skyline",
-    ];
-  }
-  if (/roma|rome/.test(d)) {
-    return ["Colosseum Rome", "Trevi Fountain Rome", "Vatican Rome"];
-  }
-  if (/london|londres/.test(d)) {
-    return ["Big Ben London", "Tower Bridge London", "London skyline"];
-  }
-  if (/new york|nyc|nueva york|manhattan|brooklyn/.test(d)) {
-    return [
-      "Empire State Building New York",
-      "Brooklyn Bridge New York",
-      "Times Square New York night",
-      "Statue of Liberty New York",
-      "Central Park New York",
-      "Chrysler Building New York",
-      "High Line New York",
-      "One World Trade Center New York",
-      "Grand Central Terminal New York",
-      "SoHo New York street",
-    ];
-  }
-  if (/montreal|montr[eé]al/.test(d)) {
-    return [
-      "Old Montreal winter",
-      "Notre-Dame Basilica Montreal",
-      "Montreal skyline night",
-      "Mount Royal Montreal",
-      "Rue Saint-Paul Montreal",
-    ];
-  }
-  if (/quebec|qu[eé]bec/.test(d) && !/montreal/.test(d)) {
-    return [
-      "Old Quebec City winter",
-      "Chateau Frontenac Quebec",
-      "Quebec City skyline snow",
-      "Petit Champlain Quebec",
-    ];
-  }
-  if (/toronto/.test(d)) {
-    return [
-      "CN Tower Toronto",
-      "Toronto skyline night",
-      "Distillery District Toronto",
-      "Toronto waterfront",
-    ];
-  }
-  if (/canada|canad[aá]/.test(d)) {
-    return [
-      "Old Quebec City winter snow",
-      "Montreal Old Port winter",
-      "CN Tower Toronto",
-      "Niagara Falls winter",
-    ];
-  }
-  if (/praga|prague|praha/.test(d)) {
-    return [
-      "Charles Bridge Prague",
-      "Prague Castle skyline",
-      "Old Town Square Prague",
-      "Astronomical Clock Prague",
-      "Vltava Prague night",
-    ];
-  }
-  if (/viena|vienna|wien/.test(d)) {
-    return [
-      "Vienna Stephansdom",
-      "Schönbrunn Palace Vienna",
-      "Vienna Ringstrasse",
-      "Hofburg Vienna",
-      "Vienna skyline night",
-    ];
-  }
-  if (/venecia|venice|venezia/.test(d)) {
-    return [
-      "Venice Grand Canal",
-      "St Mark's Square Venice",
-      "Rialto Bridge Venice",
-      "Venice gondola canal",
-      "Venetian lagoon sunset",
-    ];
-  }
-  if (/budapest/.test(d)) {
-    return ["Budapest Parliament", "Chain Bridge Budapest", "Buda Castle"];
-  }
+  const place = destination.trim();
+  if (!place) return [];
   return [
-    `${destination} landmark photo`,
-    `${destination} skyline`,
-    `${destination} old town square`,
-    `${destination} cityscape -map -plan -pdf -book`,
+    `${place} skyline`,
+    `${place} landmark`,
+    `${place} cityscape photo`,
+    `${place} old town`,
+    `${place} street night`,
+    `${place} travel photography`,
+    `${place} waterfront`,
+    `${place} historic center`,
   ];
 }
 
@@ -198,7 +75,7 @@ async function searchFileTitles(query: string, limit = 5): Promise<string[]> {
   api.searchParams.set("srlimit", String(limit));
   api.searchParams.set(
     "srsearch",
-    `${query} -pdf -djvu -svg -map -plan -postcard -engraving`,
+    `${query} -pdf -djvu -svg -map -plan -postcard -engraving -manuscript -book -satellite -MODIS`,
   );
   api.searchParams.set("origin", "*");
 
@@ -272,7 +149,7 @@ export async function fetchDestinationImages(
 ): Promise<GuideImage[]> {
   const queries = [
     ...landmarkQueriesForDestination(destination),
-    ...extraQueries.slice(0, 3).map((q) => `${destination} ${q}`),
+    ...extraQueries.slice(0, 4).map((q) => `${destination} ${q}`),
   ].slice(0, 10);
 
   const images: GuideImage[] = [];

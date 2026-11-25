@@ -4,9 +4,9 @@ export type TransportPref = "flexible";
 
 export type TripPlanInput = {
   origin: string;
-  /** Primary destination (first city). */
+  /** Primary destination (first city or country as typed by the user). */
   destination: string;
-  /** Extra cities on the same trip (e.g. Prague + Vienna). */
+  /** Extra destinations the user added (cities/countries). */
   destinations: string[];
   dateMode: DateMode;
   /** Exact outbound YYYY-MM-DD */
@@ -65,43 +65,38 @@ export const INTEREST_PRESETS = [
 
 export type InterestPreset = (typeof INTEREST_PRESETS)[number];
 
-/** Expand country-level destinations into a classic multi-city route for stays/days. */
-export function expandDestinationLabel(label: string): string[] {
-  const d = label
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .trim();
-  if (/^(japon|japan|nihon|nippon)$/.test(d)) {
-    return ["Tokio", "Kioto", "Osaka"];
-  }
-  if (/^(corea del sur|south korea|korea|corea)$/.test(d)) {
-    return ["Seúl", "Busan"];
-  }
-  if (/^(italia|italy)$/.test(d)) {
-    return ["Roma", "Florencia", "Venecia"];
-  }
-  if (/^(francia|france)$/.test(d)) {
-    return ["París"];
-  }
-  if (/^(espana|spain)$/.test(d)) {
-    return ["Madrid", "Barcelona"];
-  }
-  if (/^(canada|canad[aá])$/.test(d)) {
-    return ["Montreal", "Quebec", "Toronto"];
-  }
-  if (/^(eeuu|usa|estados unidos|united states)$/.test(d)) {
-    return ["Nueva York"];
-  }
-  return [label.trim()].filter(Boolean);
-}
-
+/** User-typed destinations only — never invent country→city expansions here. */
 export function allDestinations(
   input: Pick<TripPlanInput, "destination" | "destinations">,
 ): string[] {
-  const raw = [input.destination, ...(input.destinations || [])]
+  const list = [input.destination, ...(input.destinations || [])]
     .map((s) => s.trim())
     .filter(Boolean);
-  const expanded = raw.flatMap((label) => expandDestinationLabel(label));
-  return [...new Set(expanded)];
+  return [...new Set(list)];
+}
+
+/** Prefer concrete cities from the AI plan; fall back to user labels. */
+export function citiesFromPlan(
+  plan: {
+    stays?: { city?: string }[];
+    days?: { city?: string }[];
+    legs?: { toCity?: string; fromCity?: string }[];
+  } | null,
+  fallback: string[],
+): string[] {
+  const fromStays = (plan?.stays || []).map((s) => s.city?.trim()).filter(Boolean) as string[];
+  const fromDays = (plan?.days || []).map((d) => d.city?.trim()).filter(Boolean) as string[];
+  const fromLegs = (plan?.legs || [])
+    .flatMap((l) => [l.toCity, l.fromCity])
+    .map((s) => s?.trim())
+    .filter(Boolean) as string[];
+
+  const ordered: string[] = [];
+  for (const c of [...fromStays, ...fromDays, ...fromLegs]) {
+    const key = c.toLowerCase();
+    if (!ordered.some((x) => x.toLowerCase() === key)) ordered.push(c);
+  }
+  // Drop origin-looking noise later in booking; here keep destinations only
+  if (ordered.length >= 1) return ordered.slice(0, 6);
+  return fallback.slice(0, 6);
 }
