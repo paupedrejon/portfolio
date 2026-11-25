@@ -44,7 +44,10 @@ export function sanitizeGuideHtml(html: string): string {
   let out = html;
   // Strip scripts and event handlers
   out = out.replace(/<script\b[\s\S]*?<\/script>/gi, "");
-  out = out.replace(/<iframe\b[\s\S]*?<\/iframe>/gi, "");
+  // Allow only YouTube embeds (hero ambient video); strip other iframes
+  out = out.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, (tag) =>
+    /youtube\.com\/embed\//i.test(tag) ? tag : "",
+  );
   out = out.replace(/<object\b[\s\S]*?<\/object>/gi, "");
   out = out.replace(/<embed\b[^>]*>/gi, "");
   out = out.replace(/\son\w+\s*=\s*(['"]).*?\1/gi, "");

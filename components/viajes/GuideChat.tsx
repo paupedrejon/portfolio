@@ -14,7 +14,7 @@ type GuideChatProps = {
   loading: boolean;
   messages: ChatMessage[];
   onSend: (instruction: string) => Promise<void>;
-  /** Compact bottom dock under fullscreen guide */
+  /** Floating ChatGPT-style composer under the guide */
   dock?: boolean;
   onDownloadHtml?: () => void;
 };
@@ -49,14 +49,14 @@ export default function GuideChat({
       .reverse()
       .find((m) => m.role === "assistant");
     return (
-      <div className="viajes-dock" aria-label={t("chatTitlePlain")}>
-        {lastAssistant && (
-          <p className="viajes-dock__status" aria-live="polite">
-            {loading ? t("actions.editing") : lastAssistant.text}
+      <div className="viajes-float" aria-label={t("chatTitlePlain")}>
+        {(lastAssistant || loading) && (
+          <p className="viajes-float__status" aria-live="polite">
+            {loading ? t("actions.editing") : lastAssistant?.text}
           </p>
         )}
         <form
-          className="viajes-dock__composer"
+          className="viajes-float__pill"
           onSubmit={async (e) => {
             e.preventDefault();
             await submit();
@@ -73,7 +73,7 @@ export default function GuideChat({
           {onDownloadHtml && (
             <button
               type="button"
-              className="viajes-iconbtn"
+              className="viajes-float__icon"
               disabled={disabled || loading}
               onClick={onDownloadHtml}
               aria-label={t("actions.downloadHtml")}
@@ -84,7 +84,7 @@ export default function GuideChat({
           )}
           <button
             type="submit"
-            className="viajes-iconbtn viajes-iconbtn--primary"
+            className="viajes-float__send"
             disabled={disabled || loading || !draft.trim()}
             aria-label={t("actions.send")}
             title={t("actions.send")}

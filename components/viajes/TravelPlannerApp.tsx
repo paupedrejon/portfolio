@@ -23,8 +23,28 @@ function purify(html: string): string {
   if (!sanitize) return html;
   return sanitize(html, {
     WHOLE_DOCUMENT: true,
-    ADD_TAGS: ["link", "style"],
-    ADD_ATTR: ["target", "rel", "href", "media", "type", "charset"],
+    ADD_TAGS: ["link", "style", "iframe", "video", "source"],
+    ADD_ATTR: [
+      "target",
+      "rel",
+      "href",
+      "src",
+      "media",
+      "type",
+      "charset",
+      "allow",
+      "allowfullscreen",
+      "frameborder",
+      "loading",
+      "tabindex",
+      "autoplay",
+      "muted",
+      "loop",
+      "playsinline",
+      "poster",
+      "aria-hidden",
+      "aria-label",
+    ],
   });
 }
 
@@ -125,11 +145,17 @@ export default function TravelPlannerApp() {
   const guideMode = hasGuide && !showWizard;
 
   useEffect(() => {
-    if (!guideMode) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const cls = "viajes-guide-open";
+    if (guideMode) {
+      document.body.classList.add(cls);
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.classList.remove(cls);
+      document.body.style.overflow = "";
+    }
     return () => {
-      document.body.style.overflow = prev;
+      document.body.classList.remove(cls);
+      document.body.style.overflow = "";
     };
   }, [guideMode]);
 

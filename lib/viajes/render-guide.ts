@@ -298,6 +298,12 @@ export function renderGuideHtml(params: {
     booking,
   } = params;
   const videos = (params.videos || []).slice(0, 5);
+  const heroVideo =
+    videos.find((v) =>
+      /walk|4k|drone|city|vista|tour|night|calle|street/i.test(
+        `${v.title} ${v.description}`,
+      ),
+    ) || videos[0] || null;
   const activityImages = params.activityImages || new Map();
   const luxury = params.luxury ?? 3;
   const images = filterGuideImages(params.images).filter(
@@ -368,9 +374,8 @@ export function renderGuideHtml(params: {
   };
 
   /**
-   * Activity photos ONLY from the per-activity map (Wikipedia → pageimage).
-   * Never reuse a pool image — that produced identical / unrelated photos.
-   * Empty placeholder beats a wrong photo.
+   * Prefer per-activity Wikipedia/Commons hit; else a UNIQUE unused city photo.
+   * Never recycle the same URL (that caused identical wrong photos).
    */
   const photoForActivity = (
     city: string,
@@ -381,7 +386,7 @@ export function renderGuideHtml(params: {
       usedUrls.add(urlKey(direct.url));
       return direct;
     }
-    return null;
+    return nextImg(city, activity);
   };
 
   const legs: TransportLeg[] =
@@ -752,6 +757,9 @@ html[data-style="washi"] .seal,html[data-style="hanji"] .seal{border-radius:6px;
 .v-script{writing-mode:vertical-rl;text-orientation:upright;font-family:var(--display);font-weight:800;letter-spacing:.14em;font-size:18px;color:var(--accent)}
 .hero{position:relative;min-height:min(72vh,620px);color:#fff;overflow:hidden;background:#0d0b10;isolation:isolate}
 .hero-bg{position:absolute;inset:0;z-index:-2;background:${hero ? `url("${esc(hero.url)}") center/cover` : `radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--accent) 50%,#000),#0d0b10)`}}
+.hero-bg--video{overflow:hidden;background:#0d0b10}
+.hero-bg--video iframe{position:absolute;left:50%;top:50%;width:100vw;height:56.25vw;min-height:100%;min-width:177.77vh;transform:translate(-50%,-50%) scale(1.12);border:0;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.hero-bg--video iframe{display:none}}
 .hero::before{content:"";position:absolute;inset:0;z-index:-1;background:${theme.heroOverlay}}
 .motif{position:absolute;z-index:-1;pointer-events:none}
 .motif-disc{width:min(48vw,380px);aspect-ratio:1;border-radius:50%;background:var(--accent);right:8%;top:60px;opacity:.85;box-shadow:0 0 0 14px color-mix(in srgb,var(--accent) 25%,transparent)}
@@ -905,7 +913,20 @@ footer{margin:48px 0 0;padding:24px 0 48px;font-size:13px;color:var(--mute)}
 </head>
 <body>
 <header class="hero">
-  <div class="hero-bg" role="img" aria-label="${esc(destination)}"></div>
+  ${
+    heroVideo
+      ? `<div class="hero-bg hero-bg--video" aria-hidden="true">
+    <div class="hero-bg" role="img" aria-label="${esc(destination)}"></div>
+    <iframe
+      src="https://www.youtube.com/embed/${esc(heroVideo.id)}?autoplay=1&amp;mute=1&amp;controls=0&amp;loop=1&amp;playlist=${esc(heroVideo.id)}&amp;playsinline=1&amp;rel=0&amp;modestbranding=1&amp;iv_load_policy=3"
+      title="${esc(heroVideo.title)}"
+      allow="autoplay; encrypted-media; picture-in-picture"
+      tabindex="-1"
+      loading="eager"
+    ></iframe>
+  </div>`
+      : `<div class="hero-bg" role="img" aria-label="${esc(destination)}"></div>`
+  }
   ${heroOrnament(theme)}
   <div class="wrap">
     <div class="eyebrow">${esc(origin)} → ${esc(destination)} · ${esc(dateLine)}</div>
