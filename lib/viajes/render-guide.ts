@@ -30,6 +30,18 @@ function esc(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+/** Keep hero headline short so the cover stays compact (better media quality). */
+function shortHeroTitle(title: string): string {
+  const t = (title || "").trim().replace(/\s+/g, " ");
+  if (t.length <= 56) return t;
+  const cut = t.slice(0, 53).replace(/\s+\S*$/, "");
+  return `${cut || t.slice(0, 53)}…`;
+}
+
+function encOrigin(): string {
+  return encodeURIComponent("https://www.youtube.com");
+}
+
 function normCity(s?: string): string {
   return (s || "")
     .toLowerCase()
@@ -302,11 +314,18 @@ export function renderGuideHtml(params: {
   } = params;
   const videos = (params.videos || []).slice(0, 5);
   const heroVideo =
-    videos.find((v) =>
-      /walk|4k|drone|city|vista|tour|night|calle|street/i.test(
-        `${v.title} ${v.description}`,
-      ),
-    ) || videos[0] || null;
+    [...videos].sort((a, b) => {
+      const score = (v: (typeof videos)[number]) => {
+        const blob = `${v.title} ${v.description}`.toLowerCase();
+        let s = 0;
+        if (/4k|uhd|2160|hdr/.test(blob)) s += 5;
+        if (/walk|walking|paseo|stroll|drone|cinematic/.test(blob)) s += 4;
+        if (/night|sunset|golden/.test(blob)) s += 2;
+        if (/no talking|ambient|timelapse/.test(blob)) s += 2;
+        return s;
+      };
+      return score(b) - score(a);
+    })[0] || null;
   const activityImages = params.activityImages || new Map();
   const luxury = params.luxury ?? 3;
   const images = filterGuideImages(params.images).filter(
@@ -817,23 +836,23 @@ h1,h2,h3,h4{font-family:var(--display);font-weight:800;margin:0;line-height:1.15
 .seal{display:inline-grid;place-items:center;min-width:44px;height:44px;padding:0 8px;font-family:var(--display);font-weight:800;color:var(--accent);border:2px solid var(--accent);border-radius:4px;line-height:1;font-size:14px}
 html[data-style="washi"] .seal,html[data-style="hanji"] .seal{border-radius:6px;border-width:3px;font-size:22px;width:44px;padding:0}
 .v-script{writing-mode:vertical-rl;text-orientation:upright;font-family:var(--display);font-weight:800;letter-spacing:.14em;font-size:18px;color:var(--accent)}
-.hero{position:relative;min-height:min(72vh,620px);color:#fff;overflow:hidden;background:#0d0b10;isolation:isolate}
+.hero{position:relative;min-height:min(52vh,460px);max-height:520px;color:#fff;overflow:hidden;background:#0d0b10;isolation:isolate}
 .hero-bg{position:absolute;inset:0;z-index:-2;background:${hero ? `#0d0b10` : `radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--accent) 50%,#000),#0d0b10)`}}
 .hero-bg img.hero-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0}
 .hero-bg--video{overflow:hidden;background:#0d0b10}
-.hero-bg--video iframe{position:absolute;left:50%;top:50%;width:100vw;height:56.25vw;min-height:100%;min-width:177.77vh;transform:translate(-50%,-50%) scale(1.55);border:0;pointer-events:none;z-index:1}
+.hero-bg--video iframe{position:absolute;left:50%;top:50%;width:100vw;height:56.25vw;min-height:100%;min-width:177.77vh;transform:translate(-50%,-50%) scale(1.18);border:0;pointer-events:none;z-index:1}
 .hero-bg--video .hero-shield{position:absolute;inset:0;z-index:2;pointer-events:auto;background:transparent}
 @media (prefers-reduced-motion:reduce){.hero-bg--video iframe{display:none}}
 .hero::before{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;background:${theme.heroOverlay}}
-.motif{position:absolute;z-index:-1;pointer-events:none}
-.motif-disc{width:min(48vw,380px);aspect-ratio:1;border-radius:50%;background:var(--accent);right:8%;top:60px;opacity:.85;box-shadow:0 0 0 14px color-mix(in srgb,var(--accent) 25%,transparent)}
-.motif-taxi{left:0;right:0;top:0;height:10px;background:repeating-linear-gradient(90deg,var(--accent) 0 28px,#111 28px 56px)}
-.motif-bar{left:0;top:0;bottom:0;width:8px;background:var(--accent)}
-.hero .wrap{position:relative;z-index:4;min-height:min(72vh,620px);display:flex;flex-direction:column;justify-content:flex-end;padding:70px 22px 56px}
-.hero .eyebrow{font-size:13px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:#f3d9b8}
-.hero h1{font-size:clamp(2.8rem,9vw,5.5rem);margin:8px 0 6px;text-shadow:0 6px 30px rgba(0,0,0,.35);max-width:16ch}
-.hero .sub{font-size:1.1rem;max-width:44ch;margin:8px 0 0;color:#efe6d6}
-.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.motif{position:absolute;z-index:1;pointer-events:none}
+.motif-disc{width:min(36vw,260px);aspect-ratio:1;border-radius:50%;background:var(--accent);right:6%;top:40px;opacity:.75;box-shadow:0 0 0 10px color-mix(in srgb,var(--accent) 25%,transparent)}
+.motif-taxi{left:0;right:0;top:0;height:8px;background:repeating-linear-gradient(90deg,var(--accent) 0 28px,#111 28px 56px)}
+.motif-bar{left:0;top:0;bottom:0;width:6px;background:var(--accent)}
+.hero .wrap{position:relative;z-index:4;min-height:min(52vh,460px);display:flex;flex-direction:column;justify-content:flex-end;padding:40px 22px 36px}
+.hero .eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:#f3d9b8}
+.hero h1{font-size:clamp(1.45rem,3.6vw,2.45rem);margin:6px 0 4px;text-shadow:0 4px 22px rgba(0,0,0,.4);max-width:22ch;line-height:1.08;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.hero .sub{font-size:.95rem;max-width:42ch;margin:6px 0 0;color:#efe6d6;line-height:1.4;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .chips span{background:var(--card);color:var(--ink);font-weight:700;font-size:14px;padding:6px 14px;border-left:5px solid var(--accent)}
 html[data-style="metro"] .chips span{border-left:0;border-bottom:3px solid var(--accent)}
 .divider{height:12px}
@@ -1003,12 +1022,15 @@ footer{margin:48px 0 0;padding:24px 0 48px;font-size:13px;color:var(--mute)}
           ? `<img class="hero-poster" src="${esc(heroVideo.thumb)}" alt="" decoding="async" referrerpolicy="no-referrer"/>`
           : "";
       if (heroVideo) {
-        return `<div class="hero-bg hero-bg--video" aria-hidden="true" inert>
+        // No inert here — it can block muted autoplay in Chromium.
+        // Poster stays under the iframe as fallback while the stream starts.
+        return `<div class="hero-bg hero-bg--video" aria-hidden="true">
     ${poster}
     <iframe
-      src="https://www.youtube-nocookie.com/embed/${esc(heroVideo.id)}?autoplay=1&amp;mute=1&amp;controls=0&amp;loop=1&amp;playlist=${esc(heroVideo.id)}&amp;playsinline=1&amp;rel=0&amp;modestbranding=1&amp;iv_load_policy=3&amp;fs=0&amp;disablekb=1&amp;cc_load_policy=0"
+      src="https://www.youtube.com/embed/${esc(heroVideo.id)}?autoplay=1&amp;mute=1&amp;muted=1&amp;controls=0&amp;loop=1&amp;playlist=${esc(heroVideo.id)}&amp;playsinline=1&amp;rel=0&amp;modestbranding=1&amp;iv_load_policy=3&amp;fs=0&amp;disablekb=1&amp;cc_load_policy=0&amp;origin=${encOrigin()}"
       title="${esc(heroVideo.title)}"
-      allow="autoplay; encrypted-media"
+      allow="autoplay; encrypted-media; picture-in-picture"
+      allowfullscreen
       tabindex="-1"
       loading="eager"
     ></iframe>
@@ -1021,7 +1043,7 @@ footer{margin:48px 0 0;padding:24px 0 48px;font-size:13px;color:var(--mute)}
   ${heroOrnament(theme)}
   <div class="wrap">
     <div class="eyebrow">${esc(origin)} → ${esc(destination)} · ${esc(dateLine)}</div>
-    <h1>${esc(plan.title)}</h1>
+    <h1>${esc(shortHeroTitle(plan.title))}</h1>
     <p class="sub">${esc(plan.tagline || theme.mood)}</p>
     <div class="chips">
       <span>${pax} ${pax === 1 ? "viajero" : "viajeros"}</span>

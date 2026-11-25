@@ -10,7 +10,7 @@ import GuidePreview from "@/components/viajes/GuidePreview";
 import GuideChat, { type ChatMessage } from "@/components/viajes/GuideChat";
 import type { TripPlanInput } from "@/lib/viajes/types";
 
-const STORAGE_KEY = "viajes-guide-v4";
+const STORAGE_KEY = "viajes-guide-v5";
 
 /**
  * Server already runs sanitizeGuideHtml. Client DOMPurify was stripping
@@ -21,6 +21,25 @@ function purify(html: string): string {
     .replace(/<script\b[\s\S]*?<\/script>/gi, "")
     .replace(/\son\w+\s*=\s*(['"]).*?\1/gi, "")
     .replace(/\son\w+\s*=\s*[^\s>]+/gi, "");
+}
+
+async function readApiJson(res: Response): Promise<Record<string, unknown>> {
+  const text = await res.text();
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    const snippet = text.replace(/\s+/g, " ").trim().slice(0, 140);
+    if (/an error occurred|function invocation|timeout|504|503/i.test(snippet)) {
+      throw new Error(
+        "El servidor tardó demasiado o falló. Espera ~1 min y reintenta.",
+      );
+    }
+    throw new Error(
+      snippet
+        ? `Respuesta inválida del servidor: ${snippet}`
+        : "Respuesta inválida del servidor.",
+    );
+  }
 }
 
 function defaultTrip(locale: string): TripPlanInput {
@@ -148,12 +167,13 @@ export default function TravelPlannerApp() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(trip),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) {
-        const err = new Error(data.message || t("errors.generic")) as Error & {
-          code?: string;
-        };
-        err.code = data.error;
+        const err = new Error(
+          (typeof data.message === "string" && data.message) ||
+            t("errors.generic"),
+        ) as Error & { code?: string };
+        err.code = typeof data.error === "string" ? data.error : undefined;
         throw err;
       }
       return data as {
@@ -217,19 +237,25 @@ export default function TravelPlannerApp() {
               : [trip.destination, ...(trip.destinations || [])],
         }),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) {
-        throw new Error(data.message || t("errors.generic"));
+        throw new Error(
+          (typeof data.message === "string" && data.message) ||
+            t("errors.generic"),
+        );
       }
-      setHtml(purify(data.html as string));
-      if (data.title) setTitle(data.title);
-      if (Array.isArray(data.cities)) setCities(data.cities);
-      if (data.trip) {
+      setHtml(purify(String(data.html || "")));
+      if (typeof data.title === "string") setTitle(data.title);
+      if (Array.isArray(data.cities)) {
+        setCities(data.cities.filter((c): c is string => typeof c === "string"));
+      }
+      if (data.trip && typeof data.trip === "object") {
+        const nextTrip = data.trip as Partial<TripPlanInput>;
         setTrip({
           ...defaultTrip(locale),
-          ...data.trip,
+          ...nextTrip,
           locale,
-          destinations: data.trip.destinations || [],
+          destinations: nextTrip.destinations || [],
           transport: "flexible",
         });
       }

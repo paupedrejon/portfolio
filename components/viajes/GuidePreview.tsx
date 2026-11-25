@@ -78,9 +78,9 @@ export default function GuidePreview({
           <iframe
             title={title || t("previewFrameTitle")}
             srcDoc={html}
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            referrerPolicy="strict-origin-when-cross-origin"
-            sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-modals"
+            allow="autoplay *; encrypted-media *; picture-in-picture *; fullscreen *"
+            referrerPolicy="origin-when-cross-origin"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-modals allow-presentation"
           />
         </div>
       )}

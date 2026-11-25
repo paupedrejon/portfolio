@@ -33,7 +33,8 @@ function extractYoutubeId(url: string): string | null {
 }
 
 function thumbFor(id: string): string {
-  return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+  // maxres when available looks sharper as hero poster fallback
+  return `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
 }
 
 /** Generic vibe queries — works for any city on Earth. */
