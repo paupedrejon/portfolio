@@ -38,8 +38,10 @@ PRICE & FACT INTEGRITY (non-negotiable)
 - Prefer PRICE FACTS / SEARCH SNIPPETS. Cite [n] or domain.
 - If snippets show a band (e.g. 630–650 € i/v), use that — never invent 900+ €.
 - If no snippet price: use a realistic market ORIENTATIVO labeled "(orient.)" — NEVER dump "No verificado" on every line.
-- For stays: if nightly known, total = nightly × nights (label orient. if computed).
+- For stays: total MUST = nightly × nights (125×16=2000). One booking CTA only (Booking OR Airbnb).
+- Transport: ONE CTA per leg to buy that ticket (Skyscanner / Trainline / Flixbus) — not two buttons.
 - Forbidden: fake flight codes (NY-120), "Aerolínea Regular", "Estancia Completa" country packs.
+- Days: full trip length, ≥3 activities/day. Never a 2-day stub for a 2-week trip.
 - Real operator + flight number ONLY when in snippets; else operator "Ver en Skyscanner" and vehicleNo omitted.
 
 ════════════════════════════════════
@@ -225,11 +227,12 @@ export const JSON_SYSTEM_PROMPT = `Travel planner. Return ONLY valid JSON (no ma
   "transport": {"outbound": string, "inbound": string, "note"?: string},
   "stays": [{
     "name": "specific property name",
-    "city": "Tokio",
-    "price": "total for stay or No verificado",
-    "nightly": "85 €",
+    "city": "Montreal",
+    "price": "2000 €",
+    "nightly": "125 €",
     "vibe": "neighborhood + why",
-    "nights": "4 noches"
+    "nights": "16 noches",
+    "platform": "booking"
   }],
   "budget": [{"label": string, "amount": string}],
   "budgetPerPerson": string,
@@ -248,14 +251,15 @@ export const JSON_SYSTEM_PROMPT = `Travel planner. Return ONLY valid JSON (no ma
   }],
   "disclaimer": string
 }
-RULES:
+RULES (agency-quality — not a vague brochure):
 - LIGHT paper palette matching ART BRIEF. NO emoji. NO Japanese motifs unless destination is Japan.
-- Prices: snippets/PRICE FACTS first; else realistic "(orient.)" amounts — avoid littering "No verificado".
-- Never invent 900€ flights if snippets show ~640€. Never invent flight numbers (no NY-120).
-- stays: EXACTLY one per destination city with SPECIFIC hotel name + nightly when possible.
+- Stay price MUST equal nightly × nights (125×16 = 2000). Never invent inconsistent totals.
+- stays: EXACTLY one per destination city; specific hotel; platform "booking"|"airbnb".
 - legs: every hop + return; vehicleNo only if real from snippets.
-- days: cover the trip; concrete places + prices; vary activity names (MoMA, High Line, Brooklyn Bridge…).
-- budget MUST list legs + stays + food + activities; budgetPerPerson + budgetTotal required (compute if needed).
+- days: ONE object PER calendar day of the trip (16 nights ⇒ ~16 days). NEVER stop after day 2.
+- Each day ≥3 activities (morning/afternoon/evening) with concrete places + prices. No empty days.
+- Split days across ALL destination cities in order.
+- budget MUST list legs + stays + food + activities; budgetPerPerson + budgetTotal required.
 Locale = user locale.`;
 
 export function buildJsonUserPrompt(params: {
@@ -291,7 +295,9 @@ Palette: ${JSON.stringify({
   })}
 REQUIRED stays (one each): ${dests.join(", ")}
 Stay windows: ${stayHint || "derive from window"}
-If nightly known, set price = nightly × nights as "X €".
+Nights total: ${(booking?.stays || []).reduce((a, s) => a + s.nights, 0) || "?"} — output that many DAY objects (or nights+1), each with ≥3 activities.
+If nightly known, price = nightly × nights exactly (math must add up).
+HARD FAIL if you only plan 1–2 days for a long trip.
 PRICE FACTS:
 ${priceFacts.map((f, i) => `(p${i + 1}) ${f}`).join("\n") || "(none — use realistic orient. amounts, not blank No verificado everywhere)"}
 Snippets:

@@ -52,6 +52,8 @@ export type ItineraryPlan = {
     nightly?: string;
     vibe?: string;
     nights?: string;
+    /** Where to book this exact stay */
+    platform?: "booking" | "airbnb";
   }[];
   budget: { label: string; amount: string }[];
   /** Estimated total per person */

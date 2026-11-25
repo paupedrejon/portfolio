@@ -75,6 +75,24 @@ export function videoQueriesForCity(city: string): string[] {
   if (/seul|seoul/.test(d)) {
     return [`site:youtube.com Seoul night walk Myeongdong Hongdae 4K`];
   }
+  if (/montreal|montr[eé]al/.test(d)) {
+    return [
+      `site:youtube.com Old Montreal winter walking tour snow`,
+      `site:youtube.com Montreal night walk winter 4K`,
+    ];
+  }
+  if (/quebec|qu[eé]bec/.test(d)) {
+    return [`site:youtube.com Old Quebec City winter night walk snow`];
+  }
+  if (/toronto/.test(d)) {
+    return [`site:youtube.com Toronto winter walking tour 4K`];
+  }
+  if (/canada|canad[aá]/.test(d)) {
+    return [
+      `site:youtube.com Quebec City winter walk snow 4K`,
+      `site:youtube.com Montreal winter Old Port walk`,
+    ];
+  }
   if (/roma|rome/.test(d)) {
     return [`site:youtube.com Rome walking tour Colosseum 4K`];
   }

@@ -201,6 +201,32 @@ export function themeForDestination(destination: string): DestinationTheme {
     };
   }
 
+  if (/canada|canad[aá]|montreal|montr[eé]al|quebec|toronto|niagara/.test(d)) {
+    return {
+      bg: "#eef3f6",
+      ink: "#12202a",
+      accent: "#c8102e",
+      accentSoft: "#f3d4da",
+      paper: "#f7fafc",
+      mute: "#5a6a75",
+      rule: "#c9d5de",
+      secondary: "#1a3a5c",
+      night: "#0c1218",
+      neon: "#4fc3f7",
+      heroOverlay:
+        "linear-gradient(120deg,rgba(12,18,24,.9) 0%,rgba(12,18,24,.45) 55%,rgba(12,18,24,.2) 100%)",
+      displayFont: "Cormorant Garamond",
+      bodyFont: "Source Sans 3",
+      googleFontsHref: fonts("Cormorant Garamond", "Source Sans 3"),
+      scriptSamples: ["01", "02", "03", "04", "05", "06"],
+      style: "editorial",
+      verticalScript: false,
+      mood: "northern ice, maple red, winter light",
+      artBrief:
+        "Canadá invierno: papel frío azulado + maple red. Sin estética japonesa. Paisajes/ciudades reales (Montreal, Quebec, Toronto).",
+    };
+  }
+
   if (/nyc|new york|nueva york|manhattan|brooklyn|miami|los angeles|chicago/.test(d)) {
     return {
       bg: "#f2f0ea",

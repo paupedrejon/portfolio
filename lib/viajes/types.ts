@@ -87,6 +87,12 @@ export function expandDestinationLabel(label: string): string[] {
   if (/^(espana|spain)$/.test(d)) {
     return ["Madrid", "Barcelona"];
   }
+  if (/^(canada|canad[aá])$/.test(d)) {
+    return ["Montreal", "Quebec", "Toronto"];
+  }
+  if (/^(eeuu|usa|estados unidos|united states)$/.test(d)) {
+    return ["Nueva York"];
+  }
   return [label.trim()].filter(Boolean);
 }
 

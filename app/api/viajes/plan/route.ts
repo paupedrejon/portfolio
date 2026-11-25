@@ -11,6 +11,7 @@ import {
   buildPlanUserPrompt,
 } from "@/lib/viajes/prompts";
 import { parseItineraryJson } from "@/lib/viajes/itinerary-schema";
+import { isItineraryDenseEnough } from "@/lib/viajes/itinerary-quality";
 import { renderGuideHtml } from "@/lib/viajes/render-guide";
 import { clientIp, consumeRateLimit } from "@/lib/viajes/rate-limit";
 import { isGuideComplete, sanitizeGuideHtml } from "@/lib/viajes/sanitize";
@@ -89,12 +90,13 @@ export async function POST(request: Request) {
         "museum",
         "park",
         "night",
+        "winter",
       ];
       const batches = await Promise.all(
         dests.slice(0, 4).map((d) =>
           fetchDestinationImages(d, [
             ...input.interests.slice(0, 2),
-            ...landmarkExtras.slice(0, 3),
+            ...landmarkExtras.slice(0, 4),
           ]),
         ),
       );
@@ -123,23 +125,50 @@ export async function POST(request: Request) {
     }
 
     const booking = buildBookingLinks(input);
+    const nights = Math.max(
+      1,
+      (booking.stays || []).reduce((a, s) => a + s.nights, 0) ||
+        Math.round(
+          (new Date(`${booking.tripEnd}T12:00:00`).getTime() -
+            new Date(`${booking.tripStart}T12:00:00`).getTime()) /
+            86400000,
+        ),
+    );
+
     let html = "";
     let usedFallback = false;
 
-    // 1) Prefer structured JSON → washi renderer (accurate stays/prices/receipt)
-    try {
+    const tryJsonPass = async (strictExtra: string) => {
       const rawJson = await generateGeminiText(
         JSON_SYSTEM_PROMPT,
-        buildJsonUserPrompt({ input, snippets, consultedAt, booking }),
+        `${buildJsonUserPrompt({ input, snippets, consultedAt, booking })}\n${strictExtra}`,
         {
-          temperature: 0.35,
-          maxOutputTokens: 8192,
+          temperature: 0.3,
+          maxOutputTokens: 12288,
           attemptsPerModel: 2,
           maxModels: 3,
         },
       );
-      const plan = parseItineraryJson(rawJson);
+      return parseItineraryJson(rawJson);
+    };
+
+    // 1) Structured JSON → renderer (retry once if itinerary too thin)
+    try {
+      let plan = await tryJsonPass("");
       if (plan) {
+        const quality = isItineraryDenseEnough(plan, { nights });
+        if (!quality.ok) {
+          console.warn("[viajes/plan] thin itinerary:", quality.reason);
+          const retry = await tryJsonPass(
+            `\nPREVIOUS DRAFT REJECTED: ${quality.reason}. Output ALL ${nights} days with ≥3 activities each across ${dests.join(", ")}.`,
+          );
+          if (retry) {
+            const q2 = isItineraryDenseEnough(retry, { nights });
+            if (q2.ok || (retry.days?.length || 0) > (plan.days?.length || 0)) {
+              plan = retry;
+            }
+          }
+        }
         html = sanitizeGuideHtml(
           renderGuideHtml({
             plan,
@@ -150,6 +179,7 @@ export async function POST(request: Request) {
             origin: input.origin,
             locale: input.locale,
             travelers: input.travelers,
+            luxury: input.luxury,
             booking,
           }),
         );
@@ -173,7 +203,7 @@ export async function POST(request: Request) {
             booking,
           }),
           {
-            temperature: 0.45,
+            temperature: 0.4,
             maxOutputTokens: 12288,
             attemptsPerModel: 1,
             maxModels: 2,

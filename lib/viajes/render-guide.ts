@@ -8,7 +8,12 @@ import {
   type DestinationTheme,
 } from "./destination-theme";
 import { filterGuideImages } from "./wikimedia";
-import { formatEuro, parseEuro, resolveStayTotal } from "./money";
+import {
+  formatEuro,
+  parseEuro,
+  resolveStayTotal,
+  stayPlatformForLuxury,
+} from "./money";
 
 function esc(s: string): string {
   return s
@@ -90,23 +95,21 @@ function renderTicket(
       (normCity(l.to).includes(normCity(leg.toCity)) ||
         normCity(leg.toCity).includes(normCity(l.to))),
   );
-  const ctas: { href: string; label: string; solid?: boolean }[] = [];
-  if (kind === "train" || kind === "bus" || kind === "ferry") {
-    ctas.push({
-      href: matched?.trainline || booking.trainsTrainline,
-      label: "Trainline",
-      solid: true,
-    });
-    ctas.push({
-      href: matched?.flixbus || booking.busFlixbus,
-      label: "Flixbus",
-    });
+  // ONE primary CTA to book this leg at the shown price
+  let ctaHref = href;
+  let ctaLabel = `Reservar · ${price}`;
+  if (kind === "train") {
+    ctaHref = matched?.trainline || booking.trainsTrainline;
+    ctaLabel = `Reservar tren · ${price}`;
+  } else if (kind === "bus") {
+    ctaHref = matched?.flixbus || booking.busFlixbus;
+    ctaLabel = `Reservar bus · ${price}`;
+  } else if (kind === "ferry") {
+    ctaHref = matched?.skyscanner || href;
+    ctaLabel = `Reservar ferry · ${price}`;
   } else {
-    ctas.push({ href, label: "Skyscanner", solid: true });
-    ctas.push({
-      href: matched?.google || booking.flightsGoogle,
-      label: "Google Flights",
-    });
+    ctaHref = matched?.skyscanner || href;
+    ctaLabel = `Reservar vuelo · ${price}`;
   }
 
   const flightId =
@@ -142,12 +145,7 @@ function renderTicket(
     </div>
     <div class="tk-foot">
       <div class="btns">
-        ${ctas
-          .map(
-            (c) =>
-              `<a class="btn${c.solid ? " solid" : ""}" href="${esc(c.href)}" target="_blank" rel="noopener">${esc(c.label)}</a>`,
-          )
-          .join("")}
+        <a class="btn solid" href="${esc(ctaHref)}" target="_blank" rel="noopener">${esc(ctaLabel)}</a>
       </div>
     </div>
   </article>`;
@@ -198,6 +196,7 @@ export function renderGuideHtml(params: {
   origin: string;
   locale: string;
   travelers: number;
+  luxury?: number;
   booking: BookingLinks;
 }): string {
   const {
@@ -210,6 +209,7 @@ export function renderGuideHtml(params: {
     booking,
   } = params;
   const videos = (params.videos || []).slice(0, 8);
+  const luxury = params.luxury ?? 3;
   const images = filterGuideImages(params.images);
   const theme = themeForDestination(destination);
   const p = {
@@ -229,18 +229,33 @@ export function renderGuideHtml(params: {
   const usedUrls = new Set<string>();
   if (hero?.url) usedUrls.add(hero.url);
 
-  const nextImg = (city?: string): GuideImage | null => {
+  const scoreImg = (img: GuideImage, tokens: string[], city?: string) => {
+    const blob = `${img.query} ${img.title}`.toLowerCase();
+    let score = 0;
     const n = normCity(city);
-    const cityPool = n
-      ? pool.filter((img) => normCity(img.query).includes(n) || normCity(img.title).includes(n))
-      : [];
-    const prefer = (cityPool.length ? cityPool : pool).filter(
-      (img) => !usedUrls.has(img.url),
-    );
+    if (n && (normCity(img.query).includes(n) || normCity(img.title).includes(n)))
+      score += 4;
+    for (const t of tokens) {
+      if (t.length < 4) continue;
+      if (blob.includes(t)) score += 3;
+    }
+    if (usedUrls.has(img.url)) score -= 20;
+    return score;
+  };
+
+  const nextImg = (city?: string, hint?: string): GuideImage | null => {
+    const tokens = (hint || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "")
+      .split(/[^a-z0-9]+/)
+      .filter((t) => t.length > 3);
+    const ranked = [...pool, ...images]
+      .map((img) => ({ img, score: scoreImg(img, tokens, city) }))
+      .sort((a, b) => b.score - a.score);
     const pick =
-      prefer[0] ||
-      pool.find((img) => !usedUrls.has(img.url)) ||
-      images.find((img) => !usedUrls.has(img.url)) ||
+      ranked.find((r) => r.score > 0 && !usedUrls.has(r.img.url))?.img ||
+      ranked.find((r) => !usedUrls.has(r.img.url))?.img ||
       null;
     if (pick?.url) usedUrls.add(pick.url);
     return pick;
@@ -278,36 +293,51 @@ export function renderGuideHtml(params: {
       nightly: hit?.nightly,
       nights: link.nights,
     });
+    const platform =
+      hit?.platform || stayPlatformForLuxury(luxury);
+    const bookHref = platform === "airbnb" ? link.airbnb : link.booking;
+    const bookLabel =
+      platform === "airbnb"
+        ? `Reservar en Airbnb · ${total}`
+        : `Reservar en Booking · ${total}`;
     return {
       name: hit?.name || `Alojamiento en ${link.city}`,
       city: link.city,
       price: total,
-      nightly: hit?.nightly,
+      nightly: hit?.nightly || "",
       vibe: hit?.vibe || "",
-      nights: hit?.nights || `${link.nights} noches`,
+      nightsLabel: `${link.nights} noches · ${link.checkin} → ${link.checkout}`,
+      nights: link.nights,
+      bookHref,
+      bookLabel,
       link,
     };
   });
 
   const stayHtml = staysList
     .map((stay) => {
-      const photo = nextImg(stay.city);
+      const photo = nextImg(stay.city, stay.name);
+      const nightlyNum = parseEuro(stay.nightly);
+      const nightlyShown = nightlyNum
+        ? formatEuro(nightlyNum)
+        : parseEuro(stay.price) && stay.nights
+          ? formatEuro((parseEuro(stay.price) || 0) / stay.nights)
+          : stay.nightly;
       return `<article class="stay">
         <div class="poster">
           ${photo?.url ? `<img src="${esc(photo.url)}" alt="${esc(stay.city)}"/>` : ""}
           <span class="city-es">${esc(stay.city)}</span>
         </div>
         <div class="body">
-          <div class="when">${esc(`${stay.nights} · ${stay.link.checkin} → ${stay.link.checkout}`)}</div>
+          <div class="when">${esc(stay.nightsLabel)}</div>
           <h3>${esc(stay.name)}</h3>
           <p>${esc(stay.vibe || "")}</p>
           <div class="money">
-            ${stay.nightly ? `<div><small>Por noche</small><b>${esc(stay.nightly)}</b></div>` : ""}
-            <div class="pp"><small>Total estancia</small><b>${esc(stay.price)}</b></div>
+            ${nightlyShown ? `<div><small>Por noche</small><b>${esc(nightlyShown)}</b></div>` : ""}
+            <div class="pp"><small>Total estancia (${stay.nights} noches)</small><b>${esc(stay.price)}</b></div>
           </div>
           <div class="btns" style="margin-top:14px">
-            <a class="btn solid" href="${esc(stay.link.booking)}" target="_blank" rel="noopener">Booking</a>
-            <a class="btn" href="${esc(stay.link.airbnb)}" target="_blank" rel="noopener">Airbnb</a>
+            <a class="btn solid" href="${esc(stay.bookHref)}" target="_blank" rel="noopener">${esc(stay.bookLabel)}</a>
           </div>
         </div>
       </article>`;
@@ -355,11 +385,13 @@ export function renderGuideHtml(params: {
     const meta = [planLeg?.date || "", planLeg?.operator || "", planLeg?.price || ""]
       .filter(Boolean)
       .join(" · ");
+    const groundHref = label === "Bus" ? flixHref : trainHref;
+    const groundLabel =
+      label === "Bus" ? "Reservar bus" : "Reservar tren";
     return `<div class="transit">
       <span><b>${esc(label)}</b> ${esc(fromCity)} → ${esc(toCity)}${meta ? ` · ${esc(meta)}` : ""}</span>
       <span class="btns">
-        <a class="btn solid" href="${esc(trainHref)}" target="_blank" rel="noopener">Trainline</a>
-        <a class="btn" href="${esc(flixHref)}" target="_blank" rel="noopener">Flixbus</a>
+        <a class="btn solid" href="${esc(groundHref)}" target="_blank" rel="noopener">${esc(groundLabel)}</a>
       </span>
     </div>`;
   }
@@ -385,7 +417,7 @@ export function renderGuideHtml(params: {
           ?.getYourGuide || booking.activitiesGetYourGuide;
       const acts = (day.activities || [])
         .map((a) => {
-          const img = nextImg(city);
+          const img = nextImg(city, a.name);
           const label = a.bookingLabel || "Ver / reservar";
           const isFree = /gratis|incluido|free|0\s*€/i.test(a.price || "");
           return `<figure class="act">

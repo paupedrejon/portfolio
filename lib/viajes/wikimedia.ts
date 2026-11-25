@@ -33,10 +33,10 @@ function stripHtml(html: string): string {
 }
 
 const BAD_TITLE =
-  /\.(pdf|djvu|svg|tif|tiff)(\b|$)|\/page\d|plan de |map of |carte |atlas |coat of arms|flag of |logo |diagram|screenshot|oj_l_|hermit nation|estudios americanos|cathedral_square.*vilnius|milan_cathedral|duomo|colosseum|eiffel.*when.?not.?paris|title.?page|pictorial representation|manuscript|engraving|woodcut|etching|\bia\b|austriae|lingayen|moscow|arbat|book.?cover|scan of|postcard of .*18|old.?map|cadastr/i;
+  /\.(pdf|djvu|svg|tif|tiff)(\b|$)|\/page\d|plan de |map of |carte |atlas |coat of arms|flag of |logo |diagram|screenshot|oj_l_|hermit nation|estudios americanos|cathedral_square.*vilnius|milan_cathedral|duomo|colosseum|eiffel.*when.?not.?paris|title.?page|pictorial representation|manuscript|engraving|woodcut|etching|\bia\b|austriae|lingayen|moscow|arbat|book.?cover|scan of|postcard of .*18|old.?map|cadastr|burn.?scar|modis|satellite|nasa |documents_de_la_session|session_de_la|puissance_du_canada|chart of |graph of |topo(graphic)? map|cadastral|scan_|page_from|newspaper|gazette|peel\b.*map|victoria.?pei|prince edward|worksheet|infographic|emblem|seal of |crest of /i;
 
 const BAD_URL =
-  /\.pdf($|\?)|\/wikipedia\/commons\/.*\.pdf|page\d+-.*\.pdf|\.djvu|\.svg($|\?)/i;
+  /\.pdf($|\?)|\/wikipedia\/commons\/.*\.pdf|page\d+-.*\.pdf|\.djvu|\.svg($|\?)|Burn_Scars|MODIS|Documents_de_la_session/i;
 
 function isUsableTitle(title: string): boolean {
   return !BAD_TITLE.test(title);
@@ -116,6 +116,39 @@ export function landmarkQueriesForDestination(destination: string): string[] {
       "One World Trade Center New York",
       "Grand Central Terminal New York",
       "SoHo New York street",
+    ];
+  }
+  if (/montreal|montr[eé]al/.test(d)) {
+    return [
+      "Old Montreal winter",
+      "Notre-Dame Basilica Montreal",
+      "Montreal skyline night",
+      "Mount Royal Montreal",
+      "Rue Saint-Paul Montreal",
+    ];
+  }
+  if (/quebec|qu[eé]bec/.test(d) && !/montreal/.test(d)) {
+    return [
+      "Old Quebec City winter",
+      "Chateau Frontenac Quebec",
+      "Quebec City skyline snow",
+      "Petit Champlain Quebec",
+    ];
+  }
+  if (/toronto/.test(d)) {
+    return [
+      "CN Tower Toronto",
+      "Toronto skyline night",
+      "Distillery District Toronto",
+      "Toronto waterfront",
+    ];
+  }
+  if (/canada|canad[aá]/.test(d)) {
+    return [
+      "Old Quebec City winter snow",
+      "Montreal Old Port winter",
+      "CN Tower Toronto",
+      "Niagara Falls winter",
     ];
   }
   if (/praga|prague|praha/.test(d)) {
