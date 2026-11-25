@@ -1,9 +1,11 @@
 const FALLBACK_MODELS = [
   "gemini-3.5-flash-lite",
   "gemini-flash-lite-latest",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.8-flash",
   "gemini-3.1-flash-lite",
   "gemini-flash-latest",
-  "gemini-3.5-flash",
 ];
 
 type GeminiPart = { text?: string };
@@ -21,14 +23,14 @@ function sleep(ms: number) {
 }
 
 function shouldSkipModel(message: string): boolean {
-  return /no longer available|not found|is not supported|not supported for|INVALID_ARGUMENT/i.test(
+  return /no longer available|not found|is not supported|not supported for|INVALID_ARGUMENT|update your code/i.test(
     message,
   );
 }
 
 function isBusy(message: string, status: number): boolean {
   if (status === 429 || status === 503) return true;
-  return /high demand|temporarily|try again|unavailable|overloaded|resource.exhausted/i.test(
+  return /high demand|temporarily|try again|unavailable|overloaded|resource.exhausted|UNAVAILABLE/i.test(
     message,
   );
 }
@@ -44,20 +46,36 @@ async function callModel(
   | { kind: "busy" | "skip" | "fatal"; message: string; status: number }
 > {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: system }] },
-      contents: [{ role: "user", parts: [{ text: user }] }],
-      generationConfig: {
-        temperature: options?.temperature ?? 0.85,
-        maxOutputTokens: options?.maxOutputTokens ?? 8192,
-      },
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: user }] }],
+        generationConfig: {
+          temperature: options?.temperature ?? 0.85,
+          maxOutputTokens: options?.maxOutputTokens ?? 8192,
+        },
+      }),
+      signal: AbortSignal.timeout(90_000),
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "fetch failed";
+    return { kind: "busy", message: msg, status: 503 };
+  }
 
-  const data = (await res.json()) as GeminiResponse;
+  let data: GeminiResponse;
+  try {
+    data = (await res.json()) as GeminiResponse;
+  } catch {
+    return {
+      kind: "busy",
+      message: `Gemini HTTP ${res.status} (bad JSON)`,
+      status: res.status,
+    };
+  }
   const msg = data.error?.message || `Gemini HTTP ${res.status}`;
 
   if (!res.ok) {
@@ -95,35 +113,43 @@ export async function generateGeminiText(
   options?: {
     temperature?: number;
     maxOutputTokens?: number;
-    /** Attempts per model (default 2). */
+    /** Attempts per model (default 3). */
     attemptsPerModel?: number;
     /** Cap how many models to try (default all). */
     maxModels?: number;
   },
 ): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY_MISSING");
   }
 
-  const preferred = process.env.GEMINI_TRAVEL_MODEL;
+  const preferred = process.env.GEMINI_TRAVEL_MODEL?.trim();
   const models = [
     ...(preferred ? [preferred] : []),
     ...FALLBACK_MODELS.filter((m) => m !== preferred),
   ].slice(0, options?.maxModels ?? FALLBACK_MODELS.length + 1);
 
-  const attemptsPerModel = options?.attemptsPerModel ?? 2;
+  const attemptsPerModel = options?.attemptsPerModel ?? 3;
   let sawQuota = false;
   let lastBusy = "Gemini está saturado. Reintenta en unos segundos.";
 
   for (const model of models) {
     for (let attempt = 0; attempt < attemptsPerModel; attempt++) {
-      if (attempt > 0) await sleep(900 * attempt);
+      if (attempt > 0) {
+        // Exponential backoff: ~1.2s, 2.4s, 4.8s… (+ jitter)
+        const wait = Math.round(1200 * 2 ** (attempt - 1) + Math.random() * 400);
+        await sleep(wait);
+      }
       const result = await callModel(apiKey, model, system, user, options);
       if ("text" in result) return result.text;
 
       if (result.kind === "skip" || result.kind === "fatal") break; // next model
-      if (result.message === "GEMINI_QUOTA") sawQuota = true;
+      if (result.message === "GEMINI_QUOTA") {
+        sawQuota = true;
+        // Quota on one model — try others before giving up
+        break;
+      }
       lastBusy = result.message;
     }
   }

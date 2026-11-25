@@ -120,8 +120,8 @@ export async function generateTravelGuide(
       {
         temperature: 0.3,
         maxOutputTokens: 12288,
-        attemptsPerModel: 2,
-        maxModels: 3,
+        attemptsPerModel: 3,
+        maxModels: 5,
       },
     );
     return parseItineraryJson(rawJson);
@@ -216,8 +216,8 @@ export async function generateTravelGuide(
         {
           temperature: 0.4,
           maxOutputTokens: 12288,
-          attemptsPerModel: 1,
-          maxModels: 2,
+          attemptsPerModel: 2,
+          maxModels: 4,
         },
       );
       const candidate = sanitizeGuideHtml(extractHtmlDocument(rawHtml));

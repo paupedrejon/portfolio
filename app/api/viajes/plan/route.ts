@@ -4,7 +4,7 @@ import { clientIp, consumeRateLimit } from "@/lib/viajes/rate-limit";
 import { parseTripPlanInput } from "@/lib/viajes/validate";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 180;
 
 export async function POST(request: Request) {
   try {

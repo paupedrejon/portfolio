@@ -137,7 +137,12 @@ export default function TravelPlannerApp() {
   async function generate() {
     setError(null);
     setLoadingPlan(true);
-    try {
+    const isBusyMsg = (msg: string) =>
+      /saturad|high demand|try again|reintenta|GENERATION_FAILED|unavailable/i.test(
+        msg,
+      );
+
+    const requestOnce = async () => {
       const res = await fetch("/api/viajes/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -145,9 +150,34 @@ export default function TravelPlannerApp() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || t("errors.generic"));
+        const err = new Error(data.message || t("errors.generic")) as Error & {
+          code?: string;
+        };
+        err.code = data.error;
+        throw err;
       }
-      const clean = purify(data.html as string);
+      return data as {
+        html: string;
+        title?: string | null;
+        cities?: string[];
+        trip?: TripPlanInput;
+      };
+    };
+
+    try {
+      let data: Awaited<ReturnType<typeof requestOnce>>;
+      try {
+        data = await requestOnce();
+      } catch (first) {
+        const msg = first instanceof Error ? first.message : "";
+        if (!isBusyMsg(msg)) throw first;
+        // Gemini spikes are often ~30–60s — one automatic retry
+        setError("Gemini está ocupado… reintentando en unos segundos.");
+        await new Promise((r) => setTimeout(r, 8000));
+        setError(null);
+        data = await requestOnce();
+      }
+      const clean = purify(data.html);
       setHtml(clean);
       setTitle(data.title || null);
       if (Array.isArray(data.cities)) setCities(data.cities);
