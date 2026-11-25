@@ -10,42 +10,17 @@ import GuidePreview from "@/components/viajes/GuidePreview";
 import GuideChat, { type ChatMessage } from "@/components/viajes/GuideChat";
 import type { TripPlanInput } from "@/lib/viajes/types";
 
-const STORAGE_KEY = "viajes-guide-v3";
+const STORAGE_KEY = "viajes-guide-v4";
 
+/**
+ * Server already runs sanitizeGuideHtml. Client DOMPurify was stripping
+ * CSS url() (hero poster) and could mangle embeds — keep a light pass only.
+ */
 function purify(html: string): string {
-  if (typeof window === "undefined") return html;
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require("dompurify") as {
-    default?: { sanitize: (s: string, cfg?: object) => string };
-    sanitize?: (s: string, cfg?: object) => string;
-  };
-  const sanitize = mod.default?.sanitize ?? mod.sanitize;
-  if (!sanitize) return html;
-  return sanitize(html, {
-    WHOLE_DOCUMENT: true,
-    ADD_TAGS: ["link", "style", "iframe", "video", "source"],
-    ADD_ATTR: [
-      "target",
-      "rel",
-      "href",
-      "src",
-      "media",
-      "type",
-      "charset",
-      "allow",
-      "allowfullscreen",
-      "frameborder",
-      "loading",
-      "tabindex",
-      "autoplay",
-      "muted",
-      "loop",
-      "playsinline",
-      "poster",
-      "aria-hidden",
-      "aria-label",
-    ],
-  });
+  return html
+    .replace(/<script\b[\s\S]*?<\/script>/gi, "")
+    .replace(/\son\w+\s*=\s*(['"]).*?\1/gi, "")
+    .replace(/\son\w+\s*=\s*[^\s>]+/gi, "");
 }
 
 function defaultTrip(locale: string): TripPlanInput {
@@ -186,7 +161,7 @@ export default function TravelPlannerApp() {
         });
       }
       setShowWizard(false);
-      setMessages([{ role: "assistant", text: t("chat.ready") }]);
+      setMessages([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("errors.generic"));
     } finally {
@@ -294,16 +269,15 @@ export default function TravelPlannerApp() {
             fullscreen
             hideToolbar
           />
+          <GuideChat
+            dock
+            disabled={!html}
+            loading={loadingEdit}
+            messages={messages}
+            onSend={edit}
+            onDownloadHtml={downloadHtml}
+          />
         </div>
-
-        <GuideChat
-          dock
-          disabled={!html}
-          loading={loadingEdit}
-          messages={messages}
-          onSend={edit}
-          onDownloadHtml={downloadHtml}
-        />
 
         {error && (
           <p className="viajes-fs__error" role="alert">

@@ -1666,7 +1666,7 @@
       "destinationCity": "Città o paese",
       "addCity": "Praga, Vienna…",
       "interestsNote": "Musei, croissant, Le Marais…",
-      "chat": "Cambia l'hotel del giorno 2 con qualcosa di più centrale"
+      "chat": "Dimmi cosa cambiare…"
     },
     "hints": {
       "multiDest": "Puoi concatenare destinazioni (es. Praga + Vienna)."
@@ -1723,7 +1723,7 @@
       "editing": "Applico le modifiche…"
     },
     "chat": {
-      "ready": "Guida pronta. Dimmi cosa cambiare.",
+      "ready": "",
       "updated": "Guida aggiornata.",
       "you": "Tu",
       "assistant": "Planner"

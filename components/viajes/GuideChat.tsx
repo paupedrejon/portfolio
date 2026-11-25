@@ -45,14 +45,11 @@ export default function GuideChat({
   };
 
   if (dock) {
-    const lastAssistant = [...messages]
-      .reverse()
-      .find((m) => m.role === "assistant");
     return (
       <div className="viajes-float" aria-label={t("chatTitlePlain")}>
-        {(lastAssistant || loading) && (
+        {loading && (
           <p className="viajes-float__status" aria-live="polite">
-            {loading ? t("actions.editing") : lastAssistant?.text}
+            {t("actions.editing")}
           </p>
         )}
         <form

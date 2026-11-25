@@ -374,8 +374,8 @@ export function renderGuideHtml(params: {
   };
 
   /**
-   * Prefer per-activity Wikipedia/Commons hit; else a UNIQUE unused city photo.
-   * Never recycle the same URL (that caused identical wrong photos).
+   * Prefer per-activity Wikipedia/Commons hit; else UNIQUE city photo;
+   * last resort: unused YouTube thumb for that city (still a real photo).
    */
   const photoForActivity = (
     city: string,
@@ -386,7 +386,25 @@ export function renderGuideHtml(params: {
       usedUrls.add(urlKey(direct.url));
       return direct;
     }
-    return nextImg(city, activity);
+    const fromPool = nextImg(city, activity);
+    if (fromPool) return fromPool;
+    const cityN = normCity(city);
+    const yt = videos.find(
+      (v) =>
+        v.thumb &&
+        !usedUrls.has(urlKey(v.thumb)) &&
+        (!cityN || normCity(v.city).includes(cityN)),
+    );
+    if (yt?.thumb) {
+      usedUrls.add(urlKey(yt.thumb));
+      return {
+        url: yt.thumb,
+        title: yt.title,
+        attribution: "YouTube",
+        query: `${city}::${activity}`,
+      };
+    }
+    return null;
   };
 
   const legs: TransportLeg[] =
@@ -455,7 +473,7 @@ export function renderGuideHtml(params: {
           : stay.nightly;
       return `<article class="stay">
         <div class="poster">
-          ${photo?.url ? `<img src="${esc(photo.url)}" alt="${esc(stay.city)}"/>` : ""}
+          ${photo?.url ? `<img src="${esc(photo.url)}" alt="${esc(stay.city)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"/>` : ""}
           <span class="city-es">${esc(stay.city)}</span>
         </div>
         <div class="body">
@@ -562,11 +580,12 @@ export function renderGuideHtml(params: {
             ? "Gratis"
             : price;
           return `<figure class="act">
-            <div class="ph${img?.url ? "" : " ph-empty"}"${
-              img?.url
-                ? ` style="background-image:url('${esc(img.url)}')"`
-                : ""
-            }>
+            <div class="ph${img?.url ? "" : " ph-empty"}">
+              ${
+                img?.url
+                  ? `<img src="${esc(img.url)}" alt="${esc(a.name)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"/>`
+                  : ""
+              }
               <span class="tag price">${esc(priceTag)}</span>
               ${isNight ? `<span class="tag noche">Noche</span>` : ""}
               ${a.time ? `<span class="tag time">${esc(a.time)}</span>` : ""}
@@ -699,7 +718,7 @@ export function renderGuideHtml(params: {
         .map(
           (v) => `<a class="vid" href="${esc(v.url)}" target="_blank" rel="noopener">
         <div class="vid-thumb">
-          <img src="${esc(v.thumb)}" alt="${esc(v.title)}" loading="lazy"/>
+          <img src="${esc(v.thumb)}" alt="${esc(v.title)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"/>
           <div class="vid-play" aria-hidden="true"><span></span></div>
         </div>
         <div class="vid-body">
@@ -756,9 +775,10 @@ h1,h2,h3,h4{font-family:var(--display);font-weight:800;margin:0;line-height:1.15
 html[data-style="washi"] .seal,html[data-style="hanji"] .seal{border-radius:6px;border-width:3px;font-size:22px;width:44px;padding:0}
 .v-script{writing-mode:vertical-rl;text-orientation:upright;font-family:var(--display);font-weight:800;letter-spacing:.14em;font-size:18px;color:var(--accent)}
 .hero{position:relative;min-height:min(72vh,620px);color:#fff;overflow:hidden;background:#0d0b10;isolation:isolate}
-.hero-bg{position:absolute;inset:0;z-index:-2;background:${hero ? `url("${esc(hero.url)}") center/cover` : `radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--accent) 50%,#000),#0d0b10)`}}
+.hero-bg{position:absolute;inset:0;z-index:-2;background:${hero ? `#0d0b10` : `radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--accent) 50%,#000),#0d0b10)`}}
+.hero-bg img.hero-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .hero-bg--video{overflow:hidden;background:#0d0b10}
-.hero-bg--video iframe{position:absolute;left:50%;top:50%;width:100vw;height:56.25vw;min-height:100%;min-width:177.77vh;transform:translate(-50%,-50%) scale(1.12);border:0;pointer-events:none}
+.hero-bg--video iframe{position:absolute;left:50%;top:50%;width:100vw;height:56.25vw;min-height:100%;min-width:177.77vh;transform:translate(-50%,-50%) scale(1.12);border:0;pointer-events:none;z-index:1}
 @media (prefers-reduced-motion:reduce){.hero-bg--video iframe{display:none}}
 .hero::before{content:"";position:absolute;inset:0;z-index:-1;background:${theme.heroOverlay}}
 .motif{position:absolute;z-index:-1;pointer-events:none}
@@ -849,9 +869,10 @@ section{padding:56px 0 8px}
 .dnight{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);border:1.5px solid var(--rule);padding:6px 10px;white-space:nowrap;align-self:start}
 .acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:18px;padding:22px 0 8px}
 .act{margin:0}
-.act .ph{position:relative;aspect-ratio:4/3;background:#2a2622 center/cover no-repeat;overflow:hidden;isolation:isolate}
-.act .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.45));pointer-events:none}
-.act .ph-empty{background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 18%,var(--rule)),var(--card))}
+.act .ph{position:relative;aspect-ratio:4/3;background:#2a2622;overflow:hidden;isolation:isolate}
+.act .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.act .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.45));pointer-events:none;z-index:0}
+.act .ph-empty{background:linear-gradient(145deg,var(--rule),var(--card))}
 .act .tag{position:absolute;z-index:1;font-size:11px;font-weight:700;letter-spacing:.04em;padding:4px 8px;line-height:1.2;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.45)}
 .act .tag.price{left:10px;bottom:10px;background:rgba(12,10,12,.72);backdrop-filter:blur(4px);font-family:var(--display);font-size:15px;font-weight:800}
 .act .tag.noche{left:10px;top:10px;background:var(--accent)}
@@ -914,9 +935,15 @@ footer{margin:48px 0 0;padding:24px 0 48px;font-size:13px;color:var(--mute)}
 <body>
 <header class="hero">
   ${
-    heroVideo
-      ? `<div class="hero-bg hero-bg--video" aria-hidden="true">
-    <div class="hero-bg" role="img" aria-label="${esc(destination)}"></div>
+    (() => {
+      const poster = hero?.url
+        ? `<img class="hero-poster" src="${esc(hero.url)}" alt="" decoding="async" referrerpolicy="no-referrer"/>`
+        : heroVideo?.thumb
+          ? `<img class="hero-poster" src="${esc(heroVideo.thumb)}" alt="" decoding="async" referrerpolicy="no-referrer"/>`
+          : "";
+      if (heroVideo) {
+        return `<div class="hero-bg hero-bg--video" aria-hidden="true">
+    ${poster}
     <iframe
       src="https://www.youtube.com/embed/${esc(heroVideo.id)}?autoplay=1&amp;mute=1&amp;controls=0&amp;loop=1&amp;playlist=${esc(heroVideo.id)}&amp;playsinline=1&amp;rel=0&amp;modestbranding=1&amp;iv_load_policy=3"
       title="${esc(heroVideo.title)}"
@@ -924,8 +951,10 @@ footer{margin:48px 0 0;padding:24px 0 48px;font-size:13px;color:var(--mute)}
       tabindex="-1"
       loading="eager"
     ></iframe>
-  </div>`
-      : `<div class="hero-bg" role="img" aria-label="${esc(destination)}"></div>`
+  </div>`;
+      }
+      return `<div class="hero-bg" role="img" aria-label="${esc(destination)}">${poster}</div>`;
+    })()
   }
   ${heroOrnament(theme)}
   <div class="wrap">
