@@ -65,6 +65,15 @@ export default function CustomCursor() {
     };
 
     const onPointerMove = (event: PointerEvent) => {
+      const root = rootRef.current;
+      const overIframe =
+        event.target instanceof HTMLIFrameElement ||
+        document.body.classList.contains("viajes-guide-open");
+      if (overIframe) {
+        if (root) root.style.opacity = "0";
+        return;
+      }
+      if (root && root.style.opacity === "0") root.style.opacity = "1";
       x = event.clientX;
       y = event.clientY;
       dirty = true;

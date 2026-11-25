@@ -244,6 +244,16 @@ body.viajes-guide-open .bmn-wrapper {
   display: none !important;
 }
 
+/* Custom cursor freezes over iframes — use system cursor in guide mode */
+body.viajes-guide-open.custom-cursor-enabled,
+body.viajes-guide-open.custom-cursor-enabled * {
+  cursor: auto !important;
+}
+body.viajes-guide-open .custom-cursor-root {
+  display: none !important;
+  opacity: 0 !important;
+}
+
 /* Fullscreen guide + floating ChatGPT-style composer */
 .viajes-fs {
   position: fixed;
@@ -351,16 +361,33 @@ body.viajes-guide-open .bmn-wrapper {
 .viajes-float__pill input {
   min-width: 0;
   height: 40px;
-  border: 0;
-  outline: none;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
   background: transparent;
-  color: var(--text);
+  color: #f3f4f6;
   font: inherit;
   font-size: 0.95rem;
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.viajes-float__pill input:focus,
+.viajes-float__pill input:focus-visible,
+.viajes-float__pill input:active {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.viajes-float__pill:focus-within {
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
 }
 
 .viajes-float__pill input::placeholder {
-  color: var(--muted);
+  color: #9ca3af;
 }
 
 .viajes-float__icon {

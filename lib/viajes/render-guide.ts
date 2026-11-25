@@ -374,8 +374,8 @@ export function renderGuideHtml(params: {
   };
 
   /**
-   * Prefer per-activity Wikipedia/Commons hit; else UNIQUE city photo;
-   * last resort: unused YouTube thumb for that city (still a real photo).
+   * Prefer per-activity hit → unique city photo → unused YT thumb →
+   * any YT thumb → soft-reuse a city pool photo (never leave a blank card).
    */
   const photoForActivity = (
     city: string,
@@ -389,22 +389,47 @@ export function renderGuideHtml(params: {
     const fromPool = nextImg(city, activity);
     if (fromPool) return fromPool;
     const cityN = normCity(city);
-    const yt = videos.find(
+    const ytCity = videos.find(
       (v) =>
         v.thumb &&
         !usedUrls.has(urlKey(v.thumb)) &&
         (!cityN || normCity(v.city).includes(cityN)),
     );
-    if (yt?.thumb) {
-      usedUrls.add(urlKey(yt.thumb));
+    if (ytCity?.thumb) {
+      usedUrls.add(urlKey(ytCity.thumb));
       return {
-        url: yt.thumb,
-        title: yt.title,
+        url: ytCity.thumb,
+        title: ytCity.title,
         attribution: "YouTube",
         query: `${city}::${activity}`,
       };
     }
-    return null;
+    const ytAny = videos.find(
+      (v) => v.thumb && !usedUrls.has(urlKey(v.thumb)),
+    );
+    if (ytAny?.thumb) {
+      usedUrls.add(urlKey(ytAny.thumb));
+      return {
+        url: ytAny.thumb,
+        title: ytAny.title,
+        attribution: "YouTube",
+        query: `${city}::${activity}`,
+      };
+    }
+    // Soft reuse: prefer same-city pool image over an empty card
+    const reuse =
+      [...pool, ...images].find(
+        (img) =>
+          img.url &&
+          cityN &&
+          (normCity(img.query).includes(cityN) ||
+            normCity(img.title).includes(cityN)),
+      ) ||
+      direct ||
+      pool[0] ||
+      images[0] ||
+      null;
+    return reuse;
   };
 
   const legs: TransportLeg[] =
@@ -776,11 +801,12 @@ html[data-style="washi"] .seal,html[data-style="hanji"] .seal{border-radius:6px;
 .v-script{writing-mode:vertical-rl;text-orientation:upright;font-family:var(--display);font-weight:800;letter-spacing:.14em;font-size:18px;color:var(--accent)}
 .hero{position:relative;min-height:min(72vh,620px);color:#fff;overflow:hidden;background:#0d0b10;isolation:isolate}
 .hero-bg{position:absolute;inset:0;z-index:-2;background:${hero ? `#0d0b10` : `radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--accent) 50%,#000),#0d0b10)`}}
-.hero-bg img.hero-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.hero-bg img.hero-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0}
 .hero-bg--video{overflow:hidden;background:#0d0b10}
-.hero-bg--video iframe{position:absolute;left:50%;top:50%;width:100vw;height:56.25vw;min-height:100%;min-width:177.77vh;transform:translate(-50%,-50%) scale(1.12);border:0;pointer-events:none;z-index:1}
+.hero-bg--video iframe{position:absolute;left:50%;top:50%;width:100vw;height:56.25vw;min-height:100%;min-width:177.77vh;transform:translate(-50%,-50%) scale(1.55);border:0;pointer-events:none;z-index:1}
+.hero-bg--video .hero-shield{position:absolute;inset:0;z-index:2;pointer-events:auto;background:transparent}
 @media (prefers-reduced-motion:reduce){.hero-bg--video iframe{display:none}}
-.hero::before{content:"";position:absolute;inset:0;z-index:-1;background:${theme.heroOverlay}}
+.hero::before{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;background:${theme.heroOverlay}}
 .motif{position:absolute;z-index:-1;pointer-events:none}
 .motif-disc{width:min(48vw,380px);aspect-ratio:1;border-radius:50%;background:var(--accent);right:8%;top:60px;opacity:.85;box-shadow:0 0 0 14px color-mix(in srgb,var(--accent) 25%,transparent)}
 .motif-taxi{left:0;right:0;top:0;height:10px;background:repeating-linear-gradient(90deg,var(--accent) 0 28px,#111 28px 56px)}
@@ -859,14 +885,14 @@ section{padding:56px 0 8px}
 .chapter .kj-lat{font-size:clamp(1.8rem,4vw,2.6rem);letter-spacing:.08em}
 .chapter h3{font-size:clamp(1.4rem,3vw,1.9rem)}
 .chapter p{margin:2px 0 0;color:var(--mute);font-size:.95rem}
-.dias{display:grid;gap:42px}
-.dia{display:grid;gap:0;padding:0;background:transparent;border:0}
-.dia-head{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:end;padding:0 0 14px;border-bottom:2px solid var(--ink)}
+.dias{display:grid;gap:28px}
+.dia{display:grid;gap:0;padding:22px 22px 18px;background:var(--card);border:1px solid var(--rule);box-shadow:0 18px 36px -28px rgba(20,16,14,.55)}
+.dia-head{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:end;margin:0 -22px;padding:0 22px 14px;border-bottom:2px solid var(--ink)}
 .dnum b{font-family:var(--display);font-weight:800;font-size:clamp(2.8rem,7vw,4.2rem);line-height:.85;color:var(--ink)}
 .dm{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--mute)}
 .dia h4{font-size:clamp(1.35rem,3vw,1.85rem);margin:4px 0 0}
 .dsub{margin:6px 0 0;color:var(--mute);font-size:.98rem;max-width:52ch}
-.dnight{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);border:1.5px solid var(--rule);padding:6px 10px;white-space:nowrap;align-self:start}
+.dnight{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);border:1.5px solid var(--rule);padding:6px 10px;white-space:nowrap;align-self:start;background:color-mix(in srgb,var(--paper-bg) 70%,transparent)}
 .acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:18px;padding:22px 0 8px}
 .act{margin:0}
 .act .ph{position:relative;aspect-ratio:4/3;background:#2a2622;overflow:hidden;isolation:isolate}
@@ -883,7 +909,7 @@ section{padding:56px 0 8px}
 .act .yt:hover{text-decoration:underline}
 .yt-ico{width:14px;height:14px;border-radius:50%;background:#e11;display:inline-grid;place-items:center;flex:none}
 .yt-ico::before{content:"";border-style:solid;border-width:4px 0 4px 7px;border-color:transparent transparent transparent #fff;margin-left:1px}
-.dia-foot{display:grid;grid-template-columns:1.2fr .8fr;gap:22px;margin-top:18px;padding-top:16px;border-top:1px solid var(--rule)}
+.dia-foot{display:grid;grid-template-columns:1.2fr .8fr;gap:22px;margin:8px -22px 0;padding:16px 22px 0;border-top:1px solid var(--rule)}
 .dia-foot h5{margin:0 0 8px;font-family:var(--display);font-size:1rem;letter-spacing:.14em;text-transform:uppercase;font-weight:800}
 .dia-foot p{margin:0 0 6px;font-size:.92rem;color:var(--mute)}
 .dia-foot p b{color:var(--ink);font-weight:700}
@@ -942,15 +968,16 @@ footer{margin:48px 0 0;padding:24px 0 48px;font-size:13px;color:var(--mute)}
           ? `<img class="hero-poster" src="${esc(heroVideo.thumb)}" alt="" decoding="async" referrerpolicy="no-referrer"/>`
           : "";
       if (heroVideo) {
-        return `<div class="hero-bg hero-bg--video" aria-hidden="true">
+        return `<div class="hero-bg hero-bg--video" aria-hidden="true" inert>
     ${poster}
     <iframe
-      src="https://www.youtube.com/embed/${esc(heroVideo.id)}?autoplay=1&amp;mute=1&amp;controls=0&amp;loop=1&amp;playlist=${esc(heroVideo.id)}&amp;playsinline=1&amp;rel=0&amp;modestbranding=1&amp;iv_load_policy=3"
+      src="https://www.youtube-nocookie.com/embed/${esc(heroVideo.id)}?autoplay=1&amp;mute=1&amp;controls=0&amp;loop=1&amp;playlist=${esc(heroVideo.id)}&amp;playsinline=1&amp;rel=0&amp;modestbranding=1&amp;iv_load_policy=3&amp;fs=0&amp;disablekb=1&amp;cc_load_policy=0"
       title="${esc(heroVideo.title)}"
-      allow="autoplay; encrypted-media; picture-in-picture"
+      allow="autoplay; encrypted-media"
       tabindex="-1"
       loading="eager"
     ></iframe>
+    <div class="hero-shield" aria-hidden="true"></div>
   </div>`;
       }
       return `<div class="hero-bg" role="img" aria-label="${esc(destination)}">${poster}</div>`;
