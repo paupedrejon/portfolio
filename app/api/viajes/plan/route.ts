@@ -17,6 +17,7 @@ import { isGuideComplete, sanitizeGuideHtml } from "@/lib/viajes/sanitize";
 import { searchTravelContext } from "@/lib/viajes/tavily";
 import { parseTripPlanInput } from "@/lib/viajes/validate";
 import { fetchDestinationImages, filterGuideImages } from "@/lib/viajes/wikimedia";
+import { fetchTripVideos, type GuideVideo } from "@/lib/viajes/youtube";
 import { buildBookingLinks } from "@/lib/viajes/booking-links";
 import { allDestinations, type SearchSnippet } from "@/lib/viajes/types";
 
@@ -102,6 +103,25 @@ export async function POST(request: Request) {
       console.warn("[viajes/plan] wikimedia", imgErr);
     }
 
+    let videos: GuideVideo[] = [];
+    try {
+      if (process.env.TAVILY_API_KEY) {
+        videos = await fetchTripVideos(input);
+      }
+    } catch (vidErr) {
+      if (vidErr instanceof Error && vidErr.message === "TAVILY_QUOTA") {
+        return NextResponse.json(
+          {
+            error: "TAVILY_QUOTA",
+            message:
+              "Cuota gratuita de búsqueda agotada este mes. Prueba más adelante.",
+          },
+          { status: 429 },
+        );
+      }
+      console.warn("[viajes/plan] youtube", vidErr);
+    }
+
     const booking = buildBookingLinks(input);
     let html = "";
     let usedFallback = false;
@@ -124,6 +144,7 @@ export async function POST(request: Request) {
           renderGuideHtml({
             plan,
             images,
+            videos,
             consultedAt,
             destination: dests.join(" · ") || input.destination,
             origin: input.origin,
@@ -147,6 +168,7 @@ export async function POST(request: Request) {
             input,
             snippets,
             images,
+            videos,
             consultedAt,
             booking,
           }),
@@ -188,6 +210,7 @@ export async function POST(request: Request) {
       ),
       sources: snippets.slice(0, 24),
       images,
+      videos,
       consultedAt,
       fallback: usedFallback,
     });

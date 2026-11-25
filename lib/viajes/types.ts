@@ -35,6 +35,8 @@ export type GuideImage = {
   query: string;
 };
 
+export type { GuideVideo } from "./youtube";
+
 export type SearchSnippet = {
   query: string;
   title: string;

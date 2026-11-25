@@ -1,5 +1,6 @@
 import type { GuideImage, SearchSnippet, TripPlanInput } from "./types";
 import { allDestinations } from "./types";
+import type { GuideVideo } from "./youtube";
 import type { BookingLinks } from "./booking-links";
 import { themeForDestination } from "./destination-theme";
 import { extractPriceFacts } from "./price-facts";
@@ -75,16 +76,19 @@ ART (destination-specific — NEVER copy Japan onto other cities)
 - Follow ART BRIEF + style token exactly. NYC = metro/newsprint/taxi stripe. Paris = editorial. Japan ONLY = washi/hinomaru/hanko.
 - FORBIDDEN outside Japan/Korea: hinomaru disc, kanji, vertical Asian script, hanko stamps, seigaiha waves, class names implying Japan.
 - Cultural PAPER from ART TOKENS (not Dark Cherry). Google Fonts from FONT HREF.
-- Hero full-bleed from ALLOWED IMAGES. Use DIFFERENT images per activity/city — never repeat one photo everywhere.`;
+- Hero full-bleed from ALLOWED IMAGES. Use DIFFERENT images per activity/city — never repeat one photo everywhere.
+- Include a section «Así se ve de verdad» (or locale equivalent) with cards linking ONLY to ALLOWED VIDEOS (YouTube). Thumbnail from provided thumb URL, title, short blurb, open in new tab. No iframes/embeds.`;
 
 export function buildPlanUserPrompt(params: {
   input: TripPlanInput;
   snippets: SearchSnippet[];
   images: GuideImage[];
+  videos?: GuideVideo[];
   consultedAt: string;
   booking: BookingLinks;
 }): string {
   const { input, snippets, images, consultedAt, booking } = params;
+  const videos = params.videos || [];
   const dests = allDestinations(input);
   const theme = themeForDestination(dests[0] || input.destination);
   const interests = [
@@ -177,12 +181,22 @@ ${images
   )
   .join("\n\n") || "(none)"}
 
+ALLOWED VIDEOS (YouTube only — use these for «Así se ve de verdad»; do not invent IDs):
+${videos
+  .slice(0, 8)
+  .map(
+    (v, i) =>
+      `[vid${i + 1}] ${v.city} · ${v.title}\nWatch: ${v.url}\nThumb: ${v.thumb}\nBlurb: ${v.description}`,
+  )
+  .join("\n\n") || "(none — omit video section)"}
+
 HARD CHECK before you finish:
 1) ${dests.length} stay cards (one per: ${dests.join(", ")})
 2) Train/bus legs have Trainline/Flixbus buttons
 3) Receipt section with totals
-4) No emoji
-5) Ends with </html>`;
+4) Video gallery if ALLOWED VIDEOS present
+5) No emoji
+6) Ends with </html>`;
 }
 
 export const JSON_SYSTEM_PROMPT = `Travel planner. Return ONLY valid JSON (no markdown):

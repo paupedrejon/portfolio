@@ -1,4 +1,5 @@
 import type { GuideImage } from "./types";
+import type { GuideVideo } from "./youtube";
 import type { ItineraryPlan, TransportLeg } from "./itinerary-schema";
 import type { BookingLinks } from "./booking-links";
 import {
@@ -191,6 +192,7 @@ function divider(theme: DestinationTheme): string {
 export function renderGuideHtml(params: {
   plan: ItineraryPlan;
   images: GuideImage[];
+  videos?: GuideVideo[];
   consultedAt: string;
   destination: string;
   origin: string;
@@ -207,6 +209,7 @@ export function renderGuideHtml(params: {
     travelers,
     booking,
   } = params;
+  const videos = (params.videos || []).slice(0, 8);
   const images = filterGuideImages(params.images);
   const theme = themeForDestination(destination);
   const p = {
@@ -485,6 +488,43 @@ export function renderGuideHtml(params: {
   const stayHint =
     staySum > 0 ? formatEuro(staySum) : staysList[0]?.price || "Ver Booking";
 
+  const videosTitle =
+    lang.startsWith("en")
+      ? "How it really looks"
+      : lang.startsWith("it")
+        ? "Com'è davvero"
+        : "Así se ve de verdad";
+  const videosLead =
+    lang.startsWith("en")
+      ? "YouTube walks & atmosphere — open externally"
+      : lang.startsWith("it")
+        ? "Video YouTube, si aprono fuori"
+        : "vídeos de YouTube, se abren fuera";
+
+  const videosHtml =
+    videos.length === 0
+      ? ""
+      : `<section id="videos">
+    ${sectionHead(theme, seals[0] || "01", videosTitle, videosLead)}
+    <div class="videos">
+      ${videos
+        .map(
+          (v) => `<a class="vid" href="${esc(v.url)}" target="_blank" rel="noopener">
+        <div class="vid-thumb">
+          <img src="${esc(v.thumb)}" alt="${esc(v.title)}" loading="lazy"/>
+          <div class="vid-play" aria-hidden="true"><span></span></div>
+        </div>
+        <div class="vid-body">
+          <b>${esc(v.title)}</b>
+          <small>${esc(v.description)}</small>
+          <span class="vid-city">${esc(v.city)}</span>
+        </div>
+      </a>`,
+        )
+        .join("\n")}
+    </div>
+  </section>`;
+
   const styleAttr = `data-style="${esc(theme.style)}"`;
 
   return `<!DOCTYPE html>
@@ -644,11 +684,23 @@ section{padding:56px 0 8px}
 .todo{display:grid;gap:10px;margin:0;padding:0;list-style:none}
 .todo li{display:grid;grid-template-columns:120px 1fr;gap:14px;background:var(--card);border:1px solid var(--rule);padding:12px 16px}
 .todo .w{font-family:var(--display);font-weight:800;color:var(--accent)}
+.videos{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));gap:18px;margin-top:8px}
+.vid{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--rule);overflow:hidden;transition:transform .2s}
+.vid:hover{transform:translateY(-3px)}
+.vid-thumb{position:relative;aspect-ratio:16/10;background:#111;overflow:hidden}
+.vid-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.vid-play{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.25)}
+.vid-play span{width:52px;height:36px;border-radius:10px;background:#ff0033;display:grid;place-items:center;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+.vid-play span::before{content:"";border-style:solid;border-width:8px 0 8px 14px;border-color:transparent transparent transparent #fff;margin-left:3px}
+.vid-body{padding:12px 14px 16px}
+.vid-body b{display:block;font-family:var(--display);font-weight:800;font-size:1.05rem;line-height:1.25;color:var(--ink)}
+.vid-body small{display:block;margin-top:4px;font-size:.82rem;color:var(--mute);line-height:1.4}
+.vid-city{display:inline-block;margin-top:8px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
 footer{margin:48px 0 0;padding:24px 0 48px;font-size:13px;color:var(--mute)}
 @media print{
   .divider{display:none}
-  .ticket,.stay,.dia,.receipt{break-inside:avoid}
-  .btn{display:none}
+  .ticket,.stay,.dia,.receipt,.vid{break-inside:avoid}
+  .btn,.vid-play{display:none}
 }
 </style>
 </head>
@@ -676,6 +728,8 @@ ${divider(theme)}
     <div class="ema"><div class="k">Alojamiento</div><div class="v num">${esc(stayHint)}</div><div class="s">1 por ciudad</div></div>
     <div class="ema total"><div class="k">Total por persona</div><div class="v num">${esc(perPerson)}</div><div class="s">Grupo ${pax}: ${esc(totalGroup)}</div></div>
   </div>
+
+  ${videosHtml}
 
   <section id="transporte">
     ${sectionHead(theme, seals[1] || "01", "Transporte", "Billetes con fecha y enlace de reserva por tramo.")}

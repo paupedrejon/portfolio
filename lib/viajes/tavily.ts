@@ -92,7 +92,7 @@ async function searchOne(
 export async function searchTravelContext(
   input: TripPlanInput,
 ): Promise<SearchSnippet[]> {
-  const apiKey = process.env.TAVILY_API_KEY;
+  const apiKey = process.env.TAVILY_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("TAVILY_API_KEY_MISSING");
   }
