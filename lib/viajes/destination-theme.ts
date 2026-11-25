@@ -109,14 +109,20 @@ export function themeForDestination(destination: string): DestinationTheme {
   }
 
   const { accent, soft, neon } = accentFromName(place);
+  // Paper tint derived from the same hash so each destination feels distinct
+  let h = 0;
+  for (let i = 0; i < place.length; i++) h = (h * 31 + place.charCodeAt(i)) >>> 0;
+  const paperHue = h % 360;
+  const bg = `hsl(${paperHue} 22% 92%)`;
+  const paper = `hsl(${paperHue} 28% 96%)`;
   return {
-    bg: "#f2ebe6",
+    bg,
     ink: "#1a1416",
     accent,
     accentSoft: soft,
-    paper: "#faf6f2",
+    paper,
     mute: "#62555a",
-    rule: "#d9cdc8",
+    rule: `hsl(${paperHue} 14% 80%)`,
     secondary: "#2a3a4a",
     night: "#120e12",
     neon,

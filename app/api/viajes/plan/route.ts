@@ -18,6 +18,7 @@ import { isGuideComplete, sanitizeGuideHtml } from "@/lib/viajes/sanitize";
 import { searchTravelContext } from "@/lib/viajes/tavily";
 import { parseTripPlanInput } from "@/lib/viajes/validate";
 import { fetchDestinationImages, filterGuideImages } from "@/lib/viajes/wikimedia";
+import { fetchActivityImageMap } from "@/lib/viajes/activity-images";
 import { fetchTripVideos, type GuideVideo } from "@/lib/viajes/youtube";
 import { buildBookingLinks } from "@/lib/viajes/booking-links";
 import {
@@ -25,6 +26,8 @@ import {
   citiesFromPlan,
   type SearchSnippet,
 } from "@/lib/viajes/types";
+import type { GuideImage } from "@/lib/viajes/types";
+import type { ActivityImageKey } from "@/lib/viajes/activity-images";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -131,8 +134,9 @@ export async function POST(request: Request) {
 
     let html = "";
     let usedFallback = false;
-    let images: Awaited<ReturnType<typeof fetchDestinationImages>> = [];
+    let images: GuideImage[] = [];
     let videos: GuideVideo[] = [];
+    let activityImages = new Map<ActivityImageKey, GuideImage>();
     let resolvedCities = userLabels;
 
     const tryJsonPass = async (strictExtra: string) => {
@@ -177,11 +181,16 @@ export async function POST(request: Request) {
         // Rebuild booking + media for the concrete cities the plan chose
         booking = buildBookingLinks(input, resolvedCities);
         try {
-          const media = await loadMediaForCities(
-            resolvedCities,
-            input.interests,
-          );
-          images = media.images;
+          const [media, actMedia] = await Promise.all([
+            loadMediaForCities(resolvedCities, input.interests),
+            fetchActivityImageMap(plan),
+          ]);
+          activityImages = actMedia.byActivity;
+          images = filterGuideImages([
+            ...media.images,
+            ...actMedia.cityFallbacks,
+            ...[...actMedia.byActivity.values()],
+          ]);
           videos = media.videos;
         } catch (mediaErr) {
           if (mediaErr instanceof Error && mediaErr.message === "TAVILY_QUOTA") {
@@ -202,6 +211,7 @@ export async function POST(request: Request) {
             plan,
             images,
             videos,
+            activityImages,
             consultedAt,
             destination: resolvedCities.join(" · ") || input.destination,
             origin: input.origin,

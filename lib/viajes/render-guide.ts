@@ -9,6 +9,10 @@ import {
 } from "./destination-theme";
 import { filterGuideImages } from "./wikimedia";
 import {
+  lookupActivityImage,
+  type ActivityImageKey,
+} from "./activity-images";
+import {
   formatEuro,
   parseEuro,
   resolveStayTotal,
@@ -65,6 +69,91 @@ function addDaysIso(iso: string, n: number): string {
     month: "short",
     year: "numeric",
   });
+}
+
+function tokensOf(s: string): string[] {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length > 3);
+}
+
+function hourOf(time?: string): number | null {
+  if (!time) return null;
+  const m = time.match(/(\d{1,2})/);
+  if (!m) return null;
+  const h = Number(m[1]);
+  return Number.isFinite(h) ? h : null;
+}
+
+function slotOf(time?: string): "mañana" | "tarde" | "noche" {
+  const h = hourOf(time);
+  if (h == null) return "tarde";
+  if (h < 12) return "mañana";
+  if (h < 18) return "tarde";
+  return "noche";
+}
+
+function matchVideoForActivity(
+  videos: GuideVideo[],
+  city: string,
+  activity: string,
+): GuideVideo | null {
+  if (!videos.length) return null;
+  const tokens = tokensOf(activity);
+  const cityN = normCity(city);
+  let best: GuideVideo | null = null;
+  let bestScore = -1;
+  for (const v of videos) {
+    const blob = `${v.title} ${v.description} ${v.city}`.toLowerCase();
+    let score = 0;
+    if (cityN && normCity(v.city).includes(cityN)) score += 4;
+    for (const t of tokens) {
+      if (blob.includes(t)) score += 3;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      best = v;
+    }
+  }
+  if (bestScore >= 3) return best;
+  return (
+    videos.find((v) => cityN && normCity(v.city).includes(cityN)) ||
+    videos[0] ||
+    null
+  );
+}
+
+function youtubeHref(
+  videos: GuideVideo[],
+  city: string,
+  activity: string,
+): string {
+  const hit = matchVideoForActivity(videos, city, activity);
+  if (hit?.url) return hit.url;
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(`${activity} ${city}`)}`;
+}
+
+function buildDayPlan(
+  activities: { name: string; time?: string }[],
+): { mañana: string; tarde: string; noche: string } {
+  const buckets: Record<"mañana" | "tarde" | "noche", string[]> = {
+    mañana: [],
+    tarde: [],
+    noche: [],
+  };
+  for (const a of activities) {
+    buckets[slotOf(a.time)].push(a.name);
+  }
+  const join = (xs: string[]) =>
+    xs.length ? xs.slice(0, 3).join(", ") : "Libre / ritmo local";
+  return {
+    mañana: join(buckets.mañana),
+    tarde: join(buckets.tarde),
+    noche: join(buckets.noche),
+  };
 }
 
 function renderTicket(
@@ -189,6 +278,8 @@ export function renderGuideHtml(params: {
   plan: ItineraryPlan;
   images: GuideImage[];
   videos?: GuideVideo[];
+  /** Per-activity photos resolved via Wikipedia/Commons */
+  activityImages?: Map<ActivityImageKey, GuideImage>;
   consultedAt: string;
   destination: string;
   origin: string;
@@ -207,6 +298,7 @@ export function renderGuideHtml(params: {
     booking,
   } = params;
   const videos = (params.videos || []).slice(0, 8);
+  const activityImages = params.activityImages || new Map();
   const luxury = params.luxury ?? 3;
   const images = filterGuideImages(params.images);
   const theme = themeForDestination(destination);
@@ -241,22 +333,35 @@ export function renderGuideHtml(params: {
     return score;
   };
 
-  const nextImg = (city?: string, hint?: string): GuideImage | null => {
-    const tokens = (hint || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/\p{M}/gu, "")
-      .split(/[^a-z0-9]+/)
-      .filter((t) => t.length > 3);
+  const nextImg = (
+    city?: string,
+    hint?: string,
+    opts?: { allowReuse?: boolean },
+  ): GuideImage | null => {
+    const tokens = tokensOf(hint || "");
     const ranked = [...pool, ...images]
       .map((img) => ({ img, score: scoreImg(img, tokens, city) }))
       .sort((a, b) => b.score - a.score);
     const pick =
       ranked.find((r) => r.score > 0 && !usedUrls.has(r.img.url))?.img ||
       ranked.find((r) => !usedUrls.has(r.img.url))?.img ||
-      null;
+      (opts?.allowReuse
+        ? ranked.find((r) => r.score > 0)?.img || ranked[0]?.img || null
+        : null);
     if (pick?.url) usedUrls.add(pick.url);
     return pick;
+  };
+
+  const photoForActivity = (
+    city: string,
+    activity: string,
+  ): GuideImage | null => {
+    const direct = lookupActivityImage(activityImages, city, activity);
+    if (direct?.url) {
+      usedUrls.add(direct.url);
+      return direct;
+    }
+    return nextImg(city, activity, { allowReuse: true });
   };
 
   const legs: TransportLeg[] =
@@ -314,7 +419,9 @@ export function renderGuideHtml(params: {
 
   const stayHtml = staysList
     .map((stay) => {
-      const photo = nextImg(stay.city, stay.name);
+      const photo =
+        lookupActivityImage(activityImages, stay.city, stay.name) ||
+        nextImg(stay.city, stay.name, { allowReuse: true });
       const nightlyNum = parseEuro(stay.nightly);
       const nightlyShown = nightlyNum
         ? formatEuro(nightlyNum)
@@ -367,29 +474,38 @@ export function renderGuideHtml(params: {
         normCity(l.fromCity).includes(normCity(fromCity)) &&
         normCity(l.toCity).includes(normCity(toCity)),
     );
-    const trainHref =
-      booking.legs?.find(
-        (l) =>
-          normCity(l.from).includes(normCity(fromCity)) &&
-          normCity(l.to).includes(normCity(toCity)),
-      )?.trainline || booking.trainsTrainline;
-    const flixHref =
-      booking.legs?.find(
-        (l) =>
-          normCity(l.from).includes(normCity(fromCity)) &&
-          normCity(l.to).includes(normCity(toCity)),
-      )?.flixbus || booking.busFlixbus;
-    const label = planLeg?.kind === "bus" ? "Bus" : "Tren";
-    const meta = [planLeg?.date || "", planLeg?.operator || "", planLeg?.price || ""]
+    const bookLeg = booking.legs?.find(
+      (l) =>
+        normCity(l.from).includes(normCity(fromCity)) &&
+        normCity(l.to).includes(normCity(toCity)),
+    );
+    const kind = (planLeg?.kind || "flight").toLowerCase();
+    const meta = [
+      planLeg?.date || "",
+      planLeg?.operator || "",
+      planLeg?.price || "",
+    ]
       .filter(Boolean)
       .join(" · ");
-    const groundHref = label === "Bus" ? flixHref : trainHref;
-    const groundLabel =
-      label === "Bus" ? "Reservar bus" : "Reservar tren";
+    let label = "Vuelo";
+    let href = bookLeg?.skyscanner || booking.flightsSkyscanner;
+    let cta = "Reservar vuelo";
+    if (kind === "bus") {
+      label = "Bus";
+      href = bookLeg?.flixbus || booking.busFlixbus;
+      cta = "Reservar bus";
+    } else if (kind === "train") {
+      label = "Tren";
+      href = bookLeg?.trainline || booking.trainsTrainline;
+      cta = "Reservar tren";
+    } else if (kind === "ferry") {
+      label = "Ferry";
+      cta = "Ver opciones";
+    }
     return `<div class="transit">
       <span><b>${esc(label)}</b> ${esc(fromCity)} → ${esc(toCity)}${meta ? ` · ${esc(meta)}` : ""}</span>
       <span class="btns">
-        <a class="btn solid" href="${esc(groundHref)}" target="_blank" rel="noopener">${esc(groundLabel)}</a>
+        <a class="btn solid" href="${esc(href)}" target="_blank" rel="noopener">${esc(cta)}</a>
       </span>
     </div>`;
   }
@@ -410,34 +526,39 @@ export function renderGuideHtml(params: {
         chapter = `${transit}<div class="chapter">${chapterMark}<div><h3>${esc(city)}</h3><p>${esc(day.summary || "")}</p></div></div>`;
         lastCity = city;
       }
-      const gyg =
-        booking.stays?.find((s) => normCity(s.city) === normCity(city))
-          ?.getYourGuide || booking.activitiesGetYourGuide;
-      const acts = (day.activities || [])
+      const dayActs = day.activities || [];
+      const acts = dayActs
         .map((a) => {
-          const img = nextImg(city, a.name);
-          const label = a.bookingLabel || "Ver / reservar";
-          const isFree = /gratis|incluido|free|0\s*€/i.test(a.price || "");
+          const img = photoForActivity(city, a.name);
+          const price = (a.price || "").trim() || "Orient.";
+          const isNight = slotOf(a.time) === "noche";
+          const yt = youtubeHref(videos, city, a.name);
+          const priceTag = /gratis|incluido|free|0\s*[€$¥]/i.test(price)
+            ? "Gratis"
+            : price;
           return `<figure class="act">
-            ${
+            <div class="ph${img?.url ? "" : " ph-empty"}"${
               img?.url
-                ? `<div class="ph" style="background-image:url('${esc(img.url)}')"></div>`
-                : `<div class="ph ph-empty"></div>`
-            }
+                ? ` style="background-image:url('${esc(img.url)}')"`
+                : ""
+            }>
+              <span class="tag price">${esc(priceTag)}</span>
+              ${isNight ? `<span class="tag noche">Noche</span>` : ""}
+              ${a.time ? `<span class="tag time">${esc(a.time)}</span>` : ""}
+            </div>
             <figcaption>
-              ${a.time ? `<span class="act-time">${esc(a.time)}</span>` : ""}
               <b>${esc(a.name)}</b>
               <span class="d">${esc(a.tip || "")}</span>
-              <span class="act-price">${esc(a.price || "Orientativo")}</span>
-              ${
-                isFree
-                  ? ""
-                  : `<a class="btn" href="${esc(gyg)}" target="_blank" rel="noopener">${esc(label)}</a>`
-              }
+              <a class="yt" href="${esc(yt)}" target="_blank" rel="noopener"><span class="yt-ico" aria-hidden="true"></span> Vídeos en YouTube</a>
             </figcaption>
           </figure>`;
         })
         .join("");
+      const planDay = buildDayPlan(dayActs);
+      const moveHint =
+        theme.style === "washi" || theme.style === "hanji"
+          ? "Tarjeta de transporte local · ~presupuesto día"
+          : `Moverse en ${city} · metro / bus / a pie`;
       const num = dayNumberLabel(day.title, i);
       const dayDate = booking.tripStart
         ? addDaysIso(booking.tripStart, i)
@@ -454,6 +575,18 @@ export function renderGuideHtml(params: {
           <span class="dnight">Noche en ${esc(city)}</span>
         </div>
         <div class="acts">${acts}</div>
+        <div class="dia-foot">
+          <div class="plan">
+            <h5>Plan del día</h5>
+            <p><b>Mañana</b> · ${esc(planDay.mañana)}</p>
+            <p><b>Tarde</b> · ${esc(planDay.tarde)}</p>
+            <p><b>Noche</b> · ${esc(planDay.noche)}</p>
+          </div>
+          <div class="move">
+            <h5>Cómo moverse y cuánto cuesta</h5>
+            <p>${esc(moveHint)}</p>
+          </div>
+        </div>
       </article>`;
     })
     .join("\n");
@@ -585,7 +718,10 @@ export function renderGuideHtml(params: {
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;background:var(--paper-bg)}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
-body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65;background:var(--paper-bg)}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65;background:
+  radial-gradient(ellipse 80% 50% at 10% -10%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 55%),
+  radial-gradient(ellipse 60% 40% at 100% 0%,color-mix(in srgb,var(--secondary) 8%,transparent),transparent 50%),
+  var(--paper-bg)}
 img{max-width:100%;display:block}
 a{color:var(--secondary)}
 h1,h2,h3,h4{font-family:var(--display);font-weight:800;margin:0;line-height:1.15}
@@ -675,29 +811,42 @@ section{padding:56px 0 8px}
 .chapter .kj-lat{font-size:clamp(1.8rem,4vw,2.6rem);letter-spacing:.08em}
 .chapter h3{font-size:clamp(1.4rem,3vw,1.9rem)}
 .chapter p{margin:2px 0 0;color:var(--mute);font-size:.95rem}
-.dias,.dia{display:grid;gap:28px}
-.dia{gap:0;background:var(--card);border:1px solid var(--rule)}
-.dia-head{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:16px 22px;border-bottom:1px solid var(--rule)}
-.dnum b{font-family:var(--display);font-weight:800;font-size:3rem;line-height:.9}
-.dm{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--mute)}
-.dia h4{font-size:clamp(1.2rem,2.5vw,1.6rem);margin:2px 0 0}
-.dsub{margin:4px 0 0;color:var(--mute);font-size:.95rem}
-.dnight{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);border:1.5px solid var(--rule);padding:4px 10px;white-space:nowrap}
-.acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));gap:16px;padding:18px 22px 22px}
+.dias{display:grid;gap:42px}
+.dia{display:grid;gap:0;padding:0;background:transparent;border:0}
+.dia-head{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:end;padding:0 0 14px;border-bottom:2px solid var(--ink)}
+.dnum b{font-family:var(--display);font-weight:800;font-size:clamp(2.8rem,7vw,4.2rem);line-height:.85;color:var(--ink)}
+.dm{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--mute)}
+.dia h4{font-size:clamp(1.35rem,3vw,1.85rem);margin:4px 0 0}
+.dsub{margin:6px 0 0;color:var(--mute);font-size:.98rem;max-width:52ch}
+.dnight{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);border:1.5px solid var(--rule);padding:6px 10px;white-space:nowrap;align-self:start}
+.acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:18px;padding:22px 0 8px}
 .act{margin:0}
-.act .ph{aspect-ratio:16/10;background:#2a2622 center/cover no-repeat}
-.act .ph-empty{background:linear-gradient(135deg,var(--rule),var(--card))}
-.act b{display:block;font-family:var(--display);font-weight:800;font-size:1.05rem;margin-top:8px}
-.act .d{display:block;font-size:.85rem;color:var(--mute);margin-top:2px}
-.act-time{display:block;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--secondary);margin-top:8px}
-.act-price{display:block;font-family:var(--display);font-weight:800;font-size:1rem;margin-top:6px;color:var(--accent)}
-.act .btn{margin-top:8px;font-size:12px;padding:6px 12px}
+.act .ph{position:relative;aspect-ratio:4/3;background:#2a2622 center/cover no-repeat;overflow:hidden;isolation:isolate}
+.act .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.45));pointer-events:none}
+.act .ph-empty{background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 18%,var(--rule)),var(--card))}
+.act .tag{position:absolute;z-index:1;font-size:11px;font-weight:700;letter-spacing:.04em;padding:4px 8px;line-height:1.2;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.45)}
+.act .tag.price{left:10px;bottom:10px;background:rgba(12,10,12,.72);backdrop-filter:blur(4px);font-family:var(--display);font-size:15px;font-weight:800}
+.act .tag.noche{left:10px;top:10px;background:var(--accent)}
+.act .tag.time{right:10px;top:10px;background:rgba(12,10,12,.55);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.act b{display:block;font-family:var(--display);font-weight:800;font-size:1.12rem;margin-top:10px;line-height:1.2}
+.act .d{display:block;font-size:.88rem;color:var(--mute);margin-top:4px;line-height:1.4}
+.act .yt{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none}
+.act .yt:hover{text-decoration:underline}
+.yt-ico{width:14px;height:14px;border-radius:50%;background:#e11;display:inline-grid;place-items:center;flex:none}
+.yt-ico::before{content:"";border-style:solid;border-width:4px 0 4px 7px;border-color:transparent transparent transparent #fff;margin-left:1px}
+.dia-foot{display:grid;grid-template-columns:1.2fr .8fr;gap:22px;margin-top:18px;padding-top:16px;border-top:1px solid var(--rule)}
+.dia-foot h5{margin:0 0 8px;font-family:var(--display);font-size:1rem;letter-spacing:.14em;text-transform:uppercase;font-weight:800}
+.dia-foot p{margin:0 0 6px;font-size:.92rem;color:var(--mute)}
+.dia-foot p b{color:var(--ink);font-weight:700}
+.dia-foot .move{padding:14px 16px;border:1.5px solid var(--rule);background:var(--card)}
 .transit{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:18px 0;padding:14px 16px;border:1.5px dashed var(--rule);background:var(--card);font-size:.95rem}
-@media (max-width:640px){
+@media (max-width:760px){
   .dia-head{grid-template-columns:auto 1fr;gap:12px}
   .dia-head .dnight{grid-column:1/-1;justify-self:start}
   .acts{grid-template-columns:1fr 1fr}
+  .dia-foot{grid-template-columns:1fr}
 }
+@media (max-width:480px){.acts{grid-template-columns:1fr}}
 .budget{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:28px;align-items:start}
 @media (max-width:820px){.budget{grid-template-columns:1fr}}
 .receipt{background:#fffdf8;padding:24px 24px 36px;box-shadow:0 18px 30px -22px rgba(29,26,23,.7);
@@ -772,7 +921,7 @@ ${divider(theme)}
   </section>
 
   <section id="ruta">
-    ${sectionHead(theme, seals[3] || "03", "La ruta, día a día", "Actividades concretas. Fotos distintas por lugar cuando hay catálogo.")}
+    ${sectionHead(theme, seals[3] || "03", "La ruta, día a día", "Cada actividad con foto del lugar, precio sobre la imagen y vídeo en YouTube.")}
     <div class="route" aria-label="Recorrido">${routeHtml}</div>
     <div class="dias">${daysHtml}</div>
   </section>
