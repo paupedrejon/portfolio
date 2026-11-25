@@ -67,12 +67,28 @@ export function landmarkQueriesForDestination(destination: string): string[] {
       "Arc de Triomphe Paris",
     ];
   }
-  if (/tokio|tokyo|japon|japan|kyoto|osaka/.test(d)) {
+  if (/kioto|kyoto/.test(d)) {
+    return [
+      "Fushimi Inari Kyoto",
+      "Kinkakuji Golden Pavilion Kyoto",
+      "Arashiyama bamboo Kyoto",
+      "Kiyomizu-dera Kyoto",
+    ];
+  }
+  if (/osaka/.test(d)) {
+    return [
+      "Dotonbori Osaka night",
+      "Osaka Castle",
+      "Shinsekai Osaka",
+      "Shinsaibashi Osaka",
+    ];
+  }
+  if (/tokio|tokyo|japon|japan/.test(d)) {
     return [
       "Tokyo skyline night",
       "Sensoji temple Tokyo",
       "Shibuya crossing Tokyo",
-      "Fushimi Inari Kyoto",
+      "Meiji Shrine Tokyo",
     ];
   }
   if (/barcelona/.test(d)) {
