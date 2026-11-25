@@ -8,7 +8,6 @@ import {
   Building2,
   Camera,
   CircleDollarSign,
-  Compass,
   Crown,
   Hotel,
   Landmark,
@@ -26,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import CityAutocomplete from "@/components/viajes/CityAutocomplete";
+import ViajesDateField from "@/components/viajes/ViajesDateField";
 import {
   INTEREST_PRESETS,
   type DateMode,
@@ -238,10 +238,6 @@ export default function TripWizard({
                 {t("dateModes.flexible")}
               </button>
             </div>
-            <span className="viajes-sky__hint">
-              <Compass size={14} aria-hidden />
-              {t("transport.allModes")}
-            </span>
           </div>
 
           <div className="viajes-sky__stack" id="viajes-wizard-title">
@@ -281,24 +277,23 @@ export default function TripWizard({
 
               {value.dateMode === "exact" ? (
                 <>
-                  <label className="viajes-sky__field">
-                    <span className="viajes-sky-label">{t("fields.startDate")}</span>
-                    <input
-                      type="date"
+                  <div className="viajes-sky__field">
+                    <ViajesDateField
+                      label={t("fields.startDate")}
                       value={value.startDate || ""}
-                      onChange={(e) => set("startDate", e.target.value)}
+                      onChange={(v) => set("startDate", v)}
                       required
                     />
-                  </label>
-                  <label className="viajes-sky__field">
-                    <span className="viajes-sky-label">{t("fields.endDate")}</span>
-                    <input
-                      type="date"
+                  </div>
+                  <div className="viajes-sky__field">
+                    <ViajesDateField
+                      label={t("fields.endDate")}
                       value={value.endDate || ""}
-                      onChange={(e) => set("endDate", e.target.value)}
+                      onChange={(v) => set("endDate", v)}
+                      min={value.startDate || undefined}
                       required
                     />
-                  </label>
+                  </div>
                 </>
               ) : (
                 <>

@@ -1,61 +1,65 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Download } from "lucide-react";
 
 type GuidePreviewProps = {
   html: string | null;
   title: string | null;
   loading: boolean;
-  onPrint: () => void;
+  onPrint?: () => void;
   onDownloadHtml: () => void;
-  compact?: boolean;
+  /** Full-bleed iframe under the chrome of the page */
+  fullscreen?: boolean;
+  hideToolbar?: boolean;
 };
 
 export default function GuidePreview({
   html,
   title,
   loading,
-  onPrint,
   onDownloadHtml,
-  compact = false,
+  fullscreen = false,
+  hideToolbar = false,
 }: GuidePreviewProps) {
   const t = useTranslations("viajes");
 
   return (
     <section
-      className={`viajes-guide${compact ? " viajes-guide--compact" : ""}`}
+      className={`viajes-guide${fullscreen ? " viajes-guide--fs" : ""}`}
       aria-labelledby="viajes-preview-title"
     >
-      <div className="viajes-guide__toolbar">
-        <div>
-          <h2 id="viajes-preview-title" className="viajes-guide__title">
-            {title || t("previewTitlePlain")}
-          </h2>
-          {!html && (
-            <p className="viajes-guide__hint">{t("previewHint")}</p>
+      {!hideToolbar && (
+        <div className="viajes-guide__toolbar">
+          <div>
+            <h2 id="viajes-preview-title" className="viajes-guide__title">
+              {title || t("previewTitlePlain")}
+            </h2>
+            {!html && (
+              <p className="viajes-guide__hint">{t("previewHint")}</p>
+            )}
+          </div>
+          {html && (
+            <div className="viajes-actions">
+              <button
+                type="button"
+                className="viajes-iconbtn viajes-iconbtn--primary"
+                disabled={loading}
+                onClick={onDownloadHtml}
+                aria-label={t("actions.downloadHtml")}
+                title={t("actions.downloadHtml")}
+              >
+                <Download size={18} aria-hidden />
+              </button>
+            </div>
           )}
         </div>
-        {html && (
-          <div className="viajes-actions">
-            <button
-              type="button"
-              className="viajes-btn viajes-btn--ghost"
-              disabled={loading}
-              onClick={onPrint}
-            >
-              {t("actions.print")}
-            </button>
-            <button
-              type="button"
-              className="viajes-btn viajes-btn--primary"
-              disabled={loading}
-              onClick={onDownloadHtml}
-            >
-              {t("actions.downloadHtml")}
-            </button>
-          </div>
-        )}
-      </div>
+      )}
+      {hideToolbar && (
+        <h2 id="viajes-preview-title" className="sr-only">
+          {title || t("previewTitlePlain")}
+        </h2>
+      )}
 
       {!html && !loading && (
         <div className="viajes-empty">

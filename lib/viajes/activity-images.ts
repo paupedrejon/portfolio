@@ -180,9 +180,22 @@ function titleCandidates(activity: string, city: string): string[] {
   if (/senso-?ji|sensō-?ji|asakusa/i.test(raw)) add("Sensō-ji");
   if (/fushimi|inari/i.test(raw)) add("Fushimi Inari-taisha");
   if (/arashiyama/i.test(raw)) add("Arashiyama");
-  if (/polanco/i.test(raw) && /cena|restaurante|comer/i.test(raw)) {
-    add("Polanco (Ciudad de México)");
+  if (/polanco/i.test(raw)) add("Polanco (Ciudad de México)");
+  if (/hundertwasser/i.test(raw)) {
+    add("Hundertwasserhaus", "KunstHausWien");
   }
+  if (/prater/i.test(raw)) add("Wurstelprater", "Prater");
+  if (/noria|riesenrad|wiener riesenrad/i.test(raw)) add("Wiener Riesenrad");
+  if (/sch[oö]nbrunn/i.test(raw)) add("Schloss Schönbrunn");
+  if (/stephansdom|stephan(s)?platz/i.test(raw)) add("Stephansdom");
+  if (/belvedere/i.test(raw)) add("Belvedere, Vienna");
+  if (/sagrada/i.test(raw)) add("Sagrada Família");
+  if (/park g[uü]ell|güell/i.test(raw)) add("Park Güell");
+  if (/colosseum|coliseo|colosseo/i.test(raw)) add("Colosseum");
+  if (/eiffel/i.test(raw)) add("Eiffel Tower");
+  if (/tower bridge/i.test(raw)) add("Tower Bridge");
+  if (/times square/i.test(raw)) add("Times Square");
+  if (/central park/i.test(raw)) add("Central Park");
   // Airport → airport page (better than random city history)
   if (/aeropuerto|airport|benito ju[aá]rez/i.test(raw)) {
     add(
@@ -385,8 +398,8 @@ export async function fetchActivityImageMap(
       const score = scoreCandidate(cand, thumb.title, job.activity, job.city);
       if (!best || score > best.score) best = { score, thumb };
     }
-    // Require a real match — don't assign weak city dump pages
-    if (!best || best.score < 6) continue;
+    // Soft threshold: candidate hit already implies relevance
+    if (!best || best.score < 3) continue;
     markUsed(best.thumb.url);
     byActivity.set(job.key, {
       url: best.thumb.url,
@@ -396,22 +409,91 @@ export async function fetchActivityImageMap(
     });
   }
 
-  // Commons for misses (sequential, short pause to avoid 429)
-  const misses = withCandidates.filter((j) => !byActivity.has(j.key)).slice(0, 14);
-  for (const job of misses) {
-    const core = landmarkCore(job.activity);
-    if (core.length < 4) continue;
-    const img = await commonsPhoto(`${core} ${job.city}`, usedUrls);
-    if (!img) {
-      await new Promise((r) => setTimeout(r, 80));
-      continue;
+  // Commons / summary for misses — parallel batches
+  const misses = withCandidates.filter((j) => !byActivity.has(j.key));
+  async function fillMiss(job: (typeof withCandidates)[number]) {
+    const core = landmarkCore(job.activity) || job.activity;
+    // Try Wikipedia summary on top candidates first (1 call each, high precision)
+    for (const cand of job.candidates.slice(0, 3)) {
+      for (const lang of ["es", "en"] as const) {
+        const sum = await wikiSummaryThumb(cand, lang);
+        if (sum && !isUsed(sum.url) && !BAD_ASSET.test(sum.title)) {
+          markUsed(sum.url);
+          byActivity.set(job.key, {
+            ...sum,
+            query: `${job.city}::${job.activity}`,
+          });
+          return;
+        }
+      }
     }
+    const queries = [
+      `${core} ${job.city}`,
+      core.length > 3 ? core : "",
+      /cena|dinner|restaurante|comer|food/i.test(job.activity)
+        ? `${job.city} restaurant`
+        : "",
+      /parque|park|jard[ií]n|garden/i.test(job.activity)
+        ? `${job.city} park`
+        : "",
+      /museo|museum/i.test(job.activity) ? `${job.city} museum` : "",
+    ].filter((q) => q.length > 3);
+
+    for (const q of queries) {
+      const img = await commonsPhoto(q, usedUrls);
+      if (img) {
+        markUsed(img.url);
+        byActivity.set(job.key, {
+          ...img,
+          query: `${job.city}::${job.activity}`,
+        });
+        return;
+      }
+    }
+  }
+
+  for (let i = 0; i < misses.length; i += 5) {
+    await Promise.all(misses.slice(i, i + 5).map((job) => fillMiss(job)));
+  }
+
+  // Large unique city pool → fill remaining empties (URLs still unused)
+  const poolQueries = cities.flatMap((c) => [
+    `${c} landmark`,
+    `${c} street`,
+    `${c} plaza`,
+    `${c} park`,
+    `${c} cathedral`,
+    `${c} museum`,
+    `${c} night`,
+    `${c} architecture`,
+  ]);
+  const cityPool: GuideImage[] = [];
+  const poolSeen = new Set<string>(usedUrls);
+  for (let i = 0; i < poolQueries.length; i += 4) {
+    const batch = await Promise.all(
+      poolQueries
+        .slice(i, i + 4)
+        .map((q) => commonsPhoto(q, poolSeen)),
+    );
+    for (const img of batch) {
+      if (!img || poolSeen.has(urlKey(img.url))) continue;
+      poolSeen.add(urlKey(img.url));
+      cityPool.push(img);
+      if (cityPool.length >= 28) break;
+    }
+    if (cityPool.length >= 28) break;
+  }
+
+  let poolIdx = 0;
+  for (const job of withCandidates) {
+    if (byActivity.has(job.key)) continue;
+    const img = cityPool[poolIdx++];
+    if (!img) break;
     markUsed(img.url);
     byActivity.set(job.key, {
       ...img,
       query: `${job.city}::${job.activity}`,
     });
-    await new Promise((r) => setTimeout(r, 80));
   }
 
   const cityFallbacks: GuideImage[] = [];
@@ -421,12 +503,11 @@ export async function fetchActivityImageMap(
       cityFallbacks.push(sum);
     }
   }
-  for (const city of cities) {
-    const sky = await commonsPhoto(`${city} skyline`, usedUrls);
-    if (sky && !isUsed(sky.url)) {
-      markUsed(sky.url);
-      cityFallbacks.push({ ...sky, query: `${city}::skyline` });
-    }
+  for (const img of cityPool.slice(poolIdx)) {
+    if (cityFallbacks.length >= 12) break;
+    if (isUsed(img.url)) continue;
+    markUsed(img.url);
+    cityFallbacks.push({ ...img, query: img.query || "city-pool" });
   }
 
   return { byActivity, cityFallbacks };

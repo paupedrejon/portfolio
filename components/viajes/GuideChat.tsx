@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { Download, SendHorizontal } from "lucide-react";
 
 export type ChatMessage = {
   role: "user" | "assistant";
@@ -13,6 +14,9 @@ type GuideChatProps = {
   loading: boolean;
   messages: ChatMessage[];
   onSend: (instruction: string) => Promise<void>;
+  /** Compact bottom dock under fullscreen guide */
+  dock?: boolean;
+  onDownloadHtml?: () => void;
 };
 
 export default function GuideChat({
@@ -20,6 +24,8 @@ export default function GuideChat({
   loading,
   messages,
   onSend,
+  dock = false,
+  onDownloadHtml,
 }: GuideChatProps) {
   const t = useTranslations("viajes");
   const [draft, setDraft] = useState("");
@@ -30,6 +36,65 @@ export default function GuideChat({
     if (!el) return;
     el.scrollTop = el.scrollHeight;
   }, [messages, loading]);
+
+  const submit = async () => {
+    const text = draft.trim();
+    if (!text || disabled || loading) return;
+    setDraft("");
+    await onSend(text);
+  };
+
+  if (dock) {
+    const lastAssistant = [...messages]
+      .reverse()
+      .find((m) => m.role === "assistant");
+    return (
+      <div className="viajes-dock" aria-label={t("chatTitlePlain")}>
+        {lastAssistant && (
+          <p className="viajes-dock__status" aria-live="polite">
+            {loading ? t("actions.editing") : lastAssistant.text}
+          </p>
+        )}
+        <form
+          className="viajes-dock__composer"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            await submit();
+          }}
+        >
+          <input
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={t("placeholders.chat")}
+            disabled={disabled || loading}
+            aria-label={t("placeholders.chat")}
+          />
+          {onDownloadHtml && (
+            <button
+              type="button"
+              className="viajes-iconbtn"
+              disabled={disabled || loading}
+              onClick={onDownloadHtml}
+              aria-label={t("actions.downloadHtml")}
+              title={t("actions.downloadHtml")}
+            >
+              <Download size={18} aria-hidden />
+            </button>
+          )}
+          <button
+            type="submit"
+            className="viajes-iconbtn viajes-iconbtn--primary"
+            disabled={disabled || loading || !draft.trim()}
+            aria-label={t("actions.send")}
+            title={t("actions.send")}
+          >
+            <SendHorizontal size={18} aria-hidden />
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <aside className="viajes-chatpanel" aria-labelledby="viajes-chat-title">
@@ -67,10 +132,7 @@ export default function GuideChat({
         className="viajes-chatpanel__composer"
         onSubmit={async (e) => {
           e.preventDefault();
-          const text = draft.trim();
-          if (!text || disabled || loading) return;
-          setDraft("");
-          await onSend(text);
+          await submit();
         }}
       >
         <textarea
@@ -88,10 +150,12 @@ export default function GuideChat({
         />
         <button
           type="submit"
-          className="viajes-btn viajes-btn--primary"
+          className="viajes-iconbtn viajes-iconbtn--primary"
           disabled={disabled || loading || !draft.trim()}
+          aria-label={t("actions.send")}
+          title={t("actions.send")}
         >
-          {t("actions.send")}
+          <SendHorizontal size={18} aria-hidden />
         </button>
       </form>
     </aside>

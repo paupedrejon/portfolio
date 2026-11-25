@@ -45,6 +45,307 @@
   text-align: left;
 }
 
+/* —— Custom date field (Dark Cherry) —— */
+.viajes-date {
+  position: relative;
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.viajes-date__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.92rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.viajes-date__trigger:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.viajes-date__ghost {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+.viajes-date__pop {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  width: min(292px, 92vw);
+  padding: 0.75rem;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-glow, 0 18px 40px rgba(0, 0, 0, 0.35));
+}
+
+.viajes-date__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  margin-bottom: 0.55rem;
+}
+
+.viajes-date__nav strong {
+  font-size: 0.88rem;
+  text-transform: capitalize;
+  letter-spacing: -0.02em;
+}
+
+.viajes-date__nav button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.viajes-date__week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+  text-align: center;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.viajes-date__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.viajes-date__empty {
+  min-height: 34px;
+}
+
+.viajes-date__day {
+  min-height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.viajes-date__day:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.viajes-date__day--sel {
+  background: var(--accent);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.viajes-date__day:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.viajes-date__foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.55rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--line);
+}
+
+.viajes-date__foot button {
+  border: 0;
+  background: transparent;
+  color: var(--accent-text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.35rem;
+}
+
+/* Icon buttons */
+.viajes-iconbtn {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--accent-text);
+  cursor: pointer;
+  flex: none;
+  transition: transform 180ms var(--ease-out), background 180ms var(--ease-out);
+}
+
+.viajes-iconbtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.viajes-iconbtn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+@media (hover: hover) {
+  .viajes-iconbtn:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* Fullscreen guide + bottom dock (covers page chrome) */
+.viajes-fs {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 100dvh;
+  height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.viajes-fs__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem clamp(0.75rem, 2vw, 1.1rem);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(10px);
+  z-index: 2;
+}
+
+.viajes-fs__title {
+  flex: 1;
+  min-width: 0;
+}
+
+.viajes-fs__title strong {
+  display: block;
+  font-size: 0.95rem;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viajes-fs__stage {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.viajes-fs__stage .viajes-guide--fs {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  padding: 0;
+}
+
+.viajes-fs__stage .viajes-guide__frame {
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.viajes-fs__stage .viajes-guide__frame iframe {
+  height: 100%;
+  min-height: 0;
+}
+
+.viajes-dock {
+  z-index: 3;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 94%, var(--bg));
+  padding: 0.55rem clamp(0.75rem, 2vw, 1.1rem) calc(0.65rem + env(safe-area-inset-bottom, 0px));
+  display: grid;
+  gap: 0.4rem;
+}
+
+.viajes-dock__status {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viajes-dock__composer {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.viajes-dock__composer input {
+  min-width: 0;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 0 0.9rem;
+  font: inherit;
+}
+
+.viajes-fs__error {
+  position: absolute;
+  left: 50%;
+  bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  margin: 0;
+  max-width: min(90vw, 420px);
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, #4a1020 88%, #000);
+  color: #ffb3c1;
+  font-size: 0.85rem;
+  z-index: 4;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .viajes-sky__top {
   display: flex;
   flex-wrap: wrap;

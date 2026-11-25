@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { ArrowLeft, Download } from "lucide-react";
 import PortfolioPageHero from "@/components/portfolio/PortfolioPageHero";
 import HomeHeroBackground from "@/components/home/HomeHeroBackground";
 import TripWizard from "@/components/viajes/TripWizard";
@@ -118,6 +119,16 @@ export default function TravelPlannerApp() {
   const busy = loadingPlan || loadingEdit;
   const hasGuide = Boolean(html);
   const wizardVisible = !hasGuide || showWizard;
+  const guideMode = hasGuide && !showWizard;
+
+  useEffect(() => {
+    if (!guideMode) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [guideMode]);
 
   async function generate() {
     setError(null);
@@ -137,12 +148,6 @@ export default function TravelPlannerApp() {
       setTitle(data.title || null);
       setShowWizard(false);
       setMessages([{ role: "assistant", text: t("chat.ready") }]);
-      requestAnimationFrame(() => {
-        document.getElementById("viajes-app")?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("errors.generic"));
     } finally {
@@ -191,33 +196,61 @@ export default function TravelPlannerApp() {
     URL.revokeObjectURL(url);
   }
 
-  function printGuide() {
-    if (!html) return;
-    const w = window.open(
-      "",
-      "_blank",
-      "noopener,noreferrer,width=1024,height=768",
+  if (guideMode) {
+    return (
+      <div className="viajes-fs" id="viajes-app">
+        <header className="viajes-fs__bar">
+          <button
+            type="button"
+            className="viajes-iconbtn"
+            onClick={() => setShowWizard(true)}
+            aria-label={t("actions.newTrip")}
+            title={t("actions.newTrip")}
+          >
+            <ArrowLeft size={18} aria-hidden />
+          </button>
+          <div className="viajes-fs__title">
+            <strong>{title || t("previewTitlePlain")}</strong>
+          </div>
+          <button
+            type="button"
+            className="viajes-iconbtn viajes-iconbtn--primary"
+            disabled={loadingEdit}
+            onClick={downloadHtml}
+            aria-label={t("actions.downloadHtml")}
+            title={t("actions.downloadHtml")}
+          >
+            <Download size={18} aria-hidden />
+          </button>
+        </header>
+
+        <div className="viajes-fs__stage">
+          <GuidePreview
+            html={html}
+            title={title}
+            loading={loadingEdit}
+            onDownloadHtml={downloadHtml}
+            fullscreen
+            hideToolbar
+          />
+        </div>
+
+        <GuideChat
+          dock
+          disabled={!html}
+          loading={loadingEdit}
+          messages={messages}
+          onSend={edit}
+          onDownloadHtml={downloadHtml}
+        />
+
+        {error && (
+          <p className="viajes-fs__error" role="alert">
+            {error}
+          </p>
+        )}
+      </div>
     );
-    if (!w) {
-      setError(t("errors.popup"));
-      return;
-    }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-    const trigger = () => {
-      try {
-        w.focus();
-        w.print();
-      } catch {
-        /* ignore */
-      }
-    };
-    if (w.document.readyState === "complete") {
-      setTimeout(trigger, 250);
-    } else {
-      w.addEventListener("load", () => setTimeout(trigger, 250));
-    }
   }
 
   return (
@@ -252,43 +285,6 @@ export default function TravelPlannerApp() {
           <div className="viajes-generating-card">
             <strong>{t("actions.generating")}</strong>
             <span>{t("generatingHint")}</span>
-          </div>
-        )}
-
-        {hasGuide && !showWizard && (
-          <div className="viajes-workspace">
-            <div className="viajes-workspace__guide">
-              <div className="viajes-workspace__bar">
-                <button
-                  type="button"
-                  className="viajes-btn viajes-btn--ghost"
-                  onClick={() => {
-                    setShowWizard(true);
-                    requestAnimationFrame(() => {
-                      document.getElementById("hero-section")?.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start",
-                      });
-                    });
-                  }}
-                >
-                  {t("actions.newTrip")}
-                </button>
-              </div>
-              <GuidePreview
-                html={html}
-                title={title}
-                loading={loadingEdit}
-                onPrint={printGuide}
-                onDownloadHtml={downloadHtml}
-              />
-            </div>
-            <GuideChat
-              disabled={!html}
-              loading={loadingEdit}
-              messages={messages}
-              onSend={edit}
-            />
           </div>
         )}
 
