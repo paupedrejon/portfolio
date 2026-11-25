@@ -196,6 +196,19 @@ function titleCandidates(activity: string, city: string): string[] {
   if (/tower bridge/i.test(raw)) add("Tower Bridge");
   if (/times square/i.test(raw)) add("Times Square");
   if (/central park/i.test(raw)) add("Central Park");
+  if (/museo del prado|\bprado\b/i.test(raw)) add("Museo del Prado");
+  if (/thyssen/i.test(raw)) add("Museo Thyssen-Bornemisza");
+  if (/reina sof[ií]a|reina sofia/i.test(raw)) add("Museo Nacional Centro de Arte Reina Sofía");
+  if (/buen retiro|\bretiro\b/i.test(raw)) add("Parque del Retiro");
+  if (/atocha/i.test(raw)) add("Estación de Atocha", "Madrid Atocha railway station");
+  if (/gran v[ií]a/i.test(raw)) add("Gran Vía, Madrid");
+  if (/plaza mayor/i.test(raw)) add("Plaza Mayor, Madrid");
+  if (/shard/i.test(raw)) add("The Shard");
+  if (/westminster/i.test(raw)) add("Westminster Abbey");
+  if (/borough market/i.test(raw)) add("Borough Market");
+  if (/four seasons/i.test(raw)) add(`Four Seasons Hotel ${city}`, "Four Seasons Hotel Madrid");
+  if (/ritz/i.test(raw) && city) add(`The Ritz ${city}`, `Hotel Ritz ${city}`);
+  if (/mandarin|oriental/i.test(raw) && city) add(`Mandarin Oriental ${city}`);
   // Airport → airport page (better than random city history)
   if (/aeropuerto|airport|benito ju[aá]rez/i.test(raw)) {
     add(
@@ -301,6 +314,38 @@ async function commonsPhoto(
   return null;
 }
 
+async function openversePhoto(
+  query: string,
+  used: Set<string>,
+): Promise<GuideImage | null> {
+  const api = new URL("https://api.openverse.org/v1/images/");
+  api.searchParams.set("q", query);
+  api.searchParams.set("page_size", "8");
+  api.searchParams.set("license", "pdm,cc0,by,by-sa");
+  api.searchParams.set("format", "json");
+  const data = await fetchJson<{
+    results?: {
+      title?: string;
+      url?: string;
+      thumbnail?: string;
+      foreign_landing_url?: string;
+    }[];
+  }>(api.toString());
+  for (const hit of data?.results || []) {
+    const title = hit.title || query;
+    if (BAD_ASSET.test(title) || BAD_ASSET.test(hit.url || "")) continue;
+    const url = usableThumb(hit.thumbnail || hit.url, title);
+    if (!url || used.has(urlKey(url))) continue;
+    return {
+      url,
+      title,
+      attribution: "Openverse",
+      query,
+    };
+  }
+  return null;
+}
+
 async function wikiSummaryThumb(
   title: string,
   lang: "es" | "en",
@@ -356,7 +401,7 @@ export async function fetchActivityImageMap(
     for (const a of day.activities || []) pushJob(day.city || "", a.name || "");
   }
 
-  const capped = jobs.slice(0, 40);
+  const capped = jobs.slice(0, 56);
   const cities = [
     ...new Set(
       (plan.days || []).map((d) => (d.city || "").trim()).filter(Boolean),
@@ -427,11 +472,16 @@ export async function fetchActivityImageMap(
         }
       }
     }
+    const isHotel = /hotel|resort|palace|ritz|seasons|mandarin|hyatt|hilton|marriott|apartment|hostal|hostel/i.test(
+      job.activity,
+    );
     const queries = [
       `${core} ${job.city}`,
       core.length > 3 ? core : "",
-      /cena|dinner|restaurante|comer|food/i.test(job.activity)
-        ? `${job.city} restaurant`
+      isHotel ? `${job.activity}` : "",
+      isHotel ? `${core} hotel ${job.city}` : "",
+      /cena|dinner|restaurante|comer|food|almuerzo|lunch/i.test(job.activity)
+        ? `${job.city} restaurant food`
         : "",
       /parque|park|jard[ií]n|garden/i.test(job.activity)
         ? `${job.city} park`
@@ -441,6 +491,18 @@ export async function fetchActivityImageMap(
 
     for (const q of queries) {
       const img = await commonsPhoto(q, usedUrls);
+      if (img) {
+        markUsed(img.url);
+        byActivity.set(job.key, {
+          ...img,
+          query: `${job.city}::${job.activity}`,
+        });
+        return;
+      }
+    }
+    // Hotels / leftovers: Openverse often has usable modern photos
+    for (const q of queries.slice(0, 3)) {
+      const img = await openversePhoto(q, usedUrls);
       if (img) {
         markUsed(img.url);
         byActivity.set(job.key, {
@@ -466,6 +528,10 @@ export async function fetchActivityImageMap(
     `${c} museum`,
     `${c} night`,
     `${c} architecture`,
+    `${c} skyline`,
+    `${c} restaurant`,
+    `${c} hotel exterior`,
+    `${c} square`,
   ]);
   const cityPool: GuideImage[] = [];
   const poolSeen = new Set<string>(usedUrls);
@@ -479,9 +545,9 @@ export async function fetchActivityImageMap(
       if (!img || poolSeen.has(urlKey(img.url))) continue;
       poolSeen.add(urlKey(img.url));
       cityPool.push(img);
-      if (cityPool.length >= 28) break;
+      if (cityPool.length >= 40) break;
     }
-    if (cityPool.length >= 28) break;
+    if (cityPool.length >= 40) break;
   }
 
   let poolIdx = 0;

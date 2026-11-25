@@ -82,12 +82,47 @@ function trainline(from: string, to: string, date?: string): string {
   return date ? `${base}&outwardDate=${enc(date)}` : base;
 }
 
-function bookingHotel(city: string, checkin: string, checkout: string, adults: number): string {
-  return `https://www.booking.com/searchresults.es.html?ss=${enc(city)}&checkin=${enc(checkin)}&checkout=${enc(checkout)}&group_adults=${adults}&no_rooms=1&selected_currency=EUR`;
+/** Search Booking for a property (name + city) or city-only fallback. */
+function bookingHotel(
+  place: string,
+  checkin: string,
+  checkout: string,
+  adults: number,
+): string {
+  return `https://www.booking.com/searchresults.es.html?ss=${enc(place)}&checkin=${enc(checkin)}&checkout=${enc(checkout)}&group_adults=${adults}&no_rooms=1&selected_currency=EUR&order=relevance`;
 }
 
-function airbnbHotel(city: string, checkin: string, checkout: string, adults: number): string {
-  return `https://www.airbnb.es/s/${enc(city)}/homes?checkin=${enc(checkin)}&checkout=${enc(checkout)}&adults=${adults}`;
+function airbnbHotel(
+  city: string,
+  checkin: string,
+  checkout: string,
+  adults: number,
+  property?: string,
+): string {
+  const base = `https://www.airbnb.es/s/${enc(city)}/homes?checkin=${enc(checkin)}&checkout=${enc(checkout)}&adults=${adults}`;
+  return property ? `${base}&query=${enc(property)}` : base;
+}
+
+/** Deep-link toward a named stay (hotel/apartment) for the given city window. */
+export function stayBookingHref(opts: {
+  platform: "booking" | "airbnb";
+  name?: string;
+  city: string;
+  checkin: string;
+  checkout: string;
+  adults: number;
+}): string {
+  const label = [opts.name?.trim(), opts.city.trim()].filter(Boolean).join(", ");
+  if (opts.platform === "airbnb") {
+    return airbnbHotel(
+      opts.city,
+      opts.checkin,
+      opts.checkout,
+      opts.adults,
+      opts.name,
+    );
+  }
+  return bookingHotel(label || opts.city, opts.checkin, opts.checkout, opts.adults);
 }
 
 export type LegBookingLink = {

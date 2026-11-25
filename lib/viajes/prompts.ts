@@ -260,6 +260,9 @@ RULES (agency-quality — works for ANY country/city on Earth):
 - legs: every hop between chosen cities + return; vehicleNo only if real from snippets.
 - days: ONE object PER calendar day (16 nights ⇒ ~16 days). NEVER stop after day 2.
 - Each day ≥3 activities (morning/afternoon/evening) with concrete places + prices.
+- EVERY activity.price must be concrete (e.g. "32 €", "Gratis", "~45 € / pers.") — never leave meals blank. Lunch/dinner need approx €/person matching luxury.
+- Local getting-around must match luxury: level 5 = private chauffeur / premium taxi (NOT metro day-pass as primary); level 4 = taxi + optional half-day driver; ≤3 = metro/bus passes OK.
+- Stay names must be real bookable properties; Booking/Airbnb will deep-link by that name.
 - Split days across the chosen cities in order.
 - budget MUST list legs + stays + food + activities; budgetPerPerson + budgetTotal required.
 Locale = user locale.`;
@@ -282,7 +285,13 @@ export function buildJsonUserPrompt(params: {
 Dates: ${dateCopy(input)}
 Window: ${booking?.tripStart || "?"} → ${booking?.tripEnd || "?"}
 Travelers: ${input.travelers}
-Luxury ${input.luxury}/5 · multi-modal
+Luxury ${input.luxury}/5 · multi-modal${
+  input.luxury >= 5
+    ? " · LOCAL MOVE = private chauffeur / black car (no public-transit-first advice)"
+    : input.luxury >= 4
+      ? " · LOCAL MOVE = taxis + optional private driver"
+      : " · LOCAL MOVE = transit passes OK"
+}
 Interests: ${[...input.interests, input.interestsNote].filter(Boolean).join(", ") || "general"}
 Locale: ${input.locale}
 Consulted: ${consultedAt}

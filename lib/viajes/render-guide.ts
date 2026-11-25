@@ -2,6 +2,7 @@ import type { GuideImage } from "./types";
 import type { GuideVideo } from "./youtube";
 import type { ItineraryPlan, TransportLeg } from "./itinerary-schema";
 import type { BookingLinks } from "./booking-links";
+import { stayBookingHref } from "./booking-links";
 import {
   pickHeroImage,
   themeForDestination,
@@ -13,7 +14,9 @@ import {
   type ActivityImageKey,
 } from "./activity-images";
 import {
+  estimateActivityPrice,
   formatEuro,
+  localMoveOptions,
   parseEuro,
   resolveStayTotal,
   stayPlatformForLuxury,
@@ -373,9 +376,27 @@ export function renderGuideHtml(params: {
     return pick;
   };
 
+  /** Round-robin soft reuse so we never stamp the same photo on every card. */
+  let reuseCursor = 0;
+  const softReusePhoto = (city: string): GuideImage | null => {
+    const cityN = normCity(city);
+    const candidates = [...pool, ...images].filter((img) => img?.url);
+    if (!candidates.length) return null;
+    const cityHits = candidates.filter(
+      (img) =>
+        cityN &&
+        (normCity(img.query).includes(cityN) ||
+          normCity(img.title).includes(cityN)),
+    );
+    const list = cityHits.length ? cityHits : candidates;
+    const pick = list[reuseCursor % list.length];
+    reuseCursor += 1;
+    return pick || null;
+  };
+
   /**
    * Prefer per-activity hit → unique city photo → unused YT thumb →
-   * any YT thumb → soft-reuse a city pool photo (never leave a blank card).
+   * rotate soft-reuse (never blank, never the same image stamped forever).
    */
   const photoForActivity = (
     city: string,
@@ -386,6 +407,9 @@ export function renderGuideHtml(params: {
       usedUrls.add(urlKey(direct.url));
       return direct;
     }
+    // Direct hit already used elsewhere — still better than a random walk video
+    if (direct?.url) return direct;
+
     const fromPool = nextImg(city, activity);
     if (fromPool) return fromPool;
     const cityN = normCity(city);
@@ -404,32 +428,7 @@ export function renderGuideHtml(params: {
         query: `${city}::${activity}`,
       };
     }
-    const ytAny = videos.find(
-      (v) => v.thumb && !usedUrls.has(urlKey(v.thumb)),
-    );
-    if (ytAny?.thumb) {
-      usedUrls.add(urlKey(ytAny.thumb));
-      return {
-        url: ytAny.thumb,
-        title: ytAny.title,
-        attribution: "YouTube",
-        query: `${city}::${activity}`,
-      };
-    }
-    // Soft reuse: prefer same-city pool image over an empty card
-    const reuse =
-      [...pool, ...images].find(
-        (img) =>
-          img.url &&
-          cityN &&
-          (normCity(img.query).includes(cityN) ||
-            normCity(img.title).includes(cityN)),
-      ) ||
-      direct ||
-      pool[0] ||
-      images[0] ||
-      null;
-    return reuse;
+    return softReusePhoto(city);
   };
 
   const legs: TransportLeg[] =
@@ -466,13 +465,21 @@ export function renderGuideHtml(params: {
     });
     const platform =
       hit?.platform || stayPlatformForLuxury(luxury);
-    const bookHref = platform === "airbnb" ? link.airbnb : link.booking;
+    const stayName = hit?.name || `Alojamiento en ${link.city}`;
+    const bookHref = stayBookingHref({
+      platform: platform === "airbnb" ? "airbnb" : "booking",
+      name: hit?.name,
+      city: link.city,
+      checkin: link.checkin,
+      checkout: link.checkout,
+      adults: pax,
+    });
     const bookLabel =
       platform === "airbnb"
         ? `Reservar en Airbnb · ${total}`
-        : `Reservar en Booking · ${total}`;
+        : `Buscar «${stayName}» en Booking · ${total}`;
     return {
-      name: hit?.name || `Alojamiento en ${link.city}`,
+      name: stayName,
       city: link.city,
       price: total,
       nightly: hit?.nightly || "",
@@ -489,7 +496,8 @@ export function renderGuideHtml(params: {
     .map((stay) => {
       const photo =
         lookupActivityImage(activityImages, stay.city, stay.name) ||
-        nextImg(stay.city, stay.name);
+        nextImg(stay.city, stay.name) ||
+        softReusePhoto(stay.city);
       const nightlyNum = parseEuro(stay.nightly);
       const nightlyShown = nightlyNum
         ? formatEuro(nightlyNum)
@@ -598,12 +606,15 @@ export function renderGuideHtml(params: {
       const acts = dayActs
         .map((a) => {
           const img = photoForActivity(city, a.name);
-          const price = (a.price || "").trim() || "Orient.";
+          const price = estimateActivityPrice(a.name, a.price, luxury);
           const isNight = slotOf(a.time) === "noche";
           const yt = youtubeHref(videos, city, a.name);
           const priceTag = /gratis|incluido|free|0\s*[€$¥]/i.test(price)
             ? "Gratis"
             : price;
+          const tip =
+            a.tip?.trim() ||
+            "Reserva con antelación si es temporada alta; confirma horarios el día anterior.";
           return `<figure class="act">
             <div class="ph${img?.url ? "" : " ph-empty"}">
               ${
@@ -616,18 +627,25 @@ export function renderGuideHtml(params: {
               ${a.time ? `<span class="tag time">${esc(a.time)}</span>` : ""}
             </div>
             <figcaption>
+              <div class="act-meta">
+                ${a.time ? `<span class="act-when">${esc(a.time)}</span>` : ""}
+                <span class="act-price">${esc(priceTag)}</span>
+              </div>
               <b>${esc(a.name)}</b>
-              <span class="d">${esc(a.tip || "")}</span>
+              <span class="d">${esc(tip)}</span>
               <a class="yt" href="${esc(yt)}" target="_blank" rel="noopener"><span class="yt-ico" aria-hidden="true"></span> Vídeos en YouTube</a>
             </figcaption>
           </figure>`;
         })
         .join("");
       const planDay = buildDayPlan(dayActs);
-      const moveHint =
-        theme.style === "washi" || theme.style === "hanji"
-          ? "Tarjeta de transporte local · ~presupuesto día"
-          : `Moverse en ${city} · metro / bus / a pie`;
+      const moveOpts = localMoveOptions(city, luxury);
+      const moveHtml = moveOpts
+        .map(
+          (o) =>
+            `<li class="move-item"><span class="ico ico-${esc(o.icon)}" aria-hidden="true"></span><div><b>${esc(o.title)}</b><small>${esc(o.detail)}</small></div></li>`,
+        )
+        .join("");
       const num = dayNumberLabel(day.title, i);
       const dayDate = booking.tripStart
         ? addDaysIso(booking.tripStart, i)
@@ -653,7 +671,7 @@ export function renderGuideHtml(params: {
           </div>
           <div class="move">
             <h5>Cómo moverse y cuánto cuesta</h5>
-            <p>${esc(moveHint)}</p>
+            <ul class="move-list">${moveHtml}</ul>
           </div>
         </div>
       </article>`;
@@ -865,8 +883,8 @@ section{padding:56px 0 8px}
 .stays{display:grid;gap:22px}
 .stay{display:grid;grid-template-columns:minmax(0,320px) 1fr;background:var(--card);border:1px solid var(--rule)}
 @media (max-width:760px){.stay{grid-template-columns:1fr}}
-.poster{position:relative;min-height:240px;overflow:hidden;background:#222}
-.poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.poster{position:relative;min-height:240px;overflow:hidden;background:linear-gradient(145deg,#1a1a1e,#3a3530 55%,#2a2622)}
+.poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
 .poster .city-es{position:absolute;left:16px;bottom:12px;z-index:1;color:#fff;font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:12px;text-shadow:0 2px 12px #000}
 .stay .body{padding:20px 22px}
 .stay .when{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
@@ -893,9 +911,9 @@ section{padding:56px 0 8px}
 .dia h4{font-size:clamp(1.35rem,3vw,1.85rem);margin:4px 0 0}
 .dsub{margin:6px 0 0;color:var(--mute);font-size:.98rem;max-width:52ch}
 .dnight{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);border:1.5px solid var(--rule);padding:6px 10px;white-space:nowrap;align-self:start;background:color-mix(in srgb,var(--paper-bg) 70%,transparent)}
-.acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:18px;padding:22px 0 8px}
-.act{margin:0}
-.act .ph{position:relative;aspect-ratio:4/3;background:#2a2622;overflow:hidden;isolation:isolate}
+.acts{display:grid;grid-template-columns:1fr;gap:20px;padding:22px 0 8px}
+.act{margin:0;display:grid;grid-template-columns:minmax(220px,38%) 1fr;gap:0 22px;align-items:stretch;background:color-mix(in srgb,var(--paper-bg) 55%,var(--card));border:1px solid var(--rule);overflow:hidden}
+.act .ph{position:relative;min-height:200px;aspect-ratio:16/11;background:#2a2622;overflow:hidden;isolation:isolate}
 .act .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .act .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.45));pointer-events:none;z-index:0}
 .act .ph-empty{background:linear-gradient(145deg,var(--rule),var(--card))}
@@ -903,25 +921,42 @@ section{padding:56px 0 8px}
 .act .tag.price{left:10px;bottom:10px;background:rgba(12,10,12,.72);backdrop-filter:blur(4px);font-family:var(--display);font-size:15px;font-weight:800}
 .act .tag.noche{left:10px;top:10px;background:var(--accent)}
 .act .tag.time{right:10px;top:10px;background:rgba(12,10,12,.55);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
-.act b{display:block;font-family:var(--display);font-weight:800;font-size:1.12rem;margin-top:10px;line-height:1.2}
-.act .d{display:block;font-size:.88rem;color:var(--mute);margin-top:4px;line-height:1.4}
-.act .yt{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none}
+.act figcaption{padding:18px 18px 18px 0;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.act-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.act-when,.act-price{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);border:1px solid var(--rule);padding:4px 8px}
+.act-price{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,var(--rule))}
+.act b{display:block;font-family:var(--display);font-weight:800;font-size:clamp(1.15rem,2.4vw,1.45rem);margin:0;line-height:1.2}
+.act .d{display:block;font-size:.95rem;color:var(--mute);margin-top:8px;line-height:1.5;max-width:62ch}
+.act .yt{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none}
 .act .yt:hover{text-decoration:underline}
 .yt-ico{width:14px;height:14px;border-radius:50%;background:#e11;display:inline-grid;place-items:center;flex:none}
 .yt-ico::before{content:"";border-style:solid;border-width:4px 0 4px 7px;border-color:transparent transparent transparent #fff;margin-left:1px}
-.dia-foot{display:grid;grid-template-columns:1.2fr .8fr;gap:22px;margin:8px -22px 0;padding:16px 22px 0;border-top:1px solid var(--rule)}
+.dia-foot{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;margin:8px -22px 0;padding:16px 22px 0;border-top:1px solid var(--rule)}
 .dia-foot h5{margin:0 0 8px;font-family:var(--display);font-size:1rem;letter-spacing:.14em;text-transform:uppercase;font-weight:800}
 .dia-foot p{margin:0 0 6px;font-size:.92rem;color:var(--mute)}
 .dia-foot p b{color:var(--ink);font-weight:700}
-.dia-foot .move{padding:14px 16px;border:1.5px solid var(--rule);background:var(--card)}
+.dia-foot .move{padding:14px 16px;border:1.5px solid var(--rule);background:color-mix(in srgb,var(--card) 88%,var(--accent))}
+.move-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.move-item{display:grid;grid-template-columns:36px 1fr;gap:10px;align-items:start}
+.move-item b{display:block;font-size:.95rem;color:var(--ink)}
+.move-item small{display:block;margin-top:2px;font-size:.82rem;color:var(--mute);line-height:1.35}
+.ico{width:36px;height:36px;border-radius:10px;background:var(--ink);color:#fff;display:grid;place-items:center;position:relative;flex:none}
+.ico::before{content:"";display:block}
+.ico-metro::before{width:16px;height:16px;border:2px solid #fff;border-radius:50%;box-shadow:inset 0 0 0 3px transparent}
+.ico-metro::after{content:"";position:absolute;width:6px;height:6px;background:#fff;border-radius:50%}
+.ico-taxi::before{width:18px;height:10px;border:2px solid #fff;border-radius:3px;box-shadow:0 6px 0 -4px #fff,0 6px 0 -2px #fff}
+.ico-car::before{width:18px;height:8px;border:2px solid #fff;border-radius:4px 4px 2px 2px}
+.ico-walk::before{width:4px;height:14px;background:#fff;border-radius:2px;box-shadow:6px 4px 0 -1px #fff,-6px 8px 0 -1px #fff}
+.ico-bike::before{width:14px;height:14px;border:2px solid #fff;border-radius:50%;box-shadow:12px 0 0 -2px #fff,12px 0 0 0 #fff}
 .transit{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:18px 0;padding:14px 16px;border:1.5px dashed var(--rule);background:var(--card);font-size:.95rem}
 @media (max-width:760px){
   .dia-head{grid-template-columns:auto 1fr;gap:12px}
   .dia-head .dnight{grid-column:1/-1;justify-self:start}
-  .acts{grid-template-columns:1fr 1fr}
+  .act{grid-template-columns:1fr}
+  .act figcaption{padding:14px 16px 16px}
   .dia-foot{grid-template-columns:1fr}
 }
-@media (max-width:480px){.acts{grid-template-columns:1fr}}
+@media (max-width:480px){.act .ph{min-height:160px}}
 .budget{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:28px;align-items:start}
 @media (max-width:820px){.budget{grid-template-columns:1fr}}
 .receipt{background:#fffdf8;padding:24px 24px 36px;box-shadow:0 18px 30px -22px rgba(29,26,23,.7);
