@@ -24,6 +24,7 @@ export const LOCALIZED_STATIC_PATHS = [
   "/labs",
   "/labs/minecraft",
   "/blog",
+  "/viajes",
   "/tealcode",
 ] as const;
 
