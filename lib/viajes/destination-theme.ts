@@ -139,6 +139,48 @@ export function themeForDestination(destination: string): DestinationTheme {
   };
 }
 
+/**
+ * Luxury 4–5 → champagne / gold editorial (premium travel magazine).
+ * Keeps JP/KR script themes but gold-shifts accents.
+ */
+export function applyLuxuryTheme(
+  base: DestinationTheme,
+  luxury: number,
+): DestinationTheme {
+  if (luxury < 4) return base;
+  const gold = luxury >= 5 ? "#c6a35a" : "#b08d4f";
+  const ink = luxury >= 5 ? "#f4ecdf" : "#1a1208";
+  const bg = luxury >= 5 ? "#0c0a08" : "#f6efe4";
+  const paper = luxury >= 5 ? "#14100c" : "#fcf8f1";
+  const mute = luxury >= 5 ? "#b7a792" : "#6a5c4c";
+  const rule = luxury >= 5 ? "#2a241c" : "#e2d5c0";
+  return {
+    ...base,
+    bg,
+    paper,
+    ink,
+    accent: gold,
+    accentSoft: luxury >= 5 ? "#2a2216" : "#f0e4cf",
+    mute,
+    rule,
+    secondary: luxury >= 5 ? "#e8d5a8" : "#5c4a32",
+    night: "#0a0806",
+    neon: gold,
+    heroOverlay:
+      luxury >= 5
+        ? "linear-gradient(115deg,rgba(8,6,4,.88) 0%,rgba(8,6,4,.45) 48%,rgba(8,6,4,.2) 100%),linear-gradient(0deg,rgba(8,6,4,.85),transparent 42%)"
+        : "linear-gradient(125deg,rgba(18,12,6,.9),rgba(18,12,6,.35))",
+    displayFont: "Cormorant Garamond",
+    bodyFont: luxury >= 5 ? "Outfit" : "Source Sans 3",
+    googleFontsHref:
+      luxury >= 5
+        ? fonts("Cormorant Garamond", "Outfit")
+        : fonts("Cormorant Garamond", "Source Sans 3"),
+    mood: luxury >= 5 ? `ultra-luxury atelier for ${base.mood}` : base.mood,
+    artBrief: `${base.artBrief} Luxury ${luxury}/5: gold accents, generous whitespace, premium editorial — not flashy neon.`,
+  };
+}
+
 export function pickHeroImage<T extends { url: string; title?: string; query?: string }>(
   images: T[],
 ): T | undefined {
@@ -147,7 +189,7 @@ export function pickHeroImage<T extends { url: string; title?: string; query?: s
     const t = `${img.title || ""} ${img.query || ""} ${img.url}`.toLowerCase();
     let score = 0;
     if (
-      /skyline|cityscape|landmark|plaza|square|cathedral|temple|castle|bridge|tower|palace|harbor|harbour|waterfront|old.?town|centro|night|noche/.test(
+      /skyline|cityscape|landmark|plaza|square|cathedral|temple|castle|bridge|tower|palace|harbor|harbour|waterfront|old.?town|centro|night|noche|beach|playa|lagoon|resort|overwater|island|isla|reef/.test(
         t,
       )
     )

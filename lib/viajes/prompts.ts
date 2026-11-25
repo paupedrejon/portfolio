@@ -204,8 +204,8 @@ HARD CHECK before you finish:
 
 export const JSON_SYSTEM_PROMPT = `Travel planner. Return ONLY valid JSON (no markdown):
 {
-  "title": string,
-  "tagline": string,
+  "title": "short punchy title ≤48 chars (no subtitle after colon if possible)",
+  "tagline": "one sentence ≤110 chars",
   "datesLabel": string,
   "luxuryLabel": string,
   "palette": {"bg":"#paper","ink":"#dark","accent":"#hex","paper":"#card"},
@@ -255,7 +255,8 @@ export const JSON_SYSTEM_PROMPT = `Travel planner. Return ONLY valid JSON (no ma
 RULES (agency-quality — works for ANY country/city on Earth):
 - If the user typed a COUNTRY or REGION (e.g. Canadá, Japón, Italia, Patagonia), YOU must pick 2–4 concrete CITIES that fit trip length + interests. Never use the country name as stays[].city.
 - If the user already typed cities, use those cities (in order). Do not invent unrelated countries.
-- LIGHT paper palette matching ART BRIEF. NO emoji. Japanese ornaments ONLY if destination is Japan.
+- LIGHT paper palette matching ART BRIEF (luxury 4–5 may be gold/dark editorial). NO emoji. Japanese ornaments ONLY if destination is Japan.
+- title MUST be ≤48 characters, punchy, ideally without a long subtitle after ":".
 - Stay price MUST equal nightly × nights. One platform per stay: "booking"|"airbnb".
 - legs: every hop between chosen cities + return; vehicleNo only if real from snippets.
 - days: ONE object PER calendar day (16 nights ⇒ ~16 days). NEVER stop after day 2.

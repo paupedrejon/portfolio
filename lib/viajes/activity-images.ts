@@ -50,6 +50,21 @@ function usableThumb(src?: string, title = ""): string | null {
   return src;
 }
 
+/** Reject photos that clearly belong to another famous place. */
+function conflictsWithCity(title: string, city: string): boolean {
+  const cityN = norm(city);
+  const blob = norm(title);
+  if (!cityN || !blob) return false;
+  if (blob.includes(cityN)) return false;
+  const cityTok = cityN
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length > 3 && !/^(norte|sur|atol|atolon|island|isla)$/.test(t));
+  if (cityTok.some((t) => blob.includes(t))) return false;
+  return /launceston|tasmania|australia|sydney|melbourne|tokyo|kyoto|osaka|london|paris|new york|nyc|roma|rome|berlin|bangkok|dubai|singapore|toronto|vancouver|cairo|moscow|beijing/i.test(
+    blob,
+  );
+}
+
 async function fetchJson<T>(url: string): Promise<T | null> {
   try {
     const res = await fetch(url, {
@@ -209,6 +224,12 @@ function titleCandidates(activity: string, city: string): string[] {
   if (/four seasons/i.test(raw)) add(`Four Seasons Hotel ${city}`, "Four Seasons Hotel Madrid");
   if (/ritz/i.test(raw) && city) add(`The Ritz ${city}`, `Hotel Ritz ${city}`);
   if (/mandarin|oriental/i.test(raw) && city) add(`Mandarin Oriental ${city}`);
+  if (/maldives|maldiv|mal[eé]\b|atol/i.test(`${raw} ${city}`)) {
+    add("Maldives", "Malé", "Overwater bungalow", `${city} beach`);
+  }
+  if (/overwater|bungalow|villa acu|water villa/i.test(raw)) {
+    add("Overwater bungalow", `${city} resort`);
+  }
   // Airport → airport page (better than random city history)
   if (/aeropuerto|airport|benito ju[aá]rez/i.test(raw)) {
     add(
@@ -256,6 +277,7 @@ function scoreCandidate(
 async function commonsPhoto(
   query: string,
   used: Set<string>,
+  cityHint = "",
 ): Promise<GuideImage | null> {
   const isUsed = (url: string) => used.has(urlKey(url));
   const api = new URL("https://commons.wikimedia.org/w/api.php");
@@ -295,6 +317,7 @@ async function commonsPhoto(
   for (const page of Object.values(data?.query?.pages ?? {})) {
     const title = page.title || "";
     if (BAD_ASSET.test(title)) continue;
+    if (cityHint && conflictsWithCity(title, cityHint)) continue;
     const info = page.imageinfo?.[0];
     if (!info?.mime?.startsWith("image/") || info.mime.includes("svg")) continue;
     const url = usableThumb(info.thumburl || info.url, title);
@@ -334,6 +357,7 @@ async function openversePhoto(
   for (const hit of data?.results || []) {
     const title = hit.title || query;
     if (BAD_ASSET.test(title) || BAD_ASSET.test(hit.url || "")) continue;
+    if (conflictsWithCity(title, query)) continue;
     const url = usableThumb(hit.thumbnail || hit.url, title);
     if (!url || used.has(urlKey(url))) continue;
     return {
@@ -480,17 +504,25 @@ export async function fetchActivityImageMap(
       core.length > 3 ? core : "",
       isHotel ? `${job.activity}` : "",
       isHotel ? `${core} hotel ${job.city}` : "",
+      /cena|dinner|restaurante|comer|food|almuerzo|lunch|seafood|marisco/i.test(
+        job.activity,
+      )
+        ? `${job.city} seafood restaurant`
+        : "",
       /cena|dinner|restaurante|comer|food|almuerzo|lunch/i.test(job.activity)
-        ? `${job.city} restaurant food`
+        ? `${job.city} cuisine`
         : "",
       /parque|park|jard[ií]n|garden/i.test(job.activity)
         ? `${job.city} park`
         : "",
       /museo|museum/i.test(job.activity) ? `${job.city} museum` : "",
+      /playa|beach|snorkel|buceo|lagoon|atol/i.test(job.activity)
+        ? `${job.city} beach lagoon`
+        : "",
     ].filter((q) => q.length > 3);
 
     for (const q of queries) {
-      const img = await commonsPhoto(q, usedUrls);
+      const img = await commonsPhoto(q, usedUrls, job.city);
       if (img) {
         markUsed(img.url);
         byActivity.set(job.key, {
@@ -503,7 +535,7 @@ export async function fetchActivityImageMap(
     // Hotels / leftovers: Openverse often has usable modern photos
     for (const q of queries.slice(0, 3)) {
       const img = await openversePhoto(q, usedUrls);
-      if (img) {
+      if (img && !conflictsWithCity(img.title, job.city)) {
         markUsed(img.url);
         byActivity.set(job.key, {
           ...img,
@@ -539,7 +571,7 @@ export async function fetchActivityImageMap(
     const batch = await Promise.all(
       poolQueries
         .slice(i, i + 4)
-        .map((q) => commonsPhoto(q, poolSeen)),
+        .map((q) => commonsPhoto(q, poolSeen, q.split(/\s+/)[0] || "")),
     );
     for (const img of batch) {
       if (!img || poolSeen.has(urlKey(img.url))) continue;

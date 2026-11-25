@@ -4,6 +4,7 @@ import type { ItineraryPlan, TransportLeg } from "./itinerary-schema";
 import type { BookingLinks } from "./booking-links";
 import { stayBookingHref } from "./booking-links";
 import {
+  applyLuxuryTheme,
   pickHeroImage,
   themeForDestination,
   type DestinationTheme,
@@ -21,6 +22,7 @@ import {
   resolveStayTotal,
   stayPlatformForLuxury,
 } from "./money";
+import { videoMatchesPlace } from "./youtube";
 
 function esc(s: string): string {
   return s
@@ -30,12 +32,36 @@ function esc(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-/** Keep hero headline short so the cover stays compact (better media quality). */
+/**
+ * Short punchy hero title — never CSS-ellipsis.
+ * Prefer the clause before ":" / "—" so "Maldivas de Ultra Lujo: …" → "Maldivas de Ultra Lujo".
+ */
 function shortHeroTitle(title: string): string {
-  const t = (title || "").trim().replace(/\s+/g, " ");
-  if (t.length <= 56) return t;
-  const cut = t.slice(0, 53).replace(/\s+\S*$/, "");
-  return `${cut || t.slice(0, 53)}…`;
+  let t = (title || "").trim().replace(/\s+/g, " ");
+  const clause = t.split(/\s*[:：—–|]\s*/)[0]?.trim();
+  if (clause && clause.length >= 10 && clause.length <= 52) return clause;
+  if (t.length <= 48) return t;
+  const words = t.split(" ");
+  let out = "";
+  for (const w of words) {
+    const next = out ? `${out} ${w}` : w;
+    if (next.length > 44) break;
+    out = next;
+  }
+  return out || words.slice(0, 5).join(" ");
+}
+
+function shortHeroSub(tagline: string): string {
+  const t = (tagline || "").trim().replace(/\s+/g, " ");
+  if (t.length <= 110) return t;
+  const words = t.split(" ");
+  let out = "";
+  for (const w of words) {
+    const next = out ? `${out} ${w}` : w;
+    if (next.length > 108) break;
+    out = next;
+  }
+  return out || t.slice(0, 108);
 }
 
 function encOrigin(): string {
@@ -313,19 +339,6 @@ export function renderGuideHtml(params: {
     booking,
   } = params;
   const videos = (params.videos || []).slice(0, 5);
-  const heroVideo =
-    [...videos].sort((a, b) => {
-      const score = (v: (typeof videos)[number]) => {
-        const blob = `${v.title} ${v.description}`.toLowerCase();
-        let s = 0;
-        if (/4k|uhd|2160|hdr/.test(blob)) s += 5;
-        if (/walk|walking|paseo|stroll|drone|cinematic/.test(blob)) s += 4;
-        if (/night|sunset|golden/.test(blob)) s += 2;
-        if (/no talking|ambient|timelapse/.test(blob)) s += 2;
-        return s;
-      };
-      return score(b) - score(a);
-    })[0] || null;
   const activityImages = params.activityImages || new Map();
   const luxury = params.luxury ?? 3;
   const images = filterGuideImages(params.images).filter(
@@ -334,13 +347,50 @@ export function renderGuideHtml(params: {
         `${img.title} ${img.query} ${img.url}`,
       ),
   );
-  const theme = themeForDestination(destination);
-  const p = {
-    bg: plan.palette?.bg || theme.bg,
-    ink: plan.palette?.ink || theme.ink,
-    accent: plan.palette?.accent || theme.accent,
-    paper: plan.palette?.paper || theme.paper,
-  };
+  const theme = applyLuxuryTheme(themeForDestination(destination), luxury);
+  const placeHints = [
+    destination,
+    ...destination.split(/[·|,/]/).map((s) => s.trim()),
+  ].filter(Boolean);
+  const heroVideo =
+    [...videos]
+      .filter((v) => placeHints.some((p) => videoMatchesPlace(v, p)))
+      .sort((a, b) => {
+        const score = (v: (typeof videos)[number]) => {
+          const blob = `${v.title} ${v.description}`.toLowerCase();
+          let s = 0;
+          if (placeHints.some((p) => videoMatchesPlace(v, p))) s += 8;
+          if (/4k|uhd|2160|hdr/.test(blob)) s += 5;
+          if (/beach|playa|lagoon|resort|overwater|reef|island|isla/.test(blob))
+            s += 6;
+          if (/eiffel|tower|landmark|drone|cinematic|aerial/.test(blob)) s += 4;
+          if (/walk|walking|paseo|stroll/.test(blob)) s += 2;
+          if (/night|sunset|golden/.test(blob)) s += 2;
+          return s;
+        };
+        return score(b) - score(a);
+      })[0] ||
+    [...videos].sort((a, b) => {
+      const score = (v: (typeof videos)[number]) =>
+        placeHints.some((p) => videoMatchesPlace(v, p)) ? 1 : 0;
+      return score(b) - score(a);
+    })[0] ||
+    null;
+  // Luxury owns the palette (ignore AI purple/teal leftovers)
+  const p =
+    luxury >= 4
+      ? {
+          bg: theme.bg,
+          ink: theme.ink,
+          accent: theme.accent,
+          paper: theme.paper,
+        }
+      : {
+          bg: plan.palette?.bg || theme.bg,
+          ink: plan.palette?.ink || theme.ink,
+          accent: plan.palette?.accent || theme.accent,
+          paper: plan.palette?.paper || theme.paper,
+        };
   // Prefer Wikipedia city summary (::hero) over random Commons historical shots
   const hero =
     images.find((img) => /::hero$/i.test(img.query || "")) ||
@@ -395,27 +445,26 @@ export function renderGuideHtml(params: {
     return pick;
   };
 
-  /** Round-robin soft reuse so we never stamp the same photo on every card. */
+  /** Soft reuse ONLY same-city images — never stamp a random foreign frame. */
   let reuseCursor = 0;
   const softReusePhoto = (city: string): GuideImage | null => {
     const cityN = normCity(city);
-    const candidates = [...pool, ...images].filter((img) => img?.url);
-    if (!candidates.length) return null;
-    const cityHits = candidates.filter(
+    if (!cityN) return null;
+    const cityHits = [...pool, ...images].filter(
       (img) =>
-        cityN &&
+        img?.url &&
         (normCity(img.query).includes(cityN) ||
           normCity(img.title).includes(cityN)),
     );
-    const list = cityHits.length ? cityHits : candidates;
-    const pick = list[reuseCursor % list.length];
+    if (!cityHits.length) return null;
+    const pick = cityHits[reuseCursor % cityHits.length];
     reuseCursor += 1;
     return pick || null;
   };
 
   /**
-   * Prefer per-activity hit → unique city photo → unused YT thumb →
-   * rotate soft-reuse (never blank, never the same image stamped forever).
+   * Prefer per-activity Wikipedia hit → unique city photo → same-city soft reuse.
+   * Never use YouTube thumbs here (wrong countries showed up as "activity photos").
    */
   const photoForActivity = (
     city: string,
@@ -426,27 +475,10 @@ export function renderGuideHtml(params: {
       usedUrls.add(urlKey(direct.url));
       return direct;
     }
-    // Direct hit already used elsewhere — still better than a random walk video
     if (direct?.url) return direct;
 
     const fromPool = nextImg(city, activity);
     if (fromPool) return fromPool;
-    const cityN = normCity(city);
-    const ytCity = videos.find(
-      (v) =>
-        v.thumb &&
-        !usedUrls.has(urlKey(v.thumb)) &&
-        (!cityN || normCity(v.city).includes(cityN)),
-    );
-    if (ytCity?.thumb) {
-      usedUrls.add(urlKey(ytCity.thumb));
-      return {
-        url: ytCity.thumb,
-        title: ytCity.title,
-        attribution: "YouTube",
-        query: `${city}::${activity}`,
-      };
-    }
     return softReusePhoto(city);
   };
 
@@ -794,7 +826,29 @@ export function renderGuideHtml(params: {
     </div>
   </section>`;
 
-  const styleAttr = `data-style="${esc(theme.style)}"`;
+  const styleAttr = `data-style="${esc(theme.style)}" data-lux="${luxury}"`;
+  const luxCss =
+    luxury >= 4
+      ? `
+html[data-lux="4"] .chips span,html[data-lux="5"] .chips span{border-left-color:var(--accent);letter-spacing:.04em}
+html[data-lux="5"]{color-scheme:dark}
+html[data-lux="5"] body{background:
+  radial-gradient(ellipse 70% 45% at 15% -5%,color-mix(in srgb,var(--accent) 18%,transparent),transparent 55%),
+  radial-gradient(ellipse 50% 35% at 100% 10%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 50%),
+  var(--paper-bg)}
+html[data-lux="5"] .ema,html[data-lux="5"] .stay,html[data-lux="5"] .dia,html[data-lux="5"] .act,html[data-lux="5"] .ticket,html[data-lux="5"] .vid,html[data-lux="5"] .move{
+  background:linear-gradient(165deg,color-mix(in srgb,var(--card) 92%,var(--accent)),var(--card));
+  border-color:color-mix(in srgb,var(--accent) 35%,var(--rule));
+  box-shadow:0 22px 50px -30px rgba(0,0,0,.65),inset 0 1px 0 color-mix(in srgb,var(--accent) 22%,transparent)}
+html[data-lux="5"] .btn.solid{background:var(--accent);color:#14100c;border-color:var(--accent)}
+html[data-lux="5"] .btn{border-color:var(--accent);color:var(--accent)}
+html[data-lux="5"] .chapter .kj,html[data-lux="5"] .seal{color:var(--accent);border-color:var(--accent)}
+html[data-lux="5"] .receipt{background:#1a1510;color:var(--ink);box-shadow:none}
+html[data-lux="5"] .dia-head{border-bottom-color:color-mix(in srgb,var(--accent) 55%,var(--rule))}
+html[data-lux="4"] .dia,html[data-lux="4"] .stay{box-shadow:0 18px 40px -28px rgba(40,28,12,.35)}
+html[data-lux="4"] .btn.solid{background:var(--ink);border-color:var(--ink)}
+`
+      : "";
 
   return `<!DOCTYPE html>
 <html lang="${esc(lang)}" ${styleAttr}>
@@ -850,8 +904,8 @@ html[data-style="washi"] .seal,html[data-style="hanji"] .seal{border-radius:6px;
 .motif-bar{left:0;top:0;bottom:0;width:6px;background:var(--accent)}
 .hero .wrap{position:relative;z-index:4;min-height:min(52vh,460px);display:flex;flex-direction:column;justify-content:flex-end;padding:40px 22px 36px}
 .hero .eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:#f3d9b8}
-.hero h1{font-size:clamp(1.45rem,3.6vw,2.45rem);margin:6px 0 4px;text-shadow:0 4px 22px rgba(0,0,0,.4);max-width:22ch;line-height:1.08;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
-.hero .sub{font-size:.95rem;max-width:42ch;margin:6px 0 0;color:#efe6d6;line-height:1.4;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.hero h1{font-size:clamp(1.45rem,3.6vw,2.45rem);margin:6px 0 4px;text-shadow:0 4px 22px rgba(0,0,0,.4);max-width:20ch;line-height:1.08}
+.hero .sub{font-size:.95rem;max-width:42ch;margin:6px 0 0;color:#efe6d6;line-height:1.4}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .chips span{background:var(--card);color:var(--ink);font-weight:700;font-size:14px;padding:6px 14px;border-left:5px solid var(--accent)}
 html[data-style="metro"] .chips span{border-left:0;border-bottom:3px solid var(--accent)}
@@ -976,6 +1030,7 @@ section{padding:56px 0 8px}
   .dia-foot{grid-template-columns:1fr}
 }
 @media (max-width:480px){.act .ph{min-height:160px}}
+${luxCss}
 .budget{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:28px;align-items:start}
 @media (max-width:820px){.budget{grid-template-columns:1fr}}
 .receipt{background:#fffdf8;padding:24px 24px 36px;box-shadow:0 18px 30px -22px rgba(29,26,23,.7);
@@ -1044,7 +1099,7 @@ footer{margin:48px 0 0;padding:24px 0 48px;font-size:13px;color:var(--mute)}
   <div class="wrap">
     <div class="eyebrow">${esc(origin)} → ${esc(destination)} · ${esc(dateLine)}</div>
     <h1>${esc(shortHeroTitle(plan.title))}</h1>
-    <p class="sub">${esc(plan.tagline || theme.mood)}</p>
+    <p class="sub">${esc(shortHeroSub(plan.tagline || theme.mood))}</p>
     <div class="chips">
       <span>${pax} ${pax === 1 ? "viajero" : "viajeros"}</span>
       <span>${esc(destination)}</span>
