@@ -375,9 +375,11 @@ body.viajes-guide-open .custom-cursor-root {
 
 .viajes-float__pill input:focus,
 .viajes-float__pill input:focus-visible,
-.viajes-float__pill input:active {
+.viajes-float__pill input:active,
+.viajes-page .viajes-float__pill input:focus-visible {
   border: 0 !important;
   outline: none !important;
+  outline-offset: 0 !important;
   box-shadow: none !important;
 }
 

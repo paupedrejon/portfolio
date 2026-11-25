@@ -811,7 +811,7 @@ html[data-style="washi"] .seal,html[data-style="hanji"] .seal{border-radius:6px;
 .motif-disc{width:min(48vw,380px);aspect-ratio:1;border-radius:50%;background:var(--accent);right:8%;top:60px;opacity:.85;box-shadow:0 0 0 14px color-mix(in srgb,var(--accent) 25%,transparent)}
 .motif-taxi{left:0;right:0;top:0;height:10px;background:repeating-linear-gradient(90deg,var(--accent) 0 28px,#111 28px 56px)}
 .motif-bar{left:0;top:0;bottom:0;width:8px;background:var(--accent)}
-.hero .wrap{position:relative;min-height:min(72vh,620px);display:flex;flex-direction:column;justify-content:flex-end;padding:70px 22px 56px}
+.hero .wrap{position:relative;z-index:4;min-height:min(72vh,620px);display:flex;flex-direction:column;justify-content:flex-end;padding:70px 22px 56px}
 .hero .eyebrow{font-size:13px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:#f3d9b8}
 .hero h1{font-size:clamp(2.8rem,9vw,5.5rem);margin:8px 0 6px;text-shadow:0 6px 30px rgba(0,0,0,.35);max-width:16ch}
 .hero .sub{font-size:1.1rem;max-width:44ch;margin:8px 0 0;color:#efe6d6}
