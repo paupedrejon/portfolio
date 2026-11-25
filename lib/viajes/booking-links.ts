@@ -108,7 +108,12 @@ export type CityStayLink = {
   nights: number;
   booking: string;
   airbnb: string;
+  getYourGuide: string;
 };
+
+function getYourGuide(city: string): string {
+  return `https://www.getyourguide.com/s/?q=${enc(city)}&searchSource=2`;
+}
 
 /** Public deep-links (no paid API) for “buy / book” CTAs. */
 export function buildBookingLinks(input: TripPlanInput) {
@@ -137,6 +142,7 @@ export function buildBookingLinks(input: TripPlanInput) {
       nights: cityNights,
       booking: bookingHotel(city, checkin, checkout, adults),
       airbnb: airbnbHotel(city, checkin, checkout, adults),
+      getYourGuide: getYourGuide(city),
     });
     cursor = checkout;
   });

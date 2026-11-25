@@ -73,8 +73,31 @@ function renderTicket(
     booking.tripStart ||
     "—";
   const kind = (leg.kind || "flight").toLowerCase();
-  const cta =
-    kind === "bus" ? "Flixbus" : kind === "train" ? "Trainline" : "Skyscanner";
+  const matched = (booking.legs || []).find(
+    (l) =>
+      (normCity(l.from).includes(normCity(leg.fromCity)) ||
+        normCity(leg.fromCity).includes(normCity(l.from))) &&
+      (normCity(l.to).includes(normCity(leg.toCity)) ||
+        normCity(leg.toCity).includes(normCity(l.to))),
+  );
+  const ctas: { href: string; label: string; solid?: boolean }[] = [];
+  if (kind === "train" || kind === "bus" || kind === "ferry") {
+    ctas.push({
+      href: matched?.trainline || booking.trainsTrainline,
+      label: "Trainline",
+      solid: true,
+    });
+    ctas.push({
+      href: matched?.flixbus || booking.busFlixbus,
+      label: "Flixbus",
+    });
+  } else {
+    ctas.push({ href, label: "Skyscanner", solid: true });
+    ctas.push({
+      href: matched?.google || booking.flightsGoogle,
+      label: "Google Flights",
+    });
+  }
 
   return `<article class="ticket" style="--c:${esc(accent)}">
     <div class="tk-head"><span>${esc(seal)} · BOARDING PASS</span><span>${esc(label)}</span></div>
@@ -99,12 +122,17 @@ function renderTicket(
         <div class="r">${esc(leg.fromCity || from)} → ${esc(leg.toCity || to)}
           <small>${esc([leg.arrive ? `llega ${leg.arrive}` : "", leg.duration || "", leg.note || ""].filter(Boolean).join(" · "))}</small>
         </div>
-        <span class="fn">${esc(leg.vehicleNo || price)}</span>
+        <span class="fn">${esc(leg.vehicleNo || "ver oferta")}</span>
       </div>
     </div>
     <div class="tk-foot">
       <div class="btns">
-        <a class="btn solid" href="${esc(href)}" target="_blank" rel="noopener">Reservar · ${esc(cta)}</a>
+        ${ctas
+          .map(
+            (c) =>
+              `<a class="btn${c.solid ? " solid" : ""}" href="${esc(c.href)}" target="_blank" rel="noopener">${esc(c.label)}</a>`,
+          )
+          .join("")}
       </div>
     </div>
   </article>`;
@@ -187,22 +215,26 @@ export function renderGuideHtml(params: {
     )
     .join("\n");
 
-  const staysList = plan.stays?.length
-    ? plan.stays
-    : (booking.stays || []).map((s) => ({
-        name: `Alojamiento en ${s.city}`,
-        city: s.city,
-        price: "No verificado",
-        vibe: "",
-        nights: `${s.nights} noches`,
-      }));
+  // Always one stay per booking city; merge AI names onto booking windows
+  const staysList = (booking.stays || []).map((link, i) => {
+    const hit =
+      plan.stays?.find((s) => normCity(s.city) === normCity(link.city)) ||
+      plan.stays?.[i];
+    return {
+      name: hit?.name || `Alojamiento en ${link.city}`,
+      city: link.city,
+      price: hit?.price || "No verificado",
+      nightly: hit?.nightly,
+      vibe: hit?.vibe || "",
+      nights: hit?.nights || `${link.nights} noches`,
+      link,
+    };
+  });
 
   const stayHtml = staysList
-    .map((stay, i) => {
-      const city = stay.city || booking.stays?.[i]?.city || destination;
-      const link =
-        booking.stays?.find((s) => normCity(s.city) === normCity(city)) ||
-        booking.stays?.[i];
+    .map((stay) => {
+      const city = stay.city;
+      const link = stay.link;
       const photo = imgForCity(images, city) || nextImg(city);
       return `<article class="stay">
         <div class="poster">
@@ -210,39 +242,74 @@ export function renderGuideHtml(params: {
           <span class="city-es">${esc(city)}</span>
         </div>
         <div class="body">
-          <div class="when">${esc(
-            stay.nights ||
-              (link
-                ? `${link.nights} noches · ${link.checkin} → ${link.checkout}`
-                : ""),
-          )}</div>
+          <div class="when">${esc(`${stay.nights} · ${link.checkin} → ${link.checkout}`)}</div>
           <h3>${esc(stay.name)}</h3>
           <p>${esc(stay.vibe || "")}</p>
           <div class="money">
+            ${stay.nightly ? `<div><small>Por noche</small><b>${esc(stay.nightly)}</b></div>` : ""}
             <div class="pp"><small>Total estancia</small><b>${esc(stay.price || "No verificado")}</b></div>
           </div>
           <div class="btns" style="margin-top:14px">
-            <a class="btn solid" href="${esc(link?.booking || booking.hotelsBooking)}" target="_blank" rel="noopener">Booking</a>
-            <a class="btn" href="${esc(link?.airbnb || booking.hotelsAirbnb)}" target="_blank" rel="noopener">Airbnb</a>
+            <a class="btn solid" href="${esc(link.booking)}" target="_blank" rel="noopener">Booking</a>
+            <a class="btn" href="${esc(link.airbnb)}" target="_blank" rel="noopener">Airbnb</a>
           </div>
         </div>
       </article>`;
     })
     .join("\n");
 
-  // Group days into city chapters
-  const citiesOrder: string[] = [];
-  for (const day of plan.days) {
-    const c = day.city || destination;
-    if (!citiesOrder.includes(c)) citiesOrder.push(c);
-  }
+  const citiesOrder: string[] =
+    (booking.stays || []).map((s) => s.city).filter(Boolean).length > 0
+      ? (booking.stays || []).map((s) => s.city)
+      : (() => {
+          const order: string[] = [];
+          for (const day of plan.days) {
+            const c = day.city || destination;
+            if (!order.includes(c)) order.push(c);
+          }
+          return order;
+        })();
 
   const routeHtml = citiesOrder
     .map((c) => {
-      const nights = plan.days.filter((d) => (d.city || destination) === c).length;
-      return `<div class="stop"><b>${esc(c)}</b><span>${nights} día${nights === 1 ? "" : "s"}</span></div>`;
+      const nights =
+        booking.stays?.find((s) => normCity(s.city) === normCity(c))?.nights ||
+        plan.days.filter((d) => normCity(d.city || destination) === normCity(c))
+          .length;
+      return `<div class="stop"><b>${esc(c)}</b><span>${nights} noche${nights === 1 ? "" : "s"}</span></div>`;
     })
     .join("");
+
+  function transitBetween(fromCity: string, toCity: string): string {
+    const trainHref =
+      booking.legs?.find(
+        (l) =>
+          normCity(l.from).includes(normCity(fromCity)) &&
+          normCity(l.to).includes(normCity(toCity)),
+      )?.trainline || booking.trainsTrainline;
+    const flixHref =
+      booking.legs?.find(
+        (l) =>
+          normCity(l.from).includes(normCity(fromCity)) &&
+          normCity(l.to).includes(normCity(toCity)),
+      )?.flixbus || booking.busFlixbus;
+    const planLeg = legs.find(
+      (l) =>
+        normCity(l.fromCity).includes(normCity(fromCity)) &&
+        normCity(l.toCity).includes(normCity(toCity)),
+    );
+    const label = planLeg?.kind === "bus" ? "Bus" : "Tren";
+    const meta = [planLeg?.date || "", planLeg?.operator || "", planLeg?.price || ""]
+      .filter(Boolean)
+      .join(" · ");
+    return `<div class="transit">
+      <span><b>${esc(label)}</b> ${esc(fromCity)} → ${esc(toCity)}${meta ? ` · ${esc(meta)}` : ""}</span>
+      <span class="btns">
+        <a class="btn solid" href="${esc(trainHref)}" target="_blank" rel="noopener">Trainline</a>
+        <a class="btn" href="${esc(flixHref)}" target="_blank" rel="noopener">Flixbus</a>
+      </span>
+    </div>`;
+  }
 
   let lastCity = "";
   const daysHtml = plan.days
@@ -251,12 +318,19 @@ export function renderGuideHtml(params: {
       let chapter = "";
       if (city !== lastCity) {
         const seal = seals[(citiesOrder.indexOf(city) + 1) % seals.length] || "";
-        chapter = `<div class="chapter">${seal ? `<span class="kj" aria-hidden="true">${esc(seal)}</span>` : "<span></span>"}<div><h3>${esc(city)}</h3><p>${esc(day.summary || "")}</p></div></div>`;
+        const transit =
+          lastCity && city !== lastCity ? transitBetween(lastCity, city) : "";
+        chapter = `${transit}<div class="chapter">${seal ? `<span class="kj" aria-hidden="true">${esc(seal)}</span>` : "<span></span>"}<div><h3>${esc(city)}</h3><p>${esc(day.summary || "")}</p></div></div>`;
         lastCity = city;
       }
+      const gyg =
+        booking.stays?.find((s) => normCity(s.city) === normCity(city))
+          ?.getYourGuide || booking.activitiesGetYourGuide;
       const acts = (day.activities || [])
         .map((a) => {
           const img = nextImg(city);
+          const label = a.bookingLabel || "Ver / reservar";
+          const isFree = /gratis|incluido|free|0\s*€/i.test(a.price || "");
           return `<figure class="act">
             ${
               img?.url
@@ -264,8 +338,15 @@ export function renderGuideHtml(params: {
                 : `<div class="ph"></div>`
             }
             <figcaption>
+              ${a.time ? `<span class="act-time">${esc(a.time)}</span>` : ""}
               <b>${esc(a.name)}</b>
-              <span class="d">${esc(a.tip || "")}${a.price ? ` · ${esc(a.price)}` : ""}</span>
+              <span class="d">${esc(a.tip || "")}</span>
+              <span class="act-price">${esc(a.price || "No verificado")}</span>
+              ${
+                isFree
+                  ? ""
+                  : `<a class="btn" href="${esc(gyg)}" target="_blank" rel="noopener">${esc(label)}</a>`
+              }
             </figcaption>
           </figure>`;
         })
@@ -428,6 +509,10 @@ section{padding:56px 0 8px}
 .act .ph{aspect-ratio:16/10;background:#2a2622 center/cover no-repeat}
 .act b{display:block;font-family:var(--mincho);font-weight:800;font-size:1.05rem;margin-top:8px}
 .act .d{display:block;font-size:.85rem;color:var(--mute);margin-top:2px}
+.act-time{display:block;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ai);margin-top:8px}
+.act-price{display:block;font-family:var(--mincho);font-weight:800;font-size:1rem;margin-top:6px;color:var(--shu)}
+.act .btn{margin-top:8px;font-size:12px;padding:6px 12px}
+.transit{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:18px 0;padding:14px 16px;border:1.5px dashed var(--rule);background:var(--card);font-size:.95rem}
 @media (max-width:640px){
   .dia-head{grid-template-columns:auto 1fr;gap:12px}
   .dia-head .dnight{grid-column:1/-1;justify-self:start}

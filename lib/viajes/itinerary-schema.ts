@@ -2,7 +2,13 @@ export type ItineraryDay = {
   title: string;
   city?: string;
   summary?: string;
-  activities: { name: string; price?: string; tip?: string }[];
+  activities: {
+    name: string;
+    price?: string;
+    tip?: string;
+    time?: string;
+    bookingLabel?: string;
+  }[];
 };
 
 export type TransportLeg = {
@@ -43,6 +49,7 @@ export type ItineraryPlan = {
     name: string;
     city?: string;
     price?: string;
+    nightly?: string;
     vibe?: string;
     nights?: string;
   }[];

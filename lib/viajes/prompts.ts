@@ -2,6 +2,7 @@ import type { GuideImage, SearchSnippet, TripPlanInput } from "./types";
 import { allDestinations } from "./types";
 import type { BookingLinks } from "./booking-links";
 import { themeForDestination } from "./destination-theme";
+import { extractPriceFacts } from "./price-facts";
 
 function luxuryCopy(n: number): string {
   const map: Record<number, string> = {
@@ -27,67 +28,53 @@ function dateCopy(input: TripPlanInput): string {
   return "Flexible dates — suggest a realistic window";
 }
 
-/**
- * Blueprint inspired by the Claude «Japón febrero 2027» guide:
- * cultural paper art direction, boarding-pass tickets, ema summary,
- * numbered section seals, city chapters, dense day cards, receipt budget.
- * Destination-adaptive — never force Japanese glyphs onto non-JP trips.
- */
-export const GUIDE_SYSTEM_PROMPT = `You are an elite travel art-director + budget closer.
-Output ONLY one complete HTML5 document. No markdown fences. No JavaScript. No iframes. No emoji.
+export const GUIDE_SYSTEM_PROMPT = `Elite travel art-director + budget closer.
+Output ONLY one complete HTML5 document ending with </html>. No markdown. No JavaScript. No iframes. NO EMOJI anywhere (use CSS/SVG/text icons only).
 
 ════════════════════════════════════
-ART DIRECTION (match ART BRIEF + tokens)
+PRICE & FACT INTEGRITY (non-negotiable)
 ════════════════════════════════════
-- The DOWNLOADABLE guide uses CULTURAL PAPER (cream/washi/hanji), NOT the portfolio Dark Cherry UI.
-- CSS variables in :root from ART TOKENS. Google Fonts from FONT HREF.
-- Hero: full-bleed photo (ALLOWED IMAGES only) + dark overlay + HUGE display title + short sub + chip row ("fuda"/tags).
-- Optional cultural ornament (circle stamp, vertical script) ONLY if it fits the destination (JP/KR). For Paris/Italy use roman numerals / latin seals — never paste Japanese on a non-Japan trip.
-- Body: paper background, serif display + clean sans body, hairline rules, stamp/seal section headers (.sh with numbered mark).
-- Prefer transform/opacity-safe CSS; respect prefers-reduced-motion (disable animations).
-- Print CSS: hide sticky nav, keep tickets/days/receipt break-inside:avoid.
+- EVERY money figure MUST come from PRICE FACTS or SEARCH SNIPPETS. Cite [n] or domain.
+- NEVER invent flight prices. If snippets say ~630–650 € round-trip, use that band — do NOT write 900+ €.
+- NEVER use vague "~3.600 €" country packs. Prefer exact snippet amounts; else write exactly "No verificado".
+- Forbidden fillers: "Aerolínea Regular", "Partner", "Estancia Completa", "Pack N noches" for a whole country.
+- Flights: include operator + flight number (e.g. KE928) when present in snippets; else "ver en Skyscanner".
+- Prefer round-trip price once OR split ida/vuelta only if snippets separate them — never double-count.
 
 ════════════════════════════════════
-DOCUMENT STRUCTURE (in this order)
+STAYS (critical)
 ════════════════════════════════════
-1) HERO — destination name dominant; dates; 1 sentence promise; chips (nights · cities · ~€/person).
-2) SUMMARY STRIP (.summary) — 3–4 "ema"/plaque cards: Transport total, Stay total, Total/pp (highlighted), optional alt origin note. Big tabular numbers.
-3) SECTION «Vuelos / Transporte» — BOARDING-PASS tickets (.ticket):
-   - Colored .tk-head ("BOARDING PASS · IDA/VUELTA/TRAMO")
-   - Big airport/station codes + dashed .path between them
-   - .tk-meta: operator, calendar DATE (vie 14 nov 2026), times, price
-   - Perforation (.perf)
-   - .tk-legs rows with exact times, vehicle numbers, layovers
-   - CTA buttons using LEG LINKS for that exact from→to (Skyscanner / Trainline / Flixbus / Google). NEVER bare homepages. NEVER reuse wrong-leg URLs.
-   One ticket/card per major hop including return. Multi-modal OK (flight + train + bus + ferry).
-4) SECTION «Alojamiento» — ONE lodging PER destination city:
-   - Photo from ALLOWED IMAGES for that city (City:: prefix)
-   - Name, neighborhood, nights, check-in→check-out exact dates
-   - Nightly + total price from snippets (else "No verificado")
-   - Tags (metro, kitchen, score…)
-   - CTAs: that city's Booking + Airbnb from STAY LINKS
-5) SECTION «Ruta» — horizontal .route of cities/nights, then DAY-BY-DAY:
-   - Optional .chapter per city (big cultural glyph/numeral + city name + night span)
-   - Each .dia: big day number, weekday, title, one-line sub, "Noche en X" badge
-   - .acts grid: 3–5 activities with photo (if available), name, tip, price (EUR or Gratis / No verificado)
-   - Morning / afternoon / evening substance — NOT "paseo libre"
-   - .transit banners for trains/buses between cities with times + operator
-   - Food stops with typical prices; ≥1 paid highlight if luxury ≥ 2
-6) SECTION «Presupuesto» — RECEIPT (.receipt) with dotted leaders:
-   Every transport leg + every stay + food/day estimate + activities
-   Totals: per person + group (TRAVELERS). Footnote domains from snippets + CONSULTED_AT.
-7) Optional «Noches» block on dark night palette IF interests include nightlife/party — concrete venues + €/¥ estimates.
-8) SECTION «Reservas» — dated checklist (when to book flights, stays, trains).
-9) Footer disclaimer.
+- ONE lodging CARD PER city in DESTINATIONS list (e.g. Tokio + Kioto + Osaka = 3 cards).
+- Each card: specific property NAME (real hotel/hostel/apartment style name from snippets if possible), neighborhood, nights, check-in→check-out from STAY LINKS, nightly + total, photo for THAT city, Booking + Airbnb CTAs for THAT city only.
+- NEVER one card titled for the whole country covering all cities.
 
 ════════════════════════════════════
-HARD CONTENT RULES
+TRANSPORT
 ════════════════════════════════════
-- IMAGES: ONLY URLs in ALLOWED IMAGES. Never invent Wikimedia URLs. Never maps/books/engravings/title pages. Match City:: prefix to section city; else omit <img>.
-- Prices ONLY from SEARCH SNIPPETS (cite [n] / domain). Else "No verificado". Prefer EUR.
-- Concrete calendar dates on every pass and stay — never omit the day.
-- Language = user locale.
-- Self-contained: inline <style> + Google Fonts <link>. Inline SVG icons OK (plane/train). No <script>.`;
+- Boarding-pass ticket per leg (ida, intercity trains/buses, vuelta).
+- Intercity train/bus MUST include Trainline and/or Flixbus CTA from LEG LINKS for that from→to.
+- Never bare thetrainline.com homepage. Never emoji in transit banners.
+
+════════════════════════════════════
+DAYS / ACTIVITIES
+════════════════════════════════════
+- Full trip length; morning/afternoon/evening with concrete places.
+- Each paid activity: photo (ALLOWED IMAGES for that city when available) + price + CTA link (GetYourGuide city link or official) "Ver / reservar".
+- Free sights still get a short tip; photo when available.
+
+════════════════════════════════════
+RECEIPT (mandatory — document incomplete without it)
+════════════════════════════════════
+- Final .receipt section summing: each transport leg, each city stay, food estimate, activities.
+- Per person + group total for TRAVELERS. Footnote CONSULTED_AT + domains.
+- Document MUST end with checklist + footer + </html>. If running long, shorten day tips — NEVER truncate before receipt.
+
+════════════════════════════════════
+ART
+════════════════════════════════════
+- Cultural PAPER theme from ART TOKENS (not Dark Cherry).
+- Google Fonts from FONT HREF. Hero full-bleed from ALLOWED IMAGES only.
+- Cultural seals/glyphs only if appropriate for destination.`;
 
 export function buildPlanUserPrompt(params: {
   input: TripPlanInput;
@@ -105,6 +92,7 @@ export function buildPlanUserPrompt(params: {
   ]
     .filter(Boolean)
     .join(", ");
+  const priceFacts = extractPriceFacts(snippets);
 
   const legLines = (booking.legs || [])
     .map(
@@ -122,19 +110,20 @@ export function buildPlanUserPrompt(params: {
       (s, i) =>
         `[stay${i + 1}] ${s.city} · ${s.nights} nights · ${s.checkin} → ${s.checkout}
   Booking: ${s.booking}
-  Airbnb: ${s.airbnb}`,
+  Airbnb: ${s.airbnb}
+  GetYourGuide: ${s.getYourGuide}`,
     )
     .join("\n");
 
   return `Travel guide HTML for:
 
 ORIGIN: ${input.origin}
-DESTINATIONS (in order): ${dests.join(" → ")}  ← cover ALL with stays + day chapters
+DESTINATIONS (in order — ONE stay card EACH): ${dests.join(" → ")}
 DATES: ${dateCopy(input)}
-SUGGESTED WINDOW: ${booking.tripStart} → ${booking.tripEnd} (concrete days on every pass/stay)
+SUGGESTED WINDOW: ${booking.tripStart} → ${booking.tripEnd}
 TRAVELERS: ${input.travelers}
 LUXURY: ${luxuryCopy(input.luxury)}
-TRANSPORT: ALWAYS multi-modal (flight/train/bus/ferry as needed)
+TRANSPORT: multi-modal (flight/train/bus/ferry)
 INTERESTS: ${interests || "general sightseeing"}
 LOCALE: ${input.locale}
 CONSULTED_AT: ${consultedAt}
@@ -155,33 +144,43 @@ ART TOKENS:
 DISPLAY FONT: ${theme.displayFont}
 BODY FONT: ${theme.bodyFont}
 FONT HREF: ${theme.googleFontsHref}
-SCRIPT / SEAL SAMPLES (use only if culturally appropriate): ${theme.scriptSamples.join(" · ")}
+SCRIPT SAMPLES (only if culturally OK): ${theme.scriptSamples.join(" · ")}
 
-LEG LINKS (match from→to — do not mix):
+PRICE FACTS (use these amounts; do not invent higher flight prices):
+${priceFacts.map((f, i) => `  (p${i + 1}) ${f}`).join("\n") || "  (none — write No verificado)"}
+
+LEG LINKS:
 ${legLines || "(none)"}
 
-STAY LINKS (one lodging card per city):
-${stayLines || `(fallback Booking) ${booking.hotelsBooking}`}
+STAY LINKS (${booking.stays?.length || 0} cities — output ${booking.stays?.length || 0} stay cards):
+${stayLines || `(fallback) ${booking.hotelsBooking}`}
 
-Also: GetYourGuide ${booking.activitiesGetYourGuide}
+GetYourGuide root: ${booking.activitiesGetYourGuide}
 
-SEARCH SNIPPETS (anchor EVERY price; footnote sources):
+SEARCH SNIPPETS:
 ${snippets
-  .slice(0, 14)
+  .slice(0, 16)
   .map(
     (s, i) =>
-      `[${i + 1}] ${s.title}\n${s.url}\n${s.content.slice(0, 400)}`,
+      `[${i + 1}] ${s.title}\n${s.url}\n${s.content.slice(0, 450)}`,
   )
-  .join("\n\n") || "(none — mark prices No verificado)"}
+  .join("\n\n") || "(none)"}
 
-ALLOWED IMAGES (prefix City:: = that city only; never invent URLs):
+ALLOWED IMAGES (City:: prefix = that city only):
 ${images
-  .slice(0, 14)
+  .slice(0, 16)
   .map(
     (img, i) =>
       `[img${i + 1}] ${img.query} | ${img.title}\nURL: ${img.url}\nCredit: ${img.attribution}`,
   )
-  .join("\n\n") || "(none — CSS-only hero)"}`;
+  .join("\n\n") || "(none)"}
+
+HARD CHECK before you finish:
+1) ${dests.length} stay cards (one per: ${dests.join(", ")})
+2) Train/bus legs have Trainline/Flixbus buttons
+3) Receipt section with totals
+4) No emoji
+5) Ends with </html>`;
 }
 
 export const JSON_SYSTEM_PROMPT = `Travel planner. Return ONLY valid JSON (no markdown):
@@ -194,73 +193,99 @@ export const JSON_SYSTEM_PROMPT = `Travel planner. Return ONLY valid JSON (no ma
   "legs": [{
     "kind": "flight"|"train"|"bus"|"ferry",
     "label": "IDA"|"VUELTA"|"TRAMO",
-    "fromCode": "BCN",
-    "toCode": "PRG",
+    "fromCode": "MXP",
+    "toCode": "HND",
     "fromCity": string,
     "toCity": string,
     "operator": string,
-    "date": "vie 14 nov 2026",
+    "date": "vie 12 feb 2027",
     "depart": "20:05",
-    "arrive": "22:40",
-    "duration": "2 h 35",
-    "vehicleNo": "VY8721",
-    "price": "55 €",
+    "arrive": "22:50",
+    "duration": "14 h 45",
+    "vehicleNo": "KE928",
+    "price": "648 €",
     "note": string
   }],
   "transport": {"outbound": string, "inbound": string, "note"?: string},
-  "stays": [{"name": string, "city": string, "price": string, "vibe": string, "nights": string}],
+  "stays": [{
+    "name": "specific property name",
+    "city": "Tokio",
+    "price": "total for stay or No verificado",
+    "nightly": "85 €",
+    "vibe": "neighborhood + why",
+    "nights": "4 noches"
+  }],
   "budget": [{"label": string, "amount": string}],
   "budgetPerPerson": string,
   "budgetTotal": string,
-  "days": [{"title": string, "city"?: string, "summary"?: string, "activities": [{"name": string, "price"?: string, "tip"?: string}]}],
-  "disclaimer"?: string
+  "days": [{
+    "title": string,
+    "city": string,
+    "summary": string,
+    "activities": [{
+      "name": string,
+      "price": string,
+      "tip": string,
+      "bookingLabel": "Ver entrada"|"Reservar"|"Más info",
+      "time": "09:30"
+    }]
+  }],
+  "disclaimer": string
 }
-LIGHT cultural paper palette (cream paper + dark ink), NOT dark-mode UI.
-Prices from snippets else "No verificado".
-stays: ONE per destination city with concrete price.
-legs: every hop including return, each with calendar date.
-days: full trip length, rich morning/afternoon/evening detail.
+RULES:
+- LIGHT paper palette. NO emoji in any string.
+- Prices ONLY from snippets / PRICE FACTS. Else "No verificado". Never invent 900€ flights if snippets show ~640€.
+- stays: EXACTLY one object per destination city with a SPECIFIC name (not "Estancia Completa Japón").
+- legs: every hop + return; include vehicleNo when known; intercity trains as kind=train.
+- days: full trip; activities with concrete places + prices.
+- budget MUST list each leg + each stay + food + activities; include budgetPerPerson and budgetTotal.
 Locale = user locale.`;
 
 export function buildJsonUserPrompt(params: {
   input: TripPlanInput;
   snippets: SearchSnippet[];
   consultedAt: string;
+  booking?: BookingLinks;
 }): string {
-  const { input, snippets, consultedAt } = params;
+  const { input, snippets, consultedAt, booking } = params;
   const dests = allDestinations(input);
   const theme = themeForDestination(dests[0] || input.destination);
-  return `Trip JSON for ${input.origin} → ${dests.join(" → ")} (content ONLY about these places).
+  const priceFacts = extractPriceFacts(snippets);
+  const stayHint = (booking?.stays || [])
+    .map((s) => `${s.city}: ${s.nights}n ${s.checkin}→${s.checkout}`)
+    .join("; ");
+
+  return `Trip JSON for ${input.origin} → ${dests.join(" → ")}.
 Dates: ${dateCopy(input)}
+Window: ${booking?.tripStart || "?"} → ${booking?.tripEnd || "?"}
 Travelers: ${input.travelers}
-Luxury ${input.luxury}/5 · ALWAYS multi-modal transport
+Luxury ${input.luxury}/5 · multi-modal
 Interests: ${[...input.interests, input.interestsNote].filter(Boolean).join(", ") || "general"}
 Locale: ${input.locale}
 Consulted: ${consultedAt}
 Art mood: ${theme.mood}
-Art brief: ${theme.artBrief}
-Suggested palette: ${JSON.stringify({
+Palette: ${JSON.stringify({
     bg: theme.bg,
     ink: theme.ink,
     accent: theme.accent,
     paper: theme.paper,
   })}
-ONE stay per city. Legs with calendar dates covering all hops + return.
-Dense day-by-day across all cities for the trip length.
-Compute budgetPerPerson and budgetTotal for ${input.travelers} travelers from snippets.
+REQUIRED stays (one each): ${dests.join(", ")}
+Stay windows: ${stayHint || "derive from window"}
+PRICE FACTS:
+${priceFacts.map((f, i) => `(p${i + 1}) ${f}`).join("\n") || "(none — No verificado)"}
 Snippets:
 ${snippets
-  .slice(0, 12)
-  .map((s, i) => `[${i + 1}] ${s.title} | ${s.url} | ${s.content.slice(0, 300)}`)
+  .slice(0, 14)
+  .map((s, i) => `[${i + 1}] ${s.title} | ${s.url} | ${s.content.slice(0, 320)}`)
   .join("\n")}`;
 }
 
 export const EDIT_SYSTEM_PROMPT = `You edit an existing self-contained travel-guide HTML document.
-Return the FULL updated HTML document only.
-Preserve cultural paper art direction (NOT Dark Cherry). Keep boarding-pass tickets with dates,
-one stay per city with photos/prices, dense day-by-day itinerary, receipt budget.
-Never invent image URLs or precise prices without sources.
-Keep booking CTA links if present. No scripts. Match guide language.`;
+Return the FULL updated HTML document only (must include receipt + </html>).
+Preserve cultural paper art. No emoji. No invented prices.
+Keep one stay per city, boarding passes with dates, Trainline/Flixbus on ground legs,
+activity CTAs, dense days. No scripts. Match guide language.`;
 
 export function buildEditUserPrompt(params: {
   html: string;

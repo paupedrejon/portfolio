@@ -13,7 +13,7 @@ import {
 import { parseItineraryJson } from "@/lib/viajes/itinerary-schema";
 import { renderGuideHtml } from "@/lib/viajes/render-guide";
 import { clientIp, consumeRateLimit } from "@/lib/viajes/rate-limit";
-import { sanitizeGuideHtml } from "@/lib/viajes/sanitize";
+import { isGuideComplete, sanitizeGuideHtml } from "@/lib/viajes/sanitize";
 import { searchTravelContext } from "@/lib/viajes/tavily";
 import { parseTripPlanInput } from "@/lib/viajes/validate";
 import { fetchDestinationImages, filterGuideImages } from "@/lib/viajes/wikimedia";
@@ -59,6 +59,7 @@ export async function POST(request: Request) {
     }
 
     const consultedAt = new Date().toISOString();
+    const dests = allDestinations(input);
 
     let snippets: SearchSnippet[] = [];
     try {
@@ -80,9 +81,8 @@ export async function POST(request: Request) {
 
     let images: Awaited<ReturnType<typeof fetchDestinationImages>> = [];
     try {
-      const dests = allDestinations(input);
       const batches = await Promise.all(
-        dests.slice(0, 3).map((d) =>
+        dests.slice(0, 4).map((d) =>
           fetchDestinationImages(d, [...input.interests.slice(0, 2)]),
         ),
       );
@@ -95,64 +95,77 @@ export async function POST(request: Request) {
     let html = "";
     let usedFallback = false;
 
-    // 1) Prefer full art-directed HTML from Gemini
+    // 1) Prefer structured JSON → washi renderer (accurate stays/prices/receipt)
     try {
-      const rawHtml = await generateGeminiText(
-        GUIDE_SYSTEM_PROMPT,
-        buildPlanUserPrompt({
-          input,
-          snippets,
-          images,
-          consultedAt,
-          booking,
-        }),
-        {
-          temperature: 0.7,
-          maxOutputTokens: 12288,
-          attemptsPerModel: 1,
-          maxModels: 2,
-        },
-      );
-      html = sanitizeGuideHtml(extractHtmlDocument(rawHtml));
-    } catch (htmlErr) {
-      console.warn("[viajes/plan] html pass failed", htmlErr);
-    }
-
-    // 2) Fallback: compact JSON + our destination-themed renderer
-    if (html.length < 200 || !/<html[\s>]/i.test(html)) {
-      usedFallback = true;
       const rawJson = await generateGeminiText(
         JSON_SYSTEM_PROMPT,
-        buildJsonUserPrompt({ input, snippets, consultedAt }),
+        buildJsonUserPrompt({ input, snippets, consultedAt, booking }),
         {
-          temperature: 0.45,
-          maxOutputTokens: 4096,
-          attemptsPerModel: 3,
+          temperature: 0.35,
+          maxOutputTokens: 8192,
+          attemptsPerModel: 2,
           maxModels: 3,
         },
       );
       const plan = parseItineraryJson(rawJson);
-      if (!plan) {
-        return NextResponse.json(
-          {
-            error: "GENERATION_FAILED",
-            message:
-              "Gemini está saturado y no pudo armar la guía. Espera ~1 min y reintenta.",
-          },
-          { status: 502 },
+      if (plan) {
+        html = sanitizeGuideHtml(
+          renderGuideHtml({
+            plan,
+            images,
+            consultedAt,
+            destination: dests.join(" · ") || input.destination,
+            origin: input.origin,
+            locale: input.locale,
+            travelers: input.travelers,
+            booking,
+          }),
         );
+        usedFallback = true;
       }
-      html = sanitizeGuideHtml(
-        renderGuideHtml({
-          plan,
-          images,
-          consultedAt,
-          destination: input.destination,
-          origin: input.origin,
-          locale: input.locale,
-          travelers: input.travelers,
-          booking,
-        }),
+    } catch (jsonErr) {
+      console.warn("[viajes/plan] json pass failed", jsonErr);
+    }
+
+    // 2) Optional art-directed HTML only if JSON path failed
+    if (!html || html.length < 400) {
+      try {
+        const rawHtml = await generateGeminiText(
+          GUIDE_SYSTEM_PROMPT,
+          buildPlanUserPrompt({
+            input,
+            snippets,
+            images,
+            consultedAt,
+            booking,
+          }),
+          {
+            temperature: 0.45,
+            maxOutputTokens: 12288,
+            attemptsPerModel: 1,
+            maxModels: 2,
+          },
+        );
+        const candidate = sanitizeGuideHtml(extractHtmlDocument(rawHtml));
+        if (isGuideComplete(candidate, { minStays: Math.min(dests.length, 2) })) {
+          html = candidate;
+          usedFallback = false;
+        } else {
+          console.warn("[viajes/plan] html incomplete — rejected");
+        }
+      } catch (htmlErr) {
+        console.warn("[viajes/plan] html pass failed", htmlErr);
+      }
+    }
+
+    if (!html || html.length < 200 || !/<html[\s>]/i.test(html)) {
+      return NextResponse.json(
+        {
+          error: "GENERATION_FAILED",
+          message:
+            "Gemini está saturado y no pudo armar la guía. Espera ~1 min y reintenta.",
+        },
+        { status: 502 },
       );
     }
 

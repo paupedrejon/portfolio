@@ -63,9 +63,37 @@ export const INTEREST_PRESETS = [
 
 export type InterestPreset = (typeof INTEREST_PRESETS)[number];
 
-export function allDestinations(input: Pick<TripPlanInput, "destination" | "destinations">): string[] {
-  const list = [input.destination, ...(input.destinations || [])]
+/** Expand country-level destinations into a classic multi-city route for stays/days. */
+export function expandDestinationLabel(label: string): string[] {
+  const d = label
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .trim();
+  if (/^(japon|japan|nihon|nippon)$/.test(d)) {
+    return ["Tokio", "Kioto", "Osaka"];
+  }
+  if (/^(corea del sur|south korea|korea|corea)$/.test(d)) {
+    return ["Seúl", "Busan"];
+  }
+  if (/^(italia|italy)$/.test(d)) {
+    return ["Roma", "Florencia", "Venecia"];
+  }
+  if (/^(francia|france)$/.test(d)) {
+    return ["París"];
+  }
+  if (/^(espana|spain)$/.test(d)) {
+    return ["Madrid", "Barcelona"];
+  }
+  return [label.trim()].filter(Boolean);
+}
+
+export function allDestinations(
+  input: Pick<TripPlanInput, "destination" | "destinations">,
+): string[] {
+  const raw = [input.destination, ...(input.destinations || [])]
     .map((s) => s.trim())
     .filter(Boolean);
-  return [...new Set(list)];
+  const expanded = raw.flatMap((label) => expandDestinationLabel(label));
+  return [...new Set(expanded)];
 }

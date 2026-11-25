@@ -1,5 +1,6 @@
 import { allDestinations } from "./types";
 import type { SearchSnippet, TripPlanInput } from "./types";
+import { resolveTripDates } from "./booking-links";
 
 type TavilyResult = {
   title?: string;
@@ -19,57 +20,43 @@ function luxuryLabel(n: number): string {
   return "luxury 5-star hotel";
 }
 
-function whenLabel(input: TripPlanInput): string {
-  if (input.dateMode === "exact" && input.startDate && input.endDate) {
-    return `${input.startDate} to ${input.endDate}`;
-  }
-  if (input.dateMode === "flexible") {
-    const month = input.flexibleMonth || "upcoming months";
-    const min = input.daysMin ?? 3;
-    const max = input.daysMax ?? 10;
-    return `${month} trip ${min}-${max} days`;
-  }
-  if (input.days) return `${input.days} days`;
-  return "flexible dates";
-}
-
 export function buildSearchQueries(input: TripPlanInput): string[] {
   const dests = allDestinations(input);
   const primary = dests[0] || input.destination;
   const { origin, travelers } = input;
   const lux = luxuryLabel(input.luxury);
-  const when = whenLabel(input);
   const pax = travelers || 2;
+  const { start, end } = resolveTripDates(input);
 
   const interests =
     input.interests.length > 0
       ? input.interests.join(" ")
       : "sightseeing food";
 
-  const lodgingQs = dests
-    .slice(0, 3)
-    .map(
-      (city) =>
-        `Booking.com OR Airbnb ${city} ${lux} exact price per night ${when} for ${pax} adults`,
-    );
+  const lodgingQs = dests.slice(0, 4).map(
+    (city) =>
+      `${city} ${lux} hotel OR apartment Booking.com price per night EUR ${pax} adults ${start}`,
+  );
 
   const hopQs =
     dests.length > 1
       ? dests.slice(0, -1).map((city, i) => {
           const next = dests[i + 1];
-          return `train OR bus ${city} to ${next} ticket price EUR Flixbus OR Trainline ${when}`;
+          return `Shinkansen OR train OR bus ${city} to ${next} ticket price EUR Trainline`;
         })
       : [];
 
   const queries = [
-    `cheapest flight OR train OR bus ${origin} to ${primary} ${when} ${pax} adults price EUR Skyscanner OR Google Flights`,
-    ...hopQs.slice(0, 2),
+    // Round-trip flight — force cheapest known price language
+    `cheapest round trip flight ${origin} to ${primary} ${start} ${end} ${pax} adults price EUR Skyscanner`,
+    `Skyscanner ${origin} ${primary} ${start} return ${end} flight price €`,
+    ...hopQs.slice(0, 3),
     ...lodgingQs.slice(0, 3),
-    `GetYourGuide OR official ticket ${primary} ${interests} exact price EUR`,
-    `${dests.join(" ")} attraction ticket meal price EUR backpacker itinerary`,
+    `GetYourGuide ${primary} ${interests} ticket price EUR`,
+    `${dests.slice(0, 2).join(" ")} ramen meal temple ticket price EUR`,
   ].filter(Boolean);
 
-  return [...new Set(queries)].slice(0, 6);
+  return [...new Set(queries)].slice(0, 8);
 }
 
 async function searchOne(
@@ -83,7 +70,7 @@ async function searchOne(
       api_key: apiKey,
       query,
       search_depth: "basic",
-      max_results: 4,
+      max_results: 5,
       include_answer: false,
     }),
   });
@@ -98,7 +85,7 @@ async function searchOne(
       query,
       title: r.title || query,
       url: r.url!,
-      content: (r.content || "").slice(0, 900),
+      content: (r.content || "").slice(0, 1000),
     }));
 }
 
