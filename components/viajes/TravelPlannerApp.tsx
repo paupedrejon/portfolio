@@ -57,6 +57,7 @@ export default function TravelPlannerApp() {
   const [trip, setTrip] = useState<TripPlanInput>(() => defaultTrip(locale));
   const [html, setHtml] = useState<string | null>(null);
   const [title, setTitle] = useState<string | null>(null);
+  const [cities, setCities] = useState<string[]>([]);
   const [loadingPlan, setLoadingPlan] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +80,7 @@ export default function TravelPlannerApp() {
         html?: string;
         title?: string;
         trip?: TripPlanInput;
+        cities?: string[];
         messages?: ChatMessage[];
       };
       if (parsed.html) {
@@ -86,6 +88,7 @@ export default function TravelPlannerApp() {
         setShowWizard(false);
       }
       if (parsed.title) setTitle(parsed.title);
+      if (parsed.cities) setCities(parsed.cities);
       if (parsed.trip) {
         setTrip({
           ...defaultTrip(locale),
@@ -109,12 +112,12 @@ export default function TravelPlannerApp() {
     try {
       sessionStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ html, title, trip, messages }),
+        JSON.stringify({ html, title, trip, cities, messages }),
       );
     } catch {
       /* ignore */
     }
-  }, [html, title, trip, messages]);
+  }, [html, title, trip, cities, messages]);
 
   const busy = loadingPlan || loadingEdit;
   const hasGuide = Boolean(html);
@@ -146,6 +149,16 @@ export default function TravelPlannerApp() {
       const clean = purify(data.html as string);
       setHtml(clean);
       setTitle(data.title || null);
+      if (Array.isArray(data.cities)) setCities(data.cities);
+      if (data.trip) {
+        setTrip({
+          ...defaultTrip(locale),
+          ...data.trip,
+          locale,
+          destinations: data.trip.destinations || [],
+          transport: "flexible",
+        });
+      }
       setShowWizard(false);
       setMessages([{ role: "assistant", text: t("chat.ready") }]);
     } catch (err) {
@@ -164,7 +177,14 @@ export default function TravelPlannerApp() {
       const res = await fetch("/api/viajes/edit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html, instruction, trip }),
+        body: JSON.stringify({
+          instruction,
+          trip,
+          cities:
+            cities.length > 0
+              ? cities
+              : [trip.destination, ...(trip.destinations || [])],
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -172,9 +192,24 @@ export default function TravelPlannerApp() {
       }
       setHtml(purify(data.html as string));
       if (data.title) setTitle(data.title);
+      if (Array.isArray(data.cities)) setCities(data.cities);
+      if (data.trip) {
+        setTrip({
+          ...defaultTrip(locale),
+          ...data.trip,
+          locale,
+          destinations: data.trip.destinations || [],
+          transport: "flexible",
+        });
+      }
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: t("chat.updated") },
+        {
+          role: "assistant",
+          text:
+            (typeof data.summary === "string" && data.summary.trim()) ||
+            t("chat.updated"),
+        },
       ]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : t("errors.generic");

@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
-import {
-  extractGuideTitle,
-  extractHtmlDocument,
-  generateGeminiText,
-} from "@/lib/viajes/gemini";
-import {
-  EDIT_SYSTEM_PROMPT,
-  buildEditUserPrompt,
-} from "@/lib/viajes/prompts";
+import { interpretTripEdit } from "@/lib/viajes/edit-trip";
+import { generateTravelGuide } from "@/lib/viajes/generate-guide";
 import { clientIp, consumeRateLimit } from "@/lib/viajes/rate-limit";
-import { sanitizeGuideHtml } from "@/lib/viajes/sanitize";
-import { searchTravelContext } from "@/lib/viajes/tavily";
-import { parseTripPlanInput, wantsPriceResearch } from "@/lib/viajes/validate";
-import type { SearchSnippet } from "@/lib/viajes/types";
+import { parseTripPlanInput } from "@/lib/viajes/validate";
+import { allDestinations } from "@/lib/viajes/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -20,7 +11,7 @@ export const maxDuration = 120;
 export async function POST(request: Request) {
   try {
     const ip = clientIp(request);
-    const limit = consumeRateLimit(`viajes:edit:${ip}`, 20);
+    const limit = consumeRateLimit(`viajes:edit:${ip}`, 12);
     if (!limit.ok) {
       return NextResponse.json(
         {
@@ -34,18 +25,27 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const html =
-      typeof body?.html === "string" ? body.html.slice(0, 200000) : "";
     const instruction =
       typeof body?.instruction === "string"
         ? body.instruction.trim().slice(0, 800)
         : "";
 
-    if (html.length < 50 || instruction.length < 2) {
+    if (instruction.length < 2) {
       return NextResponse.json(
         {
           error: "INVALID_INPUT",
-          message: "Necesito la guía actual y una instrucción de edición.",
+          message: "Necesito una instrucción de edición.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const trip = parseTripPlanInput(body.trip || body);
+    if (!trip) {
+      return NextResponse.json(
+        {
+          error: "INVALID_INPUT",
+          message: "Falta el viaje actual (origen y destino).",
         },
         { status: 400 },
       );
@@ -61,51 +61,33 @@ export async function POST(request: Request) {
       );
     }
 
-    const consultedAt = new Date().toISOString();
-    let snippets: SearchSnippet[] = [];
+    const currentCities = Array.isArray(body.cities)
+      ? body.cities
+          .filter((x: unknown): x is string => typeof x === "string")
+          .map((x: string) => x.trim())
+          .filter(Boolean)
+          .slice(0, 6)
+      : allDestinations(trip);
 
-    if (wantsPriceResearch(instruction) && process.env.TAVILY_API_KEY) {
-      const trip = parseTripPlanInput(body.trip || body);
-      if (trip) {
-        try {
-          snippets = await searchTravelContext(trip);
-        } catch (err) {
-          if (err instanceof Error && err.message === "TAVILY_QUOTA") {
-            return NextResponse.json(
-              {
-                error: "TAVILY_QUOTA",
-                message:
-                  "Cuota gratuita de búsqueda agotada este mes. Edita sin rebuscar precios.",
-              },
-              { status: 429 },
-            );
-          }
-        }
-      }
-    }
+    const interpreted = await interpretTripEdit({
+      trip,
+      instruction,
+      currentCities,
+    });
 
-    const raw = await generateGeminiText(
-      EDIT_SYSTEM_PROMPT,
-      buildEditUserPrompt({ html, instruction, snippets, consultedAt }),
-      { temperature: 0.55, maxOutputTokens: 8192 },
-    );
-
-    const nextHtml = sanitizeGuideHtml(extractHtmlDocument(raw));
-    if (nextHtml.length < 200 || !/<html[\s>]/i.test(nextHtml)) {
-      return NextResponse.json(
-        {
-          error: "GENERATION_FAILED",
-          message: "La edición no devolvió HTML válido. Reintenta.",
-        },
-        { status: 502 },
-      );
-    }
+    const guide = await generateTravelGuide(interpreted.trip, {
+      extraJsonHint: `USER EDIT: ${instruction}\nApply this change in the itinerary (cities, days, stays, legs, videos themes). Cities in order should be: ${allDestinations(interpreted.trip).join(" → ")}.`,
+    });
 
     return NextResponse.json({
-      html: nextHtml,
-      title: extractGuideTitle(nextHtml, "Guía de viaje"),
-      sources: snippets.slice(0, 12),
-      consultedAt,
+      html: guide.html,
+      title: guide.title,
+      sources: guide.sources,
+      cities: guide.cities,
+      trip: guide.trip,
+      summary: interpreted.summary,
+      consultedAt: guide.consultedAt,
+      fallback: guide.fallback,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "UNKNOWN";
@@ -116,6 +98,26 @@ export async function POST(request: Request) {
           message: "Cuota gratuita de Gemini agotada hoy. Prueba mañana.",
         },
         { status: 429 },
+      );
+    }
+    if (message === "TAVILY_QUOTA") {
+      return NextResponse.json(
+        {
+          error: "TAVILY_QUOTA",
+          message:
+            "Cuota gratuita de búsqueda agotada este mes. Prueba más adelante.",
+        },
+        { status: 429 },
+      );
+    }
+    if (message === "GENERATION_FAILED") {
+      return NextResponse.json(
+        {
+          error: "GENERATION_FAILED",
+          message:
+            "No pude regenerar la guía con ese cambio. Reformula o reintenta.",
+        },
+        { status: 502 },
       );
     }
     console.error("[viajes/edit]", err);

@@ -309,32 +309,59 @@ ${snippets
   .join("\n")}`;
 }
 
-export const EDIT_SYSTEM_PROMPT = `You edit an existing self-contained travel-guide HTML document.
-Return the FULL updated HTML document only (must include receipt + </html>).
-Preserve cultural paper art. No emoji. No invented prices.
-Keep one stay per city, boarding passes with dates, Trainline/Flixbus on ground legs,
-activity CTAs, dense days. No scripts. Match guide language.`;
+/** Interpret a chat edit into an updated trip (cities/dates/luxury), not HTML. */
+export const EDIT_TRIP_SYSTEM_PROMPT = `You update a travel trip brief from a user chat instruction.
+Return ONLY valid JSON (no markdown):
+{
+  "origin": string,
+  "destination": string,
+  "destinations": string[],
+  "startDate": string|null,
+  "endDate": string|null,
+  "flexibleMonth": string|null,
+  "dateMode": "exact"|"flexible",
+  "daysMin": number|null,
+  "daysMax": number|null,
+  "luxury": number,
+  "travelers": number,
+  "interests": string[],
+  "interestsNote": string,
+  "summary": string
+}
+RULES:
+- Apply the instruction fully (add/remove/reorder cities, change dates, luxury, travelers, focus).
+- "añade Bratislava" with current Praga+Viena → destination=Praga, destinations=["Viena","Bratislava"] (keep order sensible for geography when possible).
+- Keep fields unchanged unless the instruction asks to change them.
+- Cities must be concrete place names (not countries) when the user named cities.
+- summary: one short sentence in the user locale describing what you changed.
+- Never invent a new origin unless asked.`;
 
-export function buildEditUserPrompt(params: {
-  html: string;
+export function buildEditTripUserPrompt(params: {
+  trip: TripPlanInput;
   instruction: string;
-  snippets?: SearchSnippet[];
-  consultedAt: string;
+  currentCities?: string[];
 }): string {
-  const extra =
-    params.snippets && params.snippets.length > 0
-      ? `\n\nNEW SEARCH SNIPPETS (${params.consultedAt}):\n${params.snippets
-          .map(
-            (s, i) =>
-              `[${i + 1}] ${s.title}\n${s.url}\n${s.content}`,
-          )
-          .join("\n\n")}`
-      : "";
+  const cities =
+    params.currentCities && params.currentCities.length > 0
+      ? params.currentCities
+      : allDestinations(params.trip);
+  return `CURRENT TRIP:
+origin: ${params.trip.origin}
+cities (in order): ${cities.join(" → ")}
+dateMode: ${params.trip.dateMode}
+startDate: ${params.trip.startDate || ""}
+endDate: ${params.trip.endDate || ""}
+flexibleMonth: ${params.trip.flexibleMonth || ""}
+daysMin: ${params.trip.daysMin ?? ""}
+daysMax: ${params.trip.daysMax ?? ""}
+luxury: ${params.trip.luxury}
+travelers: ${params.trip.travelers}
+interests: ${params.trip.interests.join(", ")}
+interestsNote: ${params.trip.interestsNote || ""}
+locale: ${params.trip.locale}
 
-  return `USER EDIT REQUEST:
+USER INSTRUCTION:
 ${params.instruction}
 
-CURRENT HTML:
-${params.html.slice(0, 120000)}
-${extra}`;
+Return the full updated trip JSON.`;
 }
