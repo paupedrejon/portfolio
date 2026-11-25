@@ -582,7 +582,8 @@ body.viajes-guide-open .custom-cursor-root {
   background: #fff;
   border-radius: 12px;
   padding: 0.55rem 0.75rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  border: 1px solid #e6e6e6;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
 }
 
 .viajes-stops__row .viajes-sky-label {
@@ -676,9 +677,14 @@ body.viajes-guide-open .custom-cursor-root {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  align-self: stretch;
   gap: 0.45rem;
   border: 0;
-  background: #12151c;
+  outline: none;
+  box-shadow: none;
+  /* Bleed 1px so the white bar doesn't flash a halo at the rounded corner */
+  margin: -1px -1px -1px 0;
+  background: #e04667;
   color: #fff;
   font-weight: 700;
   font-size: 0.98rem;
@@ -687,14 +693,26 @@ body.viajes-guide-open .custom-cursor-root {
   min-width: 8.2rem;
   border-radius: 0 14px 14px 0;
   letter-spacing: 0.01em;
+  position: relative;
+  z-index: 1;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .viajes-sky__search:hover:not(:disabled) {
-  background: #000;
+  background: #c93455;
+}
+
+.viajes-sky__search:focus,
+.viajes-sky__search:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .viajes-sky__search:disabled {
-  opacity: 0.55;
+  background: #d1d5db;
+  color: #6b7280;
+  opacity: 1;
   cursor: not-allowed;
 }
 
