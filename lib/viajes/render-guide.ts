@@ -1,8 +1,13 @@
 import type { GuideImage } from "./types";
 import type { ItineraryPlan, TransportLeg } from "./itinerary-schema";
 import type { BookingLinks } from "./booking-links";
-import { pickHeroImage, themeForDestination } from "./destination-theme";
+import {
+  pickHeroImage,
+  themeForDestination,
+  type DestinationTheme,
+} from "./destination-theme";
 import { filterGuideImages } from "./wikimedia";
+import { formatEuro, parseEuro, resolveStayTotal } from "./money";
 
 function esc(s: string): string {
   return s
@@ -39,17 +44,21 @@ function bookingHrefForLeg(leg: TransportLeg, booking: BookingLinks): string {
   return booking.flightsSkyscanner;
 }
 
-function imgForCity(images: GuideImage[], city?: string): GuideImage | null {
-  if (!city) return images[0] || null;
-  const n = normCity(city);
-  const hit = images.find((img) => normCity(img.query).includes(n));
-  return hit || null;
-}
-
 function dayNumberLabel(title: string, index: number): string {
   const m = title.match(/\b(\d{1,2})\b/);
   if (m) return m[1].padStart(2, "0");
   return String(index + 1).padStart(2, "0");
+}
+
+function addDaysIso(iso: string, n: number): string {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + n);
+  return d.toLocaleDateString("es-ES", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function renderTicket(
@@ -99,6 +108,11 @@ function renderTicket(
     });
   }
 
+  const flightId =
+    leg.vehicleNo && !/^NY-\d+/i.test(leg.vehicleNo)
+      ? leg.vehicleNo
+      : "ver oferta";
+
   return `<article class="ticket" style="--c:${esc(accent)}">
     <div class="tk-head"><span>${esc(seal)} · BOARDING PASS</span><span>${esc(label)}</span></div>
     <div class="tk-main">
@@ -108,7 +122,7 @@ function renderTicket(
         <div class="r"><b>${esc(to)}</b><small>${esc(leg.toCity || "")}</small></div>
       </div>
       <div class="tk-meta">
-        <div><small>Operador</small><b>${esc(leg.operator || "—")}</b></div>
+        <div><small>Operador</small><b>${esc(leg.operator || "Ver en Skyscanner")}</b></div>
         <div><small>Fecha</small><b>${esc(date)}</b></div>
         <div><small>Salida</small><b>${esc(leg.depart || "—")}</b></div>
         <div class="price"><small>Precio</small><b class="num">${esc(price)}</b></div>
@@ -122,7 +136,7 @@ function renderTicket(
         <div class="r">${esc(leg.fromCity || from)} → ${esc(leg.toCity || to)}
           <small>${esc([leg.arrive ? `llega ${leg.arrive}` : "", leg.duration || "", leg.note || ""].filter(Boolean).join(" · "))}</small>
         </div>
-        <span class="fn">${esc(leg.vehicleNo || "ver oferta")}</span>
+        <span class="fn">${esc(flightId)}</span>
       </div>
     </div>
     <div class="tk-foot">
@@ -139,16 +153,39 @@ function renderTicket(
 }
 
 function sectionHead(
+  theme: DestinationTheme,
   num: string,
-  script: string,
   title: string,
   lead: string,
 ): string {
+  const script =
+    theme.verticalScript && theme.scriptSamples[0]
+      ? `<span class="v-script" aria-hidden="true">${esc(theme.scriptSamples[0])}</span>`
+      : "";
   return `<div class="sh">
-    <div class="mark"><span class="hanko">${esc(num)}</span>${script ? `<span class="v-jp" aria-hidden="true">${esc(script)}</span>` : ""}</div>
+    <div class="mark"><span class="seal">${esc(num)}</span>${script}</div>
     <div><h2>${esc(title)}</h2><div class="rule"></div>
     <p class="lead">${esc(lead)}</p></div>
   </div>`;
+}
+
+function heroOrnament(theme: DestinationTheme): string {
+  if (theme.style === "washi") {
+    return `<div class="motif motif-disc" aria-hidden="true"></div>`;
+  }
+  if (theme.style === "metro") {
+    return `<div class="motif motif-taxi" aria-hidden="true"></div>`;
+  }
+  if (theme.style === "editorial" || theme.style === "mediterranean") {
+    return `<div class="motif motif-bar" aria-hidden="true"></div>`;
+  }
+  return `<div class="motif motif-bar" aria-hidden="true"></div>`;
+}
+
+function divider(theme: DestinationTheme): string {
+  if (theme.style === "washi") return `<div class="divider divider-waves" aria-hidden="true"></div>`;
+  if (theme.style === "metro") return `<div class="divider divider-taxi" aria-hidden="true"></div>`;
+  return `<div class="divider divider-rule" aria-hidden="true"></div>`;
 }
 
 export function renderGuideHtml(params: {
@@ -179,22 +216,31 @@ export function renderGuideHtml(params: {
     paper: plan.palette?.paper || theme.paper,
   };
   const hero = pickHeroImage(images);
-  const dayImages = images.filter((img) => img.url !== hero?.url);
+  const pool = images.filter((img) => img.url !== hero?.url);
   const pax = Math.max(1, travelers || 1);
   const seals = theme.scriptSamples;
   const dateLine = plan.datesLabel || `${booking.tripStart} → ${booking.tripEnd}`;
   const lang = locale || "es";
   const consulted = consultedAt.slice(0, 10);
 
-  let imgCursor = 0;
-  const nextImg = (city?: string) => {
-    const byCity = city ? imgForCity(dayImages.length ? dayImages : images, city) : null;
-    if (byCity) return byCity;
-    const pool = dayImages.length ? dayImages : images;
-    if (!pool.length) return null;
-    const img = pool[imgCursor % pool.length];
-    imgCursor += 1;
-    return img;
+  const usedUrls = new Set<string>();
+  if (hero?.url) usedUrls.add(hero.url);
+
+  const nextImg = (city?: string): GuideImage | null => {
+    const n = normCity(city);
+    const cityPool = n
+      ? pool.filter((img) => normCity(img.query).includes(n) || normCity(img.title).includes(n))
+      : [];
+    const prefer = (cityPool.length ? cityPool : pool).filter(
+      (img) => !usedUrls.has(img.url),
+    );
+    const pick =
+      prefer[0] ||
+      pool.find((img) => !usedUrls.has(img.url)) ||
+      images.find((img) => !usedUrls.has(img.url)) ||
+      null;
+    if (pick?.url) usedUrls.add(pick.url);
+    return pick;
   };
 
   const legs: TransportLeg[] =
@@ -211,19 +257,28 @@ export function renderGuideHtml(params: {
 
   const ticketsHtml = legs
     .map((leg, i) =>
-      renderTicket(leg, booking, i % 2 === 1 ? theme.secondary : p.accent, seals[0] || "PASS"),
+      renderTicket(
+        leg,
+        booking,
+        i % 2 === 1 ? theme.secondary : p.accent,
+        seals[i % seals.length] || "PASS",
+      ),
     )
     .join("\n");
 
-  // Always one stay per booking city; merge AI names onto booking windows
   const staysList = (booking.stays || []).map((link, i) => {
     const hit =
       plan.stays?.find((s) => normCity(s.city) === normCity(link.city)) ||
       plan.stays?.[i];
+    const total = resolveStayTotal({
+      total: hit?.price,
+      nightly: hit?.nightly,
+      nights: link.nights,
+    });
     return {
       name: hit?.name || `Alojamiento en ${link.city}`,
       city: link.city,
-      price: hit?.price || "No verificado",
+      price: total,
       nightly: hit?.nightly,
       vibe: hit?.vibe || "",
       nights: hit?.nights || `${link.nights} noches`,
@@ -233,42 +288,37 @@ export function renderGuideHtml(params: {
 
   const stayHtml = staysList
     .map((stay) => {
-      const city = stay.city;
-      const link = stay.link;
-      const photo = imgForCity(images, city) || nextImg(city);
+      const photo = nextImg(stay.city);
       return `<article class="stay">
         <div class="poster">
-          ${photo?.url ? `<img src="${esc(photo.url)}" alt="${esc(city)}"/>` : ""}
-          <span class="city-es">${esc(city)}</span>
+          ${photo?.url ? `<img src="${esc(photo.url)}" alt="${esc(stay.city)}"/>` : ""}
+          <span class="city-es">${esc(stay.city)}</span>
         </div>
         <div class="body">
-          <div class="when">${esc(`${stay.nights} · ${link.checkin} → ${link.checkout}`)}</div>
+          <div class="when">${esc(`${stay.nights} · ${stay.link.checkin} → ${stay.link.checkout}`)}</div>
           <h3>${esc(stay.name)}</h3>
           <p>${esc(stay.vibe || "")}</p>
           <div class="money">
             ${stay.nightly ? `<div><small>Por noche</small><b>${esc(stay.nightly)}</b></div>` : ""}
-            <div class="pp"><small>Total estancia</small><b>${esc(stay.price || "No verificado")}</b></div>
+            <div class="pp"><small>Total estancia</small><b>${esc(stay.price)}</b></div>
           </div>
           <div class="btns" style="margin-top:14px">
-            <a class="btn solid" href="${esc(link.booking)}" target="_blank" rel="noopener">Booking</a>
-            <a class="btn" href="${esc(link.airbnb)}" target="_blank" rel="noopener">Airbnb</a>
+            <a class="btn solid" href="${esc(stay.link.booking)}" target="_blank" rel="noopener">Booking</a>
+            <a class="btn" href="${esc(stay.link.airbnb)}" target="_blank" rel="noopener">Airbnb</a>
           </div>
         </div>
       </article>`;
     })
     .join("\n");
 
-  const citiesOrder: string[] =
+  const citiesOrder =
     (booking.stays || []).map((s) => s.city).filter(Boolean).length > 0
       ? (booking.stays || []).map((s) => s.city)
-      : (() => {
-          const order: string[] = [];
-          for (const day of plan.days) {
-            const c = day.city || destination;
-            if (!order.includes(c)) order.push(c);
-          }
-          return order;
-        })();
+      : [
+          ...new Set(
+            plan.days.map((d) => d.city || destination).filter(Boolean),
+          ),
+        ];
 
   const routeHtml = citiesOrder
     .map((c) => {
@@ -281,6 +331,11 @@ export function renderGuideHtml(params: {
     .join("");
 
   function transitBetween(fromCity: string, toCity: string): string {
+    const planLeg = legs.find(
+      (l) =>
+        normCity(l.fromCity).includes(normCity(fromCity)) &&
+        normCity(l.toCity).includes(normCity(toCity)),
+    );
     const trainHref =
       booking.legs?.find(
         (l) =>
@@ -293,11 +348,6 @@ export function renderGuideHtml(params: {
           normCity(l.from).includes(normCity(fromCity)) &&
           normCity(l.to).includes(normCity(toCity)),
       )?.flixbus || booking.busFlixbus;
-    const planLeg = legs.find(
-      (l) =>
-        normCity(l.fromCity).includes(normCity(fromCity)) &&
-        normCity(l.toCity).includes(normCity(toCity)),
-    );
     const label = planLeg?.kind === "bus" ? "Bus" : "Tren";
     const meta = [planLeg?.date || "", planLeg?.operator || "", planLeg?.price || ""]
       .filter(Boolean)
@@ -320,7 +370,11 @@ export function renderGuideHtml(params: {
         const seal = seals[(citiesOrder.indexOf(city) + 1) % seals.length] || "";
         const transit =
           lastCity && city !== lastCity ? transitBetween(lastCity, city) : "";
-        chapter = `${transit}<div class="chapter">${seal ? `<span class="kj" aria-hidden="true">${esc(seal)}</span>` : "<span></span>"}<div><h3>${esc(city)}</h3><p>${esc(day.summary || "")}</p></div></div>`;
+        const chapterMark =
+          theme.verticalScript && seal
+            ? `<span class="kj" aria-hidden="true">${esc(seal)}</span>`
+            : `<span class="kj kj-lat">${esc(seal || String(citiesOrder.indexOf(city) + 1).padStart(2, "0"))}</span>`;
+        chapter = `${transit}<div class="chapter">${chapterMark}<div><h3>${esc(city)}</h3><p>${esc(day.summary || "")}</p></div></div>`;
         lastCity = city;
       }
       const gyg =
@@ -335,13 +389,13 @@ export function renderGuideHtml(params: {
             ${
               img?.url
                 ? `<div class="ph" style="background-image:url('${esc(img.url)}')"></div>`
-                : `<div class="ph"></div>`
+                : `<div class="ph ph-empty"></div>`
             }
             <figcaption>
               ${a.time ? `<span class="act-time">${esc(a.time)}</span>` : ""}
               <b>${esc(a.name)}</b>
               <span class="d">${esc(a.tip || "")}</span>
-              <span class="act-price">${esc(a.price || "No verificado")}</span>
+              <span class="act-price">${esc(a.price || "Orientativo")}</span>
               ${
                 isFree
                   ? ""
@@ -352,12 +406,15 @@ export function renderGuideHtml(params: {
         })
         .join("");
       const num = dayNumberLabel(day.title, i);
+      const dayDate = booking.tripStart
+        ? addDaysIso(booking.tripStart, i)
+        : dateLine;
       return `${chapter}
       <article class="dia">
         <div class="dia-head">
           <div class="dnum"><b>${esc(num)}</b></div>
           <div>
-            <div class="dm">${esc(dateLine)}</div>
+            <div class="dm">${esc(dayDate)}</div>
             <h4>${esc(day.title)}</h4>
             ${day.summary ? `<p class="dsub">${esc(day.summary)}</p>` : ""}
           </div>
@@ -368,27 +425,70 @@ export function renderGuideHtml(params: {
     })
     .join("\n");
 
-  const budgetLines = (plan.budget || [])
+  // Budget: prefer plan rows; fill gaps from legs/stays
+  let budgetLines = (plan.budget || [])
     .map(
       (b) =>
         `<div class="line"><span class="l">${esc(b.label)}</span><span class="d"></span><span class="a">${esc(b.amount || "No verificado")}</span></div>`,
     )
     .join("");
 
-  const perPerson =
-    plan.budgetPerPerson ||
-    plan.budget?.find((b) => /persona|person|pax|\/pp/i.test(b.label))?.amount ||
-    "No verificado";
-  const totalGroup =
-    plan.budgetTotal ||
-    plan.budget?.find((b) => /total/i.test(b.label))?.amount ||
-    "No verificado";
+  if (!budgetLines) {
+    const auto: string[] = [];
+    for (const leg of legs) {
+      auto.push(
+        `<div class="line"><span class="l">${esc(leg.label || "Tramo")} ${esc(leg.fromCity || "")} → ${esc(leg.toCity || "")}</span><span class="d"></span><span class="a">${esc(leg.price || "No verificado")}</span></div>`,
+      );
+    }
+    for (const stay of staysList) {
+      auto.push(
+        `<div class="line"><span class="l">Alojamiento ${esc(stay.city)}</span><span class="d"></span><span class="a">${esc(stay.price)}</span></div>`,
+      );
+    }
+    budgetLines = auto.join("");
+  }
 
-  const transportHint = legs[0]?.price || "—";
-  const stayHint = staysList[0]?.price || "—";
+  const staySum = staysList.reduce(
+    (acc, s) => acc + (parseEuro(s.price) || 0),
+    0,
+  );
+  const legSum = legs.reduce((acc, l) => acc + (parseEuro(l.price) || 0), 0);
+  const actSum = plan.days.reduce(
+    (acc, d) =>
+      acc +
+      (d.activities || []).reduce((a, act) => a + (parseEuro(act.price) || 0), 0),
+    0,
+  );
+
+  const computedGroup =
+    parseEuro(plan.budgetTotal) ||
+    (staySum + legSum * pax + actSum * pax > 0
+      ? staySum + legSum * pax + actSum * pax
+      : null);
+  const perPerson =
+    plan.budgetPerPerson && !/no verificado/i.test(plan.budgetPerPerson)
+      ? plan.budgetPerPerson
+      : computedGroup
+        ? formatEuro(computedGroup / pax)
+        : "Ver enlaces";
+  const totalGroup =
+    plan.budgetTotal && !/no verificado/i.test(plan.budgetTotal)
+      ? plan.budgetTotal
+      : computedGroup
+        ? formatEuro(computedGroup)
+        : "Ver enlaces";
+
+  const transportHint =
+    legs.map((l) => parseEuro(l.price)).find((n) => n) != null
+      ? formatEuro(legs.reduce((a, l) => a + (parseEuro(l.price) || 0), 0))
+      : legs[0]?.price || "Ver Skyscanner";
+  const stayHint =
+    staySum > 0 ? formatEuro(staySum) : staysList[0]?.price || "Ver Booking";
+
+  const styleAttr = `data-style="${esc(theme.style)}"`;
 
   return `<!DOCTYPE html>
-<html lang="${esc(lang)}">
+<html lang="${esc(lang)}" ${styleAttr}>
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -398,82 +498,90 @@ export function renderGuideHtml(params: {
 <link href="${esc(theme.googleFontsHref)}" rel="stylesheet"/>
 <style>
 :root{
-  --washi:${esc(p.bg)};
+  --paper-bg:${esc(p.bg)};
   --card:${esc(p.paper)};
-  --sumi:${esc(p.ink)};
+  --ink:${esc(p.ink)};
   --mute:${esc(theme.mute)};
   --rule:${esc(theme.rule)};
-  --shu:${esc(p.accent)};
-  --shu-soft:${esc(theme.accentSoft)};
-  --ai:${esc(theme.secondary)};
+  --accent:${esc(p.accent)};
+  --accent-soft:${esc(theme.accentSoft)};
+  --secondary:${esc(theme.secondary)};
   --night:${esc(theme.night)};
   --neon:${esc(theme.neon)};
-  --mincho:"${esc(theme.displayFont)}",Georgia,serif;
-  --gothic:"${esc(theme.bodyFont)}",system-ui,sans-serif;
+  --display:"${esc(theme.displayFont)}",Georgia,serif;
+  --body:"${esc(theme.bodyFont)}",system-ui,sans-serif;
   color-scheme:light;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;background:var(--washi)}
+html{scroll-behavior:smooth;background:var(--paper-bg)}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
-body{margin:0;color:var(--sumi);font-family:var(--gothic);font-size:16px;line-height:1.65;background:var(--washi)}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65;background:var(--paper-bg)}
 img{max-width:100%;display:block}
-a{color:var(--ai)}
-h1,h2,h3,h4{font-family:var(--mincho);font-weight:800;margin:0;line-height:1.15}
+a{color:var(--secondary)}
+h1,h2,h3,h4{font-family:var(--display);font-weight:800;margin:0;line-height:1.15}
 .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
 .num{font-variant-numeric:tabular-nums}
-.v-jp{writing-mode:vertical-rl;text-orientation:upright;font-family:var(--mincho);font-weight:800;letter-spacing:.14em;font-size:18px;color:var(--shu)}
-.hanko{display:inline-grid;place-items:center;width:44px;height:44px;font-family:var(--mincho);font-weight:800;color:var(--shu);border:3px solid var(--shu);border-radius:6px;line-height:1}
+.seal{display:inline-grid;place-items:center;min-width:44px;height:44px;padding:0 8px;font-family:var(--display);font-weight:800;color:var(--accent);border:2px solid var(--accent);border-radius:4px;line-height:1;font-size:14px}
+html[data-style="washi"] .seal,html[data-style="hanji"] .seal{border-radius:6px;border-width:3px;font-size:22px;width:44px;padding:0}
+.v-script{writing-mode:vertical-rl;text-orientation:upright;font-family:var(--display);font-weight:800;letter-spacing:.14em;font-size:18px;color:var(--accent)}
 .hero{position:relative;min-height:min(72vh,620px);color:#fff;overflow:hidden;background:#0d0b10;isolation:isolate}
-.hero-bg{position:absolute;inset:0;z-index:-2;background:${hero ? `url("${esc(hero.url)}") center/cover` : `radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--shu) 50%,#000),#0d0b10)`}}
+.hero-bg{position:absolute;inset:0;z-index:-2;background:${hero ? `url("${esc(hero.url)}") center/cover` : `radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--accent) 50%,#000),#0d0b10)`}}
 .hero::before{content:"";position:absolute;inset:0;z-index:-1;background:${theme.heroOverlay}}
-.hinomaru{position:absolute;width:min(48vw,380px);aspect-ratio:1;border-radius:50%;background:var(--shu);right:8%;top:60px;z-index:-1;opacity:.85;box-shadow:0 0 0 14px color-mix(in srgb,var(--shu) 25%,transparent)}
+.motif{position:absolute;z-index:-1;pointer-events:none}
+.motif-disc{width:min(48vw,380px);aspect-ratio:1;border-radius:50%;background:var(--accent);right:8%;top:60px;opacity:.85;box-shadow:0 0 0 14px color-mix(in srgb,var(--accent) 25%,transparent)}
+.motif-taxi{left:0;right:0;top:0;height:10px;background:repeating-linear-gradient(90deg,var(--accent) 0 28px,#111 28px 56px)}
+.motif-bar{left:0;top:0;bottom:0;width:8px;background:var(--accent)}
 .hero .wrap{position:relative;min-height:min(72vh,620px);display:flex;flex-direction:column;justify-content:flex-end;padding:70px 22px 56px}
 .hero .eyebrow{font-size:13px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:#f3d9b8}
-.hero h1{font-size:clamp(3.2rem,11vw,6.5rem);margin:8px 0 6px;text-shadow:0 6px 30px rgba(0,0,0,.35);max-width:14ch}
+.hero h1{font-size:clamp(2.8rem,9vw,5.5rem);margin:8px 0 6px;text-shadow:0 6px 30px rgba(0,0,0,.35);max-width:16ch}
 .hero .sub{font-size:1.1rem;max-width:44ch;margin:8px 0 0;color:#efe6d6}
-.fuda{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
-.fuda span{background:var(--card);color:var(--sumi);font-weight:700;font-size:14px;padding:6px 14px;border-left:5px solid var(--shu)}
-.waves{height:40px;background:var(--ai);opacity:.9}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.chips span{background:var(--card);color:var(--ink);font-weight:700;font-size:14px;padding:6px 14px;border-left:5px solid var(--accent)}
+html[data-style="metro"] .chips span{border-left:0;border-bottom:3px solid var(--accent)}
+.divider{height:12px}
+.divider-taxi{height:10px;background:repeating-linear-gradient(90deg,var(--accent) 0 24px,#111 24px 48px)}
+.divider-rule{height:3px;background:var(--ink);opacity:.85}
+.divider-waves{height:36px;background:var(--secondary)}
 .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;margin:34px 0 0}
 .ema{position:relative;background:var(--card);border:1px solid var(--rule);padding:16px 18px}
 .ema .k{font-size:13px;font-weight:700;color:var(--mute);letter-spacing:.06em}
-.ema .v{font-family:var(--mincho);font-size:2rem;font-weight:800;line-height:1.1;margin-top:6px}
+.ema .v{font-family:var(--display);font-size:1.7rem;font-weight:800;line-height:1.1;margin-top:6px}
 .ema .s{font-size:14px;color:var(--mute)}
-.ema.total{background:var(--sumi);color:var(--washi);border-color:var(--sumi)}
+.ema.total{background:var(--ink);color:var(--paper-bg);border-color:var(--ink)}
 .ema.total .k,.ema.total .s{color:#c9bca5}
 section{padding:56px 0 8px}
 .sh{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;margin-bottom:22px}
 .sh .mark{display:flex;flex-direction:column;align-items:center;gap:8px}
 .sh h2{font-size:clamp(1.8rem,4vw,2.8rem)}
 .sh .lead{color:var(--mute);max-width:66ch;margin:10px 0 0;font-size:1.05rem}
-.rule{height:2px;background:linear-gradient(90deg,var(--sumi) 0 64px,var(--rule) 64px);margin:12px 0 0}
+.rule{height:2px;background:linear-gradient(90deg,var(--ink) 0 64px,var(--rule) 64px);margin:12px 0 0}
 .tickets{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px}
-.ticket{--c:var(--shu);background:var(--card);border:1px solid var(--rule);border-radius:14px;overflow:hidden}
+.ticket{--c:var(--accent);background:var(--card);border:1px solid var(--rule);border-radius:14px;overflow:hidden}
 .tk-head{background:var(--c);color:#fff;padding:10px 18px;display:flex;justify-content:space-between;font-size:12px;font-weight:700;letter-spacing:.12em}
 .tk-main{padding:18px 20px 12px}
 .tk-route{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px}
-.tk-route b{display:block;font-family:var(--mincho);font-size:clamp(2rem,5vw,2.8rem);line-height:1}
+.tk-route b{display:block;font-family:var(--display);font-size:clamp(2rem,5vw,2.8rem);line-height:1}
 .tk-route small{font-size:12px;color:var(--mute);font-weight:700}
 .tk-route .r{text-align:right}
 .tk-route .path{height:2px;background:repeating-linear-gradient(90deg,var(--c) 0 6px,transparent 6px 12px)}
 .tk-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
 @media (max-width:520px){.tk-meta{grid-template-columns:1fr 1fr}}
 .tk-meta small{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);font-weight:700}
-.tk-meta .price b{font-family:var(--mincho);font-size:1.6rem;color:var(--c)}
+.tk-meta .price b{font-family:var(--display);font-size:1.6rem;color:var(--c)}
 .perf{border-top:2px dashed var(--rule);margin:0 18px;position:relative}
-.perf::before,.perf::after{content:"";position:absolute;top:-12px;width:22px;height:22px;border-radius:50%;background:var(--washi);border:1px solid var(--rule)}
+.perf::before,.perf::after{content:"";position:absolute;top:-12px;width:22px;height:22px;border-radius:50%;background:var(--paper-bg);border:1px solid var(--rule)}
 .perf::before{left:-30px}.perf::after{right:-30px}
 .tk-legs{padding:12px 20px 4px}
 .leg-h{font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--c);text-transform:uppercase;margin:8px 0 4px}
 .row{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:7px 0;border-bottom:1px dotted var(--rule)}
-.row .t{font-family:var(--mincho);font-weight:800;font-size:1.25rem}
+.row .t{font-family:var(--display);font-weight:800;font-size:1.25rem}
 .row .r{font-weight:700;font-size:.95rem}
 .row .r small{display:block;font-weight:400;color:var(--mute);font-size:.8rem}
-.fn{font-size:11px;font-weight:700;border:1.5px solid var(--sumi);border-radius:4px;padding:1px 7px}
+.fn{font-size:11px;font-weight:700;border:1.5px solid var(--ink);border-radius:4px;padding:1px 7px}
 .tk-foot{padding:12px 20px 18px}
 .btns{display:flex;flex-wrap:wrap;gap:8px}
-.btn{display:inline-block;text-decoration:none;font-weight:700;font-size:14px;padding:8px 16px;border:2px solid var(--sumi);color:var(--sumi);background:transparent}
-.btn.solid{background:var(--sumi);color:var(--washi)}
+.btn{display:inline-block;text-decoration:none;font-weight:700;font-size:14px;padding:8px 16px;border:2px solid var(--ink);color:var(--ink);background:transparent}
+.btn.solid{background:var(--ink);color:var(--paper-bg)}
 .stays{display:grid;gap:22px}
 .stay{display:grid;grid-template-columns:minmax(0,320px) 1fr;background:var(--card);border:1px solid var(--rule)}
 @media (max-width:760px){.stay{grid-template-columns:1fr}}
@@ -481,25 +589,26 @@ section{padding:56px 0 8px}
 .poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .poster .city-es{position:absolute;left:16px;bottom:12px;z-index:1;color:#fff;font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:12px;text-shadow:0 2px 12px #000}
 .stay .body{padding:20px 22px}
-.stay .when{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--shu)}
+.stay .when{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
 .stay h3{font-size:1.4rem;margin:4px 0}
-.money{display:flex;gap:22px;margin-top:14px;padding-top:12px;border-top:2px solid var(--sumi)}
+.money{display:flex;gap:22px;margin-top:14px;padding-top:12px;border-top:2px solid var(--ink)}
 .money small{display:block;font-size:11px;font-weight:700;color:var(--mute);letter-spacing:.06em}
-.money b{font-family:var(--mincho);font-size:1.6rem}
+.money b{font-family:var(--display);font-size:1.6rem}
 .route{display:flex;overflow-x:auto;gap:0;padding:8px 0 18px;margin-bottom:10px}
 .stop{flex:1 0 110px;text-align:center;position:relative;padding-top:28px}
-.stop::before{content:"";position:absolute;top:12px;left:0;right:0;height:3px;background:var(--sumi)}
+.stop::before{content:"";position:absolute;top:12px;left:0;right:0;height:3px;background:var(--ink)}
 .stop:first-child::before{left:50%}.stop:last-child::before{right:50%}
-.stop b{display:block;font-family:var(--mincho);font-size:1.1rem}
+.stop b{display:block;font-family:var(--display);font-size:1.1rem}
 .stop span{display:block;font-size:12px;color:var(--mute)}
-.chapter{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:end;margin:48px 0 18px;padding-bottom:10px;border-bottom:2px solid var(--sumi)}
-.chapter .kj{font-family:var(--mincho);font-weight:800;font-size:clamp(2.4rem,6vw,3.8rem);line-height:1;color:var(--shu)}
+.chapter{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:end;margin:48px 0 18px;padding-bottom:10px;border-bottom:2px solid var(--ink)}
+.chapter .kj{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6vw,3.8rem);line-height:1;color:var(--accent)}
+.chapter .kj-lat{font-size:clamp(1.8rem,4vw,2.6rem);letter-spacing:.08em}
 .chapter h3{font-size:clamp(1.4rem,3vw,1.9rem)}
 .chapter p{margin:2px 0 0;color:var(--mute);font-size:.95rem}
 .dias,.dia{display:grid;gap:28px}
 .dia{gap:0;background:var(--card);border:1px solid var(--rule)}
 .dia-head{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:16px 22px;border-bottom:1px solid var(--rule)}
-.dnum b{font-family:var(--mincho);font-weight:800;font-size:3rem;line-height:.9}
+.dnum b{font-family:var(--display);font-weight:800;font-size:3rem;line-height:.9}
 .dm{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--mute)}
 .dia h4{font-size:clamp(1.2rem,2.5vw,1.6rem);margin:2px 0 0}
 .dsub{margin:4px 0 0;color:var(--mute);font-size:.95rem}
@@ -507,10 +616,11 @@ section{padding:56px 0 8px}
 .acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));gap:16px;padding:18px 22px 22px}
 .act{margin:0}
 .act .ph{aspect-ratio:16/10;background:#2a2622 center/cover no-repeat}
-.act b{display:block;font-family:var(--mincho);font-weight:800;font-size:1.05rem;margin-top:8px}
+.act .ph-empty{background:linear-gradient(135deg,var(--rule),var(--card))}
+.act b{display:block;font-family:var(--display);font-weight:800;font-size:1.05rem;margin-top:8px}
 .act .d{display:block;font-size:.85rem;color:var(--mute);margin-top:2px}
-.act-time{display:block;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ai);margin-top:8px}
-.act-price{display:block;font-family:var(--mincho);font-weight:800;font-size:1rem;margin-top:6px;color:var(--shu)}
+.act-time{display:block;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--secondary);margin-top:8px}
+.act-price{display:block;font-family:var(--display);font-weight:800;font-size:1rem;margin-top:6px;color:var(--accent)}
 .act .btn{margin-top:8px;font-size:12px;padding:6px 12px}
 .transit{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:18px 0;padding:14px 16px;border:1.5px dashed var(--rule);background:var(--card);font-size:.95rem}
 @media (max-width:640px){
@@ -529,14 +639,14 @@ section{padding:56px 0 8px}
 .line .l{flex:none;max-width:62%}
 .line .d{flex:1;border-bottom:2px dotted var(--rule);transform:translateY(-4px)}
 .line .a{flex:none;font-weight:700;font-variant-numeric:tabular-nums}
-.receipt .tot{border-top:2px solid var(--sumi);margin-top:10px;padding-top:12px;font-family:var(--mincho);font-size:1.35rem;font-weight:800;display:flex;justify-content:space-between}
+.receipt .tot{border-top:2px solid var(--ink);margin-top:10px;padding-top:12px;font-family:var(--display);font-size:1.35rem;font-weight:800;display:flex;justify-content:space-between}
 .note{font-size:.9rem;color:var(--mute);margin-top:14px}
 .todo{display:grid;gap:10px;margin:0;padding:0;list-style:none}
 .todo li{display:grid;grid-template-columns:120px 1fr;gap:14px;background:var(--card);border:1px solid var(--rule);padding:12px 16px}
-.todo .w{font-family:var(--mincho);font-weight:800;color:var(--shu)}
+.todo .w{font-family:var(--display);font-weight:800;color:var(--accent)}
 footer{margin:48px 0 0;padding:24px 0 48px;font-size:13px;color:var(--mute)}
 @media print{
-  .waves{display:none}
+  .divider{display:none}
   .ticket,.stay,.dia,.receipt{break-inside:avoid}
   .btn{display:none}
 }
@@ -545,12 +655,12 @@ footer{margin:48px 0 0;padding:24px 0 48px;font-size:13px;color:var(--mute)}
 <body>
 <header class="hero">
   <div class="hero-bg" role="img" aria-label="${esc(destination)}"></div>
-  <div class="hinomaru" aria-hidden="true"></div>
+  ${heroOrnament(theme)}
   <div class="wrap">
     <div class="eyebrow">${esc(origin)} → ${esc(destination)} · ${esc(dateLine)}</div>
     <h1>${esc(plan.title)}</h1>
     <p class="sub">${esc(plan.tagline || theme.mood)}</p>
-    <div class="fuda">
+    <div class="chips">
       <span>${pax} ${pax === 1 ? "viajero" : "viajeros"}</span>
       <span>${esc(destination)}</span>
       ${plan.luxuryLabel ? `<span>${esc(plan.luxuryLabel)}</span>` : ""}
@@ -558,7 +668,7 @@ footer{margin:48px 0 0;padding:24px 0 48px;font-size:13px;color:var(--mute)}
     </div>
   </div>
 </header>
-<div class="waves" aria-hidden="true"></div>
+${divider(theme)}
 
 <main class="wrap">
   <div class="summary">
@@ -568,36 +678,36 @@ footer{margin:48px 0 0;padding:24px 0 48px;font-size:13px;color:var(--mute)}
   </div>
 
   <section id="transporte">
-    ${sectionHead(seals[1] || "01", seals[0] || "", "Transporte", "Billetes concretos con fecha, hora y enlace de reserva por tramo.")}
+    ${sectionHead(theme, seals[1] || "01", "Transporte", "Billetes con fecha y enlace de reserva por tramo.")}
     <div class="tickets">${ticketsHtml}</div>
   </section>
 
   <section id="alojamiento">
-    ${sectionHead(seals[2] || "02", "", "Alojamiento", "Una opción por ciudad, con fechas exactas de check-in y check-out.")}
+    ${sectionHead(theme, seals[2] || "02", "Alojamiento", "Una opción por ciudad, con fechas exactas de check-in y check-out.")}
     <div class="stays">${stayHtml || "<p>No verificado</p>"}</div>
   </section>
 
   <section id="ruta">
-    ${sectionHead(seals[3] || "03", "", "La ruta, día a día", "Actividades concretas con precio orientativo. Sin relleno.")}
+    ${sectionHead(theme, seals[3] || "03", "La ruta, día a día", "Actividades concretas. Fotos distintas por lugar cuando hay catálogo.")}
     <div class="route" aria-label="Recorrido">${routeHtml}</div>
     <div class="dias">${daysHtml}</div>
   </section>
 
   <section id="presupuesto">
-    ${sectionHead(seals[4] || "04", "", "Presupuesto por persona", `Cifras ancladas a búsqueda web · consultado ${consulted}.`)}
+    ${sectionHead(theme, seals[4] || "04", "Presupuesto por persona", `Cifras ancladas a búsqueda o cálculo orientativo · ${consulted}.`)}
     <div class="budget">
       <div class="receipt">
         <h3>RECIBO</h3>
         <div class="rs">${esc(origin)} → ${esc(destination)} · ${pax} pax</div>
-        ${budgetLines || `<div class="line"><span class="l">Total</span><span class="d"></span><span class="a">No verificado</span></div>`}
+        ${budgetLines || `<div class="line"><span class="l">Total</span><span class="d"></span><span class="a">Ver enlaces</span></div>`}
         <div class="tot line"><span class="l">Por persona</span><span class="a">${esc(perPerson)}</span></div>
         <div class="tot line"><span class="l">Total grupo</span><span class="a">${esc(totalGroup)}</span></div>
       </div>
       <div>
-        <p class="note">${esc(plan.disclaimer || "Precios orientativos a partir de búsqueda web; verifica en el enlace de reserva antes de comprar.")}</p>
+        <p class="note">${esc(plan.disclaimer || "Precios orientativos; confirma en Skyscanner / Booking antes de pagar. Si aparece «orient.» es cálculo a partir de tarifa/noche.")}</p>
         <ul class="todo" style="margin-top:18px">
           <li><span class="w">Ya</span><span>Cerrar fechas y número de viajeros.</span></li>
-          <li><span class="w">Pronto</span><span>Reservar vuelos/trenes con los enlaces de cada tramo.</span></li>
+          <li><span class="w">Pronto</span><span>Reservar vuelos con los enlaces de cada tramo.</span></li>
           <li><span class="w">Después</span><span>Bloquear alojamiento ciudad a ciudad.</span></li>
         </ul>
       </div>
@@ -607,7 +717,7 @@ footer{margin:48px 0 0;padding:24px 0 48px;font-size:13px;color:var(--mute)}
 
 <footer>
   <div class="wrap">
-    Consultado: ${esc(consulted)} · ${esc(theme.mood)}
+    Consultado: ${esc(consulted)} · ${esc(theme.mood)} · estilo ${esc(theme.style)}
     · <a href="${esc(booking.flightsSkyscanner)}" target="_blank" rel="noopener">Skyscanner</a>
     · <a href="${esc(booking.hotelsBooking)}" target="_blank" rel="noopener">Booking</a>
     · <a href="${esc(booking.activitiesGetYourGuide)}" target="_blank" rel="noopener">GetYourGuide</a>

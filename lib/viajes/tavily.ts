@@ -47,13 +47,13 @@ export function buildSearchQueries(input: TripPlanInput): string[] {
       : [];
 
   const queries = [
-    // Round-trip flight — force cheapest known price language
     `cheapest round trip flight ${origin} to ${primary} ${start} ${end} ${pax} adults price EUR Skyscanner`,
-    `Skyscanner ${origin} ${primary} ${start} return ${end} flight price €`,
-    ...hopQs.slice(0, 3),
+    `${origin} to ${primary} flights February price euros round trip`,
+    ...hopQs.slice(0, 2),
     ...lodgingQs.slice(0, 3),
+    `${primary} hotel mid-range price per night EUR Booking`,
     `GetYourGuide ${primary} ${interests} ticket price EUR`,
-    `${dests.slice(0, 2).join(" ")} ramen meal temple ticket price EUR`,
+    `${primary} museum ticket Broadway dinner price EUR`,
   ].filter(Boolean);
 
   return [...new Set(queries)].slice(0, 8);

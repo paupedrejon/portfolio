@@ -81,9 +81,20 @@ export async function POST(request: Request) {
 
     let images: Awaited<ReturnType<typeof fetchDestinationImages>> = [];
     try {
+      const landmarkExtras = [
+        "skyline",
+        "landmark",
+        "bridge",
+        "museum",
+        "park",
+        "night",
+      ];
       const batches = await Promise.all(
         dests.slice(0, 4).map((d) =>
-          fetchDestinationImages(d, [...input.interests.slice(0, 2)]),
+          fetchDestinationImages(d, [
+            ...input.interests.slice(0, 2),
+            ...landmarkExtras.slice(0, 3),
+          ]),
         ),
       );
       images = filterGuideImages(batches.flat());

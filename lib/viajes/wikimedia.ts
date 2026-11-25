@@ -104,11 +104,18 @@ export function landmarkQueriesForDestination(destination: string): string[] {
   if (/london|londres/.test(d)) {
     return ["Big Ben London", "Tower Bridge London", "London skyline"];
   }
-  if (/new york|nyc|nueva york/.test(d)) {
+  if (/new york|nyc|nueva york|manhattan|brooklyn/.test(d)) {
     return [
       "Empire State Building New York",
       "Brooklyn Bridge New York",
-      "Times Square New York",
+      "Times Square New York night",
+      "Statue of Liberty New York",
+      "Central Park New York",
+      "Chrysler Building New York",
+      "High Line New York",
+      "One World Trade Center New York",
+      "Grand Central Terminal New York",
+      "SoHo New York street",
     ];
   }
   if (/praga|prague|praha/.test(d)) {
@@ -232,16 +239,16 @@ export async function fetchDestinationImages(
 ): Promise<GuideImage[]> {
   const queries = [
     ...landmarkQueriesForDestination(destination),
-    ...extraQueries.slice(0, 2).map((q) => `${destination} ${q}`),
-  ].slice(0, 6);
+    ...extraQueries.slice(0, 3).map((q) => `${destination} ${q}`),
+  ].slice(0, 10);
 
   const images: GuideImage[] = [];
   const seen = new Set<string>();
 
   for (const q of queries) {
-    const titles = await searchFileTitles(q, 4);
+    const titles = await searchFileTitles(q, 3);
     for (const title of titles) {
-      if (images.length >= 8) return filterGuideImages(images);
+      if (images.length >= 14) return filterGuideImages(images);
       const img = await resolveImage(title, `${destination}::${q}`);
       if (!img || seen.has(img.url)) continue;
       seen.add(img.url);

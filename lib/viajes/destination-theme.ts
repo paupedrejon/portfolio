@@ -1,32 +1,33 @@
+export type GuideStyle =
+  | "washi" // Japan — hinomaru, hanko, vertical script OK
+  | "hanji" // Korea
+  | "metro" // NYC / US — newsprint, taxi stripe, no JP motifs
+  | "editorial" // Paris / London / Europe — roman numerals
+  | "mediterranean" // Spain / Italy
+  | "default";
+
 export type DestinationTheme = {
-  /** Paper / page background (light cultural paper) */
   bg: string;
-  /** Body ink */
   ink: string;
-  /** Primary accent (stamp / CTA) */
   accent: string;
-  /** Soft accent wash */
   accentSoft: string;
-  /** Card surface */
   paper: string;
-  /** Muted text */
   mute: string;
-  /** Hairline / rules */
   rule: string;
-  /** Secondary accent (links / transit) */
   secondary: string;
-  /** Night section background */
   night: string;
-  /** Neon / night accent */
   neon: string;
   heroOverlay: string;
   displayFont: string;
   bodyFont: string;
   googleFontsHref: string;
-  /** Short cultural script / stamp glyphs for headers (optional) */
+  /** Section marks — never Japanese glyphs outside washi/hanji */
   scriptSamples: string[];
+  /** Visual system — controls ornaments in the renderer */
+  style: GuideStyle;
+  /** Only true for JP/KR cultural scripts */
+  verticalScript: boolean;
   mood: string;
-  /** One-line art brief for the model */
   artBrief: string;
 };
 
@@ -62,9 +63,11 @@ export function themeForDestination(destination: string): DestinationTheme {
         "family=Noto+Serif+JP:wght@500;700",
       ),
       scriptSamples: ["旅", "一", "二", "三", "四", "五", "東京", "京都", "大阪"],
+      style: "washi",
+      verticalScript: true,
       mood: "washi paper, sumi ink, hinomaru red, seigaiha waves, hanko stamps",
       artBrief:
-        "Cartel de viaje → papel washi con tinta sumi; secciones con sello hanko y tipografía vertical; billetes perforados; presupuesto como recibo dentado; noches en neón. NO Dark Cherry.",
+        "SOLO para Japón: papel washi, hinomaru, hanko, tipografía vertical. Nunca reutilizar este sistema en otros destinos.",
     };
   }
 
@@ -85,10 +88,12 @@ export function themeForDestination(destination: string): DestinationTheme {
       displayFont: "Noto Serif KR",
       bodyFont: "Noto Sans KR",
       googleFontsHref: fonts("Noto Serif KR", "Noto Sans KR"),
-      scriptSamples: ["旅", "서", "울", "한", "국"],
+      scriptSamples: ["한", "국", "서", "울", "01", "02"],
+      style: "hanji",
+      verticalScript: true,
       mood: "hanji paper, Seoul neon, dancheong red-blue",
       artBrief:
-        "Papel hanji claro + tinta oscura; acento dancheong rojo; sellos numerados; billetes; recibo; bloque noche neón. Tipografía coreana si cabe. NO Dark Cherry.",
+        "SOLO Corea: papel hanji + dancheong. No hinomaru japonés. No Dark Cherry.",
     };
   }
 
@@ -110,13 +115,15 @@ export function themeForDestination(destination: string): DestinationTheme {
       bodyFont: "Source Sans 3",
       googleFontsHref: fonts("Cormorant Garamond", "Source Sans 3"),
       scriptSamples: ["I", "II", "III", "IV", "V", "VI"],
+      style: "editorial",
+      verticalScript: false,
       mood: "cream paper, champagne gold, Haussmann ink",
       artBrief:
-        "Papel crema parisino + oro champagne; encabezados roman numerals; billetes tipo boarding pass; recibo; noche Seine. NO Dark Cherry.",
+        "París editorial: numerales romanos, sin sellos asiáticos ni hinomaru. NO Dark Cherry.",
     };
   }
 
-  if (/roma|rome|italia|italy|milan|mil[aá]n|firenze|florence|napoles|naples/.test(d)) {
+  if (/roma|rome|italia|italy|milan|mil[aá]n|firenze|florence|napoles|naples|venecia|venice/.test(d)) {
     return {
       bg: "#f3ebe2",
       ink: "#1a120e",
@@ -134,9 +141,11 @@ export function themeForDestination(destination: string): DestinationTheme {
       bodyFont: "Source Sans 3",
       googleFontsHref: fonts("Libre Baskerville", "Source Sans 3"),
       scriptSamples: ["I", "II", "III", "IV", "V", "VI"],
+      style: "mediterranean",
+      verticalScript: false,
       mood: "travertine paper, terracotta, espresso",
       artBrief:
-        "Papel travertino + terracota; billetes; recibo; capítulos por ciudad; noche espresso. NO Dark Cherry.",
+        "Italia mediterránea: terracota, sin estética japonesa. NO Dark Cherry.",
     };
   }
 
@@ -158,9 +167,11 @@ export function themeForDestination(destination: string): DestinationTheme {
       bodyFont: "Source Sans 3",
       googleFontsHref: fonts("Playfair Display", "Source Sans 3"),
       scriptSamples: ["01", "02", "03", "04", "05", "06"],
+      style: "mediterranean",
+      verticalScript: false,
       mood: "mediterranean dusk paper, vermillion",
       artBrief:
-        "Papel mediterráneo + vermellón; billetes; recibo; días densos. NO Dark Cherry.",
+        "Mediterráneo: vermellón + papel cálido. Sin hinomaru/kanji. NO Dark Cherry.",
     };
   }
 
@@ -182,33 +193,37 @@ export function themeForDestination(destination: string): DestinationTheme {
       bodyFont: "Source Sans 3",
       googleFontsHref: fonts("Libre Baskerville", "Source Sans 3"),
       scriptSamples: ["I", "II", "III", "IV", "V", "VI"],
+      style: "editorial",
+      verticalScript: false,
       mood: "fog paper, navy, tea brown",
       artBrief:
-        "Papel niebla + navy; billetes; recibo; tipografía editorial británica. NO Dark Cherry.",
+        "Londres editorial navy. Sin motivos japoneses. NO Dark Cherry.",
     };
   }
 
-  if (/nyc|new york|nueva york|usa|miami|los angeles|chicago/.test(d)) {
+  if (/nyc|new york|nueva york|manhattan|brooklyn|miami|los angeles|chicago/.test(d)) {
     return {
-      bg: "#f0eee8",
-      ink: "#121212",
-      accent: "#c9a227",
-      accentSoft: "#f0e4bc",
-      paper: "#faf9f5",
-      mute: "#5c5c5c",
-      rule: "#d6d2c6",
-      secondary: "#1a1a1a",
+      bg: "#f2f0ea",
+      ink: "#111111",
+      accent: "#e2b007",
+      accentSoft: "#f7e7a8",
+      paper: "#fffcf5",
+      mute: "#5a5a5a",
+      rule: "#d4d0c4",
+      secondary: "#111111",
       night: "#0a0a0c",
       neon: "#f5c518",
       heroOverlay:
-        "linear-gradient(125deg,rgba(10,10,12,.9),rgba(10,10,12,.35))",
+        "linear-gradient(115deg,rgba(8,8,10,.88) 0%,rgba(8,8,10,.45) 55%,rgba(8,8,10,.2) 100%)",
       displayFont: "Playfair Display",
       bodyFont: "Source Sans 3",
       googleFontsHref: fonts("Playfair Display", "Source Sans 3"),
       scriptSamples: ["01", "02", "03", "04", "05", "06"],
-      mood: "newsprint cream, taxi yellow, midnight",
+      style: "metro",
+      verticalScript: false,
+      mood: "newsprint, taxi yellow stripe, midnight Manhattan",
       artBrief:
-        "Papel newsprint + taxi yellow; billetes; recibo; bloque noche. NO Dark Cherry.",
+        "NYC METRO: newsprint + franja taxi yellow. PROHIBIDO hinomaru, kanji, hanko japonés, tipografía vertical asiática, olas seigaiha. Estética americana editorial.",
     };
   }
 
@@ -230,9 +245,11 @@ export function themeForDestination(destination: string): DestinationTheme {
       bodyFont: "Source Sans 3",
       googleFontsHref: fonts("Cormorant Garamond", "Source Sans 3"),
       scriptSamples: ["I", "II", "III", "IV", "V", "VI"],
+      style: "editorial",
+      verticalScript: false,
       mood: "central-europe cream paper, plum accent",
       artBrief:
-        "Papel crema centroeuropeo + ciruela; billetes; recibo; capítulos ciudad. NO Dark Cherry.",
+        "Centroeuropa editorial. Sin estética japonesa. NO Dark Cherry.",
     };
   }
 
@@ -253,9 +270,11 @@ export function themeForDestination(destination: string): DestinationTheme {
     bodyFont: "Source Sans 3",
     googleFontsHref: fonts("Cormorant Garamond", "Source Sans 3"),
     scriptSamples: ["01", "02", "03", "04", "05", "06"],
+    style: "default",
+    verticalScript: false,
     mood: "warm paper, cherry stamp accent",
     artBrief:
-      "Papel cálido claro + sello cherry; billetes perforados; recibo; itinerario denso. NO Dark Cherry (eso es solo el wizard).",
+      "Papel cálido genérico. Sin hinomaru/kanji salvo destino JP. NO Dark Cherry.",
   };
 }
 
@@ -267,7 +286,7 @@ export function pickHeroImage<T extends { url: string; title?: string; query?: s
     const t = `${img.title || ""} ${img.query || ""} ${img.url}`.toLowerCase();
     let score = 0;
     if (
-      /eiffel|tower|skyline|cityscape|plaza|square|cathedral|temple|castle|bridge|colosseum|sagrada|fuji|templo|shibuya|torii/.test(
+      /eiffel|tower|skyline|cityscape|plaza|square|cathedral|temple|castle|bridge|colosseum|sagrada|fuji|templo|shibuya|torii|brooklyn|empire|statue of liberty|times square/.test(
         t,
       )
     )

@@ -34,12 +34,12 @@ Output ONLY one complete HTML5 document ending with </html>. No markdown. No Jav
 ════════════════════════════════════
 PRICE & FACT INTEGRITY (non-negotiable)
 ════════════════════════════════════
-- EVERY money figure MUST come from PRICE FACTS or SEARCH SNIPPETS. Cite [n] or domain.
-- NEVER invent flight prices. If snippets say ~630–650 € round-trip, use that band — do NOT write 900+ €.
-- NEVER use vague "~3.600 €" country packs. Prefer exact snippet amounts; else write exactly "No verificado".
-- Forbidden fillers: "Aerolínea Regular", "Partner", "Estancia Completa", "Pack N noches" for a whole country.
-- Flights: include operator + flight number (e.g. KE928) when present in snippets; else "ver en Skyscanner".
-- Prefer round-trip price once OR split ida/vuelta only if snippets separate them — never double-count.
+- Prefer PRICE FACTS / SEARCH SNIPPETS. Cite [n] or domain.
+- If snippets show a band (e.g. 630–650 € i/v), use that — never invent 900+ €.
+- If no snippet price: use a realistic market ORIENTATIVO labeled "(orient.)" — NEVER dump "No verificado" on every line.
+- For stays: if nightly known, total = nightly × nights (label orient. if computed).
+- Forbidden: fake flight codes (NY-120), "Aerolínea Regular", "Estancia Completa" country packs.
+- Real operator + flight number ONLY when in snippets; else operator "Ver en Skyscanner" and vehicleNo omitted.
 
 ════════════════════════════════════
 STAYS (critical)
@@ -70,11 +70,12 @@ RECEIPT (mandatory — document incomplete without it)
 - Document MUST end with checklist + footer + </html>. If running long, shorten day tips — NEVER truncate before receipt.
 
 ════════════════════════════════════
-ART
+ART (destination-specific — NEVER copy Japan onto other cities)
 ════════════════════════════════════
-- Cultural PAPER theme from ART TOKENS (not Dark Cherry).
-- Google Fonts from FONT HREF. Hero full-bleed from ALLOWED IMAGES only.
-- Cultural seals/glyphs only if appropriate for destination.`;
+- Follow ART BRIEF + style token exactly. NYC = metro/newsprint/taxi stripe. Paris = editorial. Japan ONLY = washi/hinomaru/hanko.
+- FORBIDDEN outside Japan/Korea: hinomaru disc, kanji, vertical Asian script, hanko stamps, seigaiha waves, class names implying Japan.
+- Cultural PAPER from ART TOKENS (not Dark Cherry). Google Fonts from FONT HREF.
+- Hero full-bleed from ALLOWED IMAGES. Use DIFFERENT images per activity/city — never repeat one photo everywhere.`;
 
 export function buildPlanUserPrompt(params: {
   input: TripPlanInput;
@@ -130,6 +131,7 @@ CONSULTED_AT: ${consultedAt}
 
 ART MOOD: ${theme.mood}
 ART BRIEF: ${theme.artBrief}
+GUIDE STYLE: ${theme.style} · verticalScript=${theme.verticalScript}
 ART TOKENS:
   --washi/bg: ${theme.bg}
   --card/paper: ${theme.paper}
@@ -233,12 +235,13 @@ export const JSON_SYSTEM_PROMPT = `Travel planner. Return ONLY valid JSON (no ma
   "disclaimer": string
 }
 RULES:
-- LIGHT paper palette. NO emoji in any string.
-- Prices ONLY from snippets / PRICE FACTS. Else "No verificado". Never invent 900€ flights if snippets show ~640€.
-- stays: EXACTLY one object per destination city with a SPECIFIC name (not "Estancia Completa Japón").
-- legs: every hop + return; include vehicleNo when known; intercity trains as kind=train.
-- days: full trip; activities with concrete places + prices.
-- budget MUST list each leg + each stay + food + activities; include budgetPerPerson and budgetTotal.
+- LIGHT paper palette matching ART BRIEF. NO emoji. NO Japanese motifs unless destination is Japan.
+- Prices: snippets/PRICE FACTS first; else realistic "(orient.)" amounts — avoid littering "No verificado".
+- Never invent 900€ flights if snippets show ~640€. Never invent flight numbers (no NY-120).
+- stays: EXACTLY one per destination city with SPECIFIC hotel name + nightly when possible.
+- legs: every hop + return; vehicleNo only if real from snippets.
+- days: cover the trip; concrete places + prices; vary activity names (MoMA, High Line, Brooklyn Bridge…).
+- budget MUST list legs + stays + food + activities; budgetPerPerson + budgetTotal required (compute if needed).
 Locale = user locale.`;
 
 export function buildJsonUserPrompt(params: {
@@ -264,6 +267,8 @@ Interests: ${[...input.interests, input.interestsNote].filter(Boolean).join(", "
 Locale: ${input.locale}
 Consulted: ${consultedAt}
 Art mood: ${theme.mood}
+Art brief: ${theme.artBrief}
+Guide style: ${theme.style} (verticalScript=${theme.verticalScript}) — do NOT use Japan motifs unless style is washi
 Palette: ${JSON.stringify({
     bg: theme.bg,
     ink: theme.ink,
@@ -272,8 +277,9 @@ Palette: ${JSON.stringify({
   })}
 REQUIRED stays (one each): ${dests.join(", ")}
 Stay windows: ${stayHint || "derive from window"}
+If nightly known, set price = nightly × nights as "X €".
 PRICE FACTS:
-${priceFacts.map((f, i) => `(p${i + 1}) ${f}`).join("\n") || "(none — No verificado)"}
+${priceFacts.map((f, i) => `(p${i + 1}) ${f}`).join("\n") || "(none — use realistic orient. amounts, not blank No verificado everywhere)"}
 Snippets:
 ${snippets
   .slice(0, 14)
